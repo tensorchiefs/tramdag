@@ -33,8 +33,10 @@
 #
 # > **Format note.** This file is a [jupytext](https://jupytext.readthedocs.io)
 # > *percent* notebook: plain Python with `# %%` cells, so it diffs cleanly in git
-# > and never commits base64 images. VS Code runs it as a notebook out of the box;
-# > for classic Jupyter generate a (git-ignored) `.ipynb` with
+# > and never commits base64 images. VS Code and Cursor both run it as a notebook
+# > (Python + Jupyter extensions; pick the `.venv` interpreter from `uv sync`) —
+# > each `# %%` cell gets a "Run Cell" link executing in the Interactive Window.
+# > For classic Jupyter generate a (git-ignored) `.ipynb` with
 # > `uvx jupytext --to ipynb notebooks/intro_tram_dag.py`.
 
 # %% [markdown]

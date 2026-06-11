@@ -86,6 +86,14 @@ def load_rct() -> pd.DataFrame:
     return load_magic_rct()
 
 
+def DATA_R_REF(source: str) -> Path | None:
+    """Path to the committed R reference (ref_ls/) for a synthetic source, or None."""
+    if source == "magic":
+        return None
+    ref = SIM_DATA / source / "ref_ls"
+    return ref if ref.exists() else None
+
+
 def split(df: pd.DataFrame):
     train_df, temp_df = train_test_split(df, test_size=0.2, random_state=42)
     val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42)
@@ -312,12 +320,20 @@ def evaluate_rct(flow: CausalFlowDAG, results_dir: Path, save,
 
 
 def run_experiment(name: str, style: str, source: str = DEFAULT_SOURCE,
-                   phases=((3000, 1e-2), (1000, 1e-3)), batch_size=256, seed=123):
+                   phases=((3000, 1e-2), (1000, 1e-3)), batch_size=256, seed=123,
+                   restore_best: bool | None = None):
     """Full pipeline: fit -> diagnostics -> RCT evaluation -> save model.
 
     ``source`` selects the data ("magic" private clinical, or a synthetic
     "magic-mrclean/{ls,nl}"). ``phases`` is a sequence of (epochs, lr) phases.
+    ``restore_best`` toggles early-stopping (best-validation) weight restoration;
+    if None it defaults per style — off for the constrained all-`ls` model (its
+    MLE is the proportional-odds estimate, no overfitting), on for the flexible
+    `ci`/`cs` model, whose MLE overfits the observational confounding so it needs
+    the regularization to recover the causal effect.
     """
+    if restore_best is None:
+        restore_best = style != "ls"
     results_dir = RESULTS_ROOT / name
     results_dir.mkdir(parents=True, exist_ok=True)
     save = saver(results_dir / "plots")
@@ -333,10 +349,12 @@ def run_experiment(name: str, style: str, source: str = DEFAULT_SOURCE,
     n_par = sum(p.numel() for p in flow.parameters())
     print(f"Model '{name}' (style={style}): {n_par} parameters")
 
+    print(f"restore_best (early stopping) = {restore_best}")
     for i, (epochs, lr) in enumerate(phases):
         print(f"--- phase {i + 1}/{len(phases)}: {epochs} epochs at lr {lr:g} ---")
         flow.fit(train_df, val_df, epochs=epochs, learning_rate=lr,
-                 batch_size=batch_size, verbose=200, seed=seed if i == 0 else None)
+                 batch_size=batch_size, verbose=200, seed=seed if i == 0 else None,
+                 restore_best=restore_best)
 
     print("\nPer-node val NLL:", {k: round(v, 4) for k, v in flow.nll(val_df).items()})
     print("Per-node test NLL:", {k: round(v, 4) for k, v in flow.nll(test_df).items()})

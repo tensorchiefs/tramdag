@@ -148,17 +148,21 @@ computed analytically from the outcome node's PMF (no Monte Carlo):
 
 Two reading notes:
 
-- The **all-ls flow lands on the classical MLE** (+0.057 vs +0.055 on identical data),
-  as it must — an all-`ls` ordinal node *is* a proportional-odds model.
-  `validate_ls.py` confirms coefficient-level agreement (e.g. T: −0.250 flow vs
-  −0.246 MLE), and `tests/test_flow.py::test_ls_node_equals_proportional_odds`
-  checks the equivalence on synthetic data against statsmodels. The residual
-  +0.057-vs-+0.055 difference is **not under-training**: training 4x longer with a
-  final lr 1e-4 phase (`all_ls_long.py`, 16000 epochs) reproduces +0.0569 exactly.
-  It is the per-node **best-validation weight restoration** — mild early-stopping
-  regularization. On the outcome node: MLE train/val NLL 1.747/1.814 vs flow
-  1.755/**1.799** — the flow trades a hair of train likelihood for better
-  validation likelihood, the MLE is the train optimum by construction.
+- The **all-ls flow IS the classical MLE** when trained to convergence without early
+  stopping (the default, `restore_best=False`): on the synthetic `ls` cohort its
+  outcome-node coefficients match `statsmodels` *and* R `polr` to 4 decimals
+  (Age 0.0526, NIHSSa 0.1630, T −0.9424; ATE +0.1429 vs +0.1428) — see
+  `experiments/validate_ls.py` and `test_simulations.py::test_all_ls_flow_is_exact_mle`.
+  This spot-on match is only possible because `fit()` no longer restores
+  best-validation weights by default; early stopping would pin the fit off the train
+  optimum (see CHANGELOG). The earlier +0.057-vs-+0.055 residual on the clinical data
+  was exactly that early-stopping effect.
+- **Flexible (`ci`/`cs`) models are different**: their MLE *overfits the observational
+  confounding*, so they need `restore_best=True` (early-stopping regularization) to
+  recover the causal effect — confirmed on the synthetic `nl` cohort, where the
+  flexible MLE undershoots (+0.076) but the early-stopped fit recovers the true ATE
+  (+0.10), with a lower validation NLL. `run_experiment` defaults `restore_best` per
+  style accordingly (off for all-`ls`, on for flexible).
 - The treatment effect is **weakly identified** in this observational cohort
   (see STORYLINE.md in the parent repo): the likelihood around the T-coefficient is
   nearly flat, and the parent repo documents that refits drift to the 80%-split

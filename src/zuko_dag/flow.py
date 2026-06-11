@@ -154,12 +154,26 @@ class CausalFlowDAG(nn.Module):
 
     def fit(self, train_df: pd.DataFrame, val_df: pd.DataFrame | None = None,
             epochs: int = 500, learning_rate: float = 1e-2, batch_size: int = 512,
-            verbose: int = 50, seed: int | None = None) -> "CausalFlowDAG":
+            verbose: int = 50, seed: int | None = None,
+            restore_best: bool = False) -> "CausalFlowDAG":
         """Jointly fit all nodes by maximum likelihood.
 
-        Mirrors tramdag's convention: per-node best-validation weights are
-        tracked and restored at the end. Calling ``fit`` again continues
-        training (e.g. a second phase with a lower learning rate).
+        By default training keeps the **final** (converged) weights, so an
+        all-``ls`` model trained to convergence reproduces the classical maximum
+        likelihood estimate exactly (e.g. matches ``statsmodels``/``polr``).
+
+        Args:
+            val_df: optional held-out set, used only for monitoring (and for
+                ``restore_best``). If omitted, the training set is used for the
+                reported validation metric.
+            restore_best: if True, snapshot each node's best-validation weights
+                during training and restore them at the end (mild early-stopping
+                regularization, the old tramdag convention). This makes the fit
+                *not* the training-data MLE, so leave it False for an exact
+                classical comparison. Default False.
+
+        Calling ``fit`` again continues training (e.g. a second phase with a
+        lower learning rate).
         """
         if seed is not None:
             torch.manual_seed(seed)
@@ -170,9 +184,9 @@ class CausalFlowDAG(nn.Module):
         n = len(train_df)
 
         opt = torch.optim.Adam(self.parameters(), lr=learning_rate)
-        if not hasattr(self, "_best"):
+        if restore_best and not hasattr(self, "_best"):
             self._best = {name: (float("inf"), None) for name in self.order}
-        best = self._best
+        best = self._best if restore_best else None
         t0 = time.perf_counter()
         t_offset = self.history["time"][-1] if self.history.get("time") else 0.0
 
@@ -203,10 +217,11 @@ class CausalFlowDAG(nn.Module):
             self.history.setdefault("time", []).append(
                 t_offset + time.perf_counter() - t0)
 
-            for name in self.order:
-                if val_per_node[name] < best[name][0]:
-                    best[name] = (val_per_node[name],
-                                  copy.deepcopy(self.nodes[name].state_dict()))
+            if restore_best:
+                for name in self.order:
+                    if val_per_node[name] < best[name][0]:
+                        best[name] = (val_per_node[name],
+                                      copy.deepcopy(self.nodes[name].state_dict()))
 
             if verbose and (epoch % verbose == 0 or epoch == epochs - 1):
                 tot_t = sum(train_acc.values())
@@ -214,9 +229,10 @@ class CausalFlowDAG(nn.Module):
                 print(f"[epoch {epoch + 1:5d}/{epochs}] train NLL {tot_t:.4f}  "
                       f"val NLL {tot_v:.4f}")
 
-        for name, (_, state) in best.items():  # restore per-node best-val weights
-            if state is not None:
-                self.nodes[name].load_state_dict(state)
+        if restore_best:  # restore per-node best-validation weights
+            for name, (_, state) in best.items():
+                if state is not None:
+                    self.nodes[name].load_state_dict(state)
         self.eval()
         return self
 

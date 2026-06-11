@@ -1,12 +1,15 @@
-"""Validation: the all-`ls` flow's outcome node is exactly a proportional-odds
-model, so its SGD fit must agree with the statsmodels MLE on the same data.
+"""Spot-on validation: the all-`ls` flow's outcome node IS a proportional-odds
+model, so trained to convergence without early stopping it must reproduce the
+classical MLE *exactly* (statsmodels OrderedModel, and the R polr reference).
 
-Fits OrderedModel(mRS_3m ~ Age + mRS_pre + NIHSSa + T) on the identical 80%
-train split (mRS_pre one-hot, as the flow encodes ordinal parents), compares
-coefficients, and computes the MLE's analytic ATE on the RCT covariates —
-the repo's established equal-data reference (~ +0.055).
+Fits both on the same full dataset (no held-out split), with the flow using
+``restore_best=False`` so it sits at the training-data maximum likelihood — then
+compares outcome-node coefficients and the analytic ATE on the RCT covariates.
 
-Usage: uv run python validate_ls.py [all_ls|all_ls_long]
+This exactness is only possible because fit() no longer early-stops by default;
+with best-validation restoration the flow would sit off the train optimum.
+
+Usage: uv run python validate_ls.py [magic-mrclean/ls | magic-mrclean/nl | magic]
 """
 
 import sys
@@ -14,74 +17,96 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-from common import RESULTS_ROOT, load_magic, load_rct, split
+from common import DATA_R_REF, load_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from zuko_dag import CausalFlowDAG  # noqa: E402
+from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
+
+PHASES = [(4000, 1e-2), (2000, 1e-3), (1000, 1e-4)]  # to tight convergence
 
 
 def design(df: pd.DataFrame) -> pd.DataFrame:
-    """Same encoding as the flow: continuous raw, ordinal one-hot (all levels)."""
+    """Same encoding as the flow: continuous raw, ordinal one-hot (drop level 0;
+    with cutpoints the full one-hot is unidentified, so only differences to
+    level 0 are comparable)."""
     X = pd.DataFrame(index=df.index)
     X["Age"] = df["Age"].values
     for k in range(6):
         X[f"mRS_pre_{k}"] = (df["mRS_pre"].values == k).astype(float)
     X["NIHSSa"] = df["NIHSSa"].values
     X["T"] = df["T"].values
-    # drop one one-hot column: with cutpoints, the full one-hot is unidentified
-    # in the MLE (the flow absorbs this into the cutpoints; shifts only matter
-    # up to a constant, so coefficient *differences* are the comparable thing)
     return X.drop(columns=["mRS_pre_0"])
 
 
-def main(name: str = "all_ls"):
-    train_df, _, _ = split(load_magic())
-    res = OrderedModel(train_df["mRS_3m"].astype(int), design(train_df),
+def all_ls_spec() -> dict:
+    return {
+        "Age": ContinuousNode(transform="bernstein"),
+        "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ls"}),
+        "NIHSSa": ContinuousNode(transform="bernstein",
+                                 parents={"Age": "ls", "mRS_pre": "ls"}),
+        "T": OrdinalNode(levels=2, parents={"Age": "ls", "mRS_pre": "ls", "NIHSSa": "ls"}),
+        "mRS_3m": OrdinalNode(levels=7, parents={"Age": "ls", "mRS_pre": "ls",
+                                                 "NIHSSa": "ls", "T": "ls"}),
+    }
+
+
+def main(source: str = "magic-mrclean/ls"):
+    obs, rct, truth = load_data(source)
+    print(f"=== spot-on all-ls comparison on '{source}' (N={len(obs)}) ===")
+
+    # --- classical MLE (statsmodels), full data ---
+    res = OrderedModel(obs["mRS_3m"].astype(int), design(obs),
                        distr="logit").fit(method="bfgs", disp=False)
-    print("=== statsmodels OrderedModel (same 80% train split) ===")
-    print(res.params[["Age", "NIHSSa", "T"]].round(4).to_string())
 
-    # analytic ATE on RCT covariates: P(good | do(T=t)) = P(mRS_3m <= 2 | X, T=t)
-    rct = load_rct()
-    p0 = res.model.predict(res.params, exog=design(rct.assign(T=0)).values, which="prob")
-    p1 = res.model.predict(res.params, exog=design(rct.assign(T=1)).values, which="prob")
-    ate_mle = (p1[:, :3].sum(axis=1) - p0[:, :3].sum(axis=1)).mean()
-    print(f"\nMLE ATE on RCT covariates: {ate_mle:+.4f}   (repo reference ~ +0.055)")
+    # --- flow: full data, no early stopping, train to convergence ---
+    torch.manual_seed(0)
+    flow = CausalFlowDAG(all_ls_spec())
+    for ep, lr in PHASES:
+        flow.fit(obs, epochs=ep, learning_rate=lr, batch_size=256, verbose=0,
+                 seed=0 if lr == 1e-2 else None, restore_best=False)
 
-    # --- compare with the fitted all-ls flow, if available ---
-    ckpt = RESULTS_ROOT / name / "flow.pt"
-    if not ckpt.exists():
-        print(f"\n(no {ckpt} yet - run the experiment first for the comparison)")
-        return
-    print(f"\n(flow checkpoint: {ckpt})")
-    flow = CausalFlowDAG.load(ckpt)
     node = flow.nodes["mRS_3m"]
     w_age = float(node.shifts["Age"].weight.detach())
     w_nih = float(node.shifts["NIHSSa"].weight.detach())
-    # ordinal parents: shift = w @ onehot; only differences to level 0 identified
     w_pre = node.shifts["mRS_pre"].weight.detach().numpy().ravel()
     w_t = node.shifts["T"].weight.detach().numpy().ravel()
 
-    print("\n=== all-ls flow (outcome node mRS_3m) vs MLE ===")
     rows = [("Age", w_age, res.params["Age"]),
             ("NIHSSa", w_nih, res.params["NIHSSa"]),
             ("T (=1 vs 0)", w_t[1] - w_t[0], res.params["T"])]
     for k in range(1, 6):
-        rows.append((f"mRS_pre_{k} (vs 0)", w_pre[k] - w_pre[0],
-                     res.params[f"mRS_pre_{k}"]))
-    print(f"{'coefficient':<20}{'flow':>10}{'MLE':>10}{'diff':>10}")
-    for name, a, b in rows:
-        print(f"{name:<20}{a:>10.4f}{b:>10.4f}{a - b:>10.4f}")
+        rows.append((f"mRS_pre_{k} (vs 0)", w_pre[k] - w_pre[0], res.params[f"mRS_pre_{k}"]))
 
+    print(f"\n{'coefficient':<20}{'flow':>10}{'statsmodels':>13}{'|diff|':>9}")
+    maxdiff = 0.0
+    for name, a, b in rows:
+        maxdiff = max(maxdiff, abs(a - b))
+        print(f"{name:<20}{a:>10.4f}{b:>13.4f}{abs(a - b):>9.4f}")
+    print(f"{'max |diff|':<20}{'':>10}{'':>13}{maxdiff:>9.4f}")
+
+    # --- optional R polr reference (committed ref_ls/) ---
+    rref = DATA_R_REF(source)
+    if rref is not None and (rref / "coefficients.csv").exists():
+        ry = pd.read_csv(rref / "coefficients.csv")
+        ry = ry[ry["node"] == "mRS_3m"].set_index("term")["estimate"]
+        print(f"\nR polr reference (mRS_3m): Age={ry['Age']:+.4f}  "
+              f"NIHSSa={ry['NIHSSa']:+.4f}  T={ry['T']:+.4f}")
+
+    # --- ATE on the RCT covariates ---
+    p0 = res.model.predict(res.params, exog=design(rct.assign(T=0)).values, which="prob")
+    p1 = res.model.predict(res.params, exog=design(rct.assign(T=1)).values, which="prob")
+    ate_mle = float((p1[:, :3].sum(axis=1) - p0[:, :3].sum(axis=1)).mean())
     pf0 = flow.pmf(rct, node="mRS_3m", do={"T": 0})
     pf1 = flow.pmf(rct, node="mRS_3m", do={"T": 1})
-    ate_flow = (pf1[:, :3].sum(axis=1) - pf0[:, :3].sum(axis=1)).mean()
-    print(f"\nATE on RCT covariates:  flow {ate_flow:+.4f}   MLE {ate_mle:+.4f}")
-    print(f"max per-patient |P(good|do(T=1)) diff|: "
-          f"{np.abs(pf1[:, :3].sum(axis=1) - p1[:, :3].sum(axis=1)).max():.4f}")
+    ate_flow = float((pf1[:, :3].sum(axis=1) - pf0[:, :3].sum(axis=1)).mean())
+    print(f"\nATE on RCT covariates:  flow {ate_flow:+.4f}   statsmodels {ate_mle:+.4f}"
+          f"   |diff| {abs(ate_flow - ate_mle):.4f}")
+    if truth is not None:
+        print(f"  (known true ATE for this DGP: {truth['true_ate']:+.4f})")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "all_ls")
+    main(sys.argv[1] if len(sys.argv) > 1 else "magic-mrclean/ls")

@@ -75,10 +75,9 @@ level-exactly (ordinal).
 
 ## Reproducing the experiments
 
-The folder is its own uv project (the parent repo's environment is untouched):
+From the project root (the `zuko_dag/` folder when inside the paper monorepo):
 
 ```bash
-cd zuko_dag
 uv sync                                       # installs zuko, torch, ...
 uv run pytest tests/ -q                       # unit + simulation tests
 

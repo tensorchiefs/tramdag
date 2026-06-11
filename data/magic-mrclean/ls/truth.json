@@ -1,0 +1,12 @@
+{
+  "variant": "ls",
+  "seed": 7,
+  "n_obs": 1275,
+  "n_rct": 500,
+  "p_good_do_T0": 0.557332,
+  "p_good_do_T1": 0.689458,
+  "ate_population": "rct",
+  "true_ate": 0.13212599999999997,
+  "naive_obs_diff": 0.254998719108005,
+  "mc_n": 500000
+}

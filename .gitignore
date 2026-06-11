@@ -1,0 +1,14 @@
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Experiment outputs — regenerable, and (for the clinical 'magic' source) derived
+# from patient data, so never committed. The synthetic data/ folder IS tracked.
+results/
+
+# R
+.Rhistory
+.RData

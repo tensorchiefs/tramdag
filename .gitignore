@@ -12,3 +12,7 @@ results/
 # R
 .Rhistory
 .RData
+
+# Notebooks: jupytext py:percent files are the source of truth;
+# generated .ipynb (with embedded image outputs) stay out of git.
+notebooks/*.ipynb

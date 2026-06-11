@@ -130,6 +130,36 @@ committed `ref_ls/` outputs let `tests/test_simulations.py` assert the Python fl
 R fit (outcome-node coefficients and ATE) — a language-independent equivalence check,
 with no clinical data involved.
 
+### The TRAM-DAG paper DGPs
+
+All simulation studies of the paper (Sick & Dürr, *Interpretable Neural Causal Models
+with TRAM-DAGs*, CLeaR 2025, [arXiv:2503.16206](https://arxiv.org/abs/2503.16206)) are
+implemented as registry families — numpy-only SCMs with known (often analytic) ground
+truth, frozen n=5000 CSVs under `data/<name>/`, and replication experiment scripts:
+
+| family | paper | DGP | demonstrates |
+|---|---|---|---|
+| `triangle` (`linear`,`atan`,`sin`) | §6.1, C.3 | logistic-latent TRAM: `h₂=5x₂+2x₁`, `h₃=0.63x₃−0.2x₁−f(x₂)`, GMM source | LS coefficient recovery (β=2, −0.2, +0.3), CS curve ≡ −f(x₂), non-monotone f |
+| `triangle-mixed` (`linear`,`exp`) | §6.2, C.4 | same skeleton, x₃ ordinal (4 levels, θ=(−2, 0.42, 1.02)) | mixed-data L1/L2 + the odds-ratio intervention check (OR ≈ 7.4) |
+| `vaca` | §5.1–5.2, C.1 | bimodal Gaussian triangle (Sánchez-Martín 2022) | L1 (bimodal marginal the default CNF misses) + L2 `p(x₃ \| do(x₂))` |
+| `carefl` | §5.3, C.2 | 4-var Laplace SCM (Khemakhem 2021) | L3: counterfactual curves vs **analytic** truth |
+
+```bash
+cd experiments
+uv run python paper_triangle.py atan cs        # Fig. 7/15/16: CS recovery
+uv run python paper_triangle.py linear ls      # Fig. 14: coefficient trajectories
+uv run python paper_triangle_mixed.py linear ls # Fig. 9/19 + C.4 OR check
+uv run python paper_vaca.py                    # Fig. 4/5: L1 + L2 benchmark
+uv run python paper_carefl.py                  # Fig. 6: counterfactual curves
+```
+
+Sign conventions: continuous nodes match the paper directly (`z = h(x) + shift`); for
+ordinal nodes the flow *subtracts* the shift while the paper *adds* it, so fitted
+ordinal weights are the paper's with flipped sign (recorded per family in
+`truth.json` as `zuko` expectations). `tests/test_paper_dgps.py` pins the generators
+(TRAM identities by KS test, frozen-CSV contract, analytic counterfactuals) and the
+flow's recovery of each family's ground truth.
+
 ## Results
 
 ATE = mean over RCT covariates of `P(mRS_3m ≤ 2 | do(T=1)) − P(mRS_3m ≤ 2 | do(T=0))`,
@@ -192,21 +222,27 @@ zuko_dag/
 │   ├── conditioners.py            # ls / cs / ci modules (tramdag widths)
 │   ├── flow.py                    # CausalFlowDAG: fit, sample(do=,u=), abduct, pmf
 │   └── simulations/               # synthetic-cohort generators (known ground truth)
-│       └── magic_mrclean.py       #   the stroke SCM, ls/nl variants + CLI
-├── data/magic-mrclean/            # frozen synthetic CSVs (public), R reference + outputs
-│   ├── README.md  fit_ls.R
-│   ├── ls/{obs,rct}.csv truth.json ref_ls/
-│   └── nl/{obs,rct}.csv truth.json ref_ls/
+│       ├── magic_mrclean.py       #   the stroke SCM, ls/nl variants + CLI
+│       ├── triangle.py            #   paper §6 triangles (continuous + ordinal) + CLI
+│       ├── vaca.py  carefl.py     #   paper §5 benchmarks (L1/L2 + L3) + CLIs
+│       └── __init__.py            #   REGISTRY = {name: generator}
+├── data/                          # frozen synthetic CSVs — a contract, see tests
+│   ├── magic-mrclean/             #   stroke cohort + R reference (README, fit_ls.R)
+│   ├── triangle/{linear,atan,sin}/        obs.csv truth.json
+│   ├── triangle-mixed/{linear,exp}/       obs.csv truth.json
+│   └── {vaca,carefl}/                     obs.csv truth.json
 ├── experiments/
 │   ├── common.py                  # load_data(source), split, specs, plots, RCT eval
 │   ├── sim_flow.py                # storyline: all-ls vs flexible vs known truth
 │   ├── all_ls_flow.py             # all-ls experiment   (takes a data source arg)
 │   ├── nihss6_flow.py             # flexible nihss6 config
 │   ├── validate_ls.py             # flow vs statsmodels OrderedModel
-│   └── counterfactual_demo.py     # abduction → counterfactual showcase
+│   ├── counterfactual_demo.py     # abduction → counterfactual showcase
+│   └── paper_*.py                 # TRAM-DAG paper figure replications (+ paper_common)
 ├── tests/
 │   ├── test_flow.py               # core unit tests
-│   └── test_simulations.py        # generator + known-truth recovery + R-reference regression
+│   ├── test_simulations.py        # generator + known-truth recovery + R-reference regression
+│   └── test_paper_dgps.py         # paper DGPs: generator pinning + flow recovery
 └── results/<experiment>/          # plots, CSVs, checkpoints, run logs  (git-ignored)
 ```
 

@@ -1,0 +1,32 @@
+{
+  "source": "arXiv:2503.16206 Sec. 6 (Sick & Duerr, CLeaR 2025)",
+  "family": "mixed",
+  "f": "linear",
+  "f_formula": "-0.3*x",
+  "seed": 42,
+  "n_obs": 5000,
+  "paper": {
+    "beta13": 0.2,
+    "theta": [
+      -2.0,
+      0.42,
+      1.02
+    ],
+    "h3": "theta_k + 0.2*x1 + (-0.3*x)",
+    "levels": 4,
+    "level_offset": "paper counts 1..4, stored 0..3",
+    "zuko_sign": -1,
+    "beta23": -0.3
+  },
+  "zuko": {
+    "w_x2_from_x1": 2.0,
+    "w_x3_from_x1": -0.2,
+    "theta": [
+      -2.0,
+      0.42,
+      1.02
+    ],
+    "cs_curve": "-f(x2) + const",
+    "w_x3_from_x2": 0.3
+  }
+}

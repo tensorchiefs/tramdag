@@ -17,10 +17,11 @@ that **clinical data is NOT in this repo** and never should be. The synthetic
 
 ```bash
 uv sync                          # install (uv.lock pinned: zuko, torch, statsmodels, ...)
-uv run pytest tests/ -q          # full suite ~7 min; tests/test_flow.py alone ~20 s
+uv run pytest tests/ -q          # full suite ~11 min; tests/test_flow.py alone ~20 s
 cd experiments
 uv run python sim_flow.py nl     # headline storyline (all-ls vs flexible vs known truth)
 uv run python validate_ls.py     # spot-on flow == statsmodels == R polr check
+uv run python paper_triangle.py atan cs   # TRAM-DAG paper replications (paper_*.py)
 ```
 
 Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` source
@@ -39,8 +40,12 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
 - `conditioners.py` — ls/cs/ci networks (widths replicate the original tramdag pkg).
 - `flow.py` — `CausalFlowDAG`: `fit`, `sample(n, do=, u=)`, `abduct`, `pmf`,
   `log_prob`, `save/load`. NLL decomposes per node → one Adam fits all nodes jointly.
-- `simulations/magic_mrclean.py` — the synthetic stroke SCM (numpy-only, independent
-  of the flow); `ls`/`nl` variants; CLI regenerates `data/magic-mrclean/`.
+- `simulations/` — numpy-only SCM generators with known ground truth, looked up via
+  `REGISTRY`; each module has a CLI that regenerates its frozen `data/<name>/` CSVs:
+  `magic_mrclean.py` (stroke SCM, `ls`/`nl`), `triangle.py` (paper §6 continuous +
+  ordinal triangles, f variants linear/cubic/exp/atan/sin), `vaca.py` (App. C.1
+  bimodal L1/L2 benchmark), `carefl.py` (App. C.2 Laplace SCM, **analytic**
+  counterfactuals).
 
 ## Conventions that matter (easy to get wrong)
 
@@ -75,19 +80,33 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
   `ref_ls/` outputs let tests run without R.
 - Original clinical-data numbers (context only, not reproducible here): TRAM-DAG
   nihss6 +0.108, md_dag_ls +0.054, MR CLEAN RCT +0.135 [0.057, 0.213].
+- **Paper DGPs** (seed 42, arXiv:2503.16206): `triangle` true coefficients β12=+2,
+  β13=−0.2 (+0.3 on x2 for `linear`); a fitted `cs` learns −f(x2)+const.
+  `triangle-mixed` cutpoints θ=(−2, 0.42, 1.02); **ordinal sign flip**: the paper
+  ADDS the ordinal shift, the flow SUBTRACTS → fitted weights −0.2 / +0.3; the C.4
+  odds-ratio check gives OR ≈ e² ≈ 7.4. `vaca`: E[x3|do(x2=a)] = −0.25 + 0.25a
+  (do(x2=−3) is off-manifold extrapolation — looser tolerance). `carefl`:
+  counterfactuals are analytic (`Carefl4.true_counterfactual`); the paper's x_obs has
+  a ~4σ abducted noise, so tests score 300 typical rows instead of that single point.
 
 ## Testing policy
 
-- Frozen CSVs in `data/magic-mrclean/` are a contract — **never regenerate silently**;
-  a new seed/equations → new folder (sim2-style), regenerate `ref_ls/` with R, update
-  truth-dependent tests.
+- Frozen CSVs in `data/` (`magic-mrclean`, `triangle*`, `vaca`, `carefl`) are a
+  contract — **never regenerate silently**; a new seed/equations → new folder
+  (sim2-style), regenerate `ref_ls/` with R where applicable, update
+  truth-dependent tests. `test_paper_dgps.py::test_frozen_csv_contract` pins the
+  paper-DGP CSVs to their generators bit-exactly.
+- Fit tests for the paper DGPs train on **regenerated n=20k** (deterministic
+  `observational(n, seed_offset=100)`), not the frozen n=5k — β13 multiplies the
+  low-variance x1 ∈ [0.25, 0.73] and is too weakly identified at n=5k.
 - New causal features should be validated against the simulator's known truth
   (`MagicMrClean.true_ate`, `counterfactual_pair` gives true individual
   counterfactuals via shared latents).
 
 ## Roadmap notes
 
-- Generalize `simulations/` registry beyond the stroke DAG (different shapes, hidden
-  confounding à la DeCaFlow).
+- ~~Generalize `simulations/` registry beyond the stroke DAG~~ — done for the
+  TRAM-DAG paper's DGPs (triangle/triangle-mixed/vaca/carefl, June 2026). Still
+  open: hidden confounding à la DeCaFlow.
 - Package for PyPI when API stabilizes (the `CausalFlowDAG`/`ContinuousNode`/
   `OrdinalNode` surface).

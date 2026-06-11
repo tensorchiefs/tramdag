@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Added
+
+- **The TRAM-DAG paper's DGPs** (Sick & Dürr, CLeaR 2025, arXiv:2503.16206) as
+  simulation registry families, each a numpy-only SCM with known/analytic ground
+  truth + frozen n=5000 CSVs (`data/<name>/`, the test contract) and CLIs:
+  - `simulations/triangle.py` — `TriangleContinuous` (§6.1: logistic-latent TRAM
+    DGP, h₂=5x₂+2x₁, h₃=0.63x₃−0.2x₁−f(x₂)) and `TriangleMixed` (§6.2: ordinal x₃,
+    θ=(−2, 0.42, 1.02)); f variants `linear`/`cubic`/`exp`/`atan`/`sin`; supports
+    array-valued `do` (C.4 soft interventions).
+  - `simulations/vaca.py` — `VacaTriangle` (App. C.1 bimodal Gaussian L1/L2
+    benchmark vs CNF).
+  - `simulations/carefl.py` — `Carefl4` (App. C.2 Laplace SCM; **analytic**
+    counterfactuals via `abduct_noise`/`true_counterfactual`).
+- `experiments/paper_{triangle,triangle_mixed,vaca,carefl}.py` (+ `paper_common.py`)
+  — replicate the paper's figures: coefficient trajectories (Fig. 14/15/19), CS-curve
+  recovery (Fig. 7), L1/L2 distribution overlays (Fig. 4/5/9/16/20), counterfactual
+  curves at the paper's x_obs (Fig. 6), and the C.4 odds-ratio check (OR ≈ 7.4).
+- `tests/test_paper_dgps.py` — generator pinning (KS TRAM-identities, frozen-CSV
+  contract, analytic ground truth) + flow recovery (coefficients with the ordinal
+  sign-flip, CS curve, VACA do-moments, CAREFL counterfactual MAE).
+
 ### Changed (behavior)
 
 - **`CausalFlowDAG.fit(..., restore_best=False)` is now the default.** Training keeps

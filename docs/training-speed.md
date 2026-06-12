@@ -5,6 +5,65 @@ LBFGS — June 2026, Apple-silicon Mac mini, torch 2.12 (CPU unless noted).
 Reproduce with `cd experiments && uv run python bench_training.py`
 (grid ≈ 35 min; raw numbers in `results/bench-training/results.csv`).
 
+## The options, and how to use them
+
+**Schedules** (`fit(..., schedule=...)`) control the learning rate over training:
+
+| value | behavior |
+|---|---|
+| `None` (default) | constant lr — the classic behavior, exactly as before this PR |
+| `"plateau"` | **per-node**: a node whose own validation NLL hasn't improved by `min_delta` (default 1e-4) for `plateau_patience` epochs (default 15) gets its lr × 0.3, floored at 1e-3 × the initial lr. Each node decays independently — valid because the per-node losses have independent gradients. |
+| `"onecycle"` | warmup to `learning_rate`, then anneal to ~0 over exactly the `epochs` budget (torch `OneCycleLR`) — use only when you know the right budget |
+| `"cosine"` | cosine decay from `learning_rate` over `epochs` |
+
+**Early stopping / freezing** (`fit(..., freeze_patience=N)`): a node whose
+validation NLL hasn't improved for `N` epochs is *frozen* — removed from the loss
+and backward pass (real compute saving), its weights fixed from then on. When all
+nodes are frozen the fit returns early; freeze epochs are recorded in
+`flow.history["frozen"]`. Under `schedule="plateau"`, freezing additionally waits
+until the node's lr has been decayed ≥ 100×, so nodes don't freeze while a smaller
+step size would still make progress. Freezing state is per-`fit()`-call: a second
+`fit` call trains all nodes again.
+
+**Switching it all off** — e.g. for an exact comparison with classical methods
+(`statsmodels`, R `polr`/`tram`): simply omit both arguments. The defaults are
+unchanged by this PR, so
+
+```python
+flow.fit(train_df, epochs=4000, learning_rate=1e-2)   # constant lr, no freezing
+flow.fit(train_df, epochs=2000, learning_rate=1e-3)   # classic two-phase recipe
+```
+
+is still the exact-MLE path used by `experiments/validate_ls.py`. (Independent of
+all this, `restore_best=False` remains the default — see CHANGELOG.) The guard test
+`tests/test_fit_schedules.py::test_plateau_freeze_preserves_exact_mle` additionally
+shows that even *with* plateau+freezing the all-`ls` fit lands on the classical MLE
+within the usual tolerances.
+
+**LBFGS** is *not* a `fit()` option — it's a classical full-batch optimizer that
+only makes sense for small, parametric (all-`ls`) models. Recipe (also in
+`experiments/bench_training.py::run_lbfgs`):
+
+```python
+flow = CausalFlowDAG(build_spec("ls"))
+flow._set_ranges(train_df)                  # transform ranges from train quantiles
+vals = flow._tensorize(train_df)
+opt = torch.optim.LBFGS(flow.parameters(), lr=1.0, max_iter=40,
+                        history_size=30, line_search_fn="strong_wolfe")
+
+def closure():
+    opt.zero_grad()
+    loss = torch.stack([-lp.mean() for lp in flow.node_log_prob(vals).values()]).sum()
+    loss.backward()
+    return loss
+
+for _ in range(10):
+    loss = opt.step(closure)                # full-batch quasi-Newton steps
+```
+
+Fast (< 2 s to coefficient-level accuracy) but not robust across seeds (see
+Findings #2) — use it as a quick first shot with the plateau trainer as fallback.
+
 ## Method: time-to-target, not loss-go-down
 
 Each config runs once; `fit()` records per-epoch validation NLL *and* wall-clock

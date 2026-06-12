@@ -95,7 +95,7 @@ class CausalFlowDAG(nn.Module):
 
     # ------------------------------------------------------------------ data
     def _encode_parent(self, name: str, values: Tensor) -> Tensor:
-        """Encode a node's values for use as a parent feature (tramdag convention:
+        """Encode a node's values for use as a parent feature (original TRAM-DAG convention:
         continuous raw (n, 1); ordinal one-hot (n, levels))."""
         node = self.spec[name]
         if isinstance(node, OrdinalNode):
@@ -149,7 +149,7 @@ class CausalFlowDAG(nn.Module):
 
     # ------------------------------------------------------------------- fit
     def _set_ranges(self, train_df: pd.DataFrame) -> None:
-        """Train 5%/95% quantiles -> transform domain (tramdag's min_max scaling)."""
+        """Train 5%/95% quantiles -> transform domain (the original implementation's min_max scaling)."""
         for name in self.order:
             node = self.nodes[name]
             if node.kind == "continuous" and not node.ut._fitted:
@@ -178,7 +178,7 @@ class CausalFlowDAG(nn.Module):
                 If omitted, the training set is used for the validation metric.
             restore_best: if True, snapshot each node's best-validation weights
                 during training and restore them at the end (mild early-stopping
-                regularization, the old tramdag convention). This makes the fit
+                regularization, the original implementation's convention). This makes the fit
                 *not* the training-data MLE, so leave it False for an exact
                 classical comparison. Default False.
             schedule: learning-rate schedule. ``None`` = constant (the classic

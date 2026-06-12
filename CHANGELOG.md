@@ -62,7 +62,7 @@
 
 ### Added
 
-- `src/zuko_dag/simulations/magic_mrclean.py` — synthetic stroke cohort (SCM with
+- `src/tramdag/simulations/magic_mrclean.py` — synthetic stroke cohort (SCM with
   known ground truth); `ls`/`nl` variants; CLI to (re)generate frozen CSVs.
 - `data/magic-mrclean/` — frozen public CSVs + `fit_ls.R` classical R reference and
   committed `ref_ls/` outputs. The public, reproducible substitute for the private

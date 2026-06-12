@@ -1,4 +1,4 @@
-# CLAUDE.md — working context for tram-dag-zuko
+# CLAUDE.md — working context for tramdag
 
 ## What this is
 
@@ -8,8 +8,8 @@ standard-logistic latents to the observed variables; Jacobian sparsity = the DAG
 Supports the do-operator, Pearl abduction (counterfactuals), analytic interventional
 PMFs, and per-node configurable monotone transforms (Bernstein / RQ-spline / affine).
 
-Origin: extracted from the private `tensorchiefs/tram-dag-stroke` paper repo (folder
-`zuko_dag/`). The paper analyzed the MAGIC stroke cohort against the MR CLEAN RCT;
+Origin: extracted from the private `tensorchiefs/tram-dag-stroke` paper repo (as
+`zuko_dag`; renamed to `tramdag` in June 2026, repo `tensorchiefs/tramdag`). The paper analyzed the MAGIC stroke cohort against the MR CLEAN RCT;
 that **clinical data is NOT in this repo** and never should be. The synthetic
 `data/magic-mrclean/` cohort is the public stand-in (same schema, known ground truth).
 
@@ -27,7 +27,7 @@ uv run python paper_triangle.py atan cs   # TRAM-DAG paper replications (paper_*
 Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` source
 (private clinical data) only works inside the original paper monorepo.
 
-## Architecture (src/zuko_dag/)
+## Architecture (src/tramdag/)
 
 - `spec.py` — user-facing DAG spec: `{name: ContinuousNode|OrdinalNode}`, each node
   declares `parents={parent: term}` with term ∈ `ls` (linear shift), `cs` (complex
@@ -37,7 +37,7 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
   `AffineUT`; pre-scaled from train 5%/95% quantiles to [-5,5], expanding-bracket
   bisection inverse) + the ordinal ordered-logit transform
   (`P(Y<=k) = sigmoid(theta_k - shift)`, cutpoints `[t0, t0+cumsum(exp(...))]`).
-- `conditioners.py` — ls/cs/ci networks (widths replicate the original tramdag pkg).
+- `conditioners.py` — ls/cs/ci networks (widths replicate the original Keras/TF implementation).
 - `flow.py` — `CausalFlowDAG`: `fit`, `sample(n, do=, u=)`, `abduct`, `pmf`,
   `log_prob`, `save/load`. NLL decomposes per node → one Adam fits all nodes jointly.
 - `simulations/` — numpy-only SCM generators with known ground truth, looked up via
@@ -50,7 +50,7 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
 ## Conventions that matter (easy to get wrong)
 
 - **Latent scale**: continuous `z = h(x) + shift` (shifts ADDED); ordinal
-  `P(Y<=k) = sigmoid(theta_k − shift)` (shift SUBTRACTED). Both are the tramdag
+  `P(Y<=k) = sigmoid(theta_k − shift)` (shift SUBTRACTED). Both follow the original TRAM-DAG
   conventions; tests pin them.
 - **Parent encoding**: continuous parents enter RAW (no standardization); ordinal
   parents one-hot (all levels). With cutpoints, only shift *differences* between

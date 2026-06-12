@@ -39,7 +39,7 @@ import pandas as pd  # noqa: E402
 import torch  # noqa: E402
 
 from common import build_spec  # noqa: E402  (stroke all-ls spec)
-from zuko_dag import CausalFlowDAG, ContinuousNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "results" / "bench-training"

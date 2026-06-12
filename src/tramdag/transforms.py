@@ -5,13 +5,14 @@ the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.
 
-Conventions follow TRAM-DAG (tramdag package):
+Conventions follow the original TRAM-DAG implementation
+(Keras/TF, https://github.com/tensorchiefs/tram-dag):
 
 - continuous: ``z = h(x) + s(parents)`` with ``h`` Bernstein / RQ-spline / affine,
   fitted on the value range scaled from the train 5%/95% quantiles to ``[-B, B]``
   and linearly extrapolated outside.
 - ordinal:    ``P(x <= k) = sigmoid(theta_k - s(parents))`` with increasing
-  cutpoints ``theta`` (tramdag's ``transform_intercepts_ordinal`` parametrization).
+  cutpoints ``theta`` (the original implementation's ``transform_intercepts_ordinal`` parametrization).
 """
 
 from __future__ import annotations
@@ -193,13 +194,13 @@ def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
 
 
 # ---------------------------------------------------------------------------
-# Ordinal ("ordered logit") transform — exact port of tramdag's parametrization
+# Ordinal ("ordered logit") transform — exact port of the original parametrization
 # ---------------------------------------------------------------------------
 
 def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
     """(n, K-1) unconstrained -> (n, K+1) increasing cutpoints with ±inf ends.
 
-    Port of ``tramdag.utils.ordinal.transform_intercepts_ordinal``:
+    Port of the original implementation's ``transform_intercepts_ordinal``:
     ``[-inf, t0, t0 + cumsum(exp(t1:)), +inf]``.
     """
     n = theta_tilde.shape[0]

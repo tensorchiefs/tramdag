@@ -17,9 +17,9 @@ import numpy as np
 import pandas as pd
 
 from paper_common import fit_chunked, results_dir, save_json
-from zuko_dag import ContinuousNode
-from zuko_dag.simulations import Carefl4
-from zuko_dag.simulations.carefl import ALPHA_GRID, X_OBS
+from tramdag import ContinuousNode
+from tramdag.simulations import Carefl4
+from tramdag.simulations.carefl import ALPHA_GRID, X_OBS
 
 N = 20_000
 gen = Carefl4(seed=42)

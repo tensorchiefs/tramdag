@@ -1,13 +1,13 @@
-"""Unit tests for the zuko_dag causal flow."""
+"""Unit tests for the tramdag causal flow."""
 
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
-from zuko_dag.spec import validate_and_sort
-from zuko_dag.transforms import (BernsteinUT, SplineUT, AffineUT,
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag.spec import validate_and_sort
+from tramdag.transforms import (BernsteinUT, SplineUT, AffineUT,
                                  ordinal_cutpoints, ordinal_log_prob, ordinal_pmf)
 
 torch.manual_seed(0)

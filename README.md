@@ -1,6 +1,6 @@
-# zuko_dag — a causal normalizing flow re-implementation of the TRAM-DAG stroke experiments
+# tramdag — a causal normalizing flow re-implementation of the TRAM-DAG stroke experiments
 
-[![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tram-dag-zuko/blob/main/notebooks/demo_tram_dag_colab.ipynb)
+[![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 **5-minute demo** (`notebooks/demo_tram_dag_colab.py`): fit the paper's bimodal
 VACA benchmark live (GPU-ready), then walk all three rungs of Pearl's ladder —
 each answer checked against analytic ground truth.
@@ -18,7 +18,7 @@ numbers are directly comparable) but packaged as one `torch.nn.Module` flow with
 - **configurable one-dimensional transforms** per continuous node
   (`bernstein` — TRAM-faithful, `spline` — rational-quadratic, `affine`).
 
-Everything lives in this folder; nothing outside `zuko_dag/` is touched.
+Everything lives in this folder; nothing outside `tramdag/` is touched.
 
 ## Model
 
@@ -43,7 +43,7 @@ Per-node best-validation weights are tracked across `fit` calls and restored at 
 ## API
 
 ```python
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
 
 spec = {                                            # the nihss6 DAG, transcribed
     "Age":     ContinuousNode(transform="bernstein"),
@@ -86,7 +86,7 @@ level-exactly (ordinal).
 
 ## Reproducing the experiments
 
-From the project root (the `zuko_dag/` folder when inside the paper monorepo):
+From the project root (the `tramdag/` folder when inside the paper monorepo):
 
 ```bash
 uv sync                                       # installs zuko, torch, ...
@@ -223,9 +223,9 @@ predicts each patient's outcome under the opposite treatment
 ## Layout
 
 ```
-zuko_dag/
+tramdag/
 ├── pyproject.toml                 # own uv project (zuko, torch, statsmodels, ...)
-├── src/zuko_dag/
+├── src/tramdag/
 │   ├── spec.py                    # ContinuousNode / OrdinalNode, DAG validation
 │   ├── transforms.py              # Bernstein / RQS / affine wrappers, ordinal
 │   │                              #   (ordered-logit) transform + truncated-logistic

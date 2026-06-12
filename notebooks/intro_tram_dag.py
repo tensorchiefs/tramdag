@@ -12,7 +12,7 @@
 # ---
 
 # %% [markdown]
-# # TRAM-DAG — a didactic introduction with `zuko_dag`
+# # TRAM-DAG — a didactic introduction with `tramdag`
 #
 # *TRAM-DAGs* ([paper](https://arxiv.org/abs/2503.16206),
 # [original R/Keras code](https://github.com/tensorchiefs/tram-dag)) are causal models
@@ -21,7 +21,7 @@
 # models*, so once trained a single model answers all three rungs of Pearl's causal
 # hierarchy:
 #
-# | rung | query | `zuko_dag` call |
+# | rung | query | `tramdag` call |
 # |---|---|---|
 # | L1 association | $p(x)$, sampling | `flow.log_prob(df)`, `flow.sample(n)` |
 # | L2 intervention | $p(x \mid do(x_j{=}a))$ | `flow.sample(n, do={...})`, `flow.pmf(df, node, do={...})` |
@@ -99,11 +99,11 @@
 # $$
 #
 # The structure can be represented by an adjacency matrix whose entries are not 1s
-# but the **term labels**. In `zuko_dag` this labelled adjacency matrix is written
+# but the **term labels**. In `tramdag` this labelled adjacency matrix is written
 # as a dict — each node lists `parents={parent: term}` with term ∈
 # `{"ls", "cs", "ci"}`:
 #
-# | paper component | `zuko_dag` |
+# | paper component | `tramdag` |
 # |---|---|
 # | SI — baseline $f_\theta(x_i)$, constant $\theta$ | automatic: every node owns a monotone transform (`bernstein` / `spline` / `affine`); without `ci` parents its $\theta$ is a free parameter vector |
 # | CI — $\theta$ depends on parents | edge term `"ci"` (several `ci` parents feed **one joint** network → interactions) |
@@ -118,7 +118,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
 
 plt.rcParams["figure.dpi"] = 110
 
@@ -282,7 +282,7 @@ b21_hat = float(flow.nodes["X2"].shifts["X1"].weight.detach())
 b31_hat = float(flow.nodes["X3"].shifts["X1"].weight.detach())
 bY_hat = float(flow.nodes["Y"].shifts["X3"].weight.detach())
 
-from zuko_dag.transforms import ordinal_cutpoints  # noqa: E402
+from tramdag.transforms import ordinal_cutpoints  # noqa: E402
 
 with torch.no_grad():
     theta_hat = ordinal_cutpoints(flow.nodes["Y"].intercept(1))[0, 1:-1].numpy()

@@ -1,4 +1,4 @@
-"""Shared helpers for the zuko_dag stroke experiments.
+"""Shared helpers for the tramdag stroke experiments.
 
 Data conventions match the TRAM-DAG runs in the parent repository:
 MAGIC cohort filtered to NIHSSa >= 6 (N=1275), IAT -> T, 80/10/10 split with
@@ -25,7 +25,7 @@ from statsmodels.stats.proportion import proportion_confint
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RESULTS_ROOT = Path(__file__).resolve().parents[1] / "results"
@@ -63,7 +63,7 @@ def load_data(source: str = DEFAULT_SOURCE):
     """Return ``(obs_df, rct_df, truth)`` for a data source.
 
     ``source`` is either ``"magic"`` (the private clinical cohort) or a synthetic
-    folder ``"magic-mrclean/<variant>"`` under ``zuko_dag/data/``. ``truth`` is the
+    folder ``"magic-mrclean/<variant>"`` under ``tramdag/data/``. ``truth`` is the
     parsed ``truth.json`` for a synthetic source (with the known true ATE), or
     ``None`` for the clinical data.
     """
@@ -228,7 +228,7 @@ def evaluate_rct(flow: CausalFlowDAG, results_dir: Path, save,
     """Per-patient interventional PMFs on the RCT covariates -> ATE/ITE,
     calibration and RCT-vs-predicted distribution plots.
 
-    Mirrors the analytic evaluation in the tramdag scripts
+    Mirrors the analytic evaluation in the original implementation's scripts
     (predict_ordinal_pmf in stroke_fully_connected.py / nihss6.py). ``truth``,
     if given (synthetic data), supplies the known true ATE for comparison.
     """

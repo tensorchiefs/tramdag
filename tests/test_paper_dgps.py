@@ -16,11 +16,11 @@ import pytest
 import torch
 from scipy import stats
 
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
-from zuko_dag.simulations import (REGISTRY, Carefl4, TriangleContinuous,
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag.simulations import (REGISTRY, Carefl4, TriangleContinuous,
                                   TriangleMixed, VacaTriangle)
-from zuko_dag.simulations.carefl import X_OBS
-from zuko_dag.simulations.triangle import F_VARIANTS, THETA_MIXED
+from tramdag.simulations.carefl import X_OBS
+from tramdag.simulations.triangle import F_VARIANTS, THETA_MIXED
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
@@ -179,7 +179,7 @@ def test_triangle_atan_cs_recovers_coefficients_and_curve():
 def test_triangle_mixed_linear_ls_recovers_with_sign_flip():
     """Paper Sec. 6.2 / Fig. 19, in flow convention (ordinal shift subtracted):
     fitted weights -> -0.2 (x1) and +0.3 (x2); cutpoints -> (-2, 0.42, 1.02)."""
-    from zuko_dag.transforms import ordinal_cutpoints
+    from tramdag.transforms import ordinal_cutpoints
 
     df = TriangleMixed(f="linear", seed=42).observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),

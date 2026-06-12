@@ -126,6 +126,7 @@ def _load(variant):
 
 
 # ----------------------------------------------- flow recovers the true ATE
+@pytest.mark.slow
 @pytest.mark.parametrize("variant,style,tol", [
     ("ls", "ls", 0.04),        # all-ls DGP, all-ls model: exact up to finite-sample
     ("nl", "flexible", 0.04),  # nl DGP needs the flexible model to recover truth
@@ -136,6 +137,7 @@ def test_flow_recovers_true_ate(variant, style, tol):
     assert ate == pytest.approx(truth["true_ate"], abs=tol)
 
 
+@pytest.mark.slow
 def test_nl_storyline_all_ls_underestimates_flexible_recovers():
     """The headline simulation result: on the heterogeneous-effect `nl` cohort the
     all-`ls` model (which cannot extrapolate tau(Age) from the older observational
@@ -152,6 +154,7 @@ def test_nl_storyline_all_ls_underestimates_flexible_recovers():
 
 
 # ------------------------------------------- spot-on MLE (no early stopping)
+@pytest.mark.slow
 def test_all_ls_flow_is_exact_mle():
     """With restore_best=False and full-data convergence, an all-`ls` flow IS the
     classical MLE: its outcome-node coefficients match statsmodels OrderedModel
@@ -183,6 +186,7 @@ def test_all_ls_flow_is_exact_mle():
     assert (w_t[1] - w_t[0]) == pytest.approx(res.params["T"], abs=0.02)
 
 
+@pytest.mark.slow
 def test_restore_best_changes_the_fit():
     """Guard the new default: restore_best=True (early stopping on a held-out
     split) lands at a different point than the converged MLE-style fit."""
@@ -199,6 +203,7 @@ def test_restore_best_changes_the_fit():
 
 
 # ------------------------------------------------ regression vs R reference
+@pytest.mark.slow
 @pytest.mark.parametrize("variant", ["ls", "nl"])
 def test_flow_matches_r_reference(variant):
     """The all-ls flow must agree with the committed classical R fit (fit_ls.R)

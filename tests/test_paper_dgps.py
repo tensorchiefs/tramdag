@@ -147,6 +147,7 @@ def _cs_curve(flow, node, parent, grid) -> np.ndarray:
         return flow.nodes[node].shifts[parent](x).detach().numpy()
 
 
+@pytest.mark.slow
 def test_triangle_linear_ls_recovers_coefficients():
     """Paper Sec. 6.1 / Fig. 14: beta12=2, beta13=-0.2, beta23=+0.3."""
     df = TriangleContinuous(f="linear", seed=42).observational(N_FIT, seed_offset=100)
@@ -159,6 +160,7 @@ def test_triangle_linear_ls_recovers_coefficients():
     assert abs(_w(flow, "x3", "x2") - 0.3) < 0.1
 
 
+@pytest.mark.slow
 def test_triangle_atan_cs_recovers_coefficients_and_curve():
     """Paper Sec. 6.1 / Fig. 7+15: LS coefficients + CS curve == -f + const."""
     gen = TriangleContinuous(f="atan", seed=42)
@@ -176,6 +178,7 @@ def test_triangle_atan_cs_recovers_coefficients_and_curve():
     assert rmse < 0.15
 
 
+@pytest.mark.slow
 def test_triangle_mixed_linear_ls_recovers_with_sign_flip():
     """Paper Sec. 6.2 / Fig. 19, in flow convention (ordinal shift subtracted):
     fitted weights -> -0.2 (x1) and +0.3 (x2); cutpoints -> (-2, 0.42, 1.02)."""
@@ -193,6 +196,7 @@ def test_triangle_mixed_linear_ls_recovers_with_sign_flip():
     np.testing.assert_allclose(theta, THETA_MIXED, atol=0.15)
 
 
+@pytest.mark.slow
 def test_vaca_ci_flow_matches_interventional_moments():
     """Paper Sec. 5.1-5.2: an all-ci flow fits the bimodal DGP and reproduces
     E/sd of x3 under do(x2=a) (analytic truth from App. C.1)."""
@@ -216,6 +220,7 @@ def test_vaca_ci_flow_matches_interventional_moments():
         assert abs(do_samp["x3"].std() - ref["std_x3_analytic"]) < tol, f"do(x2={a})"
 
 
+@pytest.mark.slow
 def test_carefl_ci_flow_recovers_counterfactuals():
     """Paper Sec. 5.3 / Fig. 6 capability, scored robustly: individual
     counterfactuals of held-out rows vs. the analytic DGP truth. (The paper's

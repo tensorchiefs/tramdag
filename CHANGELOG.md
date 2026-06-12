@@ -1,6 +1,24 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-06-12)
+
+First PyPI release: `pip install tramdag`.
+
+### Changed (naming & packaging)
+
+- **Renamed**: Python package `zuko_dag` → **`tramdag`** (conventional alias
+  `import tramdag as td`); GitHub repo `tram-dag-zuko` → `tensorchiefs/tramdag`
+  (old URLs redirect). The package implements TRAM-DAGs; zuko names the backend.
+  No API changes; old checkpoints still load. References to the original
+  Keras/TF implementation (tensorchiefs/tram-dag) reworded to avoid
+  self-reference.
+- **MIT license** added; PyPI metadata (authors, urls, classifiers); runtime
+  dependencies trimmed to `torch`, `zuko`, `numpy`, `pandas` (pytest/scipy/
+  statsmodels/scikit-learn/matplotlib moved to the `dev` dependency group).
+- **README rewritten method-first**: the repo is the reference implementation of
+  the CLeaR 2025 paper (arXiv:2503.16206); the stroke analysis is the case study
+  (arXiv:2606.12623) with its detail moved to `docs/stroke-case-study.md`.
+  Citation BibTeX added for both papers.
 
 ### Added
 

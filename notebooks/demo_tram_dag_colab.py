@@ -40,9 +40,8 @@ import subprocess
 import sys
 import time
 
-if importlib.util.find_spec("tramdag") is None:  # Colab: install from GitHub
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-                           "git+https://github.com/tensorchiefs/tramdag"])
+if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "tramdag"])
 
 import matplotlib.pyplot as plt
 import numpy as np

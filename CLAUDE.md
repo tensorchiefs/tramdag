@@ -108,5 +108,6 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
 - ~~Generalize `simulations/` registry beyond the stroke DAG~~ — done for the
   TRAM-DAG paper's DGPs (triangle/triangle-mixed/vaca/carefl, June 2026). Still
   open: hidden confounding à la DeCaFlow.
-- Package for PyPI when API stabilizes (the `CausalFlowDAG`/`ContinuousNode`/
-  `OrdinalNode` surface).
+- ~~Package for PyPI~~ — published as `tramdag` 0.2.0 (June 2026); release flow:
+  bump version in pyproject + `__init__`, `uv build`, `uv publish` (Oliver's
+  PyPI token), CHANGELOG section.

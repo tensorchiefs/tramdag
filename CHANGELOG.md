@@ -4,6 +4,21 @@
 
 ### Added
 
+- **`fit(schedule=..., freeze_patience=...)`** — learning-rate schedules and
+  per-node early stopping (defaults unchanged). The optimizer now holds one
+  param group per node; `schedule="plateau"` decays each node's lr off its own
+  validation NLL, and `freeze_patience` drops converged nodes from the loss
+  (real FLOP savings — per-node gradients are independent) with early exit when
+  all nodes froze. Also `"onecycle"`/`"cosine"`. Benchmarks + recommendation in
+  `docs/training-speed.md` (`experiments/bench_training.py`): plateau+freeze
+  matches the hand-tuned two-phase recipe's time-to-accuracy with **no budget
+  tuning and ~3× less total compute**; full-batch LBFGS solves the classical
+  all-`ls` MLE in <2 s (2/3 seeds). Existing defaults intentionally untouched.
+- **Colab demo** `notebooks/demo_tram_dag_colab.py` (+ tracked output-stripped
+  `.ipynb` for the badge): the paper's bimodal VACA benchmark fitted live
+  (cuda/cpu auto-detect), L1 pairs plot, analytic do-checks, per-individual
+  counterfactuals vs DGP truth, GPU-vs-CPU race.
+
 - **The TRAM-DAG paper's DGPs** (Sick & Dürr, CLeaR 2025, arXiv:2503.16206) as
   simulation registry families, each a numpy-only SCM with known/analytic ground
   truth + frozen n=5000 CSVs (`data/<name>/`, the test contract) and CLIs:

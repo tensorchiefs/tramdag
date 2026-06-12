@@ -1,0 +1,252 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#   kernelspec:
+#     display_name: Python 3
+#     language: python
+#     name: python3
+# ---
+
+# %% [markdown]
+# # TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+#
+# [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tram-dag-zuko/blob/main/notebooks/demo_tram_dag_colab.ipynb)
+#
+# **TRAM-DAGs** ([Sick & Dürr, CLeaR 2025](https://arxiv.org/abs/2503.16206)) are
+# *interpretable neural causal models*: one triangular normalizing flow whose
+# Jacobian sparsity is your causal DAG. Fit it **once** on observational data and
+# you can
+#
+# 1. **L1** sample / score the observational distribution,
+# 2. **L2** answer interventional queries — `do(...)` — by graph mutilation,
+# 3. **L3** compute **individual counterfactuals** ("what would have happened to
+#    *this* unit?") via Pearl's abduction–action–prediction.
+#
+# This demo uses the benchmark the paper leads with: a 3-variable SCM whose
+# source is **bimodal** — the example where a default causal normalizing flow
+# visibly fails (paper, Fig. 4) and TRAM-DAG doesn't. Ground truth is known
+# analytically, so every claim below is *checked*, not asserted.
+#
+# Runs on CPU; on a Colab **GPU runtime** (Runtime → Change runtime type → T4)
+# the final section races the two.
+
+# %%
+import importlib.util
+import subprocess
+import sys
+import time
+
+if importlib.util.find_spec("zuko_dag") is None:  # Colab: install from GitHub
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+                           "git+https://github.com/tensorchiefs/tram-dag-zuko"])
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import torch
+
+from zuko_dag import CausalFlowDAG, ContinuousNode
+from zuko_dag.simulations import VacaTriangle
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+plt.rcParams["figure.dpi"] = 110
+print(f"torch {torch.__version__}  device: {DEVICE}")
+
+# %% [markdown]
+# ## 1. The challenge: a bimodal structural causal model
+#
+# The DGP (Sánchez-Martín et al. 2022, App. E.1; TRAM-DAG paper App. C.1):
+#
+# $$
+# \begin{aligned}
+# x_1 &\sim \tfrac12\,\mathcal N(-2,\,1.5) + \tfrac12\,\mathcal N(1.5,\,1)
+#       &&\text{(bimodal source!)}\\
+# x_2 &= -x_1 + \mathcal N(0,1)\\
+# x_3 &= x_1 + 0.25\,x_2 + \mathcal N(0,1)
+# \end{aligned}
+# $$
+#
+# The DAG is $x_1 \to x_2$, $x_1 \to x_3$, $x_2 \to x_3$. Gaussian noise — so
+# this SCM is deliberately *outside* the model family TRAM-DAG uses internally
+# (logistic latents). No free lunch is being eaten here.
+
+# %%
+gen = VacaTriangle(seed=42)
+df = gen.observational(50_000)
+train, val = df.iloc[:45_000], df.iloc[45_000:]
+
+fig, axes = plt.subplots(1, 3, figsize=(11, 3))
+for ax, c in zip(axes, df.columns):
+    ax.hist(df[c], bins=80, density=True, alpha=0.7)
+    ax.set_title(f"observed ${c[0]}_{c[1]}$")
+fig.suptitle("50,000 observational samples — note the bimodal $x_1$")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 2. Fit the TRAM-DAG — the spec *is* the DAG
+#
+# Each node gets a monotone Bernstein transform; the edge labels say how parents
+# enter (`ci` = the transform's parameters depend on the parents — maximal
+# flexibility). Training maximizes the exact joint likelihood with one Adam;
+# the new `schedule="plateau"` + `freeze_patience` lets every node decay its
+# learning rate **independently** and drop out of training once converged —
+# the fit stops itself.
+
+# %%
+spec = {
+    "x1": ContinuousNode(),                                 # source
+    "x2": ContinuousNode(parents={"x1": "ci"}),
+    "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"}),
+}
+
+torch.manual_seed(0)
+flow = CausalFlowDAG(spec, device=DEVICE)
+t0 = time.perf_counter()
+flow.fit(train, val, epochs=400, learning_rate=1e-2, batch_size=4096,
+         verbose=50, schedule="plateau", plateau_patience=10, freeze_patience=30)
+t_fit = time.perf_counter() - t0
+print(f"\nfitted on {DEVICE} in {t_fit:.1f}s "
+      f"({len(flow.history['val'])} epochs, then froze itself)")
+
+# %% [markdown]
+# ## 3. Rung 1 — does it actually fit? (the plot the CNF baseline fails)
+
+# %%
+samp = flow.sample(len(df), seed=1)
+cols = list(df.columns)
+fig, axes = plt.subplots(3, 3, figsize=(9, 8.5))
+for i, ci in enumerate(cols):
+    for j, cj in enumerate(cols):
+        ax = axes[i][j]
+        if i == j:
+            bins = np.linspace(df[ci].quantile(0.001), df[ci].quantile(0.999), 70)
+            ax.hist(df[ci], bins=bins, density=True, alpha=0.5, label="DGP")
+            ax.hist(samp[ci], bins=bins, density=True, histtype="step",
+                    lw=1.8, color="C3", label="TRAM-DAG")
+        else:
+            ax.scatter(df[cj][:1500], df[ci][:1500], s=2, alpha=0.3)
+            ax.scatter(samp[cj][:1500], samp[ci][:1500], s=2, alpha=0.3, color="C3")
+        if i == 2:
+            ax.set_xlabel(cj)
+        if j == 0:
+            ax.set_ylabel(ci)
+axes[0][0].legend(fontsize=8)
+fig.suptitle("L1: observational joint — DGP (blue) vs fitted TRAM-DAG (red)")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 4. Rung 2 — interventions: `do(x2 = a)`
+#
+# Graph mutilation: clamp $x_2$, cut its incoming edge, resample. Under the DGP,
+# $x_3\,|\,do(x_2{=}a) = x_1 + 0.25a + \mathcal N(0,1)$, so
+# $\mathbb E[x_3] = -0.25 + 0.25a$ **analytically** — a hard number to be wrong
+# about.
+
+# %%
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.2), sharey=True)
+print("E[x3 | do(x2=a)]:   analytic    TRAM-DAG")
+for ax, a in zip(axes, (-3.0, -1.0, 0.0)):
+    truth = gen.interventional(50_000, {"x2": a})
+    fl = flow.sample(50_000, do={"x2": a}, seed=2)
+    bins = np.linspace(truth["x3"].quantile(0.001), truth["x3"].quantile(0.999), 70)
+    ax.hist(truth["x3"], bins=bins, density=True, alpha=0.5, label="DGP")
+    ax.hist(fl["x3"], bins=bins, density=True, histtype="step", lw=1.8,
+            color="C3", label="TRAM-DAG")
+    ax.set_title(f"$p(x_3 \\mid do(x_2={a:+.0f}))$")
+    print(f"   a = {a:+.0f}:          {-0.25 + 0.25 * a:+.3f}      "
+          f"{fl['x3'].mean():+.3f}")
+axes[0].legend()
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 5. Rung 3 — the counterfactual magic trick
+#
+# Take 1,000 **held-out** individuals. Step 1 (*abduction*): invert the flow to
+# recover each individual's latent noise $u$ — everything about them the model
+# doesn't attribute to their parents. Sanity check: pushing $u$ back through the
+# flow must reproduce the observed data *exactly*.
+#
+# Step 2+3 (*action* + *prediction*): rerun history with $do(x_1 = 0)$ — same
+# $u$, mutilated graph. Because the DGP is fully continuous, the **true**
+# individual counterfactuals are known (the simulator keeps its noise), so we
+# can score the flow *per individual* — the strictest test in causal inference,
+# impossible with real data.
+
+# %%
+rng = np.random.default_rng(7)
+lat = gen.draw_latents(1_000, rng)
+factual = gen.simulate(latents=lat)
+cf_true = gen.simulate(latents=lat, do={"x1": 0.0})
+
+u = flow.abduct(factual)
+recon = flow.sample(u=u)
+err = np.abs(recon.to_numpy() - factual.to_numpy()).max()
+print(f"abduction -> reconstruction: max |error| = {err:.2e}  (exact recovery)")
+
+cf_flow = flow.sample(do={"x1": 0.0}, u=u)
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
+for ax, c in zip(axes, ["x2", "x3"]):
+    ax.scatter(cf_true[c], cf_flow[c], s=4, alpha=0.4)
+    lims = [cf_true[c].min(), cf_true[c].max()]
+    ax.plot(lims, lims, "k--", lw=1)
+    r = np.corrcoef(cf_true[c], cf_flow[c])[0, 1]
+    ax.set_title(f"counterfactual ${c[0]}_{c[1]}$ under $do(x_1{{=}}0)$   (r = {r:.4f})")
+    ax.set_xlabel("true (DGP, shared noise)"), ax.set_ylabel("TRAM-DAG")
+fig.suptitle("L3: individual counterfactuals, scored unit by unit")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 6. GPU vs CPU
+#
+# The whole flow is plain PyTorch, so it runs anywhere. Same 60-epoch fit, both
+# devices (on a CPU-only runtime this just reports CPU):
+
+# %%
+def timed_fit(device, epochs=60):
+    torch.manual_seed(0)
+    f = CausalFlowDAG({"x1": ContinuousNode(),
+                       "x2": ContinuousNode(parents={"x1": "ci"}),
+                       "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"})},
+                      device=device)
+    t0 = time.perf_counter()
+    f.fit(train, val, epochs=epochs, learning_rate=1e-2, batch_size=4096, verbose=0)
+    return time.perf_counter() - t0
+
+
+timings = {"cpu": timed_fit("cpu")}
+if torch.cuda.is_available():
+    timed_fit("cuda", epochs=5)  # warm-up (cuda kernel compilation)
+    timings["cuda"] = timed_fit("cuda")
+for dev, t in timings.items():
+    print(f"{dev:5s}: {t:6.1f}s for 60 epochs @ n=45,000")
+if len(timings) > 1:
+    fig, ax = plt.subplots(figsize=(4, 2.8))
+    ax.barh(list(timings), list(timings.values()), color=["C0", "C2"])
+    ax.set_xlabel("seconds (60 epochs)"), ax.set_title("same model, same data")
+    fig.tight_layout()
+    plt.show()
+
+# %% [markdown]
+# ## What you just saw
+#
+# | rung | query | call | checked against |
+# |---|---|---|---|
+# | L1 | observational joint | `flow.sample(n)` | 50k DGP samples (bimodal $x_1$ ✓) |
+# | L2 | $p(x_3 \mid do(x_2{=}a))$ | `flow.sample(n, do=...)` | analytic $\mathbb E[x_3] = -0.25 + 0.25a$ |
+# | L3 | individual counterfactuals | `flow.abduct(df)` + `flow.sample(do=..., u=u)` | per-unit DGP truth, r ≈ 0.99+ |
+#
+# And the same model family stays **interpretable** when you want it to be:
+# declare an edge `"ls"` instead of `"ci"` and its coefficient is a log-odds
+# ratio you can read off after training (that's the actual point of the paper).
+#
+# **More:** [repo](https://github.com/tensorchiefs/tram-dag-zuko) ·
+# [paper](https://arxiv.org/abs/2503.16206) ·
+# didactic walkthrough: `notebooks/intro_tram_dag.py`

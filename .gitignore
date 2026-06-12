@@ -22,3 +22,6 @@ notebooks/*.ipynb
 
 # build artifacts
 dist/
+
+# machine-benchmark outputs (collected manually per machine)
+perf_*.json

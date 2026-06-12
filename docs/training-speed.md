@@ -4,6 +4,9 @@ Benchmark of learning-rate schedules, per-node freezing, batch sizes, devices an
 LBFGS — June 2026, Apple-silicon Mac mini, torch 2.12 (CPU unless noted).
 Reproduce with `cd experiments && uv run python bench_training.py`
 (grid ≈ 35 min; raw numbers in `results/bench-training/results.csv`).
+For a quick **cross-machine** comparison (fixed 200-epoch workloads, all
+available devices, machine fingerprint to JSON) use the self-contained
+`experiments/perf_machine.py` — runs on any box after `pip install tramdag`.
 
 ## The options, and how to use them
 

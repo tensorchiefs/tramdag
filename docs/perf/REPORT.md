@@ -5,9 +5,13 @@ Fixed 200-epoch workloads (see `experiments/perf_machine.py`); `final_val_nll` m
 | host | chip | gpu | code | workload | device | fit_s | epochs_per_s | sample_100k_s | final_val_nll |
 |---|---|---|---|---|---|---|---|---|---|
 | MAC-MINI | arm | mps | c9d84bf | intro | cpu | 6.52 | 30.66 | 1.8 | 5.3741 |
+| ios-nb-duerr | arm | mps | 0.2.0 | intro | cpu | 10.72 | 18.66 | 2.38 | 5.3737 |
 | MAC-MINI | arm | mps | c9d84bf | intro | mps | 20.03 | 9.98 | 0.91 | 5.3736 |
+| ios-nb-duerr | arm | mps | 0.2.0 | intro | mps | 32.09 | 6.23 | 1.27 | 5.3728 |
 | MAC-MINI | arm | mps | c9d84bf | large | cpu | 20.73 | 9.65 | 1.71 | 4.9152 |
 | MAC-MINI | arm | mps | c9d84bf | large | mps | 31.6 | 6.33 | 0.89 | 4.9132 |
+| ios-nb-duerr | arm | mps | 0.2.0 | large | mps | 38.87 | 5.15 | 0.74 | 4.9129 |
+| ios-nb-duerr | arm | mps | 0.2.0 | large | cpu | 40.66 | 4.92 | 2.41 | 4.9153 |
 
 ## Add your machine
 

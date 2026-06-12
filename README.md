@@ -1,5 +1,10 @@
 # zuko_dag — a causal normalizing flow re-implementation of the TRAM-DAG stroke experiments
 
+[![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tram-dag-zuko/blob/main/notebooks/demo_tram_dag_colab.ipynb)
+**5-minute demo** (`notebooks/demo_tram_dag_colab.py`): fit the paper's bimodal
+VACA benchmark live (GPU-ready), then walk all three rungs of Pearl's ladder —
+each answer checked against analytic ground truth.
+
 This folder re-implements the TRAM-DAG stroke analysis from the parent repository as a
 **single normalizing flow from latent variables to observed data**, built on
 [zuko](https://zuko.readthedocs.io/stable/) and in the spirit of *Causal Normalizing
@@ -54,6 +59,12 @@ spec = {                                            # the nihss6 DAG, transcribe
 flow = CausalFlowDAG(spec)        # validates acyclicity, topo-sorts, builds the flow
 flow.fit(train_df, val_df, epochs=3000, learning_rate=1e-2, batch_size=256, seed=123)
 flow.fit(train_df, val_df, epochs=1000, learning_rate=1e-3)   # phase 2, lower lr
+
+# or self-stopping: per-node plateau lr decay + freezing of converged nodes
+# (the NLL decomposes per node with independent gradients, so per-node
+# schedules are exact; see docs/training-speed.md for benchmarks)
+flow.fit(train_df, val_df, epochs=4000, learning_rate=1e-2,
+         schedule="plateau", plateau_patience=30, freeze_patience=120)
 
 flow.log_prob(df)                          # joint log-likelihood per row
 flow.sample(1000)                          # observational sampling

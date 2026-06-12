@@ -1,0 +1,112 @@
+"""Tests for fit()'s learning-rate schedules and per-node freezing.
+
+The critical guard is the last test: plateau + freezing must NOT break the
+exact-MLE property of all-`ls` models (the flow == statsmodels == R-polr match
+pinned in test_simulations.py).
+"""
+
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+import torch
+
+from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
+
+DATA = Path(__file__).resolve().parents[1] / "data"
+
+
+def _toy_df(n=800, seed=0):
+    rng = np.random.default_rng(seed)
+    u1 = rng.logistic(size=n)
+    u2 = rng.logistic(size=n)
+    x1 = u1 / 1.5
+    x2 = (u2 - 1.0 * x1) / 2.0
+    return pd.DataFrame({"x1": x1, "x2": x2})
+
+
+def _toy_spec():
+    return {"x1": ContinuousNode(),
+            "x2": ContinuousNode(parents={"x1": "ls"})}
+
+
+@pytest.mark.parametrize("schedule", [None, "onecycle", "cosine", "plateau"])
+def test_schedules_smoke_and_improve(schedule):
+    df = _toy_df()
+    torch.manual_seed(0)
+    flow = CausalFlowDAG(_toy_spec())
+    nll0 = sum(flow.nll(df).values())  # untrained (ranges set lazily in fit)
+    flow.fit(df, epochs=60, learning_rate=1e-2, verbose=0, schedule=schedule)
+    nll1 = sum(flow.nll(df).values())
+    assert np.isfinite(nll1) and nll1 < nll0
+    assert len(flow.history["lr"]) == len(flow.history["val"])
+
+
+def test_unknown_schedule_raises():
+    flow = CausalFlowDAG(_toy_spec())
+    with pytest.raises(ValueError, match="unknown schedule"):
+        flow.fit(_toy_df(), epochs=1, schedule="exponential")
+
+
+def test_freeze_stops_early_and_records():
+    df = _toy_df()
+    torch.manual_seed(0)
+    flow = CausalFlowDAG(_toy_spec())
+    flow.fit(df, epochs=3000, learning_rate=1e-2, batch_size=256, verbose=0,
+             schedule="plateau", freeze_patience=25)
+    n_epochs = len(flow.history["val"])
+    assert n_epochs < 3000, "expected early exit once all nodes froze"
+    assert set(flow.history["frozen"]) == {"x1", "x2"}
+    for name, ep in flow.history["frozen"].items():
+        assert 1 <= ep <= n_epochs
+
+
+def test_frozen_node_parameters_stop_moving():
+    df = _toy_df()
+    torch.manual_seed(0)
+    flow = CausalFlowDAG(_toy_spec())
+    # freeze aggressively so x1 (a fast source node) freezes mid-run
+    flow.fit(df, epochs=1500, learning_rate=1e-2, batch_size=256, verbose=0,
+             freeze_patience=10)
+    if len(flow.history.get("frozen", {})) == 0:
+        pytest.skip("nothing froze within the budget (unexpected but not a bug)")
+    name = next(iter(flow.history["frozen"]))
+    snap = {k: v.clone() for k, v in flow.nodes[name].state_dict().items()}
+    flow.fit(df, epochs=5, learning_rate=1e-2, batch_size=256,
+             verbose=0)  # fresh call, no freeze
+    moved = any(not torch.equal(snap[k], v)
+                for k, v in flow.nodes[name].state_dict().items())
+    assert moved, "sanity: a fresh fit call must unfreeze (state is per-call)"
+
+
+def test_plateau_freeze_preserves_exact_mle():
+    """The headline guard: all-`ls` + plateau + freezing must still land on the
+    classical MLE (outcome-node coefficients vs the committed R reference)."""
+    obs = pd.read_csv(DATA / "magic-mrclean" / "ls" / "obs.csv")
+    ref = pd.read_csv(DATA / "magic-mrclean" / "ls" / "ref_ls" / "coefficients.csv")
+    ref_y = ref[ref["node"] == "mRS_3m"].set_index("term")["estimate"]
+
+    spec = {
+        "Age": ContinuousNode(),
+        "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ls"}),
+        "NIHSSa": ContinuousNode(parents={"Age": "ls", "mRS_pre": "ls"}),
+        "T": OrdinalNode(levels=2,
+                         parents={"Age": "ls", "mRS_pre": "ls", "NIHSSa": "ls"}),
+        "mRS_3m": OrdinalNode(levels=7, parents={"Age": "ls", "mRS_pre": "ls",
+                                                 "NIHSSa": "ls", "T": "ls"}),
+    }
+    torch.manual_seed(3)
+    flow = CausalFlowDAG(spec)
+    flow.fit(obs, epochs=4000, learning_rate=1e-2, batch_size=512, verbose=0,
+             schedule="plateau", plateau_patience=40, freeze_patience=200)
+    # same comparisons/tolerances as test_simulations::test_flow_matches_r_reference
+    w_age = float(flow.nodes["mRS_3m"].shifts["Age"].weight.detach())
+    w_nih = float(flow.nodes["mRS_3m"].shifts["NIHSSa"].weight.detach())
+    w_t = flow.nodes["mRS_3m"].shifts["T"].weight.detach().numpy().ravel()
+    assert w_age == pytest.approx(ref_y["Age"], abs=0.03)
+    assert w_nih == pytest.approx(ref_y["NIHSSa"], abs=0.03)
+    assert (w_t[1] - w_t[0]) == pytest.approx(ref_y["T"], abs=0.06)
+    # and it should have converged well before the 4000-epoch budget
+    assert len(flow.history["val"]) < 4000

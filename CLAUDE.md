@@ -61,6 +61,11 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
   "simplify" it back.
 - **Seeding**: weight init happens at construction — call `torch.manual_seed` BEFORE
   `CausalFlowDAG(spec)`, not just in `fit`.
+- **Spline tails are slope-clamped**: zuko's RQS extrapolates with a *fixed* slope
+  outside [-5,5] regardless of θ, so the ~10% of data beyond the 5%/95% pre-scaling
+  range is misweighted whenever the true tail slope differs — the structural reason
+  `spline` consistently trails `bernstein` (whose linear extrapolation follows the
+  boundary derivative). Demonstrated in `notebooks/transforms_tram_dag.py`.
 - **`fit(restore_best=False)` is the default** (keeps final converged weights = exact
   MLE; an all-`ls` model then matches statsmodels/R-polr to ~1e-3). `restore_best=True`
   = per-node best-validation restoration (early stopping). Key empirical finding:

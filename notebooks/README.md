@@ -8,6 +8,7 @@ truth**.
 | notebook | what it is |
 |---|---|
 | `intro_tram_dag.py` | didactic walkthrough of the TRAM-DAG model (SI/CI/LS/CS, L1–L3, all claims checked against a hand-built SCM) |
+| `transforms_tram_dag.py` | choosing the per-node transform (Bernstein / spline / affine) on the intro SCM: per-node NLL diagnosis, recovered h-curves, mixing transforms per node, capacity sweep, and why misspecification bends tail-risk do() queries |
 | `demo_tram_dag_colab.py` | 5-minute showcase on the paper's bimodal VACA benchmark, GPU-ready ([open in Colab](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)) |
 
 ## Rules

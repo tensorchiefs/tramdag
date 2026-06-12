@@ -115,12 +115,16 @@ class CausalFlowDAG(nn.Module):
         return {name: self._encode_parent(name, vals) for name, vals in values.items()}
 
     # ------------------------------------------------------------- likelihood
-    def node_log_prob(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
-        """Per-node log-likelihood contributions, each (n,)."""
+    def node_log_prob(self, values: dict[str, Tensor],
+                      nodes: list[str] | None = None) -> dict[str, Tensor]:
+        """Per-node log-likelihood contributions, each (n,).
+
+        ``nodes`` restricts computation to a subset (used to skip frozen nodes
+        during training — valid because the per-node losses are independent)."""
         feats = self._features(values)
         n = next(iter(values.values())).shape[0]
         out = {}
-        for name in self.order:
+        for name in (self.order if nodes is None else nodes):
             node = self.nodes[name]
             theta, shift = node.theta_shift(feats, n)
             x = values[name]
@@ -155,26 +159,48 @@ class CausalFlowDAG(nn.Module):
     def fit(self, train_df: pd.DataFrame, val_df: pd.DataFrame | None = None,
             epochs: int = 500, learning_rate: float = 1e-2, batch_size: int = 512,
             verbose: int = 50, seed: int | None = None,
-            restore_best: bool = False) -> "CausalFlowDAG":
+            restore_best: bool = False, schedule: str | None = None,
+            plateau_patience: int = 15, freeze_patience: int | None = None,
+            min_delta: float = 1e-4) -> "CausalFlowDAG":
         """Jointly fit all nodes by maximum likelihood.
 
         By default training keeps the **final** (converged) weights, so an
         all-``ls`` model trained to convergence reproduces the classical maximum
         likelihood estimate exactly (e.g. matches ``statsmodels``/``polr``).
 
+        The optimizer holds one parameter group per node. Because the joint NLL
+        decomposes per node with independent gradients, per-node learning rates
+        and freezing are exactly equivalent to independent per-node training.
+
         Args:
             val_df: optional held-out set, used only for monitoring (and for
-                ``restore_best``). If omitted, the training set is used for the
-                reported validation metric.
+                ``restore_best``, ``schedule="plateau"`` and ``freeze_patience``).
+                If omitted, the training set is used for the validation metric.
             restore_best: if True, snapshot each node's best-validation weights
                 during training and restore them at the end (mild early-stopping
                 regularization, the old tramdag convention). This makes the fit
                 *not* the training-data MLE, so leave it False for an exact
                 classical comparison. Default False.
+            schedule: learning-rate schedule. ``None`` = constant (the classic
+                behavior); ``"onecycle"`` = ``OneCycleLR`` (warmup to
+                ``learning_rate``, then anneal; stepped per batch);
+                ``"cosine"`` = ``CosineAnnealingLR`` over ``epochs``;
+                ``"plateau"`` = **per-node** decay: a node's lr is multiplied by
+                0.3 whenever its own validation NLL hasn't improved by
+                ``min_delta`` for ``plateau_patience`` epochs (floor 1e-3 ×
+                ``learning_rate``).
+            freeze_patience: if set, a node whose validation NLL hasn't improved
+                by ``min_delta`` for this many epochs is **frozen** — excluded
+                from the loss and backward pass (a real compute saving, since
+                per-node losses are independent). When every node is frozen the
+                fit returns early. Freeze epochs are recorded in
+                ``history["frozen"]``.
 
         Calling ``fit`` again continues training (e.g. a second phase with a
-        lower learning rate).
+        lower learning rate); freezing state does not carry across calls.
         """
+        if schedule not in (None, "onecycle", "cosine", "plateau"):
+            raise ValueError(f"unknown schedule {schedule!r}")
         if seed is not None:
             torch.manual_seed(seed)
         self._set_ranges(train_df)
@@ -182,30 +208,54 @@ class CausalFlowDAG(nn.Module):
         train_vals = self._tensorize(train_df)
         val_vals = self._tensorize(val_df) if val_df is not None else train_vals
         n = len(train_df)
+        steps_per_epoch = (n + batch_size - 1) // batch_size
 
-        opt = torch.optim.Adam(self.parameters(), lr=learning_rate)
+        opt = torch.optim.Adam(
+            [{"params": list(self.nodes[name].parameters()), "lr": learning_rate,
+              "node": name} for name in self.order])
+        sched = None
+        if schedule == "onecycle":
+            sched = torch.optim.lr_scheduler.OneCycleLR(
+                opt, max_lr=learning_rate, total_steps=epochs * steps_per_epoch)
+        elif schedule == "cosine":
+            sched = torch.optim.lr_scheduler.CosineAnnealingLR(
+                opt, T_max=epochs, eta_min=learning_rate * 1e-3)
+
         if restore_best and not hasattr(self, "_best"):
             self._best = {name: (float("inf"), None) for name in self.order}
         best = self._best if restore_best else None
+        # per-node plateau/freeze bookkeeping (local to this fit call)
+        node_best = {name: float("inf") for name in self.order}
+        node_bad = {name: 0 for name in self.order}
+        frozen: set[str] = set()
         t0 = time.perf_counter()
         t_offset = self.history["time"][-1] if self.history.get("time") else 0.0
+        prev_train: dict[str, float] = {}
 
         for epoch in range(epochs):
             self.train()
+            active = [name for name in self.order if name not in frozen]
             perm = torch.randperm(n, device=self.device)
-            train_acc = {name: 0.0 for name in self.order}
+            train_acc = {name: prev_train.get(name, float("nan"))
+                         for name in frozen}
+            train_acc.update({name: 0.0 for name in active})
             for start in range(0, n, batch_size):
                 idx = perm[start:start + batch_size]
                 batch = {k: v[idx] for k, v in train_vals.items()}
-                per_node = self.node_log_prob(batch)
+                per_node = self.node_log_prob(batch, nodes=active)
                 node_nlls = {k: -v.mean() for k, v in per_node.items()}
                 loss = torch.stack(list(node_nlls.values())).sum()
                 opt.zero_grad()
                 loss.backward()
                 opt.step()
+                if schedule == "onecycle":
+                    sched.step()
                 w = len(idx) / n
                 for k, v in node_nlls.items():
                     train_acc[k] += float(v.detach()) * w
+            if schedule == "cosine":
+                sched.step()
+            prev_train = train_acc
 
             self.eval()
             with torch.no_grad():
@@ -213,9 +263,34 @@ class CausalFlowDAG(nn.Module):
                                 for k, v in self.node_log_prob(val_vals).items()}
             self.history["train"].append(train_acc)
             self.history["val"].append(val_per_node)
-            self.history.setdefault("lr", []).append(learning_rate)
+            self.history.setdefault("lr", []).append(
+                max(g["lr"] for g in opt.param_groups))
             self.history.setdefault("time", []).append(
                 t_offset + time.perf_counter() - t0)
+
+            # per-node improvement tracking (plateau decay + freezing)
+            for g in opt.param_groups:
+                name = g["node"]
+                if name in frozen:
+                    continue
+                if val_per_node[name] < node_best[name] - min_delta:
+                    node_best[name] = val_per_node[name]
+                    node_bad[name] = 0
+                else:
+                    node_bad[name] += 1
+                if (schedule == "plateau" and node_bad[name] > 0
+                        and node_bad[name] % plateau_patience == 0):
+                    g["lr"] = max(g["lr"] * 0.3, learning_rate * 1e-3)
+                # under "plateau", only freeze nodes whose lr has already been
+                # decayed substantially — otherwise a node can freeze while a
+                # smaller lr would still make progress toward the optimum
+                lr_decayed = (schedule != "plateau"
+                              or g["lr"] <= learning_rate * 1e-2 * (1 + 1e-9))
+                if (freeze_patience is not None and lr_decayed
+                        and node_bad[name] >= freeze_patience):
+                    frozen.add(name)
+                    self.history.setdefault("frozen", {}).setdefault(
+                        name, len(self.history["val"]))  # 1-based global epoch
 
             if restore_best:
                 for name in self.order:
@@ -227,7 +302,13 @@ class CausalFlowDAG(nn.Module):
                 tot_t = sum(train_acc.values())
                 tot_v = sum(val_per_node.values())
                 print(f"[epoch {epoch + 1:5d}/{epochs}] train NLL {tot_t:.4f}  "
-                      f"val NLL {tot_v:.4f}")
+                      f"val NLL {tot_v:.4f}"
+                      + (f"  frozen {sorted(frozen)}" if frozen else ""))
+
+            if len(frozen) == len(self.order):  # everything converged
+                if verbose:
+                    print(f"[epoch {epoch + 1:5d}] all nodes frozen — stopping.")
+                break
 
         if restore_best:  # restore per-node best-validation weights
             for name, (_, state) in best.items():

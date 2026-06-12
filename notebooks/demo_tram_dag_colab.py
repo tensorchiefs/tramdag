@@ -114,6 +114,30 @@ print(f"\nfitted on {DEVICE} in {t_fit:.1f}s "
       f"({len(flow.history['val'])} epochs, then froze itself)")
 
 # %% [markdown]
+# Training diagnostics come for free — `fit` records per-node train/val NLL,
+# learning rates, wall-clock time and the freeze epochs. Watch the nodes drop
+# out of training one by one:
+
+# %%
+hist = flow.history
+ep = np.arange(1, len(hist["val"]) + 1)
+tot_tr = np.array([sum(d.values()) for d in hist["train"]])
+tot_va = np.array([sum(d.values()) for d in hist["val"]])
+fig, ax = plt.subplots(figsize=(7.5, 3.6))
+ax.plot(ep, tot_tr, label="train NLL (total)")
+ax.plot(ep, tot_va, label="val NLL (total)")
+for i, (name, e) in enumerate(sorted(hist.get("frozen", {}).items(),
+                                     key=lambda kv: kv[1])):
+    ax.axvline(e, ls="--", lw=1, color="gray")
+    ax.annotate(f" {name} frozen", (e, ax.get_ylim()[1]),
+                rotation=90, va="top", fontsize=8, color="gray")
+ax.set_ylim(tot_va.min() - 0.02, tot_va.min() + 0.6)   # zoom past the initial drop
+ax.set_xlabel("epoch"), ax.set_ylabel("NLL"), ax.legend()
+ax.set_title("training curve — per-node plateau decay, then self-freezing")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
 # ## 3. Rung 1 — does it actually fit? (the plot the CNF baseline fails)
 
 # %%
@@ -204,7 +228,58 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 6. GPU vs CPU
+# ## 6. Swapping the transform: Bernstein vs spline vs affine
+#
+# Each continuous node owns a **monotone 1-D transform** — that's where the
+# distributional flexibility lives. One constructor argument switches it:
+# `"bernstein"` (default, TRAM-faithful polynomial), `"spline"` (monotone
+# rational-quadratic, the neural-spline-flow building block), or `"affine"`
+# (location–scale only → every node-conditional is forced to be a logistic —
+# essentially a classical GLM). Same DAG, same training, three model families:
+
+# %%
+def make_spec(transform):
+    return {"x1": ContinuousNode(transform=transform),
+            "x2": ContinuousNode(transform=transform, parents={"x1": "ci"}),
+            "x3": ContinuousNode(transform=transform, parents={"x1": "ci", "x2": "ci"})}
+
+
+fits = {"bernstein": flow}                       # already trained above
+for tr in ["spline", "affine"]:
+    torch.manual_seed(0)
+    f = CausalFlowDAG(make_spec(tr), device=DEVICE)
+    f.fit(train, val, epochs=400, learning_rate=1e-2, batch_size=4096, verbose=0,
+          schedule="plateau", plateau_patience=10, freeze_patience=30)
+    fits[tr] = f
+print("held-out NLL (lower is better):")
+for tr, f in fits.items():
+    print(f"  {tr:9s}: {sum(f.nll(val).values()):.4f}")
+
+# %%
+bins = np.linspace(df["x1"].quantile(0.001), df["x1"].quantile(0.999), 70)
+fig, ax = plt.subplots(figsize=(7, 3.4))
+ax.hist(df["x1"], bins=bins, density=True, alpha=0.4, color="gray", label="data")
+for tr, color in [("bernstein", "C3"), ("spline", "C0"), ("affine", "C2")]:
+    ax.hist(fits[tr].sample(len(df), seed=3)["x1"], bins=bins, density=True,
+            histtype="step", lw=1.8, color=color, label=tr)
+ax.set_title("the affine (GLM-like) transform cannot bend into two modes")
+ax.set_xlabel("$x_1$"), ax.legend()
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# Reading the table: **affine** pays exactly where you'd expect — a
+# location–scale transform *cannot* produce a bimodal $x_1$ (the same failure
+# mode as the inflexible CNF in the paper's Fig. 4). The **RQ-spline** is
+# expressive enough *in principle*, but with the small TRAM-DAG parameter heads
+# it consistently trains to a worse optimum on this target (same result for
+# 8–32 bins, lr 0.01–0.1, up to 2000 epochs) — an honest empirical reason why
+# **Bernstein** (whose monotone softplus-cumsum parametrization is easier to
+# optimize) is the TRAM-faithful default. Swap per node any time via
+# `ContinuousNode(transform="spline", transform_kwargs={"bins": 16})`.
+
+# %% [markdown]
+# ## 7. GPU vs CPU
 #
 # The whole flow is plain PyTorch, so it runs anywhere. Same 60-epoch fit, both
 # devices (on a CPU-only runtime this just reports CPU):

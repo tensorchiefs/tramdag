@@ -47,3 +47,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tramdag"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: long fit/training tests — excluded from PR CI, run in the nightly full suite",
+]

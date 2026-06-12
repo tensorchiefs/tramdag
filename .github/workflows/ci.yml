@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:        # manual full-suite run from the Actions tab
+  schedule:
+    - cron: "17 3 * * *"    # nightly full suite (03:17 UTC)
+
+# Note: the default linux torch wheel bundles CUDA and is large; the uv cache
+# (keyed on uv.lock) makes every run after the first fast. We deliberately do
+# NOT pin linux to the cpu-only torch index in uv.lock — GPU machines (the
+# research rack) share that lock file.
+
+jobs:
+  fast:
+    name: fast tests (PRs and pushes)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: unit + generator tests (slow fit tests excluded)
+        run: uv run pytest tests/ -q -m "not slow"
+
+  full:
+    name: full suite (nightly / manual)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: complete test suite incl. fit/training tests
+        run: uv run pytest tests/ -q

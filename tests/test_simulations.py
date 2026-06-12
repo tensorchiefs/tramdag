@@ -10,8 +10,8 @@ import pandas as pd
 import pytest
 import torch
 
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode
-from zuko_dag.simulations import MagicMrClean
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag.simulations import MagicMrClean
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "magic-mrclean"
 

@@ -1,13 +1,13 @@
 # `magic-mrclean` — synthetic stroke cohort with known ground truth
 
 A fully synthetic dataset shaped like the MAGIC / MR CLEAN stroke study, used as the
-**public, reproducible** default for the zuko_dag experiments. It contains **no patient
+**public, reproducible** default for the tramdag experiments. It contains **no patient
 data**: every row is generated from a hand-specified structural causal model (SCM), so
 the true interventional effects are known exactly. It is a drop-in substitute for the
 private clinical data — identical column schema, dtypes and ranges — so the same
 experiment and analysis scripts run on either by changing one string.
 
-Generator: [`src/zuko_dag/simulations/magic_mrclean.py`](../../src/zuko_dag/simulations/magic_mrclean.py).
+Generator: [`src/tramdag/simulations/magic_mrclean.py`](../../src/tramdag/simulations/magic_mrclean.py).
 
 ## DAG and schema
 
@@ -83,7 +83,7 @@ The CSVs are **frozen** (committed) so Python and R see byte-identical data. To
 regenerate (e.g. a new seed → bump to a new folder rather than overwriting):
 
 ```bash
-uv run python -m zuko_dag.simulations.magic_mrclean --out data/magic-mrclean --seed 7
+uv run python -m tramdag.simulations.magic_mrclean --out data/magic-mrclean --seed 7
 ```
 
 ## R reference

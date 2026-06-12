@@ -1,4 +1,4 @@
-"""All-`ls` causal flow (zuko_dag analog of the TRAM-DAG `md_dag_ls` run).
+"""All-`ls` causal flow (this package's analog of the original `md_dag_ls` run).
 
 Every edge is a linear shift, so each node-conditional is a classical
 (proportional-odds / linear transformation) model.

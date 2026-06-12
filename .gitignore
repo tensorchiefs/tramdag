@@ -19,3 +19,6 @@ notebooks/*.ipynb
 # exception: the Colab demo needs a tracked (output-stripped) ipynb for the
 # "Open in Colab" badge; regenerate with `uvx jupytext --to ipynb <demo>.py`
 !notebooks/demo_tram_dag_colab.ipynb
+
+# build artifacts
+dist/

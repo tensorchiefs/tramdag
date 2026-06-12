@@ -14,7 +14,7 @@
 # %% [markdown]
 # # TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
 #
-# [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tram-dag-zuko/blob/main/notebooks/demo_tram_dag_colab.ipynb)
+# [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 #
 # **TRAM-DAGs** ([Sick & Dürr, CLeaR 2025](https://arxiv.org/abs/2503.16206)) are
 # *interpretable neural causal models*: one triangular normalizing flow whose
@@ -40,17 +40,16 @@ import subprocess
 import sys
 import time
 
-if importlib.util.find_spec("zuko_dag") is None:  # Colab: install from GitHub
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-                           "git+https://github.com/tensorchiefs/tram-dag-zuko"])
+if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "tramdag"])
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
 
-from zuko_dag import CausalFlowDAG, ContinuousNode
-from zuko_dag.simulations import VacaTriangle
+from tramdag import CausalFlowDAG, ContinuousNode
+from tramdag.simulations import VacaTriangle
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 plt.rcParams["figure.dpi"] = 110
@@ -322,6 +321,6 @@ if len(timings) > 1:
 # declare an edge `"ls"` instead of `"ci"` and its coefficient is a log-odds
 # ratio you can read off after training (that's the actual point of the paper).
 #
-# **More:** [repo](https://github.com/tensorchiefs/tram-dag-zuko) ·
+# **More:** [repo](https://github.com/tensorchiefs/tramdag) ·
 # [paper](https://arxiv.org/abs/2503.16206) ·
 # didactic walkthrough: `notebooks/intro_tram_dag.py`

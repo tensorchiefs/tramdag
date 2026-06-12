@@ -1,4 +1,4 @@
-"""Synthetic-cohort generators for zuko_dag.
+"""Synthetic-cohort generators for tramdag.
 
 Each scenario is one module exposing a numpy-only SCM generator class with known
 causal ground truth. New scenarios register here so experiments/tests can look

@@ -20,8 +20,8 @@ import numpy as np
 from paper_common import (PAPER_N, cs_curve, fit_chunked, ls_weight,
                           plot_hist_grid, plot_trajectories, results_dir,
                           save_json)
-from zuko_dag import ContinuousNode, OrdinalNode
-from zuko_dag.simulations import TriangleMixed
+from tramdag import ContinuousNode, OrdinalNode
+from tramdag.simulations import TriangleMixed
 
 f_name = sys.argv[1] if len(sys.argv) > 1 else "linear"
 model = sys.argv[2] if len(sys.argv) > 2 else "ls"

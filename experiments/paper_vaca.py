@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from paper_common import fit_chunked, results_dir, save_json
-from zuko_dag import ContinuousNode
-from zuko_dag.simulations import VacaTriangle
-from zuko_dag.simulations.vaca import DO_X2_VALUES
+from tramdag import ContinuousNode
+from tramdag.simulations import VacaTriangle
+from tramdag.simulations.vaca import DO_X2_VALUES
 
 N = 20_000
 gen = VacaTriangle(seed=42)

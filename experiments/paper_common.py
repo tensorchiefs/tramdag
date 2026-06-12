@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-from zuko_dag import CausalFlowDAG  # noqa: E402
+from tramdag import CausalFlowDAG  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 

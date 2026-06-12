@@ -7,7 +7,7 @@ parents together with the per-edge term type (multi-parent is the native case):
 - ``"cs"`` — complex shift (MLP, additive on the latent scale),
 - ``"ci"`` — complex intercept (the 1-D transform's parameters depend on the
   parent; several ``ci`` parents of one node feed a single joint network,
-  which reproduces tramdag's interacting-ci groups automatically).
+  which reproduces the original implementation's interacting-ci groups automatically).
 """
 
 from __future__ import annotations

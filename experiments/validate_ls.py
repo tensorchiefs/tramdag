@@ -23,7 +23,7 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 from common import DATA_R_REF, load_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from zuko_dag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
 
 PHASES = [(4000, 1e-2), (2000, 1e-3), (1000, 1e-4)]  # to tight convergence
 

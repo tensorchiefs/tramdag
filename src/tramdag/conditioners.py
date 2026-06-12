@@ -1,16 +1,17 @@
 """Conditioner networks for the per-edge term types.
 
-Architectures replicate the tramdag defaults (``tramdag/models/tram_models.py``)
+Architectures replicate the original Keras/TF implementation's defaults
+(``tram_models.py`` in https://github.com/tensorchiefs/tram-dag)
 so that fitted models are directly comparable:
 
 - ``LinearShift``        — Linear(n, 1, bias=False)            (term "ls")
 - ``ComplexShift``       — 64-128-64 ReLU MLP -> 1, no bias    (term "cs",
-                            tramdag ``ComplexShiftDefaultTabular``)
+                            original ``ComplexShiftDefaultTabular``)
 - ``ComplexIntercept``   — 8-8 ReLU MLP -> n_params, no bias   (term "ci",
-                            tramdag ``ComplexInterceptDefaultTabular``)
+                            original ``ComplexInterceptDefaultTabular``)
 - ``SimpleIntercept``    — free parameter vector (no parent dependence)
 
-Parent features follow tramdag's encoding: continuous parents enter raw
+Parent features follow the original implementation's encoding: continuous parents enter raw
 (one column), ordinal parents are one-hot encoded (``levels`` columns).
 """
 

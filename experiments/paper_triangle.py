@@ -20,8 +20,8 @@ import numpy as np
 from paper_common import (PAPER_N, cs_curve, fit_chunked, ls_weight,
                           plot_hist_grid, plot_trajectories, results_dir,
                           save_json)
-from zuko_dag import ContinuousNode
-from zuko_dag.simulations import TriangleContinuous
+from tramdag import ContinuousNode
+from tramdag.simulations import TriangleContinuous
 
 f_name = sys.argv[1] if len(sys.argv) > 1 else "atan"
 model = sys.argv[2] if len(sys.argv) > 2 else "cs"

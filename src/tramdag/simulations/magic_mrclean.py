@@ -27,7 +27,7 @@ natively in the family the flow fits. Everything is numpy-only: this module is t
 
 CLI (regenerate the frozen CSVs)::
 
-    uv run python -m zuko_dag.simulations.magic_mrclean --out data/magic-mrclean --seed 7
+    uv run python -m tramdag.simulations.magic_mrclean --out data/magic-mrclean --seed 7
 """
 
 from __future__ import annotations

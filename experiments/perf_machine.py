@@ -12,10 +12,15 @@ stopping — identical work on every machine), on every available device
 
 Usage on any machine (no repo clone needed)::
 
-    pip install tramdag            # torch comes as a dependency
-    python perf_machine.py                 # -> perf_<host>_<date>.json + summary
+    pip install tramdag                    # torch comes as a dependency
+    curl -O https://raw.githubusercontent.com/tensorchiefs/tramdag/main/experiments/perf_machine.py
+    python perf_machine.py                 # -> <YYYY-MM-DD-HHMM>_<host>.json + summary
     python perf_machine.py --devices cpu   # restrict devices
-    python perf_machine.py --report .      # merge perf_*.json into one table
+
+Collecting results: copy each machine's JSON into the repo's ``docs/perf/``
+(when run from a repo clone the JSON is written there directly), then::
+
+    python perf_machine.py --report docs/perf   # table + docs/perf/REPORT.md
 """
 
 from __future__ import annotations
@@ -76,9 +81,26 @@ WORKLOADS = {
 
 
 # ------------------------------------------------------------------- machine
+def code_version() -> dict:
+    """tramdag version + exact git commit when running inside a repo clone."""
+    v = {"tramdag": td.__version__, "git_commit": None, "git_dirty": None}
+    try:
+        import subprocess
+        here = str(Path(__file__).resolve().parent)
+        v["git_commit"] = subprocess.check_output(
+            ["git", "-C", here, "rev-parse", "--short", "HEAD"],
+            text=True, stderr=subprocess.DEVNULL).strip()
+        v["git_dirty"] = bool(subprocess.check_output(
+            ["git", "-C", here, "status", "--porcelain"],
+            text=True, stderr=subprocess.DEVNULL).strip())
+    except Exception:
+        pass  # pip-installed / curl'd outside a repo: package version only
+    return v
+
+
 def machine_info() -> dict:
     info = {
-        "hostname": socket.gethostname(),
+        "hostname": socket.gethostname().split(".")[0],
         "os": f"{platform.system()} {platform.release()}",
         "machine": platform.machine(),
         "processor": platform.processor() or platform.machine(),
@@ -145,27 +167,49 @@ def run_workload(name: str, device: str) -> dict:
 # -------------------------------------------------------------------- report
 def report(directory: str) -> None:
     rows = []
-    for f in sorted(Path(directory).glob("perf_*.json")):
+    for f in sorted(Path(directory).glob("*.json")):
         d = json.loads(f.read_text())
+        if "results" not in d:
+            continue
+        commit = (d.get("code") or {}).get("git_commit")
         for r in d["results"]:
+            if "error" in r:
+                continue
             rows.append({"host": d["machine"]["hostname"],
                          "chip": d["machine"]["processor"],
                          "gpu": d["machine"]["cuda"] or
                                 ("mps" if d["machine"]["mps"] else "-"),
+                         "code": commit or d.get("code", {}).get("tramdag", "?"),
                          **{k: r[k] for k in ["workload", "device", "fit_s",
                                               "epochs_per_s", "sample_100k_s",
                                               "final_val_nll"]}})
     if not rows:
-        print(f"no perf_*.json found in {directory}")
+        print(f"no benchmark JSONs found in {directory}")
         return
     t = pd.DataFrame(rows).sort_values(["workload", "fit_s"])
     print(t.to_string(index=False))
+    # markdown table without extra dependencies (tabulate not required)
+    cols = list(t.columns)
+    lines = ["| " + " | ".join(cols) + " |",
+             "|" + "|".join("---" for _ in cols) + "|"]
+    lines += ["| " + " | ".join(str(v) for v in row) + " |"
+              for row in t.itertuples(index=False)]
+    md = Path(directory) / "REPORT.md"
+    md.write_text(
+        "# tramdag cross-machine benchmark\n\n"
+        f"Fixed {EPOCHS}-epoch workloads (see `experiments/perf_machine.py`); "
+        "`final_val_nll` must agree across machines (same seed & data).\n\n"
+        + "\n".join(lines) + "\n")
+    print(f"-> {md}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--devices", nargs="+", default=None,
                     help="subset of {cpu, cuda, mps}; default: all available")
+    ap.add_argument("--out", metavar="DIR", default=None,
+                    help="output directory (default: docs/perf inside a clone, "
+                         "else current directory)")
     ap.add_argument("--report", metavar="DIR",
                     help="merge perf_*.json from DIR into a table and exit")
     args = ap.parse_args()
@@ -194,14 +238,21 @@ def main() -> None:
                                 "error": f"{type(e).__name__}: {e}"})
                 print(f"FAILED — {type(e).__name__}: {e}")
 
-    out = Path(f"perf_{info['hostname']}_{datetime.now(timezone.utc):%Y%m%d}.json")
+    # default output: docs/perf/ when running inside a repo clone, else cwd
+    repo_root = Path(__file__).resolve().parents[1]
+    default_out = (repo_root / "docs" / "perf"
+                   if (repo_root / ".git").exists() else Path.cwd())
+    out_dir = Path(args.out) if args.out else default_out
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stamp = f"{datetime.now(timezone.utc):%Y-%m-%d-%H%M}"
+    out = out_dir / f"{stamp}_{info['hostname']}.json"
     out.write_text(json.dumps(
-        {"machine": info, "epochs": EPOCHS,
+        {"machine": info, "code": code_version(), "epochs": EPOCHS,
          "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
          "results": results}, indent=2) + "\n")
     print(f"\n-> {out.resolve()}")
-    print("collect the JSONs from all machines in one folder, then:"
-          "  python perf_machine.py --report <folder>")
+    print("collect the JSONs from all machines in docs/perf/, then:"
+          "  python perf_machine.py --report docs/perf")
 
 
 if __name__ == "__main__":

@@ -17,9 +17,10 @@
 # [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 #
 # **TRAM-DAGs** ([Sick & Dürr, CLeaR 2025](https://arxiv.org/abs/2503.16206)) are
-# *interpretable neural causal models*: one triangular normalizing flow whose
-# Jacobian sparsity is your causal DAG. Fit it **once** on observational data and
-# you can
+# *interpretable neural causal models*: one normalizing flow wired exactly like
+# the **adjacency matrix of your causal DAG** — each variable is transformed
+# conditional on its parents, nothing else. Fit it **once** on observational
+# data and you can
 #
 # 1. **L1** sample / score the observational distribution,
 # 2. **L2** answer interventional queries — `do(...)` — by graph mutilation,
@@ -31,7 +32,8 @@
 # visibly fails (paper, Fig. 4) and TRAM-DAG doesn't. Ground truth is known
 # analytically, so every claim below is *checked*, not asserted.
 #
-# Runs on CPU; on a Colab **GPU runtime** (Runtime → Change runtime type → T4)
+# Runs on CPU; on a Colab **GPU runtime** (Runtime → Change runtime type →
+# any GPU, e.g. the free T4)
 # the final section races the two.
 
 # %%
@@ -46,6 +48,7 @@ if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy.stats as st  # for KDE plots only (preinstalled on Colab)
 import torch
 
 from tramdag import CausalFlowDAG, ContinuousNode
@@ -63,7 +66,7 @@ print(f"torch {torch.__version__}  device: {DEVICE}")
 # $$
 # \begin{aligned}
 # x_1 &\sim \tfrac12\,\mathcal N(-2,\,1.5) + \tfrac12\,\mathcal N(1.5,\,1)
-#       &&\text{(bimodal source!)}\\
+#       &&\text{(bimodal source)}\\
 # x_2 &= -x_1 + \mathcal N(0,1)\\
 # x_3 &= x_1 + 0.25\,x_2 + \mathcal N(0,1)
 # \end{aligned}
@@ -106,7 +109,7 @@ spec = {
 torch.manual_seed(0)
 flow = CausalFlowDAG(spec, device=DEVICE)
 t0 = time.perf_counter()
-flow.fit(train, val, epochs=400, learning_rate=1e-2, batch_size=4096,
+flow.fit(train, val, epochs=400, learning_rate=1e-1, batch_size=4096,
          verbose=50, schedule="plateau", plateau_patience=10, freeze_patience=30)
 t_fit = time.perf_counter() - t0
 print(f"\nfitted on {DEVICE} in {t_fit:.1f}s "
@@ -140,7 +143,7 @@ plt.show()
 # ## 3. Rung 1 — does it actually fit? (the plot the CNF baseline fails)
 
 # %%
-samp = flow.sample(len(df), seed=1)
+samp = flow.sample(5 * len(df), seed=1)
 cols = list(df.columns)
 fig, axes = plt.subplots(3, 3, figsize=(9, 8.5))
 for i, ci in enumerate(cols):
@@ -148,9 +151,12 @@ for i, ci in enumerate(cols):
         ax = axes[i][j]
         if i == j:
             bins = np.linspace(df[ci].quantile(0.001), df[ci].quantile(0.999), 70)
+            # Plot DGP histogram
             ax.hist(df[ci], bins=bins, density=True, alpha=0.5, label="DGP")
-            ax.hist(samp[ci], bins=bins, density=True, histtype="step",
-                    lw=1.8, color="C3", label="TRAM-DAG")
+            # KDE for TRAM-DAG samples
+            kde = st.gaussian_kde(samp[ci][:50_000])
+            x_eval = np.linspace(bins[0], bins[-1], 300)
+            ax.plot(x_eval, kde(x_eval), color="C3", lw=1.8, label="TRAM-DAG KDE")
         else:
             ax.scatter(df[cj][:1500], df[ci][:1500], s=2, alpha=0.3)
             ax.scatter(samp[cj][:1500], samp[ci][:1500], s=2, alpha=0.3, color="C3")
@@ -159,7 +165,7 @@ for i, ci in enumerate(cols):
         if j == 0:
             ax.set_ylabel(ci)
 axes[0][0].legend(fontsize=8)
-fig.suptitle("L1: observational joint — DGP (blue) vs fitted TRAM-DAG (red)")
+fig.suptitle("L1: observational joint — DGP (blue) vs fitted TRAM-DAG (red, KDE)")
 fig.tight_layout()
 plt.show()
 
@@ -178,9 +184,12 @@ for ax, a in zip(axes, (-3.0, -1.0, 0.0)):
     truth = gen.interventional(50_000, {"x2": a})
     fl = flow.sample(50_000, do={"x2": a}, seed=2)
     bins = np.linspace(truth["x3"].quantile(0.001), truth["x3"].quantile(0.999), 70)
+    # DGP histogram
     ax.hist(truth["x3"], bins=bins, density=True, alpha=0.5, label="DGP")
-    ax.hist(fl["x3"], bins=bins, density=True, histtype="step", lw=1.8,
-            color="C3", label="TRAM-DAG")
+    # Flow density: KDE for a smoother estimate
+    kde = st.gaussian_kde(fl["x3"].iloc[:50_000])
+    x_eval = np.linspace(bins[0], bins[-1], 300)
+    ax.plot(x_eval, kde(x_eval), color="C3", lw=1.8, label="TRAM-DAG density")
     ax.set_title(f"$p(x_3 \\mid do(x_2={a:+.0f}))$")
     print(f"   a = {a:+.0f}:          {-0.25 + 0.25 * a:+.3f}      "
           f"{fl['x3'].mean():+.3f}")

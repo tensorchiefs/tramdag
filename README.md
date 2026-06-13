@@ -56,6 +56,10 @@ flow = CausalFlowDAG(spec)                # validates acyclicity, builds the flo
 flow.fit(train_df, val_df, epochs=4000, learning_rate=1e-2,
          schedule="plateau", plateau_patience=30, freeze_patience=120)
 
+# all-`ls` model? fit it classically instead: deterministic float64 L-BFGS,
+# exact MLE matching statsmodels/R (see notebooks/classical_fit_tram_dag.py)
+flow.fit_classical(train_df)               # raises on cs/ci specs
+
 flow.log_prob(df)                          # L1: joint log-likelihood per row
 flow.sample(1000)                          # L1: observational sampling
 flow.sample(1000, do={"T": 1})             # L2: interventional (graph mutilation)

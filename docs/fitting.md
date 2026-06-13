@@ -119,6 +119,36 @@ to a single `fit` call (a later `fit` call trains all nodes again). This compose
 with `restore_best`, which still restores each node's best-validation snapshot at
 the end.
 
+#### Freezing vs. parallelism (why one helps and the other usually doesn't)
+
+It is tempting to reason "freezing a node speeds things up, so node computation
+costs time, so computing nodes *in parallel* should also speed things up." The
+premise is right but the conclusion doesn't follow, because the two act through
+different mechanisms:
+
+- **Freezing removes work** — the frozen node's forward/backward simply never
+  runs again. Removing work is an *unconditional* win, and most of its payoff is
+  structural: once *all* nodes freeze the fit stops, deleting whole epochs —
+  something parallelism can never do (it can shrink time-per-epoch, not the number
+  of epochs).
+- **Parallelism only overlaps work** — it runs the same computations
+  concurrently, which helps *only if the hardware is sitting idle* during the
+  sequential node loop. It usually isn't: parallelism is already extracted one
+  level down, where each node's batched tensor ops run across all rows and the
+  BLAS/GPU backend already uses all cores. While node A's matmul runs the cores
+  are busy, so doing node B "at the same time" just time-slices the same cores —
+  contention, often slightly slower.
+
+So freezing speeding things up does **not** imply spare capacity to parallelize
+across nodes. The exception is the regime where per-node ops *under-utilize* the
+hardware — small batches, tiny models, or many small nodes on a big GPU where each
+kernel leaves it mostly idle. There, overlapping nodes can help, but the right
+tool is **fusion** (batch same-shaped nodes into one larger tensor op, or CUDA
+streams), not threading the Python loop (which the GIL fights). That is the
+"vectorize/fuse the per-node loop" direction in
+[Optimizer choice](#optimizer-choice--current-and-future) below — a conditional
+win in that regime, distinct from freezing's unconditional one.
+
 Benchmarks, schedule trade-offs, and the recommended self-stopping recipe are in
 [training-speed.md](training-speed.md); the worked walkthrough is
 [`notebooks/intro_tram_dag.py`](../notebooks/intro_tram_dag.py).

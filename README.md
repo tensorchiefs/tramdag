@@ -90,6 +90,10 @@ ordinal nodes an ordered-logit head `P(x ≤ k) = σ(θ_k − shift)`. Abduction
 for continuous nodes and truncated-logistic for ordinal ones, so
 `flow.sample(u=flow.abduct(df))` reproduces `df` exactly / level-exactly.
 
+How both fitting paths (stochastic `fit` and classical `fit_classical`) work, with
+links to the code and notes on the memory model and future optimizers:
+[`docs/fitting.md`](docs/fitting.md).
+
 ## Validation (all pinned by tests)
 
 - **Paper replication** — every experiment of the CLeaR paper is a registry

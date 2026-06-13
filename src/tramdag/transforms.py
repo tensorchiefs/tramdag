@@ -121,7 +121,11 @@ class _ScaledUT(torch.nn.Module):
 
     @property
     def _log_dt_dx(self) -> Tensor:
-        return torch.log(torch.tensor(2.0) * self.bound) - torch.log(self.xmax - self.xmin)
+        # derive dtype from the range buffers so float64 stays pure (no float32
+        # literal promotion) inside fit_classical
+        two_b = torch.as_tensor(2.0 * self.bound, dtype=self.xmin.dtype,
+                                device=self.xmin.device)
+        return torch.log(two_b) - torch.log(self.xmax - self.xmin)
 
     def forward(self, theta: Tensor, x: Tensor) -> tuple[Tensor, Tensor]:
         """x (n,) original units, theta (n, P) -> (z0, log|dz0/dx|), both (n,)."""

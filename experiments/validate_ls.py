@@ -9,7 +9,10 @@ compares outcome-node coefficients and the analytic ATE on the RCT covariates.
 This exactness is only possible because fit() no longer early-stops by default;
 with best-validation restoration the flow would sit off the train optimum.
 
-Usage: uv run python validate_ls.py [magic-mrclean/ls | magic-mrclean/nl | magic]
+Usage: uv run python validate_ls.py [source] [--classical]
+       source: magic-mrclean/ls (default) | magic-mrclean/nl | magic
+       --classical: fit via flow.fit_classical (deterministic float64 L-BFGS)
+                    instead of the multi-phase Adam schedule
 """
 
 import sys
@@ -53,20 +56,24 @@ def all_ls_spec() -> dict:
     }
 
 
-def main(source: str = "magic-mrclean/ls"):
+def main(source: str = "magic-mrclean/ls", classical: bool = False):
     obs, rct, truth = load_data(source)
-    print(f"=== spot-on all-ls comparison on '{source}' (N={len(obs)}) ===")
+    fitter = "fit_classical (float64 L-BFGS)" if classical else "Adam (multi-phase)"
+    print(f"=== spot-on all-ls comparison on '{source}' (N={len(obs)}) — {fitter} ===")
 
     # --- classical MLE (statsmodels), full data ---
     res = OrderedModel(obs["mRS_3m"].astype(int), design(obs),
                        distr="logit").fit(method="bfgs", disp=False)
 
-    # --- flow: full data, no early stopping, train to convergence ---
+    # --- flow: full data, no early stopping, train to the MLE ---
     torch.manual_seed(0)
     flow = CausalFlowDAG(all_ls_spec())
-    for ep, lr in PHASES:
-        flow.fit(obs, epochs=ep, learning_rate=lr, batch_size=256, verbose=0,
-                 seed=0 if lr == 1e-2 else None, restore_best=False)
+    if classical:
+        flow.fit_classical(obs)
+    else:
+        for ep, lr in PHASES:
+            flow.fit(obs, epochs=ep, learning_rate=lr, batch_size=256, verbose=0,
+                     seed=0 if lr == 1e-2 else None, restore_best=False)
 
     node = flow.nodes["mRS_3m"]
     w_age = float(node.shifts["Age"].weight.detach())
@@ -109,4 +116,6 @@ def main(source: str = "magic-mrclean/ls"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "magic-mrclean/ls")
+    args = [a for a in sys.argv[1:] if a != "--classical"]
+    main(args[0] if args else "magic-mrclean/ls",
+         classical="--classical" in sys.argv)

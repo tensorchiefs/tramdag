@@ -103,11 +103,17 @@ class CausalFlowDAG(nn.Module):
                 values.long(), num_classes=node.levels).to(values.dtype)
         return values.view(-1, 1)
 
+    @property
+    def _dtype(self) -> torch.dtype:
+        """Current model dtype (float32 normally; float64 inside fit_classical)."""
+        return next(self.parameters()).dtype
+
     def _tensorize(self, df: pd.DataFrame) -> dict[str, Tensor]:
+        np_dtype = np.float64 if self._dtype == torch.float64 else np.float32
         out = {}
         for name in self.order:
             vals = torch.as_tensor(
-                df[name].to_numpy(dtype=np.float32), device=self.device)
+                df[name].to_numpy(dtype=np_dtype), device=self.device)
             out[name] = vals
         return out
 
@@ -317,6 +323,115 @@ class CausalFlowDAG(nn.Module):
         self.eval()
         return self
 
+    # --------------------------------------------------------- classical fit
+    def _is_all_ls(self) -> bool:
+        return all(t == "ls" for node in self.spec.values()
+                   for t in node.parents.values())
+
+    def ls_coefficients(self) -> dict[str, dict[str, np.ndarray]]:
+        """Per-node linear-shift weights {node: {parent: weight array}} — the
+        interpretable log-odds-ratio coefficients of an all-``ls`` model."""
+        out: dict[str, dict[str, np.ndarray]] = {}
+        for name in self.order:
+            shifts = self.nodes[name].shifts
+            if shifts:
+                out[name] = {p: m.weight.detach().cpu().numpy().ravel().copy()
+                             for p, m in shifts.items()}
+        return out
+
+    def fit_classical(self, train_df: pd.DataFrame, *, max_iter: int = 400,
+                      tol: float = 1e-6, verbose: bool = True) -> dict:
+        """Fit an **all-``ls``** model classically: full-batch, **float64**,
+        L-BFGS (strong-Wolfe line search). No minibatches, no schedule, no
+        early stopping — so the fit is **deterministic** (bit-reproducible) and
+        lands on the exact maximum-likelihood estimate, matching classical
+        software (``statsmodels`` ``OrderedModel`` / R ``polr``/``Colr``) far
+        faster than minibatch Adam.
+
+        Only valid when every edge is ``ls`` (each node-conditional is then a
+        classical transformation model); raises otherwise — for ``cs``/``ci``
+        models use :meth:`fit`, where minibatch noise also regularizes the MLPs.
+
+        float64 is a *transient compute mode*: the model is upcast for the fit
+        (``self.double()`` converts parameters **and** the transforms' range
+        buffers in one call) and restored to float32 afterwards, so the stored
+        model and ``save``/``load`` stay float32. Double precision is what lets
+        the line search resolve the optimum cleanly.
+
+        Convergence is judged by **NLL flatness** (relative change < ``tol``
+        between L-BFGS rounds). Note that ``|grad|`` and individual coefficients
+        do *not* settle to machine precision: a continuous node's Bernstein
+        intercept, and weakly-identified directions like rare one-hot levels or a
+        flat treatment-effect ridge, keep drifting along near-zero-curvature
+        valleys long after the likelihood (and the well-identified coefficients)
+        have reached the MLE. Correctness is therefore verified by comparison to
+        classical software (see ``experiments/validate_ls.py``), not by this flag.
+
+        Returns a convergence report (iterations, final NLL, gradient norm,
+        max coefficient change at the last round, wall-time, and the fitted
+        :meth:`ls_coefficients`).
+        """
+        if not self._is_all_ls():
+            raise ValueError(
+                "fit_classical requires an all-`ls` spec (every edge term 'ls'); "
+                "this spec has cs/ci terms. Use fit() for flexible models.")
+        self._set_ranges(train_df)
+
+        self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
+        assert next(self.parameters()).dtype == torch.float64
+        t0 = time.perf_counter()
+        chunk = 25  # inner L-BFGS iterations per round; we stop on NLL change
+        try:
+            vals = self._tensorize(train_df)
+            self.train()
+            opt = torch.optim.LBFGS(
+                self.parameters(), lr=1.0, max_iter=chunk, history_size=50,
+                tolerance_grad=0.0, tolerance_change=0.0,
+                line_search_fn="strong_wolfe")
+
+            def closure():
+                opt.zero_grad()
+                nll = torch.stack([-lp.mean() for lp
+                                   in self.node_log_prob(vals).values()]).sum()
+                nll.backward()
+                return nll
+
+            def flat_coefs() -> np.ndarray:
+                cs = self.ls_coefficients()
+                return np.concatenate([w for node in cs.values()
+                                       for w in node.values()]) if cs \
+                    else np.zeros(1)
+
+            prev_nll, prev_c, final_nll, n_iter, converged, coef_delta = (
+                float("inf"), flat_coefs(), float("nan"), 0, False, float("inf"))
+            for _ in range(max(1, max_iter // chunk)):
+                final_nll = float(opt.step(closure))
+                n_iter += chunk
+                cur_c = flat_coefs()
+                coef_delta = float(np.abs(cur_c - prev_c).max())
+                prev_c = cur_c
+                if abs(prev_nll - final_nll) < tol * (1.0 + abs(final_nll)):
+                    converged = True
+                    break
+                prev_nll = final_nll
+            grad_norm = float(torch.cat([p.grad.reshape(-1)
+                                         for p in self.parameters()
+                                         if p.grad is not None]).norm())
+            coefs = self.ls_coefficients()  # read while still float64
+        finally:
+            self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
+        self.eval()
+
+        report = {"converged": converged, "n_iter": n_iter,
+                  "final_nll": final_nll, "grad_norm": grad_norm,
+                  "coef_delta": coef_delta,
+                  "seconds": time.perf_counter() - t0, "coefficients": coefs}
+        if verbose:
+            print(f"fit_classical: {n_iter} L-BFGS iters, NLL {final_nll:.6f}, "
+                  f"{report['seconds']:.2f}s"
+                  + ("" if converged else f"  (NLL still moving at {max_iter} iters)"))
+        return report
+
     # ------------------------------------------------------- causal queries
     @torch.no_grad()
     def sample(self, n: int | None = None, *, do: dict[str, float] | None = None,
@@ -336,9 +451,10 @@ class CausalFlowDAG(nn.Module):
         if seed is not None:
             gen = torch.Generator(device=self.device).manual_seed(seed)
 
+        np_dtype = np.float64 if self._dtype == torch.float64 else np.float32
         if u is not None:
             n = len(u)
-            u_vals = {name: torch.as_tensor(u[name].to_numpy(dtype=np.float32, copy=True),
+            u_vals = {name: torch.as_tensor(u[name].to_numpy(dtype=np_dtype, copy=True),
                                             device=self.device) for name in self.order}
         elif n is not None:
             u_vals = {name: StandardLogistic.sample((n,), device=self.device)
@@ -399,7 +515,8 @@ class CausalFlowDAG(nn.Module):
         for col, val in (do or {}).items():
             df_local[col] = val
         nd = self.nodes[node]
-        values = {p: torch.as_tensor(df_local[p].to_numpy(dtype=np.float32),
+        np_dtype = np.float64 if self._dtype == torch.float64 else np.float32
+        values = {p: torch.as_tensor(df_local[p].to_numpy(dtype=np_dtype),
                                      device=self.device) for p in nd.parents}
         feats = self._features(values)
         theta, shift = nd.theta_shift(feats, len(df_local))

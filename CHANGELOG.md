@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`CausalFlowDAG.fit_classical()`** — deterministic, full-batch, **float64**
+  L-BFGS for all-`ls` models (each node-conditional is then a classical
+  transformation model). Bit-reproducible, reaches the exact MLE, matches
+  `statsmodels` ordered-logit / R `polr`/`Colr` to ~1e-3 on well-identified
+  coefficients; raises on `cs`/`ci` specs (use `fit()`). Plus `ls_coefficients()`
+  to read the per-node shift weights. float64 is a transient compute mode
+  (`self.double()/.float()`), so the stored model stays float32; as a side effect
+  the data path (`_tensorize`/`sample`/`pmf`) is now dtype-agnostic.
+- `notebooks/classical_fit_tram_dag.py` (didactic) and a `--classical` flag for
+  `experiments/validate_ls.py`.
+- **Next:** standard-error table from the float64 Hessian at the MLE (the float64
+  bracket here is the groundwork); needs a reference-level constraint for the
+  one-hot ordinal-parent flat directions.
+
 ## 0.2.0 (2026-06-12)
 
 First PyPI release: `pip install tramdag`.

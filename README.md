@@ -5,6 +5,9 @@
 [![CI](https://github.com/tensorchiefs/tramdag/actions/workflows/ci.yml/badge.svg)](https://github.com/tensorchiefs/tramdag/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+> ⚠️ **Status: beta (0.x), under active development.** The API may change between
+> releases until 1.0; pin a version (`tramdag==0.2.*`) for reproducibility.
+
 **TRAM-DAGs** model each variable of a structural causal model with a
 (transformation-model) flow: one triangular normalizing flow from iid
 standard-logistic latents to the observed variables, whose Jacobian sparsity is

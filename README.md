@@ -122,6 +122,10 @@ links to the code and notes on the memory model and future optimizers:
 - **Training speed** — schedules, per-node freezing, LBFGS and device benchmarks:
   [`docs/training-speed.md`](docs/training-speed.md).
 
+What the tests actually guarantee — the principles behind them (known identities,
+the datasets and software they compare against, and how the ground truth was
+obtained) — is documented in [`tests/README.md`](tests/README.md).
+
 ## Case study: individualized treatment effects in stroke
 
 The method's flagship application estimates individualized thrombectomy effects

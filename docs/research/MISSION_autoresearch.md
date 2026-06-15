@@ -38,7 +38,31 @@ src/tramdag/flow.py. The June 2026 benchmark defines your methodology.
 - Never touch the frozen CSVs in `data/`. Library changes stay **opt-in**
   (new flag/argument, defaults untouched) until the final report.
 
-## Experiment #0 (mandatory first action — the baseline)
+## Step 0 (very first action — prove you can check in)
+
+Before any benchmarking, verify the full check-in path works from this machine —
+fast, so a broken push/auth setup is caught in seconds instead of after a 30-minute
+baseline run. Create the branch and push a tiny heartbeat commit:
+
+```bash
+git checkout main && git pull
+git checkout -b research/training-speed       # the branch you work on from here on
+mkdir -p docs/research
+printf '# Autoresearch heartbeat\n\nStep 0 push round-trip from %s at %s.\n' \
+  "$(hostname)" "$(date -u +%FT%TZ)" > docs/research/HEARTBEAT.md
+git add docs/research/HEARTBEAT.md
+git commit -m "chore(autoresearch): step 0 push round-trip"
+git push -u origin research/training-speed
+```
+
+Then **confirm the commit is visible on GitHub** (the branch + `HEARTBEAT.md`).
+Report the commit URL. Only once this round-trip succeeds, continue to
+Experiment #0. If the push fails it is almost certainly the git credential helper
+on this machine — run `gh auth status` / `gh auth setup-git` (or check the remote
+URL / SSH key), fix it, and retry before doing anything else. Do **not** start the
+baseline until a check-in has demonstrably landed on the remote.
+
+## Experiment #0 (the baseline)
 
 Before changing anything: run the existing benchmark suite unchanged on THIS
 machine — `experiments/bench_training.py` (full grid, 3 seeds) and
@@ -46,7 +70,8 @@ machine — `experiments/bench_training.py` (full grid, 3 seeds) and
 from an Apple-silicon Mac mini; nothing transfers — your baseline is the only
 valid comparison point. Commit the results (bench `results.csv`/`ranking.csv`
 into `docs/research/baseline/`, the perf JSON into `docs/perf/`) and push.
-This is your first commit, before any hypothesis.
+This is your first *results* commit (after the Step 0 heartbeat), before any
+hypothesis. You may delete `docs/research/HEARTBEAT.md` in this commit.
 
 ## The metric (non-negotiable)
 

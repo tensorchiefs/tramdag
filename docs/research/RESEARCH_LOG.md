@@ -263,3 +263,44 @@ WHAT THIS TEACHES (the real result):
   #5 are consistent with this single explanation.
 - Next levers must attack coefficient convergence (schedule/optimizer on the shift
   params) or pure per-step wall-clock (dtype-copy overhead) — not initialization.
+
+---
+
+## Experiment #6 — cache parent encodings (dtype-copy overhead) (REJECTED)
+
+HYPOTHESIS: the ~15% `_to_copy`/`copy_`/`empty_strided` overhead the Exp #1
+profiler saw is the per-step one-hot/dtype-cast of parent features (recomputed
+every forward in `node_log_prob`→`_features`); caching it once and row-indexing
+per batch cuts per-step time ≥10% on ≥1 workload — a flat wall-clock multiplier
+that would help even the coefficient-bound W1 that init can't move.
+
+CHANGE (opt-in, since reverted): `fit(cache_features=True)` + a `feats=` arg on
+`node_log_prob`; precompute `_features(train_vals)` once, index per batch.
+Bit-identical (one-hot/view commute with row-indexing).
+
+COMMANDS: `uv run python probe_feat_cache.py` — (1) correctness, (2) micro-bench
+median per-step ms cached vs uncached, both workloads. Decision gate: full A/B
+only if ≥10% per-step.
+
+NUMBERS:
+- Correctness: cached vs uncached final NLL identical — stroke |diff| 0.00e+00,
+  vaca |diff| 0.00e+00.
+- Per-step median: stroke 10.86→10.84 ms (**+0.2%**), vaca 11.12→11.11 ms
+  (**+0.0%**). No A/B run — the gate rejected it.
+
+VERDICT: **REJECTED** (~0% gain). Library change **reverted** (kept `src/` clean —
+unlike the ordinal extension this has literally zero benefit). Probe + log kept.
+
+WHAT THIS TEACHES:
+- The profiler's ~15% copy overhead is **not** in the Python-level parent
+  encoding — it's intrinsic to the per-node transform math (zuko's internal
+  allocations, the batch gather `v[idx]`, log-space temporaries). Caching features
+  can't reach it.
+- **The per-step axis is now fully closed:** threads (#2), torch.compile (#3), and
+  feature-caching (#6) all fail to move per-step time. Training is irreducibly
+  dispatch-bound at the eager per-node-math level; cutting it needs a transform
+  rewrite (the compile dead-end shows that path is blocked by double-backward).
+- Combined with #4/#5 (init axis exhausted), the only axis with any remaining
+  headroom is **coefficient-convergence speed** on the `ls`/shift params (per-group
+  lr, LBFGS polish) — and that is W1-specific, fragile (LBFGS, Exp #0), and narrow.
+  The high-value search space is nearly exhausted.

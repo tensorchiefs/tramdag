@@ -17,28 +17,32 @@ DONE: warm-start init (Bernstein roots **+ ordinal cutpoints**) — opt-in
 only +3% on W1 (Exp #5 REJECTED as standalone). PR-scoping (Bernstein-only vs
 both) deferred to the report.
 
-Remaining, re-ranked by the new "coefficient-bound vs overhead" lens:
-1. **Kill dtype-copy overhead (~15%)** — profiler (Exp #1) saw ~15% in
-   `_to_copy`/`copy_`/`empty_strided`. Pure per-step wall-clock, helps EVERY
-   workload incl. the coefficient-bound W1 that init can't touch. Cache parent
-   encodings / avoid per-step float re-conversion. The only lever that addresses
-   W1. Opt-in. **DO NEXT.**
-2. **Faster coefficient convergence on `ls` shift params** — W1 is gated by the
-   shift weights reaching the MLE. Try a higher/again-scheduled lr *just* for the
-   `ls`/shift param groups (per-node lr already exists), or a brief LBFGS polish on
-   the shift params after the Adam plateau. Directly targets the W1 bottleneck.
-   Medium risk/effort.
-3. **Eval val less often (`val_every=N`)** — DOWNRANKED: entangled with the
-   plateau/freeze schedule (val drives lr-decay + freezing) AND the time-to-target
-   metric's detection granularity (history is sampled per eval). Not the clean
-   "pure overhead" lever it looked like; would need to decouple the schedule from
-   val first.
-4. batch-size × lr scaling for W3 throughput — only if W3/GPU cached; GPU loses
+State of the search after Exp #6: **both big axes are now closed.** Per-step
+(threads/compile/feature-cache all ~0–<10%) and init (warm-start helps only
+marginal-shape-bound workloads). The only remaining headroom is coefficient-
+convergence speed, which is W1-specific and fragile.
+
+Remaining, re-ranked:
+1. **Faster coefficient convergence on `ls` shift params** — W1's binding
+   constraint. Per-group higher lr for shift params, or a short LBFGS polish on
+   *just* the shift params after the Adam plateau (LBFGS already wins W1 outright
+   in Exp #0 at 4.6s but is fragile/not-robust). Expected gain real but narrow
+   (W1 only) and fragile. Borderline worth one experiment. **TOP, but <high.**
+2. batch-size × lr scaling for W3 throughput — only if W3/GPU cached; GPU loses
    here (Exp #0). Low.
-5. RQS tail-slope fix — accuracy lever, may help optimization indirectly. Low.
-6. per-node Adam betas/eps — low expected gain.
+3. RQS tail-slope fix — accuracy lever, may help optimization indirectly. Low.
+4. per-node Adam betas/eps — low expected gain.
+
+DOWNRANKED: `val_every=N` — entangled with the plateau/freeze schedule (val
+drives lr-decay + freezing) and the metric's detection granularity; not the clean
+overhead lever it looked like.
 
 DEAD ENDS (tested): thread count (Exp #2, <10%), CUDA/device (Exp #0, slower),
-torch.compile (Exp #3, double-backward unsupported), warm-start on coefficient-
-bound workloads (Exp #4/#5, init can't move W1).
+torch.compile (Exp #3, double-backward), feature-cache (Exp #6, ~0%), warm-start
+on coefficient-bound workloads (Exp #4/#5, init can't move W1).
+
+ASSESSMENT: expected gain at the top of the backlog is now low and narrow
+(W1-only, fragile). Per the mission's stop rule (top-of-backlog expected gain
+<5%, broadly), the productive search is ~exhausted. One confirmed broadly-safe
+win banked (warm-start). Lean toward wrapping up: write REPORT.md + open the PR.
 Notes: defaults stay untouched (opt-in flags) until the final report.

@@ -129,3 +129,33 @@ the only big lever left is **reducing the number of dispatched ops** (operator
 fusion via torch.compile, or batching the per-node Python loop). Threads/devices
 are dead ends here. (1 thread never hurts and saves ~7% — a free env tweak, but
 not a library change and below the 10% bar; noted, not shipped.)
+
+---
+
+## Experiment #3 — torch.compile fusion of the per-node loss (the op-count lever)
+
+HYPOTHESIS: torch.compile fuses the elementwise chain → ≥1.3× steady-state
+per-step speedup (the only lever that attacks the dispatch-bound 94%).
+
+CHANGE: `experiments/probe_compile.py` (diagnostic). Compile a `loss_fn(flow,
+batch)` closure (`dynamic=True`), measure warmup + steady per-step vs eager.
+
+COMMANDS: `uv run python probe_compile.py`
+
+NUMBERS: none — **it does not run at all.** First failure: donated-buffer guard
+(worked around with `torch._functorch.config.donated_buffer=False`). Second,
+fatal failure: `RuntimeError: torch.compile with aot_autograd does not currently
+support double backward`.
+
+VERDICT: DEAD END (hard incompatibility, not a tuning issue).
+
+WHAT THIS TEACHES: zuko's `BernsteinTransform.call_and_ladj` (and the RQS
+transform) compute the log-det-Jacobian with `torch.autograd.grad` *inside* the
+forward. Training then backprops through that → a **double backward**, which
+torch.compile's aot_autograd backend does not support. This breaks compile for
+*every continuous node* (the bulk of every workload). Compiling around it would
+require rewriting the transforms to return an analytic ladj (no autograd in
+forward) — a large change to the numerics core that risks the sacred MLE tests.
+Out of scope for a safe opt-in speed win. **The op-count axis is closed in eager
+PyTorch.** Both big per-step levers (threads, compile) are now dead → the only
+remaining wins are on the **steps-to-target axis** (init, schedule, eval cadence).

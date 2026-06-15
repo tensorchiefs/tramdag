@@ -1,0 +1,106 @@
+[stroke-ls] reference NLL 10.3042 (tight +0.001, practical +0.005)
+  baseline-2phase  b=512   cpu seed 0: practical @   34.0s  tight @   67.9s  (ran 4000 ep, 151.2s)
+  baseline-2phase  b=512   cpu seed 1: practical @   37.1s  tight @   84.1s  (ran 4000 ep, 149.7s)
+  baseline-2phase  b=512   cpu seed 2: practical @   31.5s  tight @   78.9s  (ran 4000 ep, 150.3s)
+  baseline-2phase  b=full  cpu seed 0: practical @   46.2s  tight @   65.1s  (ran 4000 ep, 77.7s)
+  baseline-2phase  b=full  cpu seed 1: practical @   53.3s  tight @   72.1s  (ran 4000 ep, 77.9s)
+  baseline-2phase  b=full  cpu seed 2: practical @   45.2s  tight @   67.7s  (ran 4000 ep, 77.7s)
+  constant         b=512   cpu seed 0: practical @   33.6s  tight @   67.4s  (ran 4000 ep, 149.8s)
+  constant         b=512   cpu seed 1: practical @   37.3s  tight @   84.4s  (ran 4000 ep, 149.9s)
+  constant         b=512   cpu seed 2: practical @   31.5s  tight @   78.8s  (ran 4000 ep, 149.6s)
+  constant         b=full  cpu seed 0: practical @   46.4s  tight @   75.1s  (ran 4000 ep, 77.9s)
+  constant         b=full  cpu seed 1: practical @   53.4s  tight @   MISS   (ran 4000 ep, 77.8s)
+  constant         b=full  cpu seed 2: practical @   45.5s  tight @   MISS   (ran 4000 ep, 78.3s)
+  onecycle         b=512   cpu seed 0: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.3s)
+  onecycle         b=512   cpu seed 1: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.2s)
+  onecycle         b=512   cpu seed 2: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.3s)
+  onecycle         b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.2s)
+  onecycle         b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.1s)
+  onecycle         b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.2s)
+  onecycle-3k      b=512   cpu seed 0: practical @   61.1s  tight @   MISS   (ran 3000 ep, 112.7s)
+  onecycle-3k      b=512   cpu seed 1: practical @   68.3s  tight @   MISS   (ran 3000 ep, 112.5s)
+  onecycle-3k      b=512   cpu seed 2: practical @   62.5s  tight @   MISS   (ran 3000 ep, 113.3s)
+  onecycle-3k      b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 3000 ep, 58.7s)
+  onecycle-3k      b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 3000 ep, 58.6s)
+  onecycle-3k      b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 3000 ep, 58.4s)
+  cosine           b=512   cpu seed 0: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.3s)
+  cosine           b=512   cpu seed 1: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.2s)
+  cosine           b=512   cpu seed 2: practical @   MISS   tight @   MISS   (ran 1500 ep, 56.9s)
+  cosine           b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.3s)
+  cosine           b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.1s)
+  cosine           b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 1500 ep, 29.2s)
+  plateau+freeze   b=512   cpu seed 0: practical @   31.9s  tight @   MISS   (ran 1527 ep, 47.5s)
+  plateau+freeze   b=512   cpu seed 1: practical @   34.5s  tight @   MISS   (ran 1524 ep, 46.1s)
+  plateau+freeze   b=512   cpu seed 2: practical @   31.6s  tight @   MISS   (ran 1381 ep, 48.1s)
+  plateau+freeze   b=full  cpu seed 0: practical @   45.1s  tight @   MISS   (ran 4000 ep, 64.9s)
+  plateau+freeze   b=full  cpu seed 1: practical @   48.9s  tight @   MISS   (ran 4000 ep, 64.6s)
+  plateau+freeze   b=full  cpu seed 2: practical @   45.0s  tight @   MISS   (ran 4000 ep, 67.2s)
+[vaca-ci] reference NLL 4.9632 (tight +0.002, practical +0.01)
+  baseline-2phase  b=512   cpu seed 0: practical @    7.5s  tight @   MISS   (ran 520 ep, 54.3s)
+  baseline-2phase  b=512   cpu seed 1: practical @    9.7s  tight @   14.2s  (ran 520 ep, 54.5s)
+  baseline-2phase  b=512   cpu seed 2: practical @    6.9s  tight @    7.7s  (ran 520 ep, 54.3s)
+  baseline-2phase  b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 520 ep, 12.0s)
+  baseline-2phase  b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 520 ep, 11.9s)
+  baseline-2phase  b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 520 ep, 12.0s)
+  constant         b=512   cpu seed 0: practical @    7.5s  tight @   MISS   (ran 520 ep, 54.4s)
+  constant         b=512   cpu seed 1: practical @    9.6s  tight @   14.1s  (ran 520 ep, 54.3s)
+  constant         b=512   cpu seed 2: practical @    6.9s  tight @    7.7s  (ran 520 ep, 54.2s)
+  constant         b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 520 ep, 12.0s)
+  constant         b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 520 ep, 12.1s)
+  constant         b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 520 ep, 12.0s)
+  onecycle         b=512   cpu seed 0: practical @   12.9s  tight @   18.4s  (ran 300 ep, 31.4s)
+  onecycle         b=512   cpu seed 1: practical @   11.9s  tight @   14.7s  (ran 300 ep, 31.4s)
+  onecycle         b=512   cpu seed 2: practical @   12.1s  tight @   MISS   (ran 300 ep, 31.3s)
+  onecycle         b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 300 ep, 7.0s)
+  onecycle         b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 300 ep, 6.9s)
+  onecycle         b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 300 ep, 6.9s)
+  cosine           b=512   cpu seed 0: practical @    7.5s  tight @   MISS   (ran 300 ep, 31.3s)
+  cosine           b=512   cpu seed 1: practical @    9.6s  tight @   16.7s  (ran 300 ep, 31.3s)
+  cosine           b=512   cpu seed 2: practical @    6.9s  tight @    8.2s  (ran 300 ep, 31.3s)
+  cosine           b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 300 ep, 7.2s)
+  cosine           b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 300 ep, 7.2s)
+  cosine           b=full  cpu seed 2: practical @   MISS   tight @   MISS   (ran 300 ep, 7.2s)
+  plateau+freeze   b=512   cpu seed 0: practical @    7.1s  tight @   MISS   (ran 199 ep, 13.8s)
+  plateau+freeze   b=512   cpu seed 1: practical @    9.6s  tight @   MISS   (ran 201 ep, 19.0s)
+  plateau+freeze   b=512   cpu seed 2: practical @    6.8s  tight @    7.5s  (ran 198 ep, 15.6s)
+  plateau+freeze   b=full  cpu seed 0: practical @   MISS   tight @   MISS   (ran 842 ep, 11.5s)
+  plateau+freeze   b=full  cpu seed 1: practical @   MISS   tight @   MISS   (ran 842 ep, 12.2s)
+  plateau+freeze   b=full  cpu seed 2: practical @   11.9s  tight @   MISS   (ran 842 ep, 15.3s)
+/home/oduerr/tramdag/experiments/bench_training.py:170: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:838.)
+  loss = float(opt.step(closure))
+  lbfgs            b=full  cpu seed 0: practical @   5.20s  tight @   MISS 
+  adam150+lbfgs    b=full  cpu seed 0: practical @   9.52s  tight @   MISS 
+  lbfgs            b=full  cpu seed 1: practical @   4.33s  tight @   MISS 
+  adam150+lbfgs    b=full  cpu seed 1: practical @   8.49s  tight @   MISS 
+  lbfgs            b=full  cpu seed 2: practical @   4.64s  tight @   MISS 
+  adam150+lbfgs    b=full  cpu seed 2: practical @   9.14s  tight @   MISS 
+
+=== ranking (median seconds to practical / tight target, cpu) ===
+ workload        schedule batch  time_to_practical_s  time_to_target_s
+stroke-ls           lbfgs  full             4.642498               NaN
+  vaca-ci  plateau+freeze   512             7.120221          7.518527
+  vaca-ci baseline-2phase   512             7.500872         10.935823
+  vaca-ci        constant   512             7.507714         10.883707
+  vaca-ci          cosine   512             7.547147         12.452752
+stroke-ls   adam150+lbfgs  full             9.144613               NaN
+  vaca-ci  plateau+freeze  full            11.880717               NaN
+  vaca-ci        onecycle   512            12.122046         16.583500
+stroke-ls  plateau+freeze   512            31.927394               NaN
+stroke-ls        constant   512            33.631793         78.775758
+stroke-ls baseline-2phase   512            34.041465         78.903578
+stroke-ls  plateau+freeze  full            45.071259               NaN
+stroke-ls baseline-2phase  full            46.240645         67.707791
+stroke-ls        constant  full            46.378330         75.087484
+stroke-ls     onecycle-3k   512            62.529153               NaN
+stroke-ls          cosine   512                  NaN               NaN
+stroke-ls          cosine  full                  NaN               NaN
+stroke-ls        onecycle   512                  NaN               NaN
+stroke-ls        onecycle  full                  NaN               NaN
+stroke-ls     onecycle-3k  full                  NaN               NaN
+  vaca-ci baseline-2phase  full                  NaN               NaN
+  vaca-ci        constant  full                  NaN               NaN
+  vaca-ci          cosine  full                  NaN               NaN
+  vaca-ci        onecycle  full                  NaN               NaN
+
+-> /home/oduerr/tramdag/results/bench-training

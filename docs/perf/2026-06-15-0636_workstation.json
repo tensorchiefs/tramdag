@@ -1,0 +1,76 @@
+{
+  "machine": {
+    "hostname": "workstation",
+    "os": "Linux 6.8.0-117-generic",
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "cpu_count": 20,
+    "python": "3.12.3",
+    "torch": "2.12.0+cu130",
+    "tramdag": "0.2.0",
+    "cuda": "NVIDIA TITAN RTX",
+    "mps": false,
+    "ram_gb": 269.9
+  },
+  "code": {
+    "tramdag": "0.2.0",
+    "git_commit": "95b441f",
+    "git_dirty": true
+  },
+  "epochs": 200,
+  "timestamp": "2026-06-15T06:36:03+00:00",
+  "results": [
+    {
+      "workload": "intro",
+      "device": "cpu",
+      "n": 5000,
+      "batch": 512,
+      "epochs": 200,
+      "fit_s": 23.76,
+      "epochs_per_s": 8.42,
+      "sample_100k_s": 1.77,
+      "abduct_10k_s": 0.01,
+      "final_val_nll": 5.3744,
+      "_sample_mean_x_last": 1.2463
+    },
+    {
+      "workload": "intro",
+      "device": "cuda",
+      "n": 5000,
+      "batch": 512,
+      "epochs": 200,
+      "fit_s": 86.96,
+      "epochs_per_s": 2.3,
+      "sample_100k_s": 0.17,
+      "abduct_10k_s": 0.01,
+      "final_val_nll": 5.3727,
+      "_sample_mean_x_last": 1.238
+    },
+    {
+      "workload": "large",
+      "device": "cpu",
+      "n": 50000,
+      "batch": 4096,
+      "epochs": 200,
+      "fit_s": 42.3,
+      "epochs_per_s": 4.73,
+      "sample_100k_s": 1.71,
+      "abduct_10k_s": 0.01,
+      "final_val_nll": 4.9154,
+      "_sample_mean_x_last": -0.2048
+    },
+    {
+      "workload": "large",
+      "device": "cuda",
+      "n": 50000,
+      "batch": 4096,
+      "epochs": 200,
+      "fit_s": 90.79,
+      "epochs_per_s": 2.2,
+      "sample_100k_s": 0.15,
+      "abduct_10k_s": 0.01,
+      "final_val_nll": 4.9134,
+      "_sample_mean_x_last": -0.1675
+    }
+  ]
+}

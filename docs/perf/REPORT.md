@@ -7,11 +7,15 @@ Fixed 200-epoch workloads (see `experiments/perf_machine.py`); `final_val_nll` m
 | MAC-MINI | arm | mps | c9d84bf | intro | cpu | 6.52 | 30.66 | 1.8 | 5.3741 |
 | ios-nb-duerr | arm | mps | 0.2.0 | intro | cpu | 10.72 | 18.66 | 2.38 | 5.3737 |
 | MAC-MINI | arm | mps | c9d84bf | intro | mps | 20.03 | 9.98 | 0.91 | 5.3736 |
+| workstation | x86_64 | NVIDIA TITAN RTX | 95b441f | intro | cpu | 23.76 | 8.42 | 1.77 | 5.3744 |
 | ios-nb-duerr | arm | mps | 0.2.0 | intro | mps | 32.09 | 6.23 | 1.27 | 5.3728 |
+| workstation | x86_64 | NVIDIA TITAN RTX | 95b441f | intro | cuda | 86.96 | 2.3 | 0.17 | 5.3727 |
 | MAC-MINI | arm | mps | c9d84bf | large | cpu | 20.73 | 9.65 | 1.71 | 4.9152 |
 | MAC-MINI | arm | mps | c9d84bf | large | mps | 31.6 | 6.33 | 0.89 | 4.9132 |
 | ios-nb-duerr | arm | mps | 0.2.0 | large | mps | 38.87 | 5.15 | 0.74 | 4.9129 |
 | ios-nb-duerr | arm | mps | 0.2.0 | large | cpu | 40.66 | 4.92 | 2.41 | 4.9153 |
+| workstation | x86_64 | NVIDIA TITAN RTX | 95b441f | large | cpu | 42.3 | 4.73 | 1.71 | 4.9154 |
+| workstation | x86_64 | NVIDIA TITAN RTX | 95b441f | large | cuda | 90.79 | 2.2 | 0.15 | 4.9134 |
 
 ## Add your machine
 

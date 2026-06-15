@@ -4,6 +4,17 @@
 
 ### Added
 
+- **`fit(warm_start=True)`** — opt-in calibrated initialization for *unconditional*
+  (`SimpleIntercept`) nodes, replacing zuko's default zero init. Bernstein roots
+  start at the linear map of the pre-scaled domain onto the standard-logistic
+  5/95 quantiles (the default is ~2.5× too steep); ordinal roots start at the
+  empirical class log-odds (default zeros ≈ uniform). A **pure init** — the
+  converged MLE is unchanged (the exact-`ls` MLE / R-`polr` equivalence is
+  preserved), applied once on the first fit, conditional `ci` intercepts untouched.
+  Large time-to-target win where a root's marginal shape dominates the NLL gap
+  (vaca-ci ~2.5× faster to target over 6 seeds); small where convergence is
+  coefficient-bound. Defaults unchanged (off). See `docs/research/REPORT.md`.
+
 - **`CausalFlowDAG.fit_classical()`** — deterministic, full-batch, **float64**
   L-BFGS for all-`ls` models (each node-conditional is then a classical
   transformation model). Bit-reproducible, reaches the exact MLE, matches

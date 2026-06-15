@@ -32,7 +32,15 @@ src/tramdag/flow.py. The June 2026 benchmark defines your methodology.
 
 ## Branch & push rules
 
-- Work exclusively on branch `research/training-speed`. **Never push to main.**
+- Work on **one** branch named `research/<YYYY-MM-DD>-<host>` (UTC date at
+  creation, short hostname — e.g. `research/2026-06-15-gpu-rack`). This identifies
+  the run by machine and date and lets several machines run without colliding.
+- **One branch per run — never fork your own work.** On every startup (including
+  after a restart or context compaction) first look for an existing branch with
+  `git ls-remote --heads origin 'research/*-<host>'`; if one exists, check it out
+  and continue on it. Only create a new `research/<today>-<host>` branch when none
+  exists for this host. Do not create a second dated branch mid-run.
+- **Never push to main.**
 - Commit after every experiment (confirmed or rejected) and **push after every
   commit** — the human follows your progress on GitHub, not by asking you.
 - Never touch the frozen CSVs in `data/`. Library changes stay **opt-in**
@@ -42,17 +50,23 @@ src/tramdag/flow.py. The June 2026 benchmark defines your methodology.
 
 Before any benchmarking, verify the full check-in path works from this machine —
 fast, so a broken push/auth setup is caught in seconds instead of after a 30-minute
-baseline run. Create the branch and push a tiny heartbeat commit:
+baseline run. Create your run branch (see naming/reuse rules above) and push a tiny
+heartbeat commit:
 
 ```bash
 git checkout main && git pull
-git checkout -b research/training-speed       # the branch you work on from here on
+HOST=$(hostname -s)
+# reuse this host's branch if it already exists, else create today's
+BRANCH=$(git ls-remote --heads origin "research/*-$HOST" | head -1 \
+         | sed 's#.*refs/heads/##')
+BRANCH=${BRANCH:-research/$(date -u +%F)-$HOST}
+git checkout -B "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
 mkdir -p docs/research
 printf '# Autoresearch heartbeat\n\nStep 0 push round-trip from %s at %s.\n' \
-  "$(hostname)" "$(date -u +%FT%TZ)" > docs/research/HEARTBEAT.md
+  "$HOST" "$(date -u +%FT%TZ)" > docs/research/HEARTBEAT.md
 git add docs/research/HEARTBEAT.md
 git commit -m "chore(autoresearch): step 0 push round-trip"
-git push -u origin research/training-speed
+git push -u origin "$BRANCH"
 ```
 
 Then **confirm the commit is visible on GitHub** (the branch + `HEARTBEAT.md`).

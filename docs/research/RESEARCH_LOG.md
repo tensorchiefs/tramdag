@@ -216,3 +216,50 @@ WHAT THIS TEACHES:
   marginal is on the critical path of the summed-NLL target.
 - Free and safe: opt-in, never regresses, converges to the identical MLE. Strong
   candidate for the final PR (consider making it the default for Bernstein roots).
+
+---
+
+## Experiment #5 — extend warm_start to ordinal cutpoints (REJECTED)
+
+HYPOTHESIS: W1 barely moved in Exp #4 because its three ordinal nodes (mRS_pre,
+T, mRS_3m) stayed cold; calibrating their cutpoints to the empirical class
+log-odds (vs zeros = near-uniform) cuts W1 median time-to-practical ≥15%.
+
+CHANGE (folded into the same opt-in flag): `warm_start` now also calibrates
+unconditional **ordinal** `SimpleIntercept` cutpoints. Added
+`transforms.ordinal_warm_start_theta(counts)` — inverts `ordinal_cutpoints`
+(`tt[0]=logit F(0)`, `tt[i]=log(logit F(i)−logit F(i−1))`). Verified numerically:
+reproduces the empirical 7-level marginal to max-abs-err 0.0 (default zeros give
+P(Y=0)=0.50 vs true 0.30). Bernstein/continuous path unchanged; W2 has no ordinal
+nodes so is provably unaffected.
+
+COMMANDS: `uv run python exp_ordinal_warmstart.py` — three arms in ONE run to
+attribute the increment without cross-run drift: `off` (warm_start=False), `bern`
+(Bernstein-only, ordinal intercepts pre-marked via the first-fit guard = Exp #4
+behavior), `full` (both). W1 only (the workload under test), 3 seeds.
+
+NUMBERS (median time-to-practical s, seeds 0/1/2):
+
+| config | off | bern | full | full vs off | ordinal increment (full vs bern) |
+|---|---|---|---|---|---|
+| plateau+freeze  | 30.8 | 29.5 | 28.6 | +7.1% | **+2.8%** |
+| baseline-2phase | 32.2 | 30.3 | 29.4 | +8.8% | **+3.0%** |
+
+(baseline-2phase *tight* also improves, 75.5→64.0 — same MLE, reached faster.)
+
+VERDICT: **REJECTED.** The ordinal increment is only ~3%; total W1 warm_start
+stays +7–9%, below the 10% bar. (Kept in the codebase: opt-in, never regresses,
+mathematically exact, and the coherent completion of "calibrate all unconditional
+marginals" — but it is *not* a standalone confirmed win.)
+
+WHAT THIS TEACHES (the real result):
+- **W1 is coefficient-bound, not init-bound.** Cold ordinal cutpoints start badly
+  wrong but Adam fixes them in a few epochs; what gates W1's time-to-target is the
+  convergence of the `ls` **shift coefficients** (the proportional-odds regression
+  weights) to the MLE — which *no* marginal-calibration init can touch.
+- This closes the warm-start line: it speeds up workloads whose NLL gap is
+  dominated by **marginal shape** (W2, +56–63%) and gives only a few % where the
+  gap is dominated by **conditional coefficient estimation** (W1). Both Exp #4 and
+  #5 are consistent with this single explanation.
+- Next levers must attack coefficient convergence (schedule/optimizer on the shift
+  params) or pure per-step wall-clock (dtype-copy overhead) — not initialization.

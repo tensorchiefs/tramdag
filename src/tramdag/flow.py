@@ -160,7 +160,7 @@ class CausalFlowDAG(nn.Module):
         ``warm_start``: opt-in calibrated Bernstein init (see ``fit``). Applied only
         on the first fit (the same ``not ut._fitted`` guard as range-setting), so a
         multi-phase fit does not reset a partially-trained intercept."""
-        from .transforms import BernsteinUT
+        from .transforms import BernsteinUT, ordinal_warm_start_theta
         for name in self.order:
             node = self.nodes[name]
             if node.kind == "continuous" and not node.ut._fitted:
@@ -170,6 +170,15 @@ class CausalFlowDAG(nn.Module):
                         and isinstance(node.intercept, SimpleIntercept)):
                     with torch.no_grad():
                         node.intercept.theta.copy_(node.ut.warm_start_theta())
+            elif (node.kind == "ordinal" and warm_start
+                    and isinstance(node.intercept, SimpleIntercept)
+                    and not getattr(node.intercept, "_warm_started", False)):
+                # calibrate unconditional cutpoints to the marginal class log-odds
+                counts = np.bincount(train_df[name].to_numpy().astype(np.int64),
+                                     minlength=self.spec[name].levels)
+                with torch.no_grad():
+                    node.intercept.theta.copy_(ordinal_warm_start_theta(counts))
+                node.intercept._warm_started = True
 
     def fit(self, train_df: pd.DataFrame, val_df: pd.DataFrame | None = None,
             epochs: int = 500, learning_rate: float = 1e-2, batch_size: int = 512,
@@ -210,12 +219,15 @@ class CausalFlowDAG(nn.Module):
                 per-node losses are independent). When every node is frozen the
                 fit returns early. Freeze epochs are recorded in
                 ``history["frozen"]``.
-            warm_start: if True, initialize each unconditional Bernstein node's
-                intercept to the calibrated linear map of its pre-scaled domain
-                onto the standard-logistic 5%/95% quantiles, instead of zuko's
-                default (~2.5x too-steep) zero init. Pure init — the converged MLE
-                is unchanged — applied once (first fit only). Opt-in; default off.
-                Affects only ``SimpleIntercept`` Bernstein nodes (not ci/ordinal).
+            warm_start: if True, calibrate each *unconditional* node's intercept
+                to its marginal at init, instead of zuko's default zero init.
+                Bernstein continuous nodes -> the linear map of the pre-scaled
+                domain onto the standard-logistic 5%/95% quantiles (default is
+                ~2.5x too steep); ordinal nodes -> cutpoints set to the empirical
+                class log-odds (default zeros = near-uniform). Pure init — the
+                converged MLE is unchanged — applied once (first fit only).
+                Opt-in; default off. Affects only ``SimpleIntercept`` nodes
+                (conditional ci intercepts are left untouched).
 
         Calling ``fit`` again continues training (e.g. a second phase with a
         lower learning rate); freezing state does not carry across calls.

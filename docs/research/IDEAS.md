@@ -3,36 +3,42 @@
 Ranking score = (expected gain × plausibility) / cost. Re-rank after every
 experiment. Results should change beliefs.
 
-## Re-ranked after Exp #4 (warm-start CONFIRMED)
+## Re-ranked after Exp #5 (ordinal warm-start REJECTED)
 
-Established: training is **dispatch-bound**, single-thread-effective; both
-per-step axes (threads, compile) are dead. Wins live on axis B (steps-to-target).
-Exp #4 banked the top idea (warm-start, +56–63% on W2). The lesson it adds: gains
-concentrate where a **continuous root's marginal is on the summed-NLL critical
-path** — so the next ideas should target the *other* big NLL contributors
-(conditional shape via ci/cs, and eval/schedule overhead).
+Big picture now: **two workload regimes.** W2-like (NLL gap dominated by
+*marginal shape*) → warm-start wins huge (Exp #4, +56–63%). W1-like (gap
+dominated by *conditional `ls` shift-coefficient estimation*) → init is nearly
+irrelevant (Exp #4 +4–8%, Exp #5 ordinal +3% on top — both below bar). The
+**init axis is now exhausted.** Remaining wins must attack either (a) coefficient
+convergence speed, or (b) pure per-step wall-clock.
 
-DONE: **warm-start init** — CONFIRMED Exp #4 (W2 +56–63%, W1 +4–8%, no regression,
-full suite green). Shipped as opt-in `fit(warm_start=True)`. Candidate PR default
-for Bernstein roots.
+DONE: warm-start init (Bernstein roots **+ ordinal cutpoints**) — opt-in
+`fit(warm_start=True)`. CONFIRMED via W2 (+56–63%); ordinal extension kept but
+only +3% on W1 (Exp #5 REJECTED as standalone). PR-scoping (Bernstein-only vs
+both) deferred to the report.
 
-Remaining, re-ranked:
-1. **Eval val less often (`val_every=N`)** — every-epoch full val pass is pure
-   wall-clock overhead, independent of the optimizer. Cheap, clean, helps *time*
-   on every workload (incl. the ones warm-start barely moved). Opt-in. **DO NEXT.**
-2. **Warm-start the ci/cs conditional too** — Exp #4 only warm-started uncond.
-   `SimpleIntercept` roots; W2's x2/x3 (ci) and W1's outcome stayed cold. Init the
-   ComplexIntercept's *output bias* toward the same calibrated θ (add a bias term /
-   set last-layer) so conditional nodes also skip rescaling. Could extend the W2
-   win to the per-seed laggards and finally move W1. Medium risk (touches ci net).
-3. **Kill dtype-copy overhead (~15%)** — cache parent encodings / avoid per-step
-   float re-conversion. Axis A but the *only* surviving per-step lever; medium.
-4. batch-size × lr scaling for W3 throughput — only if W3/GPU is cached; Exp #0
-   says GPU loses here. Low priority.
-5. LBFGS polish after plateau — already characterized (fast/fragile). Low.
+Remaining, re-ranked by the new "coefficient-bound vs overhead" lens:
+1. **Kill dtype-copy overhead (~15%)** — profiler (Exp #1) saw ~15% in
+   `_to_copy`/`copy_`/`empty_strided`. Pure per-step wall-clock, helps EVERY
+   workload incl. the coefficient-bound W1 that init can't touch. Cache parent
+   encodings / avoid per-step float re-conversion. The only lever that addresses
+   W1. Opt-in. **DO NEXT.**
+2. **Faster coefficient convergence on `ls` shift params** — W1 is gated by the
+   shift weights reaching the MLE. Try a higher/again-scheduled lr *just* for the
+   `ls`/shift param groups (per-node lr already exists), or a brief LBFGS polish on
+   the shift params after the Adam plateau. Directly targets the W1 bottleneck.
+   Medium risk/effort.
+3. **Eval val less often (`val_every=N`)** — DOWNRANKED: entangled with the
+   plateau/freeze schedule (val drives lr-decay + freezing) AND the time-to-target
+   metric's detection granularity (history is sampled per eval). Not the clean
+   "pure overhead" lever it looked like; would need to decouple the schedule from
+   val first.
+4. batch-size × lr scaling for W3 throughput — only if W3/GPU cached; GPU loses
+   here (Exp #0). Low.
+5. RQS tail-slope fix — accuracy lever, may help optimization indirectly. Low.
 6. per-node Adam betas/eps — low expected gain.
-7. RQS tail-slope fix — accuracy lever, may help optimization indirectly.
 
 DEAD ENDS (tested): thread count (Exp #2, <10%), CUDA/device (Exp #0, slower),
-torch.compile (Exp #3, double-backward unsupported).
+torch.compile (Exp #3, double-backward unsupported), warm-start on coefficient-
+bound workloads (Exp #4/#5, init can't move W1).
 Notes: defaults stay untouched (opt-in flags) until the final report.

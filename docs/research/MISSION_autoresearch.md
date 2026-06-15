@@ -97,12 +97,51 @@ hypothesis. You may delete `docs/research/HEARTBEAT.md` in this commit.
 - A change is an IMPROVEMENT only if ALL hold:
   1. median time-to-practical over ≥3 torch seeds improves ≥10% on ≥1 workload,
   2. no workload regresses >5%,
-  3. `uv run pytest tests/ -q` fully green —
+  3. the **full** test suite passes (`uv run pytest tests/ -q`, incl. `slow`) —
      `test_plateau_freeze_preserves_exact_mle` and
      `test_flow_matches_r_reference` are sacred: the exact-MLE property of
      all-`ls` models must survive every change.
+- **Test cadence (cost-staged):** during iteration run only the fast subset
+  (`uv run pytest tests/ -q -m "not slow"`, ~30 s) plus the specific test(s) your
+  change touches. Run the **full** suite (criterion 3) only when a change is about
+  to be recorded as a *confirmed* improvement, and again before the final PR — the
+  full suite is ~12 min, so running it on every experiment would dominate the run.
 - Wall-clock honesty: nothing else heavy on the machine; rerun the baseline
   whenever you doubt machine state; never compare numbers across machine states.
+
+## Runaway protection (hard timeout)
+
+Any experiment can hang (a stuck line search, an unsupported device op, a
+fat-fingered epoch count). Bound every experiment with an **OS-level** timeout —
+do not rely on noticing it yourself:
+
+- Record the **Experiment #0 baseline benchmark wall-clock**. Cap every later
+  experiment command at `min(5 × baseline, 30 min)` and wrap it in `timeout`,
+  e.g. `timeout <cap_seconds> uv run python ...`. The baseline anchor
+  auto-calibrates to this machine (a slow CPU box and a fast GPU get
+  proportionate caps); the 30-min ceiling aligns with the ≤1-experiment-per-30-min
+  pacing and the 20-experiment total.
+- **On timeout:** the process is killed by the OS and the command returns
+  non-zero. Log that experiment as `INCONCLUSIVE (timed out)`, downrank the idea,
+  and move on. **Do not auto-retry** the same configuration — it will just hang
+  again.
+
+## Scientific integrity (no gaming the metric)
+
+The time-to-target metric is a **proxy**; the real goal is genuinely faster/better
+TRAM-DAG training **in general**. Optimize for that, not for the harness:
+
+- **Broad applicability, not the particularities of the benchmark.** A change that
+  helps only W1/W2/W3, only the recorded seeds, or only this machine is **not** an
+  improvement. Before believing a candidate win, sanity-check that it generalizes
+  (e.g. it still helps on an extra seed or a held-out config/dataset shape). A win
+  that evaporates off the measured setup is overfitting to the harness — reject it.
+- **Never touch what measures you.** You may **not** edit the tests, the frozen
+  data in `data/`, the benchmark targets/tolerances in
+  `experiments/bench_training.py`, or the cached reference values, in order to make
+  a result look better. *Changing the measurement is not a result.* If a test
+  fails, your change is wrong — not the test. Reference values are computed once
+  (Experiment #0) and then fixed.
 
 ## Method: hypothesis loop with a lab notebook
 

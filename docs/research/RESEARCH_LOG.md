@@ -159,3 +159,60 @@ forward) — a large change to the numerics core that risks the sacred MLE tests
 Out of scope for a safe opt-in speed win. **The op-count axis is closed in eager
 PyTorch.** Both big per-step levers (threads, compile) are now dead → the only
 remaining wins are on the **steps-to-target axis** (init, schedule, eval cadence).
+
+---
+
+## Experiment #4 — calibrated Bernstein warm-start init (CONFIRMED)
+
+HYPOTHESIS: zuko's default zero-θ Bernstein init maps the pre-scaled domain
+[−B,B] onto latent z∈[−6.93,+7.63] — ~2.5× steeper than the standard-logistic
+5/95 quantiles (±2.944), so early training is wasted rescaling the marginal.
+A calibrated linear init cuts median time-to-practical ≥15% on W1; ≤5%
+regression on W2.
+
+CHANGE (opt-in, defaults untouched): `fit(warm_start=False)` new flag.
+`BernsteinUT.warm_start_theta()` returns the closed-form unconstrained θ (inverting
+zuko's `_constrain_theta` cumsum-of-softplus) whose transform is the exact linear
+map of [−B,B] onto [logit .05, logit .95]. Applied in `_set_ranges` under the same
+`not ut._fitted` first-fit guard (so multi-phase fits don't reset a trained
+intercept), only to `SimpleIntercept` Bernstein nodes (ci/ordinal untouched).
+Verified numerically: warm θ → z(±5)=±2.944, z(0)=0 (default: −6.93/+7.63, z(0)=0.347).
+
+COMMANDS: `uv run python exp_warmstart.py` (seeds 0/1/2) and `... 3 4 5`
+(independent robustness triple). A/B reuses bench_training's cached reference,
+tolerances, configs — measurement files untouched.
+
+NUMBERS (median time-to-practical s, baseline → warm_start, two seed triples):
+
+| workload / config | seeds 0–2 | seeds 3–5 |
+|---|---|---|
+| **vaca-ci / plateau+freeze (W2)** | 6.9 → **2.6**  (+62.6%) | 6.5 → **2.8**  (+56.2%) |
+| stroke-ls / plateau+freeze (W1)  | 31.8 → 30.4  (+4.3%) | 35.2 → 32.3  (+8.2%) |
+| stroke-ls / baseline-2phase (W1) | 33.3 → 31.2  (+6.2%) | 35.7 → 34.4  (+3.7%) |
+
+W2 per-seed (3–5): 6.7→3.5, 6.1→2.8, 6.5→2.8 — all three drop (the seed-1 plateau
+at 9.5s in the first triple was seed-specific, not method fragility). W1
+baseline-2phase *tight* target also improves (78.0→66.1, 88.0→67.8): warm-start
+reaches the **same** MLE faster, never a different optimum.
+
+VERDICT: **CONFIRMED.** (1) ≥10% on ≥1 workload: W2 +56–63% across two
+independent triples. (2) No regression >5%: W1 +4–8% (improves). (3) Full suite
+`uv run pytest tests/ -q` 73 passed (44:36) incl. the sacred
+`test_plateau_freeze_preserves_exact_mle` / `test_flow_matches_r_reference` — the
+exact-MLE property survives (warm-start is pure init).
+
+WHAT THIS TEACHES:
+- The first confirmed win, and it's on the **steps-to-target axis** as predicted
+  once both per-step axes (threads, compile) closed.
+- **Why W2 ≫ W1:** the gain scales with how much of the total NLL gap is a
+  continuous root's *marginal shape*. W2 (all-continuous) — root x1's miscalibrated
+  marginal dominates early total NLL → warm-start ~2.5×s it away. W1 (all-`ls`) —
+  the metric is train-NLL to the proportional-odds MLE, dominated by the ordinal
+  outcome's `ls` shift coefficients; the continuous marginals are a small slice, so
+  fixing them barely moves time-to-target. The effect is real and *general* (helps
+  any Bernstein root), just unevenly leveraged per workload — not harness overfit.
+- Counter-intuitive: only **1 of 3** vaca nodes is warm-started (x1; x2/x3 are ci),
+  yet the workload speeds up ~2.5×. A single well-initialized root pays off when its
+  marginal is on the critical path of the summed-NLL target.
+- Free and safe: opt-in, never regresses, converges to the identical MLE. Strong
+  candidate for the final PR (consider making it the default for Bernstein roots).

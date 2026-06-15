@@ -154,20 +154,29 @@ class CausalFlowDAG(nn.Module):
         return {k: float(-v.mean()) for k, v in per_node.items()}
 
     # ------------------------------------------------------------------- fit
-    def _set_ranges(self, train_df: pd.DataFrame) -> None:
-        """Train 5%/95% quantiles -> transform domain (the original implementation's min_max scaling)."""
+    def _set_ranges(self, train_df: pd.DataFrame, warm_start: bool = False) -> None:
+        """Train 5%/95% quantiles -> transform domain (the original implementation's min_max scaling).
+
+        ``warm_start``: opt-in calibrated Bernstein init (see ``fit``). Applied only
+        on the first fit (the same ``not ut._fitted`` guard as range-setting), so a
+        multi-phase fit does not reset a partially-trained intercept."""
+        from .transforms import BernsteinUT
         for name in self.order:
             node = self.nodes[name]
             if node.kind == "continuous" and not node.ut._fitted:
                 q = train_df[name].quantile([0.05, 0.95])
                 node.ut.set_range(q.iloc[0], q.iloc[1])
+                if (warm_start and isinstance(node.ut, BernsteinUT)
+                        and isinstance(node.intercept, SimpleIntercept)):
+                    with torch.no_grad():
+                        node.intercept.theta.copy_(node.ut.warm_start_theta())
 
     def fit(self, train_df: pd.DataFrame, val_df: pd.DataFrame | None = None,
             epochs: int = 500, learning_rate: float = 1e-2, batch_size: int = 512,
             verbose: int = 50, seed: int | None = None,
             restore_best: bool = False, schedule: str | None = None,
             plateau_patience: int = 15, freeze_patience: int | None = None,
-            min_delta: float = 1e-4) -> "CausalFlowDAG":
+            min_delta: float = 1e-4, warm_start: bool = False) -> "CausalFlowDAG":
         """Jointly fit all nodes by maximum likelihood.
 
         By default training keeps the **final** (converged) weights, so an
@@ -201,6 +210,12 @@ class CausalFlowDAG(nn.Module):
                 per-node losses are independent). When every node is frozen the
                 fit returns early. Freeze epochs are recorded in
                 ``history["frozen"]``.
+            warm_start: if True, initialize each unconditional Bernstein node's
+                intercept to the calibrated linear map of its pre-scaled domain
+                onto the standard-logistic 5%/95% quantiles, instead of zuko's
+                default (~2.5x too-steep) zero init. Pure init — the converged MLE
+                is unchanged — applied once (first fit only). Opt-in; default off.
+                Affects only ``SimpleIntercept`` Bernstein nodes (not ci/ordinal).
 
         Calling ``fit`` again continues training (e.g. a second phase with a
         lower learning rate); freezing state does not carry across calls.
@@ -209,7 +224,7 @@ class CausalFlowDAG(nn.Module):
             raise ValueError(f"unknown schedule {schedule!r}")
         if seed is not None:
             torch.manual_seed(seed)
-        self._set_ranges(train_df)
+        self._set_ranges(train_df, warm_start=warm_start)
 
         train_vals = self._tensorize(train_df)
         val_vals = self._tensorize(val_df) if val_df is not None else train_vals

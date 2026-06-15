@@ -157,6 +157,30 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
+    def warm_start_theta(self, q: float = 0.05) -> Tensor:
+        """Unconstrained Bernstein coefficients (n_params,) whose transform is the
+        *calibrated linear* map of the pre-scaled domain [-B, B] onto the standard
+        logistic quantiles [logit(q), logit(1-q)].
+
+        Rationale: after ``set_range`` each node's 5%/95% data quantiles already sit
+        at the domain bounds -+B, so a single canonical theta maps every node's body
+        onto the latent's 5%/95% quantiles -- the right *scale* from step 0. zuko's
+        default (zero) theta instead maps -+B onto ~-+log(2)*B/... (here -6.93/+7.63),
+        ~2.5x too steep, so early training is spent rescaling. This is a pure init:
+        the converged MLE is unchanged. See the inversion of
+        ``BernsteinTransform._constrain_theta`` (cumsum of softplus diffs)."""
+        import math
+        n = self._n
+        a = math.log(q) - math.log(1.0 - q)        # logit(q), e.g. -2.9444 at q=.05
+        span = -2.0 * a                            # logit(1-q) - logit(q)
+        order = n + 1                              # constrained control points: n+2
+        b = span / order                           # per-step increment (constant)
+        shift = math.log(2.0) * n / 2.0            # zuko's centering offset
+        theta = torch.full((n,), math.log(math.expm1(b)),
+                           dtype=self.xmin.dtype, device=self.xmin.device)
+        theta[0] = a + shift
+        return theta
+
 
 class SplineUT(_ScaledUT):
     """Monotone rational-quadratic spline (zuko ``MonotonicRQSTransform``)."""

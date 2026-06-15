@@ -141,7 +141,13 @@ TRAM-DAG training **in general**. Optimize for that, not for the harness:
   `experiments/bench_training.py`, or the cached reference values, in order to make
   a result look better. *Changing the measurement is not a result.* If a test
   fails, your change is wrong — not the test. Reference values are computed once
-  (Experiment #0) and then fixed.
+  (Experiment #0) and then fixed. **Do not read the target values** either — the
+  test assertions, `data/**/truth.json`, or `data/**/ref_ls/**`: run the tests and
+  trust pass/fail rather than curve-fitting to the numbers. (You *do* read the
+  input data, `data/**/obs.csv`/`rct.csv`, and the harness source — those you must
+  fit / run.) On the research machine a `PreToolUse` hook
+  (`.claude/hooks/protect_measurement.py`) enforces both rules; treat a `BLOCKED`
+  message as a hard stop, not an obstacle to route around.
 
 ## Method: hypothesis loop with a lab notebook
 

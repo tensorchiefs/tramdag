@@ -1,0 +1,16 @@
+{
+  "_comment": "Autoresearch run guard — activate ONLY on the research machine. Copy this file to .claude/settings.local.json (git-ignored) there. It registers a PreToolUse hook that blocks edits to the measurement (tests/, data/, bench_training.py) and reads of the target values (test assertions, truth.json, ref_ls). See .claude/hooks/protect_measurement.py. Do NOT copy it on the dev machine — it would block legitimate test edits. To disable: delete .claude/settings.local.json. NOTE: if you already have a settings.local.json (e.g. a permission allowlist), MERGE the 'hooks' block into it rather than overwriting.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit|Read|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect_measurement.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

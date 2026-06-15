@@ -20,9 +20,15 @@ target** (time-to-target val-NLL), secondarily reach better optima. The agent wo
 its own dated, host-scoped branch; kept an append-only lab notebook
 (`RESEARCH_LOG.md` / `IDEAS.md` / `LEADERBOARD.md`); committed and pushed after every
 experiment so a human could follow on GitHub; and was bounded by hard limits (≤20
-experiments, ≤1 per 30 min) and enforced integrity guardrails. Five experiments ran;
-**three were dead ends, one was a mandated diagnostic, and one was a confirmed win.** The
-negative results did most of the navigational work.
+experiments, ≤1 per 30 min) and enforced integrity guardrails.
+
+The run ran to completion: **7 experiments (#0 baseline + 6 hypotheses).** It produced
+**one CONFIRMED, broadly-safe win** — a calibrated warm-start init, shipped as the opt-in
+`fit(warm_start=True)` in [PR #9](https://github.com/tensorchiefs/tramdag/pull/9)
+(`feat/warm-start-init` → `main`) — and **five negatives that, between them, fully map the
+search space** along its two orthogonal axes. The negative results did most of the
+navigational work: each REJECTED/DEAD-END verdict closed off a region and re-ranked the
+backlog until both axes were exhausted and the mission's stop condition tripped.
 
 ---
 
@@ -157,6 +163,8 @@ The real trail (UTC), from `git log` on the branch:
 | `cf910d2` | 09:00 | **Exp #1–2** profiler (dispatch-bound) + thread sweep (negative) |
 | `1ec6498` | 15:01 | **Exp #3** torch.compile DEAD END |
 | `f87c8a3` | 17:01 | **Exp #4** warm-start init CONFIRMED |
+| (later) | — | **Exp #5** ordinal-cutpoint warm-start REJECTED (code kept) |
+| (later) | — | **Exp #6** feature-cache REJECTED (reverted) → REPORT.md + PR #9 |
 
 ### Exp #0 — baseline (no hypothesis)
 
@@ -270,9 +278,99 @@ path. This is *why* the effect is general (it helps any Bernstein root) but unev
 leveraged per workload — and why it is not harness overfitting.
 
 This re-ranked the backlog one more time: with warm-start banked, the live ideas became
-the *other* big NLL contributors — `val_every=N` (eval-cadence overhead, helps every
-workload), warm-starting the ci/cs conditional nodes, and killing the ~15% dtype-copy
-overhead. Threads/CUDA/compile sit explicitly in the DEAD ENDS list.
+the *other* big NLL contributors — warm-starting the *ordinal* root cutpoints (does the
++3–8% on W1 hide behind cold ordinal nodes?), and killing the ~15% dtype-copy overhead
+that the Exp #1 profiler flagged. Threads/CUDA/compile sit explicitly in the DEAD ENDS
+list. Those two ideas became Exp #5 and #6.
+
+### Exp #5 — extend warm-start to ordinal cutpoints (REJECTED, code kept)
+
+**Hypothesis:** W1 barely moved in #4 because its three ordinal nodes (mRS_pre, T, mRS_3m)
+stayed *cold*; calibrating their cutpoints to the empirical class log-odds (instead of
+zeros = near-uniform) cuts W1 median time-to-practical ≥15%.
+
+**Change (folded into the same opt-in flag):** `warm_start` now also calibrates
+unconditional **ordinal** intercepts via `ordinal_warm_start_theta(counts)`, the
+closed-form inversion of `ordinal_cutpoints`. Verified numerically: it reproduces the
+empirical 7-level marginal to **max-abs-err 0.0** (default zeros give P(Y=0)=0.50 vs true
+0.30). To attribute the increment cleanly, the experiment ran a **3-arm in-run A/B** —
+`off` / `bern` (Bernstein-only = Exp #4 behaviour) / `full` — all in one process so there
+is no cross-run drift, W1 only.
+
+**Numbers** (median time-to-practical s, seeds 0/1/2):
+
+| config | off | bern | full | full vs off | ordinal increment (full vs bern) |
+|---|---|---|---|---|---|
+| plateau+freeze  | 30.8 | 29.5 | 28.6 | +7.1% | **+2.8%** |
+| baseline-2phase | 32.2 | 30.3 | 29.4 | +8.8% | **+3.0%** |
+
+**Verdict: REJECTED.** The ordinal increment is only +2.8% / +3.0% (full vs Bernstein-only),
+and total W1 warm_start stays +7–9% — below the 10% bar. But the code was **KEPT** as
+opt-in: it never regresses, is mathematically exact (the max-abs-err-0.0 marginal check),
+and is the coherent completion of "calibrate *all* unconditional marginals." A rejected
+*workload result* is not a rejected *feature*.
+
+**What it taught:** the real lesson isn't the 3% — it's *why* it's only 3%. **W1 is
+coefficient-bound, not init-bound.** Cold ordinal cutpoints start badly wrong, but Adam
+fixes them in a handful of epochs; what actually gates W1's time-to-target is the
+convergence of the `ls` **shift coefficients** (the proportional-odds regression weights)
+to the MLE — and *no* marginal-calibration init can touch that. This closes the entire
+warm-start line with one explanation consistent with both #4 and #5: warm-start wins big
+where the NLL gap is **marginal-shape-bound** (W2, +56–63%) and barely moves where it's
+**conditional-coefficient-bound** (W1). The next levers must attack coefficient
+convergence or pure per-step wall-clock — not initialization.
+
+### Exp #6 — cache parent encodings / dtype-copy overhead (REJECTED, reverted)
+
+**Hypothesis:** the ~15% `_to_copy`/`copy_`/`empty_strided` overhead the Exp #1 profiler
+flagged is the per-step one-hot/dtype-cast of parent features (recomputed every forward in
+`_features`); caching it once and row-indexing per batch cuts per-step time ≥10% — a flat
+wall-clock multiplier that would help even the coefficient-bound W1 that init can't move.
+
+**Method — probe-first decision gate.** Rather than spend a 30-min full A/B up front, the
+agent ran a cheap micro-benchmark (`probe_feat_cache.py`): (1) correctness, (2) median
+per-step ms cached vs uncached on both workloads, with an explicit gate — *proceed to the
+full A/B only if ≥10% per-step, else reject*.
+
+**Numbers:**
+- Correctness: cached vs uncached final NLL bit-identical — stroke |diff| **0.00e+00**,
+  vaca |diff| 0.00e+00 (the one-hot/view commutes with row-indexing).
+- Per-step median: stroke 10.86→10.84 ms (**+0.2%**), vaca 11.12→11.11 ms (**+0.0%**).
+  Essentially zero. The gate fired — no A/B was run.
+
+**Verdict: REJECTED (~0% gain), and the library change was REVERTED** — unlike #5's
+coherent +3% extension, this has *literally zero* benefit, so keeping it would only make
+`src/` less truthful. (Probe + log kept as evidence.)
+
+**What it taught:** the profiler's ~15% copy overhead is **not** in the Python-level
+parent encoding — it's intrinsic to the per-node transform math (zuko's internal
+allocations, the batch gather `v[idx]`, log-space temporaries). Caching features can't
+reach it. With this, **the per-step axis is now fully closed:** threads (#2),
+torch.compile (#3), and feature-caching (#6) all fail to move per-step time. Combined with
+the init axis (exhausted by #4/#5), the only headroom left is **coefficient-convergence
+speed** on the `ls`/shift params — which is W1-specific, fragile (the LBFGS that wins W1 in
+4.6s in Exp #0 is not robust across seeds), and narrow.
+
+### Wrap-up — stop condition, final suite, curated PR
+
+With both axes closed, the top of the re-ranked backlog (`IDEAS.md`) was a single narrow,
+W1-only, fragile lever with expected gain <5% broadly — exactly the mission's **stop
+condition**. So the agent stopped searching rather than burning its remaining experiment
+budget on a low-value idea. It then:
+
+1. Wrote `docs/research/REPORT.md` — the final summary table (all 7 experiments), the one
+   recommended change, the per-axis "why the search is exhausted" argument, and explicit
+   follow-ups.
+2. Ran the **full** suite one final time on the *exact PR state*: `uv run pytest tests/ -q`
+   → **73 passed in 44:12**, including the sacred
+   `test_plateau_freeze_preserves_exact_mle` / `test_flow_matches_r_reference`.
+3. Opened **[PR #9](https://github.com/tensorchiefs/tramdag/pull/9)** containing **only the
+   validated change** — built on a *fresh* `feat/warm-start-init` branch cut from `main`
+   (just the warm-start `src/` diff + CHANGELOG + REPORT.md), **not** the research branch
+   with its six diagnostic scripts and full lab notebook. The notebook is the *evidence*
+   (linked from the PR), not the *deliverable*. The PR body honestly discloses that it
+   ships **without a unit test** — the research machine's integrity hook protects `tests/`
+   — flagging that as a follow-up rather than working around the guardrail.
 
 ---
 
@@ -290,11 +388,13 @@ What actually made this run productive, grounded in what happened above:
    *only* those three files. This is what lets the context window stay disposable and the
    run survive arbitrarily long.
 
-3. **Negative results are navigation, not waste.** Three of five experiments were dead
-   ends, yet they did the steering: profiler → "dispatch-bound" → threads dead → compile
-   dead → *only axis B is left* → warm-start. Logging each REJECTED/DEAD-END verdict in
-   full, and **re-ranking the backlog after every one**, is what walked the agent to the
-   one place a win existed.
+3. **Negative results are navigation, not waste.** Five of the six hypotheses were
+   negatives, yet they did the steering: profiler → "dispatch-bound" → threads dead →
+   compile dead → *only the steps-to-target axis is left* → warm-start wins → ordinal
+   extension shows W1 is coefficient-bound → feature-cache shows per-step is fully closed →
+   both axes exhausted → stop. Logging each REJECTED/DEAD-END verdict in full, and
+   **re-ranking the backlog after every one**, is what walked the agent to the one place a
+   win existed *and* told it when to stop.
 
 4. **Calibrate to the machine, and read a timeout as a signal.** Caps were
    `min(5×baseline, 30 min)` anchored on this box's own baseline. The full suite timed out
@@ -316,3 +416,31 @@ What actually made this run productive, grounded in what happened above:
    untouched, validated against the simulator's known truth and the full suite — so the
    final deliverable is a PR of *only the validated change* (`fit(warm_start=True)`), with
    the lab notebook as its evidence trail.
+
+8. **Probe-first decision gates — falsify cheaply before measuring expensively.** Exp #6
+   ran a few-second micro-benchmark with an explicit threshold (≥10% per-step → proceed to
+   the full A/B, else reject) and killed the idea in minutes instead of spending a 30-min
+   A/B on a lever that turned out to be ~0%. Put the cheapest possible falsification in
+   front of the expensive measurement.
+
+9. **Scope down on a timeout; don't blindly retry.** Exp #5's first run (27 fits) hit the
+   30-min cap. The agent read that correctly — "too much work for the window," not a hang —
+   and re-scoped to the 18 fits that actually mattered (dropping a workload it could *prove*
+   was unaffected, since W2 has no ordinal nodes), rather than re-running the same
+   oversized job. This is distinct from the mission's "a genuine hang is logged
+   INCONCLUSIVE and **never** auto-retried" rule: diagnosing *why* the clock ran out is the
+   point.
+
+10. **Revert dead levers; keep coherent ones — the workload verdict is not the code
+    verdict.** Exp #6's feature-cache had literally zero benefit, so it was **reverted** to
+    keep `src/` truthful. Exp #5's ordinal warm-start was also a rejected *workload result*
+    (+3%, below bar), but it is a harmless, exact, coherent completion of a shipped feature
+    that never regresses — so it was **kept**. "REJECTED" applied to a measurement; the
+    decision about the code is separate.
+
+11. **Curate the deliverable; the notebook is evidence, not product.** "Open a PR with only
+    the validated change" meant cutting a clean `feat/warm-start-init` branch from `main`
+    with just the warm-start diff + CHANGELOG + REPORT.md — *not* PR-ing the research branch
+    with all six diagnostic scripts and the full lab notebook. And be honest about the gaps
+    the guardrails impose: the PR ships **without a unit test** because the integrity hook
+    protects `tests/`, disclosed in the PR body as a follow-up rather than worked around.

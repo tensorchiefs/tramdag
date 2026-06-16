@@ -351,3 +351,37 @@ WHAT THIS TEACHES / CORRECTIONS:
   benchmark's CPU regime) — but it corrects the device guidance: for *large-batch*
   TRAM-DAG training, CUDA is the clear winner; the earlier blanket "GPU loses here"
   was over-generalized from one batch size. Honest negative-of-my-own-finding.
+
+### V1b — CPU-parallelism control (does the CPU's small-batch win rely on cores?)
+
+Follow-up `experiments/verify_gpu_cpu_cores.py`: pinned torch to 1/10/20 threads
+across the batch sweep and sampled real CPU utilization (`/proc/stat`,
+overall + per-core) — the CPU analogue of the GPU's 23% SM number.
+
+Per-step ms (default 3-node model), cpu@{1,10,20} threads vs cuda:
+
+| batch | cpu@1 | cpu@10 | cpu@20 | cuda |
+|---|---|---|---|---|
+| 4,096   | 38.6 | **17.6** | 24.4 | 37.2 |
+| 16,384  | 146.9 | **35.6** | 63.7 | 38.9 |
+| 65,536  | 656.9 | 126.2 | 127.2 | **37.8** |
+| 262,144 | 2925 | 513 | 529 | **57.3** |
+
+CPU utilization during a sustained loop (overall% / busy-core-equiv / #cores>50%):
+- b=4,096, 1 thread → 5.1% / ~1.0 core / 1 core >50%
+- b=4,096, 20 threads → 20.2% / ~4.0 cores / **0 cores >50%** (tiny ops spread thin
+  — why 20 threads is *worse* than 10 at small batch: oversubscription, no core
+  saturated)
+- b=262,144, 1 thread → 5.2% / ~1.0 core / 1 core >50%
+- b=262,144, 20 threads → 69.2% / ~13.8 cores / **20 cores >50%** (large arrays
+  parallelize well)
+
+FINDING: **the GPU-crossover batch depends on CPU thread count** — 1 thread: GPU
+wins at *every* batch (≥4,096); 10 threads (the box's optimum): CPU wins to ~16k,
+crossover ~32–64k; 20 threads: crossover ~16k. So the CPU's small-batch win *is*
+partly a multicore effect — with a single thread the GPU already wins at 4,096.
+But (a) it is not an artifact (the CPU legitimately uses ~10 cores at batch
+4k–16k to beat the dispatch-bound GPU), and (b) the headline is invariant to
+thread count: tiny ops neither parallelize on CPU (1 core busy at small batch) nor
+saturate the GPU (23% SM), and the GPU wins decisively (3–9×) at large batch
+regardless. The crossover *moves* with CPU parallelism; the *conclusion* doesn't.

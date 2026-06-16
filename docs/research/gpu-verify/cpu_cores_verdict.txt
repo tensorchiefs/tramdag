@@ -1,0 +1,1 @@
+GPU-crossover batch (first batch GPU wins) by CPU threads: 1t->None, 10t->4096, 20t->4096. Crossover shifts with CPU threads -> CPU parallelism matters near the boundary; GPU still wins decisively at large batch.

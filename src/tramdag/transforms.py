@@ -157,7 +157,7 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
-    def warm_start_theta(self, q: float = 0.05) -> Tensor:
+    def marginal_init_theta(self, q: float = 0.05) -> Tensor:
         """Unconstrained Bernstein coefficients (n_params,) whose transform is the
         *calibrated linear* map of the pre-scaled domain [-B, B] onto the standard
         logistic quantiles [logit(q), logit(1-q)].
@@ -241,7 +241,7 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
     return torch.cat([neg_inf, first, pos_inf], dim=1)
 
 
-def ordinal_warm_start_theta(counts, eps: float = 1e-3) -> Tensor:
+def ordinal_marginal_init_theta(counts, eps: float = 1e-3) -> Tensor:
     """Unconstrained cutpoint params ``theta_tilde`` (K-1,) whose marginal
     ``P(Y<=k) = sigmoid(cutpoint_k)`` matches the empirical class frequencies.
 
@@ -249,7 +249,7 @@ def ordinal_warm_start_theta(counts, eps: float = 1e-3) -> Tensor:
     ``c_0 = tt[0]``, ``c_i = c_0 + sum_{j<=i} exp(tt[j])``, so given the target
     ``c_k = logit(F(k))`` (empirical CDF, clamped off 0/1), recover
     ``tt[0] = c_0`` and ``tt[i] = log(c_i - c_{i-1})``. Like the Bernstein
-    warm-start, a pure init: the converged MLE is unchanged. ``counts`` is the
+    marginal-init, a pure init: the converged MLE is unchanged. ``counts`` is the
     per-class count vector (length K)."""
     import numpy as np
     counts = np.asarray(counts, dtype=np.float64)

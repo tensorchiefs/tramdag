@@ -112,19 +112,28 @@ hypothesis. You may delete `docs/research/HEARTBEAT.md` in this commit.
 ## Runaway protection (hard timeout)
 
 Any experiment can hang (a stuck line search, an unsupported device op, a
-fat-fingered epoch count). Bound every experiment with an **OS-level** timeout —
-do not rely on noticing it yourself:
+fat-fingered epoch count). Bound every run with an **OS-level** timeout — do not
+rely on noticing it yourself:
 
-- Record the **Experiment #0 baseline benchmark wall-clock**. Cap every later
-  experiment command at `min(5 × baseline, 30 min)` and wrap it in `timeout`,
-  e.g. `timeout <cap_seconds> uv run python ...`. The baseline anchor
-  auto-calibrates to this machine (a slow CPU box and a fast GPU get
-  proportionate caps); the 30-min ceiling aligns with the ≤1-experiment-per-30-min
-  pacing and the 20-experiment total.
+- **Anchor the cap to the baseline wall-clock of the *same scope* you re-run, not
+  to a flat ceiling.** Record how long Experiment #0 takes for each scope you'll
+  reuse — the full 3-seed grid (`bench_training.py`) and any smaller subset you
+  iterate on. Cap a later run at **~2–3× the baseline wall-clock of that same
+  scope** and wrap it in `timeout`. A legitimate re-run (even a slightly slower
+  variant) finishes inside that; a genuinely hung fit, which would run unbounded,
+  is killed. Example: if the full grid took ~T at baseline, run a confirmation
+  with `timeout $((3*T_seconds)) uv run python -u bench_training.py ...`.
+- **This is separate from pacing.** "≤1 experiment per 30 min" caps *cadence and
+  token burn* (idle-wait between experiments) — it is **not** a limit on how long
+  a single run may take. If the full grid is ~57 min on this machine, an
+  experiment that re-runs it is fine; it just means experiments are naturally
+  ~hourly here. Use a **targeted subset** (one workload / fewer seeds, or
+  `--quick`) for fast iteration, and reserve the full 3-seed grid for *confirming*
+  a candidate — each with its own scope-anchored timeout.
 - **On timeout:** the process is killed by the OS and the command returns
-  non-zero. Log that experiment as `INCONCLUSIVE (timed out)`, downrank the idea,
-  and move on. **Do not auto-retry** the same configuration — it will just hang
-  again.
+  non-zero. Log that run as `INCONCLUSIVE (timed out)` — **never** read a SIGTERM
+  as "no improvement". Downrank the idea and move on; **do not auto-retry** the
+  same configuration unchanged — it will just hang again.
 
 ## Scientific integrity (no gaming the metric)
 

@@ -4,7 +4,7 @@
 
 ### Added
 
-- **`fit(warm_start=True)`** — opt-in calibrated initialization for *unconditional*
+- **`fit(marginal_init=True)`** — opt-in calibrated initialization for *unconditional*
   (`SimpleIntercept`) nodes, replacing zuko's default zero init. Bernstein roots
   start at the linear map of the pre-scaled domain onto the standard-logistic
   5/95 quantiles (the default is ~2.5× too steep); ordinal roots start at the

@@ -157,6 +157,30 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
+    def marginal_init_theta(self, q: float = 0.05) -> Tensor:
+        """Unconstrained Bernstein coefficients (n_params,) whose transform is the
+        *calibrated linear* map of the pre-scaled domain [-B, B] onto the standard
+        logistic quantiles [logit(q), logit(1-q)].
+
+        Rationale: after ``set_range`` each node's 5%/95% data quantiles already sit
+        at the domain bounds -+B, so a single canonical theta maps every node's body
+        onto the latent's 5%/95% quantiles -- the right *scale* from step 0. zuko's
+        default (zero) theta instead maps -+B onto ~-+log(2)*B/... (here -6.93/+7.63),
+        ~2.5x too steep, so early training is spent rescaling. This is a pure init:
+        the converged MLE is unchanged. See the inversion of
+        ``BernsteinTransform._constrain_theta`` (cumsum of softplus diffs)."""
+        import math
+        n = self._n
+        a = math.log(q) - math.log(1.0 - q)        # logit(q), e.g. -2.9444 at q=.05
+        span = -2.0 * a                            # logit(1-q) - logit(q)
+        order = n + 1                              # constrained control points: n+2
+        b = span / order                           # per-step increment (constant)
+        shift = math.log(2.0) * n / 2.0            # zuko's centering offset
+        theta = torch.full((n,), math.log(math.expm1(b)),
+                           dtype=self.xmin.dtype, device=self.xmin.device)
+        theta[0] = a + shift
+        return theta
+
 
 class SplineUT(_ScaledUT):
     """Monotone rational-quadratic spline (zuko ``MonotonicRQSTransform``)."""
@@ -215,6 +239,29 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
         rest = first + torch.cumsum(torch.exp(theta_tilde[:, 1:]), dim=1)
         return torch.cat([neg_inf, first, rest, pos_inf], dim=1)
     return torch.cat([neg_inf, first, pos_inf], dim=1)
+
+
+def ordinal_marginal_init_theta(counts, eps: float = 1e-3) -> Tensor:
+    """Unconstrained cutpoint params ``theta_tilde`` (K-1,) whose marginal
+    ``P(Y<=k) = sigmoid(cutpoint_k)`` matches the empirical class frequencies.
+
+    Inverts ``ordinal_cutpoints``: the finite cutpoints are
+    ``c_0 = tt[0]``, ``c_i = c_0 + sum_{j<=i} exp(tt[j])``, so given the target
+    ``c_k = logit(F(k))`` (empirical CDF, clamped off 0/1), recover
+    ``tt[0] = c_0`` and ``tt[i] = log(c_i - c_{i-1})``. Like the Bernstein
+    marginal-init, a pure init: the converged MLE is unchanged. ``counts`` is the
+    per-class count vector (length K)."""
+    import numpy as np
+    counts = np.asarray(counts, dtype=np.float64)
+    p = counts / counts.sum()
+    F = np.clip(np.cumsum(p)[:-1], eps, 1 - eps)        # P(Y<=k), k=0..K-2
+    c = np.log(F) - np.log1p(-F)                         # logit -> increasing
+    c = np.maximum.accumulate(c)                         # guard ties (empty classes)
+    diffs = np.maximum(np.diff(c), eps)
+    tt = np.empty_like(c)
+    tt[0] = c[0]
+    tt[1:] = np.log(diffs)
+    return torch.as_tensor(tt)
 
 
 def _bounds(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:

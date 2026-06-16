@@ -28,8 +28,12 @@ Remaining, re-ranked:
    *just* the shift params after the Adam plateau (LBFGS already wins W1 outright
    in Exp #0 at 4.6s but is fragile/not-robust). Expected gain real but narrow
    (W1 only) and fragile. Borderline worth one experiment. **TOP, but <high.**
-2. batch-size × lr scaling for W3 throughput — only if W3/GPU cached; GPU loses
-   here (Exp #0). Low.
+2. **Large-batch + lr-scaled GPU throughput config** — UPRANKED after Verification
+   V1: "GPU loses here" was wrong (it loses only at batch ≤~8k; CUDA wins 3–14× at
+   batch ≥~64k, util ~23% at small batch = dispatch-bound). For big TRAM-DAGs a
+   large-batch CUDA config is a real, broadly-applicable throughput win — the one
+   genuinely live lever left. Open risk: lr/schedule must be retuned for the huge
+   batch (time-to-target, not just per-step throughput). Medium.
 3. RQS tail-slope fix — accuracy lever, may help optimization indirectly. Low.
 4. per-node Adam betas/eps — low expected gain.
 
@@ -37,12 +41,15 @@ DOWNRANKED: `val_every=N` — entangled with the plateau/freeze schedule (val
 drives lr-decay + freezing) and the metric's detection granularity; not the clean
 overhead lever it looked like.
 
-DEAD ENDS (tested): thread count (Exp #2, <10%), CUDA/device (Exp #0, slower),
-torch.compile (Exp #3, double-backward), feature-cache (Exp #6, ~0%), warm-start
-on coefficient-bound workloads (Exp #4/#5, init can't move W1).
+DEAD ENDS (tested): thread count (Exp #2, <10%), torch.compile (Exp #3,
+double-backward), feature-cache (Exp #6, ~0%), warm-start on coefficient-bound
+workloads (Exp #4/#5, init can't move W1).
+CORRECTED (Verification V1): CUDA/device is NOT a dead end — GPU loses only at
+small batch (≤~8k, the harness default 512); it wins 3–14× at large batch. Moved
+to live idea #2. The dispatch-bound diagnosis stands; the "device is hopeless"
+conclusion was over-generalized from one batch size.
 
-ASSESSMENT: expected gain at the top of the backlog is now low and narrow
-(W1-only, fragile). Per the mission's stop rule (top-of-backlog expected gain
-<5%, broadly), the productive search is ~exhausted. One confirmed broadly-safe
-win banked (warm-start). Lean toward wrapping up: write REPORT.md + open the PR.
-Notes: defaults stay untouched (opt-in flags) until the final report.
+ASSESSMENT: the per-step *CPU* search is exhausted and one broadly-safe CPU win is
+banked (warm-start, PR #9). Verification V1 reopened one live lever: large-batch
+GPU throughput (untested as a time-to-target config). Otherwise the high-value
+space is mapped. Notes: defaults stay untouched (opt-in flags).

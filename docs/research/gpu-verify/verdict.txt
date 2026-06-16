@@ -1,0 +1,1 @@
+OVERTURNED/qualified: CUDA beats CPU at size=scaled, batch=16384 (speedup 1.14); crossover exists as work-per-step grows.

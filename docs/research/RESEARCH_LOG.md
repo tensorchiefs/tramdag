@@ -304,3 +304,50 @@ WHAT THIS TEACHES:
   headroom is **coefficient-convergence speed** on the `ls`/shift params (per-group
   lr, LBFGS polish) — and that is W1-specific, fragile (LBFGS, Exp #0), and narrow.
   The high-value search space is nearly exhausted.
+
+---
+
+## Verification V1 — independent re-test of "CUDA slower than CPU" (OVERTURNS, qualified)
+
+WHY: the Exp #0 claim "CUDA is 2–4× slower than this box's CPU for these models"
+was questioned. Re-tested with a fresh standalone script (`experiments/verify_gpu.py`,
+NOT importing bench_training) with explicit artifact controls — untimed CUDA
+warm-up, `torch.cuda.synchronize()` bracketing, and asserts that params+data are
+on cuda — then swept **work-per-step** on both axes (batch × model size), the
+crossover the "tiny models lose" claim predicts.
+
+COMMANDS: `uv run python verify_gpu.py` → `docs/research/gpu-verify/{crossover.csv,
+gpu_util.txt,verdict.txt}`. Per-step median wall over 3 seeds, cpu vs cuda.
+
+NUMBERS — speedup = cpu_ms / cuda_ms (>1 = GPU wins):
+
+| batch | default (3-node, 20-coeff) | scaled (6-node, 32-coeff) |
+|---|---|---|
+| 4,096   | 0.50 | 0.50 |
+| 16,384  | 0.93 | **1.14** |
+| 65,536  | **3.09** | **7.54** |
+| 262,144 | **8.95** | **14.04** |
+
+Mechanism: at default-spec batch 4096, mean SM utilization is **~23%** (most
+`nvidia-smi dmon` samples at 8%) — the GPU sits idle between tiny kernel launches,
+i.e. dispatch-bound, exactly as the per-step profiler said.
+
+VERDICT: **OVERTURNED as an unqualified statement; CONFIRMED only narrowly.** The
+GPU *does* lose — but only in the small-per-step-work regime the benchmark uses
+(batch 512 in Exp #0; ≤~8k here). There is a clean **crossover**: CUDA wins from
+batch ~16k (larger models) / ~64k (default model) and reaches **8–14×** at large
+batch. The dispatch-bound *diagnosis* was right; the *device conclusion* I drew
+from it was over-generalized.
+
+WHAT THIS TEACHES / CORRECTIONS:
+- **Exp #0's "CUDA 2–4× slower" is true only at batch ≤~8k** (the harness default
+  512). It is NOT a property of "these models" in general.
+- **The W3 framing was wrong.** I dismissed the throughput regime (vaca-ci n=50k
+  *batch 4096*) as GPU-unfavourable — but batch 4096 is below the crossover. The
+  same n=50k data at batch ~32–50k would put the GPU **multiple× ahead**. The lever
+  for GPU is exactly what the profiler implied: feed it more work-per-step (big
+  batch), not abandon it.
+- This does NOT change the shipped result (warm-start, PR #9, validated on the
+  benchmark's CPU regime) — but it corrects the device guidance: for *large-batch*
+  TRAM-DAG training, CUDA is the clear winner; the earlier blanket "GPU loses here"
+  was over-generalized from one batch size. Honest negative-of-my-own-finding.

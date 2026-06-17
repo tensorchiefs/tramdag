@@ -385,3 +385,57 @@ But (a) it is not an artifact (the CPU legitimately uses ~10 cores at batch
 thread count: tiny ops neither parallelize on CPU (1 core busy at small batch) nor
 saturate the GPU (23% SM), and the GPU wins decisively (3–9×) at large batch
 regardless. The crossover *moves* with CPU parallelism; the *conclusion* doesn't.
+
+---
+
+## Experiment #7 — classical seeding of the flexible model (SPEED confirmed, QUALITY null/negative)
+
+HYPOTHESES: fit the all-`ls` model with `fit_classical` (exact MLE, fast), seed a
+flexible (ci/cs) model from it, continue with Adam. (1) **Speed**: reaches target
+in fewer steps. (2) **Quality (headline)**: lands in a better basin → recovers the
+true ATE on magic-mrclean/nl *without* `restore_best` (cold flexible MLE overfits
+confounding to ~+0.076; early stopping recovers ~+0.10; truth +0.104).
+
+CHANGE (opt-in, defaults untouched): `flow.seed_from_classical(classical_flow)` +
+residual bases on `ComplexShift`/`ComplexIntercept`. Direct-copy the matching
+ls/SimpleIntercept/Bernstein parts; for upgraded cs/ci edges seed a linear/constant
+base from the classical solution with the MLP zeroed. Key identity: a classical
+`ls` shift `w·parent` ≡ `±w·parent` added to the *first* transform param (Bernstein
+θ[0] +, ordinal t0 −). **Init-equivalence verified exact**: seeded flexible
+`log_prob` = classical `log_prob` (per-row max diff 4.6e-5, float32 noise) on the
+full flexible stroke spec (Age ci + NIHSSa cs).
+
+COMMANDS: `uv run python exp_seed_classical.py` (4 arms × 3 seeds; reads only
+obs/rct, true ATE is the documented constant, not truth.json).
+
+NUMBERS — recovered ATE (median; truth +0.104), magic-mrclean/nl flexible:
+
+| arm | ATE | per-seed |
+|---|---|---|
+| cold-MLE | +0.0789 | [0.079, 0.078, 0.103] |
+| cold+restore_best | +0.0886 | [0.089, 0.063, 0.104] |
+| **seeded-MLE** | **+0.0763** | [0.077, 0.076, 0.076] |
+| **seeded+restore_best** | **+0.0753** | [0.075, 0.072, 0.077] |
+
+Speed (val-NLL): seeded at **epoch 1 already ~10.5** (the classical near-optimum)
+vs cold random-init **25 / 19,339 / 13,353**; seeded reaches target in ~21 epochs;
+cold never reaches seeded's (lower) converged NLL within 2000 epochs.
+
+VERDICT: **SPEED CONFIRMED (dramatic); QUALITY NULL→NEGATIVE.** Seeding does not
+recover the true ATE — it anchors to the biased classical +0.076 (near-zero
+variance) and *undermines* the restore_best recovery (seeded best-val-NLL **is** the
+classical anchor, so seeded+restore_best = +0.075, worse than cold+restore_best).
+
+WHAT THIS TEACHES (the real result):
+- **Lower observational NLL ≠ better causal recovery.** Seeding finds a lower-NLL
+  basin that is *more* confounded, not less. You cannot fix confounding overfit by
+  better-anchored fitting; the classical anchor *cements* the confounded solution.
+- The +0.10 recovery in the project comes from `restore_best` catching a *causally*
+  good intermediate (high val NLL, low confounding). Seeding moves the best-val
+  point onto the classical anchor, so it **defeats** the only mechanism that was
+  recovering the effect. Causal footgun.
+- Mechanism is correct and a genuine *speed* lever for reaching the flexible MLE —
+  but reaching that MLE faster is the wrong target for causal use. **Not shipped to
+  main** (no PR): the headline hypothesis failed and the speed win carries a causal
+  caveat. Kept opt-in on the research branch as a validated capability + cautionary
+  result. Fast suite green (63 passed); full suite not run (not a confirmed win).

@@ -366,6 +366,83 @@ class CausalFlowDAG(nn.Module):
                              for p, m in shifts.items()}
         return out
 
+    @staticmethod
+    def _zero_last_layer(net: nn.Sequential) -> None:
+        """Zero the MLP's final Linear so its output is exactly 0 at init (the
+        residual base then carries the whole conditional)."""
+        net[-1].weight.zero_()
+        if getattr(net[-1], "bias", None) is not None:
+            net[-1].bias.zero_()
+
+    def seed_from_classical(self, classical: "CausalFlowDAG") -> "CausalFlowDAG":
+        """Initialize this (flexible) model from a **fitted all-`ls`** ``classical``
+        model so it *starts at the classical solution* and Adam then learns only the
+        nonlinear deviation (opt-in; nothing here runs unless you call it).
+
+        Transfer:
+        - ``ls`` edge kept ``ls`` / ``SimpleIntercept`` kept / Bernstein ranges →
+          copied directly;
+        - ``ls`` edge upgraded to ``cs`` → residual ``ComplexShift``: the linear
+          ``base`` is seeded with the classical weight and the MLP is zeroed;
+        - ``ls`` parent upgraded to ``ci`` → residual ``ComplexIntercept``: the
+          classical constant intercept goes into ``base_bias`` and each classical
+          ``ls`` weight ``w`` is folded into the *first* transform parameter
+          (continuous ``+w``; ordinal ``−w``, matching the shift sign), with the MLP
+          zeroed. This reproduces the classical conditional exactly at init —
+          verified by ``log_prob`` equality (see ``experiments/exp_seed_classical``).
+
+        Continuous nodes must use the ``bernstein``/``affine`` transform (a constant
+        output shift maps to the first parameter); ``spline`` ci-seeding is
+        unsupported. ``classical`` must be all-`ls` and share this model's DAG."""
+        if not classical._is_all_ls():
+            raise ValueError("seed_from_classical: `classical` must be an all-`ls` model")
+        if list(self.order) != list(classical.order):
+            raise ValueError("seed_from_classical: specs must share the same nodes")
+        self.float()
+        with torch.no_grad():
+            for name in self.order:
+                fnode, cnode = self.nodes[name], classical.nodes[name]
+                if fnode.kind == "continuous":
+                    fnode.ut.set_range(float(cnode.ut.xmin), float(cnode.ut.xmax))
+                ctheta = cnode.intercept.theta.detach()        # classical (n_params,)
+                if isinstance(fnode.intercept, SimpleIntercept):
+                    fnode.intercept.theta.copy_(ctheta)
+                else:                                          # upgraded to ci
+                    self._seed_ci_intercept(name, fnode, cnode, ctheta)
+                for parent, module in fnode.shifts.items():
+                    w = cnode.shifts[parent].weight.detach().view(1, -1)
+                    if isinstance(module, LinearShift):
+                        module.fc.weight.copy_(w)
+                    else:                                      # residual ComplexShift
+                        if module.base is None:
+                            self._attach_residual_shift(module)
+                        self._zero_last_layer(module.net)
+                        module.base.weight.copy_(w)
+        return self
+
+    def _attach_residual_shift(self, module: ComplexShift) -> None:
+        n_feat = module.net[0].in_features
+        module.base = nn.Linear(n_feat, 1, bias=False).to(self.device)
+
+    def _seed_ci_intercept(self, name, fnode, cnode, ctheta) -> None:
+        """Fold the classical (constant intercept + ls weights of the ci-parents)
+        into a residual ComplexIntercept; zero the MLP so it starts at classical."""
+        inter = fnode.intercept
+        n_params = ctheta.shape[0]
+        n_feat = inter.net[0].in_features
+        if inter.base_bias is None:                            # attach residual base
+            inter.base_bias = nn.Parameter(torch.zeros(n_params, device=self.device))
+            inter.base_lin = nn.Linear(n_feat, n_params, bias=False).to(self.device)
+        self._zero_last_layer(inter.net)
+        inter.base_bias.copy_(ctheta)
+        inter.base_lin.weight.zero_()
+        sign = 1.0 if fnode.kind == "continuous" else -1.0    # shift convention
+        col = 0
+        for p in fnode.ci_parents:                            # classical ls weight -> theta[0]
+            w = cnode.shifts[p].weight.detach().view(-1)      # (width(p),)
+            inter.base_lin.weight[0, col:col + w.numel()] = sign * w
+            col += w.numel()
+
     def fit_classical(self, train_df: pd.DataFrame, *, max_iter: int = 400,
                       tol: float = 1e-6, verbose: bool = True) -> dict:
         """Fit an **all-``ls``** model classically: full-batch, **float64**,

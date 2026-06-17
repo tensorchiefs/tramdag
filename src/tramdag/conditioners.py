@@ -33,18 +33,33 @@ class SimpleIntercept(nn.Module):
 
 
 class ComplexIntercept(nn.Module):
-    """Transform parameters as a function of the (joint) ci-parent features."""
+    """Transform parameters as a function of the (joint) ci-parent features.
 
-    def __init__(self, n_features: int, n_params: int):
+    ``residual=True`` adds a trainable linear+constant base ``base_bias +
+    base_lin(x)`` to the MLP output — used by ``seed_from_classical`` to anchor
+    the module at a classical (constant intercept + linear-shift) solution while
+    the MLP learns the deviation. Default ``False`` reproduces the original module
+    exactly (no base params)."""
+
+    def __init__(self, n_features: int, n_params: int, residual: bool = False):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(n_features, 8), nn.ReLU(),
             nn.Linear(8, 8), nn.ReLU(),
             nn.Linear(8, n_params, bias=False),
         )
+        if residual:
+            self.base_bias = nn.Parameter(torch.zeros(n_params))
+            self.base_lin = nn.Linear(n_features, n_params, bias=False)
+        else:
+            self.base_bias = None
+            self.base_lin = None
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.net(x)
+        out = self.net(x)
+        if self.base_bias is not None:
+            out = out + self.base_bias + self.base_lin(x)
+        return out
 
 
 class LinearShift(nn.Module):
@@ -61,7 +76,12 @@ class LinearShift(nn.Module):
 
 
 class ComplexShift(nn.Module):
-    def __init__(self, n_features: int):
+    """``residual=True`` adds a trainable linear base ``base(x)`` to the MLP output
+    (seeded to a classical ``ls`` weight by ``seed_from_classical``; the MLP starts
+    near-zero and learns the nonlinear deviation). Default ``False`` reproduces the
+    original module exactly."""
+
+    def __init__(self, n_features: int, residual: bool = False):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(n_features, 64), nn.ReLU(),
@@ -69,6 +89,10 @@ class ComplexShift(nn.Module):
             nn.Linear(128, 64), nn.ReLU(),
             nn.Linear(64, 1, bias=False),
         )
+        self.base = nn.Linear(n_features, 1, bias=False) if residual else None
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.net(x).squeeze(-1)
+        out = self.net(x).squeeze(-1)
+        if self.base is not None:
+            out = out + self.base(x).squeeze(-1)
+        return out

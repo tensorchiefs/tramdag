@@ -59,8 +59,9 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
   better-conditioned side chosen per element). The naive sigmoid difference saturates
   in float32 → *exactly zero* gradients → a node can freeze at init forever. Do not
   "simplify" it back.
-- **Seeding**: weight init happens at construction — call `torch.manual_seed` BEFORE
-  `CausalFlowDAG(spec)`, not just in `fit`.
+- **Seeding**: weight init happens at construction. Use `CausalFlowDAG(spec, seed=...)`
+  (the one obvious knob) — or call `torch.manual_seed` BEFORE `CausalFlowDAG(spec)`.
+  `fit(seed=...)` only seeds minibatch shuffling, not init.
 - **Spline tails are slope-clamped**: zuko's RQS extrapolates with a *fixed* slope
   outside [-5,5] regardless of θ, so the ~10% of data beyond the 5%/95% pre-scaling
   range is misweighted whenever the true tail slope differs — the structural reason

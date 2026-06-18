@@ -4,6 +4,17 @@
 
 ### Added
 
+- **API papercuts (issue #12):** `CausalFlowDAG(spec, seed=...)` seeds weight
+  initialization deterministically (one obvious reproducibility knob — `fit(seed=)`
+  only seeds shuffling); `save`/`load` now also carry a provenance `meta` block
+  (tramdag version, save time, device, and a machine/environment snapshot) and
+  `flow.meta` is repopulated on load, so cached models are self-describing;
+  `tramdag.machine_info()` exposes that snapshot (host, OS, CPU/GPU, cores, RAM,
+  python/torch/zuko/tramdag versions); a dev-install one-liner
+  (`pip install "git+https://github.com/tensorchiefs/tramdag.git@main"`) is
+  documented in the README and the Colab demo. (Training `history` already
+  round-tripped through `save`/`load`; now covered by a regression test.)
+
 - **`fit(marginal_init=True)`** — opt-in calibrated initialization for *unconditional*
   (`SimpleIntercept`) nodes, replacing zuko's default zero init. Bernstein roots
   start at the linear map of the pre-scaled domain onto the standard-logistic

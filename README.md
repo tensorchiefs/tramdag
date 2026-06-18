@@ -10,8 +10,8 @@
 
 **TRAM-DAGs** model each variable of a structural causal model with a
 (transformation-model) flow: one triangular normalizing flow from iid
-standard-logistic latents to the observed variables, whose Jacobian sparsity is
-exactly your causal DAG. Fit it **once** on observational data and answer all
+standard-logistic latents to the observed variables. The structure is of the triangular 
+Adjacency Matrix is exactly your causal DAG. Fit it **once** on observational data and answer all
 three rungs of Pearl's causal hierarchy — observational (L1), interventional
 (L2, the do-operator), and counterfactual (L3, Pearl abduction) — while keeping
 **interpretable effects**: every linear-shift coefficient is a log-odds ratio,
@@ -23,9 +23,9 @@ exactly as in classical proportional-odds models.
 > [zuko](https://zuko.readthedocs.io/stable/)); all of the paper's experiments are
 > replicated here with pinned tests.
 
-**5-minute showcase**: the Colab badge above fits the paper's bimodal benchmark
+**5-minute showcase**: the [Colab badge above](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb) fits the paper's bimodal benchmark
 live (GPU-ready) and walks L1 → L2 → L3, every answer checked against analytic
-ground truth. Didactic walkthrough of the model:
+ground truth. Further notebooks are available at [`notebooks/`](notebooks/) like the didactic walkthrough of the model:
 [`notebooks/intro_tram_dag.py`](notebooks/intro_tram_dag.py).
 
 ## Install
@@ -84,8 +84,8 @@ Per node, the transformation is additive on the latent (log-odds) scale —
 | edge term | meaning | interpretability |
 |---|---|---|
 | `ls` | linear shift `β·x_pa` | `exp(β)` is an odds ratio — one number per edge |
-| `cs` | complex shift `g(x_pa)` (MLP), still additive | odds-ratio *function*, plot `g` |
-| `ci` | complex intercept: the transform's parameters depend on the parents (several `ci` parents feed one joint network) | maximal flexibility, interactions |
+| `cs` | complex shift `g(x_pa)` (MLP), still additive | plot `g` |
+| `ci` | complex intercept: the transform's parameters depend on the parents (several `ci` parents feed one joint network) | maximal flexibility, interactions not interpretable |
 
 Continuous nodes carry a monotone 1-D transform (`bernstein` — TRAM-faithful
 default, `spline`, `affine`; `ContinuousNode(transform=..., transform_kwargs=...)`);
@@ -93,13 +93,11 @@ ordinal nodes an ordered-logit head `P(x ≤ k) = σ(θ_k − shift)`. Abduction
 for continuous nodes and truncated-logistic for ordinal ones, so
 `flow.sample(u=flow.abduct(df))` reproduces `df` exactly / level-exactly.
 
-How both fitting paths (stochastic `fit` and classical `fit_classical`) work, with
-links to the code and notes on the memory model and future optimizers:
-[`docs/fitting.md`](docs/fitting.md).
+There are two ways to fit the model: a stochastic deep learning optimizer (`fit`) and a 2nd order optimization like in the classical statistical models (`fit_classical`). The latter is more efficient for all-`ls` models (each node-conditional is then a classical transformation model). For more details, see the [`docs/fitting.md`](docs/fitting.md) file.
 
 ## Validation (all pinned by tests)
 
-- **Paper replication** — every experiment of the CLeaR paper is a registry
+- **Paper replication** — every experiment of the CLeaR paper [TODO: double-check this, reformualte] is tested against the registry
   family (numpy-only SCM + frozen CSVs + replication script):
 
   | family | paper | demonstrates |
@@ -129,7 +127,9 @@ What the tests actually guarantee — the principles behind them (known identiti
 the datasets and software they compare against, and how the ground truth was
 obtained) — is documented in [`tests/README.md`](tests/README.md).
 
-## Case study: individualized treatment effects in stroke
+<!-- ## Case study: individualized treatment effects in stroke
+
+
 
 The method's flagship application estimates individualized thrombectomy effects
 from the observational MAGIC cohort with external validation against the
@@ -148,10 +148,13 @@ including an `nl` variant where an all-`ls` model is provably misspecified:
 |---|---|---|
 | naive observational contrast | +0.303 | confounded (overstates 2.9×) |
 | all-`ls` flow | +0.076 | undershoots (misses the age-varying effect) |
-| flexible (`ci`/`cs`) flow | +0.101 | **recovers the truth** |
+| flexible (`ci`/`cs`) flow | +0.101 | **recovers the truth** | -->
 
 Full storyline, clinical-data context, R cross-check and reading notes:
 [`docs/stroke-case-study.md`](docs/stroke-case-study.md).
+
+## Testing policy
+See the [`tests/README.md`](tests/README.md) file for more details.
 
 ## Layout
 
@@ -184,7 +187,7 @@ If you use `tramdag`, please cite the method paper:
 }
 ```
 
-For the stroke application (and the `magic-mrclean` cohort design) additionally:
+<!-- For the stroke application (and the `magic-mrclean` cohort design) additionally:
 
 ```bibtex
 @article{duerr2026stroke,
@@ -196,4 +199,4 @@ For the stroke application (and the `magic-mrclean` cohort design) additionally:
   journal = {arXiv preprint arXiv:2606.12623},
   year   = {2026},
 }
-```
+``` -->

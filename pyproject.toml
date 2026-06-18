@@ -40,6 +40,10 @@ dev = [
     "scikit-learn",
     "matplotlib",
 ]
+notebooks = [
+    "jupytext",
+    "ipykernel",   # so JupyterLab / VS Code can run the generated .ipynb
+]
 
 [build-system]
 requires = ["hatchling"]

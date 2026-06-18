@@ -5,6 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.19.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -17,8 +19,8 @@
 # *TRAM-DAGs* ([paper](https://arxiv.org/abs/2503.16206),
 # [original R/Keras code](https://github.com/tensorchiefs/tram-dag)) are causal models
 # that use **structured transformation functions** to map a latent representation
-# $Z$ to the observed data $X$. For continuous variables they are *bijective causal
-# models*, so once trained a single model answers all three rungs of Pearl's causal
+# $Z$ to the observed data $X$. For continuous variables they are **bijective causal
+# models**, so once trained a single model answers all three rungs of Pearl's causal
 # hierarchy:
 #
 # | rung | query | `tramdag` call |
@@ -151,8 +153,8 @@ plt.rcParams["figure.dpi"] = 110
 #   $\vartheta_k$ (an *ordered logit*). The flip makes a positive $\beta$ push $Y$
 #   towards *higher* categories.
 #
-# $X_2$ enters $X_3$ through a **complex shift** $g(x_2)=\tfrac12 x_2^2$ — a
-# U-shape that a linear shift cannot represent. We will exploit that later.
+# $X_2$ enters $X_3$ through a **complex shift** quadratic shift $g(x_2)=\tfrac12 x_2^2$ 
+# that a linear shift cannot represent. We will come to that later.
 
 # %%
 TRUE = dict(b21=1.5, b31=0.8, bY=1.0, theta_Y=np.array([-2.0, 0.0, 1.5]))
@@ -208,7 +210,8 @@ plt.show()
 # continuous node automatically gets its monotone baseline transformation
 # (default: Bernstein polynomial with 20 coefficients, the TRAM-faithful choice);
 # the edges declare how each parent enters.
-#
+# 
+# 
 # Fitting maximises the joint likelihood. Because the flow is triangular, the
 # negative log-likelihood **decomposes per node**
 # ($\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$), and one Adam optimizer
@@ -223,9 +226,8 @@ spec = {
     "Y":  OrdinalNode(levels=4, parents={"X3": "ls"}),
 }
 
-torch.manual_seed(7)            # weight init happens at construction -> seed BEFORE
-flow = CausalFlowDAG(spec)
-flow.fit(train_df, val_df, epochs=800, learning_rate=1e-2, batch_size=512, verbose=200)
+flow = CausalFlowDAG(spec, seed=1)  # seed here too, for the Bernsteins' initial uniform knots
+flow.fit(train_df, val_df, epochs=800, learning_rate=1e-2, batch_size=20000, verbose=200)
 flow.fit(train_df, val_df, epochs=300, learning_rate=1e-3, verbose=300)  # polish
 flow.nll(val_df)
 

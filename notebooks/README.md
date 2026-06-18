@@ -32,6 +32,30 @@ interpreter created by `uv sync`). No conversion needed.
 uvx jupytext --to ipynb notebooks/intro_tram_dag.py
 ```
 
+For frequent notebook editing you can install jupytext into the venv instead of
+using `uvx` each time: `uv sync --group notebooks`.
+
+**Edit in a synced copy** (interactive notebook, `.py` stays the source of
+truth): with the `notebooks` group installed, jupytext can keep a local `.ipynb`
+paired to the `.py` so your interactive edits flow back into the tracked `.py`.
+
+The cleanest way needs no `.ipynb` at all — in JupyterLab/Jupyter Notebook,
+right-click the `.py` → *Open With* → *Notebook*. Edits save straight back to the
+`.py`; there is nothing to clean up.
+
+If you'd rather click around in a real `.ipynb`, pair the two and sync edits back:
+
+```bash
+# one-time: create intro_tram_dag.ipynb paired to the .py
+uv run jupytext --set-formats ipynb,py:percent notebooks/intro_tram_dag.py
+# ...edit the .ipynb in Jupyter, then push changes into the .py:
+uv run jupytext --sync notebooks/intro_tram_dag.ipynb
+```
+
+The paired `.ipynb` stays git-ignored. Note that `--set-formats` adds `ipynb` to
+the `.py` header — revert that one-line header change before committing (the
+committed notebooks are paired to `py:percent` only).
+
 **Headless check** (runs all cells top-to-bottom, plots suppressed):
 
 ```bash

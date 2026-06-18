@@ -74,9 +74,7 @@ print(f"torch {torch.__version__}  device: {DEVICE}")
 # \end{aligned}
 # $$
 #
-# The DAG is $x_1 \to x_2$, $x_1 \to x_3$, $x_2 \to x_3$. Gaussian noise — so
-# this SCM is deliberately *outside* the model family TRAM-DAG uses internally
-# (logistic latents). No free lunch is being eaten here.
+# The DAG is $x_1 \to x_2$, $x_1 \to x_3$, $x_2 \to x_3$. 
 
 # %%
 gen = VacaTriangle(seed=42)

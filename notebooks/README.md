@@ -10,6 +10,7 @@ truth**.
 | `intro_tram_dag.py` | didactic walkthrough of the TRAM-DAG model (SI/CI/LS/CS, L1–L3, all claims checked against a hand-built SCM) |
 | `transforms_tram_dag.py` | choosing the per-node transform (Bernstein / spline / affine) on the intro SCM: per-node NLL diagnosis, recovered h-curves, mixing transforms per node, capacity sweep, and why misspecification bends tail-risk do() queries |
 | `classical_fit_tram_dag.py` | `fit_classical` for all-`ls` models: deterministic float64 L-BFGS vs Adam (bimodal demo), exact equivalence to statsmodels ordered-logit (stroke) with an R `tram::Colr` snippet, and the classical→further-training warm-start handoff |
+| `stroke_case_study.py` | reproduces the stroke ITE paper ([arXiv:2606.12623](https://arxiv.org/abs/2606.12623)) on the public synthetic `magic-mrclean` cohort: ITE distribution (Fig. 5), model-simulated trial (Fig. 6), treated-arm discrimination (Fig. 7), ATE consistency (Table 3) — plus the ITE-vs-ground-truth validation the clinical study couldn't do |
 | `demo_tram_dag_colab.py` | 5-minute showcase on the paper's bimodal VACA benchmark, GPU-ready ([open in Colab](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)) |
 
 ## Rules

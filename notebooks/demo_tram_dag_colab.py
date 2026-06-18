@@ -19,7 +19,7 @@
 # **TRAM-DAGs** ([Sick & Dürr, CLeaR 2025](https://arxiv.org/abs/2503.16206)) are
 # *interpretable neural causal models*: one normalizing flow wired exactly like
 # the **adjacency matrix of your causal DAG** — each variable is transformed
-# conditional on its parents, nothing else. Fit it **once** on observational
+# conditional on its parents. Fit it **once** on observational
 # data and you can
 #
 # 1. **L1** sample / score the observational distribution,
@@ -44,6 +44,8 @@ import time
 
 if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "tramdag"])
+    # to track active development instead of the latest release, use:
+    #   pip install "git+https://github.com/tensorchiefs/tramdag.git@main"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,7 +112,7 @@ torch.manual_seed(0)
 flow = CausalFlowDAG(spec, device=DEVICE)
 t0 = time.perf_counter()
 flow.fit(train, val, epochs=400, learning_rate=1e-1, batch_size=4096,
-         verbose=50, schedule="plateau", plateau_patience=10, freeze_patience=30)
+         verbose=50, schedule="plateau", plateau_patience=10, freeze_patience=30, marginal_init=True)
 t_fit = time.perf_counter() - t0
 print(f"\nfitted on {DEVICE} in {t_fit:.1f}s "
       f"({len(flow.history['val'])} epochs, then froze itself)")

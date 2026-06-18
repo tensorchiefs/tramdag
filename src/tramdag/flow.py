@@ -84,13 +84,26 @@ class _Node(nn.Module):
 class CausalFlowDAG(nn.Module):
     """A causal normalizing flow defined by ``spec = {name: NodeSpec}``."""
 
-    def __init__(self, spec: dict[str, NodeSpec], device: str = "cpu"):
+    def __init__(self, spec: dict[str, NodeSpec], device: str = "cpu",
+                 seed: int | None = None):
+        """Build the flow from ``spec``.
+
+        Args:
+            seed: if given, seeds weight initialisation deterministically
+                (``torch.manual_seed`` is called before the nodes are
+                constructed). Because init happens here, this is the single
+                obvious knob for a reproducible model — ``fit(seed=...)`` only
+                controls minibatch shuffling.
+        """
         super().__init__()
+        if seed is not None:
+            torch.manual_seed(seed)
         self.spec = spec
         self.order = validate_and_sort(spec)
         self.nodes = nn.ModuleDict({name: _Node(name, spec[name], spec) for name in self.order})
         self.device = torch.device(device)
         self.history: dict = {"train": [], "val": [], "lr": [], "time": []}
+        self.meta: dict = {}   # provenance attached at save() (machine, versions)
         self.to(self.device)
 
     # ------------------------------------------------------------------ data
@@ -551,14 +564,31 @@ class CausalFlowDAG(nn.Module):
 
     # ------------------------------------------------------------------- io
     def save(self, path: str | Path) -> None:
+        """Checkpoint the model (spec + weights), its training ``history``, and a
+        provenance ``meta`` block (tramdag version, save time, device, and the
+        machine/environment it was trained on) so cached runs stay
+        self-describing — training-curve plots and timing comparisons can be
+        reconstructed from the file alone."""
+        from datetime import datetime, timezone
+
+        from . import __version__
+        from .env import machine_info
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
+        meta = {"tramdag_version": __version__,
+                "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "device": str(self.device),
+                "machine": machine_info()}
         torch.save({"spec": spec_to_dict(self.spec),
                     "state_dict": self.state_dict(),
-                    "history": self.history}, path)
+                    "history": self.history,
+                    "meta": meta}, path)
 
     @classmethod
     def load(cls, path: str | Path, device: str = "cpu") -> "CausalFlowDAG":
+        """Restore a model. ``flow.history`` and ``flow.meta`` are repopulated, so
+        a cached model can still produce training/diagnostic plots and report the
+        machine it was trained on."""
         ckpt = torch.load(path, map_location=device, weights_only=False)
         flow = cls(spec_from_dict(ckpt["spec"]), device=device)
         for name in flow.order:  # mark transforms as fitted before loading buffers
@@ -566,6 +596,7 @@ class CausalFlowDAG(nn.Module):
             if node.kind == "continuous":
                 node.ut._fitted = True
         flow.load_state_dict(ckpt["state_dict"])
-        flow.history = ckpt.get("history", {"train": [], "val": []})
+        flow.history = ckpt.get("history", {"train": [], "val": [], "lr": [], "time": []})
+        flow.meta = ckpt.get("meta", {})
         flow.eval()
         return flow

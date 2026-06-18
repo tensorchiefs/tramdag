@@ -31,9 +31,12 @@ ground truth. Didactic walkthrough of the model:
 ## Install
 
 ```bash
-pip install tramdag            # PyPI
+pip install tramdag            # latest release (PyPI)
+pip install "git+https://github.com/tensorchiefs/tramdag.git@main"   # dev version (track main)
 uv sync                        # or: dev setup from a clone (tests, experiments)
 ```
+
+Pin the dev install to a commit for reproducibility, e.g. `...tramdag.git@<sha>`.
 
 ## 30 seconds of API
 

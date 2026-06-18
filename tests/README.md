@@ -1,11 +1,6 @@
 # Tests — what they guarantee
 
-`tramdag` is a *methods* package, so its tests are written to verify **claims**,
-not to chase a line-coverage number. We deliberately do **not** track a coverage
-percentage: "which lines ran" says nothing about whether the causal estimates are
-correct. What matters here is that the flow reproduces known mathematical
-identities, agrees with independent implementations, and recovers ground truth we
-can compute exactly. This file describes those contracts and where each lives.
+This file gives an overview of the tests and how to run them.
 
 ## Running the tests
 

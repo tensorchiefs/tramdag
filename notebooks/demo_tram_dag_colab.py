@@ -53,7 +53,7 @@ import pandas as pd
 import scipy.stats as st  # for KDE plots only (preinstalled on Colab)
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode
+from tramdag import CausalFlowDAG, ContinuousNode, I
 from tramdag.simulations import VacaTriangle
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -102,8 +102,8 @@ plt.show()
 # %%
 spec = {
     "x1": ContinuousNode(),                                 # source
-    "x2": ContinuousNode(parents={"x1": "ci"}),
-    "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"}),
+    "x2": ContinuousNode(terms=[I("x1")]),
+    "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
 }
 
 torch.manual_seed(0)
@@ -248,8 +248,8 @@ plt.show()
 # %%
 def make_spec(transform):
     return {"x1": ContinuousNode(transform=transform),
-            "x2": ContinuousNode(transform=transform, parents={"x1": "ci"}),
-            "x3": ContinuousNode(transform=transform, parents={"x1": "ci", "x2": "ci"})}
+            "x2": ContinuousNode(transform=transform, terms=[I("x1")]),
+            "x3": ContinuousNode(transform=transform, terms=[I("x1"), I("x2")])}
 
 
 fits = {"bernstein": flow}                       # already trained above
@@ -296,8 +296,8 @@ plt.show()
 def timed_fit(device, epochs=60):
     torch.manual_seed(0)
     f = CausalFlowDAG({"x1": ContinuousNode(),
-                       "x2": ContinuousNode(parents={"x1": "ci"}),
-                       "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"})},
+                       "x2": ContinuousNode(terms=[I("x1")]),
+                       "x3": ContinuousNode(terms=[I("x1"), I("x2")])},
                       device=device)
     t0 = time.perf_counter()
     f.fit(train, val, epochs=epochs, learning_rate=1e-2, batch_size=4096, verbose=0)

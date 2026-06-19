@@ -26,7 +26,7 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 from common import DATA_R_REF, load_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode, LS, OrdinalNode  # noqa: E402
 
 PHASES = [(4000, 1e-2), (2000, 1e-3), (1000, 1e-4)]  # to tight convergence
 
@@ -47,12 +47,11 @@ def design(df: pd.DataFrame) -> pd.DataFrame:
 def all_ls_spec() -> dict:
     return {
         "Age": ContinuousNode(transform="bernstein"),
-        "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ls"}),
+        "mRS_pre": OrdinalNode(levels=6, terms=[LS("Age")]),
         "NIHSSa": ContinuousNode(transform="bernstein",
-                                 parents={"Age": "ls", "mRS_pre": "ls"}),
-        "T": OrdinalNode(levels=2, parents={"Age": "ls", "mRS_pre": "ls", "NIHSSa": "ls"}),
-        "mRS_3m": OrdinalNode(levels=7, parents={"Age": "ls", "mRS_pre": "ls",
-                                                 "NIHSSa": "ls", "T": "ls"}),
+                                 terms=[LS("Age"), LS("mRS_pre")]),
+        "T": OrdinalNode(levels=2, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa")]),
+        "mRS_3m": OrdinalNode(levels=7, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa"), LS("T")]),
     }
 
 

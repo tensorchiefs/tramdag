@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, CausalFlowDAG, ContinuousNode, LS, OrdinalNode
 
 plt.rcParams["figure.dpi"] = 110
 
@@ -87,9 +87,9 @@ def make_spec(transform, **kwargs):
     tk = dict(transform=transform, transform_kwargs=kwargs)
     return {
         "X1": ContinuousNode(**tk),
-        "X2": ContinuousNode(**tk, parents={"X1": "ls"}),
-        "X3": ContinuousNode(**tk, parents={"X1": "ls", "X2": "cs"}),
-        "Y": OrdinalNode(levels=4, parents={"X3": "ls"}),
+        "X2": ContinuousNode(**tk, terms=[LS("X1")]),
+        "X3": ContinuousNode(**tk, terms=[LS("X1"), CS("X2")]),
+        "Y": OrdinalNode(levels=4, terms=[LS("X3")]),
     }
 
 
@@ -207,10 +207,10 @@ plt.show()
 # %%
 spec_mixed = {
     "X1": ContinuousNode(transform="affine"),
-    "X2": ContinuousNode(transform="affine", parents={"X1": "ls"}),
+    "X2": ContinuousNode(transform="affine", terms=[LS("X1")]),
     "X3": ContinuousNode(transform="bernstein",
-                         parents={"X1": "ls", "X2": "cs"}),
-    "Y": OrdinalNode(levels=4, parents={"X3": "ls"}),
+                         terms=[LS("X1"), CS("X2")]),
+    "Y": OrdinalNode(levels=4, terms=[LS("X3")]),
 }
 flows["mixed"] = fit(spec_mixed)
 

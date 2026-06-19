@@ -20,7 +20,7 @@ import numpy as np
 from paper_common import (PAPER_N, cs_curve, fit_chunked, ls_weight,
                           plot_hist_grid, plot_trajectories, results_dir,
                           save_json)
-from tramdag import ContinuousNode, OrdinalNode
+from tramdag import ContinuousNode, LS, OrdinalNode, term
 from tramdag.simulations import TriangleMixed
 
 f_name = sys.argv[1] if len(sys.argv) > 1 else "linear"
@@ -33,8 +33,8 @@ train, val = df.iloc[: int(PAPER_N * 0.9)], df.iloc[int(PAPER_N * 0.9):]
 out = results_dir(f"paper-triangle-mixed-{f_name}-{model}")
 
 spec = {"x1": ContinuousNode(),
-        "x2": ContinuousNode(parents={"x1": "ls"}),
-        "x3": OrdinalNode(levels=4, parents={"x1": "ls", "x2": model})}
+        "x2": ContinuousNode(terms=[LS("x1")]),
+        "x3": OrdinalNode(levels=4, terms=[term("ls", "x1"), term(model, "x2")])}
 
 truths = {"beta12": 2.0, "beta13_zuko": -0.2}     # ordinal sign flip (see docstring)
 if model == "ls" and f_name == "linear":

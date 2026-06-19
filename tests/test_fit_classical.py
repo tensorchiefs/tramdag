@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, CausalFlowDAG, ContinuousNode, I, LS, OrdinalNode
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
@@ -20,12 +20,10 @@ DATA = Path(__file__).resolve().parents[1] / "data"
 def _stroke_ls_spec() -> dict:
     return {
         "Age": ContinuousNode(),
-        "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ls"}),
-        "NIHSSa": ContinuousNode(parents={"Age": "ls", "mRS_pre": "ls"}),
-        "T": OrdinalNode(levels=2, parents={"Age": "ls", "mRS_pre": "ls",
-                                            "NIHSSa": "ls"}),
-        "mRS_3m": OrdinalNode(levels=7, parents={"Age": "ls", "mRS_pre": "ls",
-                                                 "NIHSSa": "ls", "T": "ls"}),
+        "mRS_pre": OrdinalNode(levels=6, terms=[LS("Age")]),
+        "NIHSSa": ContinuousNode(terms=[LS("Age"), LS("mRS_pre")]),
+        "T": OrdinalNode(levels=2, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa")]),
+        "mRS_3m": OrdinalNode(levels=7, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa"), LS("T")]),
     }
 
 
@@ -36,7 +34,7 @@ def _obs() -> pd.DataFrame:
 # ------------------------------------------------------------------ fast
 def test_rejects_non_all_ls():
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "cs"})}
+            "x2": ContinuousNode(terms=[CS("x1")])}
     flow = CausalFlowDAG(spec)
     df = pd.DataFrame({"x1": np.random.randn(50), "x2": np.random.randn(50)})
     with pytest.raises(ValueError, match="all-`ls`"):
@@ -45,7 +43,7 @@ def test_rejects_non_all_ls():
 
 def test_rejects_ci_too():
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ci"})}
+            "x2": ContinuousNode(terms=[I("x1")])}
     with pytest.raises(ValueError):
         CausalFlowDAG(spec).fit_classical(
             pd.DataFrame({"x1": np.random.randn(50), "x2": np.random.randn(50)}))
@@ -82,8 +80,8 @@ def test_continuous_only_all_ls_runs():
     """All-continuous all-ls spec (vaca-style) is accepted and fits."""
     df = pd.read_csv(DATA / "vaca" / "obs.csv")
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ls"}),
-            "x3": ContinuousNode(parents={"x1": "ls", "x2": "ls"})}
+            "x2": ContinuousNode(terms=[LS("x1")]),
+            "x3": ContinuousNode(terms=[LS("x1"), LS("x2")])}
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
     rep = flow.fit_classical(df, max_iter=100, verbose=False)

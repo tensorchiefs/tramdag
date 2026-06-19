@@ -16,7 +16,7 @@ import pytest
 import torch
 from scipy import stats
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, CausalFlowDAG, ContinuousNode, I, LS, OrdinalNode
 from tramdag.simulations import (REGISTRY, Carefl4, TriangleContinuous,
                                   TriangleMixed, VacaTriangle)
 from tramdag.simulations.carefl import X_OBS
@@ -152,8 +152,8 @@ def test_triangle_linear_ls_recovers_coefficients():
     """Paper Sec. 6.1 / Fig. 14: beta12=2, beta13=-0.2, beta23=+0.3."""
     df = TriangleContinuous(f="linear", seed=42).observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ls"}),
-            "x3": ContinuousNode(parents={"x1": "ls", "x2": "ls"})}
+            "x2": ContinuousNode(terms=[LS("x1")]),
+            "x3": ContinuousNode(terms=[LS("x1"), LS("x2")])}
     flow = _fit(spec, df)
     assert abs(_w(flow, "x2", "x1") - 2.0) < 0.1
     assert abs(_w(flow, "x3", "x1") - (-0.2)) < 0.1
@@ -166,8 +166,8 @@ def test_triangle_atan_cs_recovers_coefficients_and_curve():
     gen = TriangleContinuous(f="atan", seed=42)
     df = gen.observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ls"}),
-            "x3": ContinuousNode(parents={"x1": "ls", "x2": "cs"})}
+            "x2": ContinuousNode(terms=[LS("x1")]),
+            "x3": ContinuousNode(terms=[LS("x1"), CS("x2")])}
     flow = _fit(spec, df)
     assert abs(_w(flow, "x2", "x1") - 2.0) < 0.1
     assert abs(_w(flow, "x3", "x1") - (-0.2)) < 0.1
@@ -186,8 +186,8 @@ def test_triangle_mixed_linear_ls_recovers_with_sign_flip():
 
     df = TriangleMixed(f="linear", seed=42).observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ls"}),
-            "x3": OrdinalNode(levels=4, parents={"x1": "ls", "x2": "ls"})}
+            "x2": ContinuousNode(terms=[LS("x1")]),
+            "x3": OrdinalNode(levels=4, terms=[LS("x1"), LS("x2")])}
     flow = _fit(spec, df)
     assert abs(_w(flow, "x3", "x1") - (-0.2)) < 0.1
     assert abs(_w(flow, "x3", "x2") - 0.3) < 0.1
@@ -203,8 +203,8 @@ def test_vaca_ci_flow_matches_interventional_moments():
     truth = json.loads((DATA / "vaca" / "truth.json").read_text())
     df = VacaTriangle(seed=42).observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ci"}),
-            "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"})}
+            "x2": ContinuousNode(terms=[I("x1")]),
+            "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
     flow = _fit(spec, df, epochs=(400, 120))
     # L1: bimodality of x1 is captured (the paper's headline vs CNF) — both
     # modes present: density mass on each side of the saddle near -0.3
@@ -230,8 +230,8 @@ def test_carefl_ci_flow_recovers_counterfactuals():
     gen = Carefl4(seed=42)
     df = gen.observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(),
-            "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"}),
-            "x4": ContinuousNode(parents={"x1": "ci", "x2": "ci"})}
+            "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
+            "x4": ContinuousNode(terms=[I("x1"), I("x2")])}
     flow = _fit(spec, df, epochs=(300, 100))
     rows = gen.observational(300, seed_offset=999)
     u = flow.abduct(rows)

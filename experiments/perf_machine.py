@@ -39,7 +39,7 @@ import pandas as pd
 import torch
 
 import tramdag as td
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, CausalFlowDAG, ContinuousNode, I, LS, OrdinalNode
 
 EPOCHS = 200  # fixed: every machine does identical work
 
@@ -63,9 +63,9 @@ WORKLOADS = {
         data=lambda: intro_dgp(5_000),
         spec=lambda: {
             "X1": ContinuousNode(),
-            "X2": ContinuousNode(parents={"X1": "ls"}),
-            "X3": ContinuousNode(parents={"X1": "ls", "X2": "cs"}),
-            "Y": OrdinalNode(levels=4, parents={"X3": "ls"}),
+            "X2": ContinuousNode(terms=[LS("X1")]),
+            "X3": ContinuousNode(terms=[LS("X1"), CS("X2")]),
+            "Y": OrdinalNode(levels=4, terms=[LS("X3")]),
         },
     ),
     "large": dict(
@@ -73,8 +73,8 @@ WORKLOADS = {
         data=lambda: td.simulations.VacaTriangle(seed=42).observational(50_000),
         spec=lambda: {
             "x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ci"}),
-            "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"}),
+            "x2": ContinuousNode(terms=[I("x1")]),
+            "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
         },
     ),
 }

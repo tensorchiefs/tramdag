@@ -38,35 +38,42 @@
 # %% [markdown]
 # ## 1. The model
 #
-# We assume a causal ordering of the variables. A TRAM-DAG is one **triangular**
-# transformation from iid latent noise $Z$ to the observed variables $X$, where each
-# $h$ is bijective (monotone increasing) in its first argument:
+# We assume a causal ordering of the variables. A TRAM-DAG fits, for each variable,
+# a monotone **transformation function** $h$ (bijective, monotone increasing) that
+# maps the observed value to a latent scale, conditional on the variable's parents:
 #
 # $$
 # \begin{align*}
-# 	x_1 &= h(z_1) \\
-# 	x_2 &= h(z_2 \mid x_1)\\
-# 	x_3 &= h(z_3 \mid x_1, x_2) \\
-# 	\dots &\\
-# 	x_p &= h(z_p \mid x_1, x_2, \dots, x_{p-1})
+# z_1 &= h(x_1) \\
+# z_2 &= h(x_2 \mid x_1)\\
+# z_3 &= h(x_3 \mid x_1, x_2) \\
+# \dots &\\
+# z_p &= h(x_p \mid x_1, x_2, \dots, x_{p-1})
 # \end{align*}
 # $$
 #
-# Each variable may only depend on a *subset* of its predecessors — its causal
-# parents $\mathrm{pa}(x_i)$ — so the Jacobian sparsity of the flow *is* the DAG.
+# This **observed → latent** map is the convention of the paper (Eq. 2,
+# $F_{X\mid\mathrm{pa}}(x)=F_U\!\big(h(x\mid\mathrm{pa})\big)$) and of the code
+# (`z = h(x) + shift`). It is also the **training direction**: $h$ is evaluated
+# *directly* to score the likelihood (cheap). **Sampling** runs the inverse
+# $x_i = h^{-1}(z_i \mid \mathrm{pa})$, which has no closed form and is solved by
+# bracketed bisection — the costlier direction.
+#
+# Together the $h$'s form one **triangular** flow; each variable may depend only on
+# a *subset* of its predecessors — its causal parents $\mathrm{pa}(x_i)$ — so the
+# Jacobian sparsity of the flow *is* the DAG.
 #
 # For the latents $z_1,\dots,z_p$ we assume a **standard logistic** distribution.
 # That choice is what makes the fitted parameters interpretable: shifts on the
-# latent scale are **log-odds ratios** (Section 5).
+# latent scale are **log-odds ratios** (Section 6).
 #
 # ### The four components
 #
 # To keep a valid interpretation, the transformation is decomposed **additively on
-# the latent scale**. Writing $h^{-1}$ for the (estimation-direction) inverse, each
-# node's transformation is
+# the latent scale**. Each node's $h$ (observed → latent, as above) is
 #
 # $$
-# z_i \;=\; h^{-1}(x_i \mid \mathrm{pa}(x_i)) \;=\;
+# z_i \;=\; h(x_i \mid \mathrm{pa}(x_i)) \;=\;
 # \underbrace{f_\theta(x_i)}_{\text{intercept}}
 # \;+\; \underbrace{\textstyle\sum_j \beta_{ij}\, x_j}_{\text{linear shifts (LS)}}
 # \;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts (CS)}} ,
@@ -86,25 +93,51 @@
 # * **Complex shift (CS):** $g(x_4)$ — an unrestricted (MLP) function of the
 #   parent, still *additive* on the latent scale.
 #
-# so that, in the generative direction,
+# so that **sampling** (the inverse direction) only has to invert the intercept —
+# the shifts move to the other side:
 #
 # $$
-# x_5 = h(z_5 \mid x_1, x_2, x_4) = f_\theta^{-1}\!\Big(z_5
+# x_5 = h^{-1}(z_5 \mid x_1, x_2, x_4) = f_\theta^{-1}\!\Big(z_5
 # - \underbrace{\beta_{51} x_1 + \beta_{52} x_2}_{\text{LS}}
 # - \underbrace{g(x_4)}_{\text{CS}}\Big).
 # $$
 #
-# The structure can be represented by an adjacency matrix whose entries are not 1s
-# but the **term labels**. In `tramdag` this labelled adjacency matrix is written
-# as a dict — each node lists `parents={parent: term}` with term ∈
-# `{"ls", "cs", "ci"}`:
+# In `tramdag` each node declares its transformation as an **additive formula of
+# terms** — `terms=[...]` — built from the constructors `I` (intercept), `LS`
+# (linear shift) and `CS` (complex shift), each naming the parent(s) it depends on:
 #
 # | paper component | `tramdag` |
 # |---|---|
-# | SI — baseline $f_\theta(x_i)$, constant $\theta$ | automatic: every node owns a monotone transform (`bernstein` / `spline` / `affine`); without `ci` parents its $\theta$ is a free parameter vector |
-# | CI — $\theta$ depends on parents | edge term `"ci"` (several `ci` parents feed **one joint** network → interactions) |
-# | LS — $\beta_{ij} x_j$ | edge term `"ls"` (a single weight, no bias) |
-# | CS — $g_{ik}(x_k)$ | edge term `"cs"` (64-128-64 MLP, additive) |
+# | SI — baseline $f_\theta(x_i)$, constant $\theta$ | automatic: every node owns a monotone transform (`bernstein` / `spline` / `affine`); with no intercept term its $\theta$ is a free parameter vector |
+# | CI — $\theta$ depends on parents | `I("X1")` (several `I(...)` parents feed **one joint** network → interactions) |
+# | LS — $\beta_{ij} x_j$ | `LS("X1")` (a single weight, no bias) |
+# | CS — $g_{ik}(x_k)$ | `CS("X1")` (64-128-64 MLP, additive) |
+
+# %% [markdown]
+# ### Gallery: a `terms=[...]` spec *is* an additive decomposition
+#
+# Read every spec line as a recipe for $h(x_i \mid \mathrm{pa})$. Each parent lands
+# in **exactly one** term — the intercept (the *shape*) or one shift — and the
+# table shows the resulting decomposition for a single continuous target $X_3$:
+#
+# | `terms=` | $z_3 = h(x_3 \mid \mathrm{pa})$ | what carries each parent |
+# |---|---|---|
+# | `[]` (source) | $f_\theta(x_3)$ | `SimpleIntercept` — $\theta$ a free vector |
+# | `[LS("X1")]` | $f_\theta(x_3) + \beta\,x_1$ | `LinearShift` — **one number** $\beta$ |
+# | `[CS("X1")]` | $f_\theta(x_3) + g(x_1)$ | `ComplexShift` — additive MLP $g$ |
+# | `[I("X1")]` | $f_{\theta(x_1)}(x_3)$ | `ComplexIntercept` — **no shift term**; $\theta$ (the whole shape) bends with $x_1$ |
+# | `[LS("X1"), CS("X2")]` | $f_\theta(x_3) + \beta x_1 + g(x_2)$ | one `LinearShift` + one `ComplexShift` (the model fitted below) |
+# | `[I("X1"), I("X2")]` | $f_{\theta(x_1,x_2)}(x_3)$ | **one joint** `ComplexIntercept` over both parents (they interact) |
+#
+# For an **ordinal** target the intercept is not a Bernstein curve but the vector of
+# ordered cutpoints $\vartheta_k(\mathrm{pa})$, and the shift is **subtracted**:
+# $P(Y \le k \mid \mathrm{pa}) = \sigma\big(\vartheta_k - \text{shift}\big)$ — `LS`
+# and `CS` terms enter that shift exactly as above.
+#
+# The odd one out is **`I(...)`** (a complex intercept): it is the only term that is
+# *not* an additive shift — it moves the parent into the intercept, so there is no
+# separate summand and no single-number coefficient to read off (§6). That is the
+# interpretability price of letting the transformation's *shape* depend on the parent.
 
 # %%
 from pathlib import Path
@@ -114,7 +147,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
 
 plt.rcParams["figure.dpi"] = 110
 
@@ -221,9 +254,9 @@ plt.show()
 # %%
 spec = {
     "X1": ContinuousNode(transform="bernstein"),
-    "X2": ContinuousNode(parents={"X1": "ls"}),
-    "X3": ContinuousNode(parents={"X1": "ls", "X2": "cs"}),
-    "Y":  OrdinalNode(levels=4, parents={"X3": "ls"}),
+    "X2": ContinuousNode(terms=[LS("X1")]),
+    "X3": ContinuousNode(terms=[LS("X1"), CS("X2")]),
+    "Y":  OrdinalNode(levels=4, terms=[LS("X3")]),
 }
 
 flow = CausalFlowDAG(spec, seed=1)  # seed here too, for the Bernsteins' initial uniform knots
@@ -232,7 +265,74 @@ flow.fit(train_df, val_df, epochs=300, learning_rate=1e-3, verbose=300)  # polis
 flow.nll(val_df)
 
 # %% [markdown]
-# ## 4. Rung 1 — the observational distribution
+# ## 4. Anatomy: the spec *is* the additive decomposition
+#
+# Section 1 showed the decomposition on paper; here we read it straight off the
+# **fitted** flow. Two small helpers do the job: `describe_node` reports which
+# network carries each parent (the structural view), and `decompose_row` prints the
+# actual numbers for one observation and verifies they rebuild the per-node
+# log-likelihood **exactly** — $z = f_\theta(x) + \sum \text{shifts}$ is an
+# identity, not a picture. We run both on `X2` (an `ls` edge), `X3` (`ls` + `cs`),
+# and the ordinal `Y` (shift **subtracted**).
+
+# %%
+from tramdag.transforms import StandardLogistic, ordinal_cutpoints, ordinal_log_prob  # noqa: E402
+
+
+def describe_node(flow, name):
+    """Structural view: the intercept module and each parent's term + network."""
+    node = flow.nodes[name]
+    n_params = node.ut.n_params if node.ut is not None else node.levels - 1
+    print(f"{name}  ({node.kind})")
+    if node.ci_parents:
+        print(f"  intercept: ComplexIntercept({node.ci_parents} -> {n_params} params)")
+    else:
+        print(f"  intercept: SimpleIntercept({n_params} params)")
+    for parent in node.ci_parents:
+        print(f"    {parent:>3} -> I    (feeds the joint intercept above)")
+    for parent, mod in node.shifts.items():
+        eff = "LS" if type(mod).__name__ == "LinearShift" else "CS"
+        print(f"    {parent:>3} -> {eff}   ({type(mod).__name__})")
+    if not node.parents:
+        print("    (source node — no parents)")
+
+
+def decompose_row(flow, name, row_df):
+    """Numeric view: print z = intercept + sum(shifts) for one row and check it
+    reproduces flow.node_log_prob exactly."""
+    node = flow.nodes[name]
+    vals = flow._tensorize(row_df)
+    feats = flow._features(vals)
+    theta, shift = node.theta_shift(feats, len(row_df))
+    parts = {p: node.shifts[p](feats[p]) for p in node.shifts}   # per-parent shift
+    print(f"{name} = {float(vals[name][0]):+.3f}  ({node.kind})")
+    if node.kind == "continuous":
+        z0, ladj = node.ut.forward(theta, vals[name])
+        terms = "  +  ".join([f"f_theta(x)={float(z0[0]):+.3f}"]
+                             + [f"{p}={float(v[0]):+.3f}" for p, v in parts.items()])
+        z = z0 + shift
+        print(f"  z = {terms}  =  {float(z[0]):+.3f}   (standard-logistic latent)")
+        lp = StandardLogistic.log_prob(z) + ladj
+    else:   # ordinal: cutpoints minus a subtracted shift
+        cuts = ordinal_cutpoints(theta)[0, 1:-1].detach().numpy().round(3)
+        terms = "  +  ".join(f"{p}={float(v[0]):+.3f}" for p, v in parts.items()) or "0"
+        print(f"  cutpoints theta_k = {cuts}")
+        print(f"  shift (SUBTRACTED) = {terms}   ->   P(Y<=k) = sigmoid(theta_k - shift)")
+        lp = ordinal_log_prob(theta, shift, vals[name])
+    check = flow.node_log_prob(vals)[name]
+    print(f"  log p(row) rebuilt = {float(lp[0]):+.4f}   node_log_prob = "
+          f"{float(check[0]):+.4f}   match={bool(torch.allclose(lp, check))}\n")
+
+
+for nm in ["X2", "X3", "Y"]:
+    describe_node(flow, nm)
+print()
+row0 = val_df.iloc[[0]]
+for nm in ["X2", "X3", "Y"]:
+    decompose_row(flow, nm, row0)
+
+# %% [markdown]
+# ## 5. Rung 1 — the observational distribution
 #
 # First sanity check: samples from the fitted flow should reproduce the joint
 # observational distribution (including the ordinal outcome's marginal).
@@ -260,7 +360,7 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 5. Single-number interpretable statistics
+# ## 6. Single-number interpretable statistics
 #
 # Because the latents are standard logistic, every linear-shift weight is a
 # **log-odds ratio**. For a continuous node ($z = h(x) + \beta\, x_{\text{pa}}$),
@@ -344,9 +444,9 @@ plt.show()
 # %%
 spec_ls = {
     "X1": ContinuousNode(transform="bernstein"),
-    "X2": ContinuousNode(parents={"X1": "ls"}),
-    "X3": ContinuousNode(parents={"X1": "ls", "X2": "ls"}),   # <- cs replaced by ls
-    "Y":  OrdinalNode(levels=4, parents={"X3": "ls"}),
+    "X2": ContinuousNode(terms=[LS("X1")]),
+    "X3": ContinuousNode(terms=[LS("X1"), LS("X2")]),   # <- cs replaced by ls
+    "Y":  OrdinalNode(levels=4, terms=[LS("X3")]),
 }
 torch.manual_seed(7)
 flow_ls = CausalFlowDAG(spec_ls)
@@ -359,7 +459,7 @@ print(f"val NLL of node X3:  cs model {flow.nll(val_df)['X3']:.4f}"
       f"   ls model {flow_ls.nll(val_df)['X3']:.4f}")
 
 # %% [markdown]
-# ## 6. Rung 2 — interventions: the do-operator
+# ## 7. Rung 2 — interventions: the do-operator
 #
 # `flow.sample(n, do={"X1": a})` performs **graph mutilation**: $X_1$ is clamped
 # to $a$, its own mechanism (and latent) is discarded, and all downstream nodes
@@ -402,13 +502,13 @@ print("P(Y = k | do(X3 = 1)):")
 print("  true:", pmf_true.round(4), "\n  flow:", pmf_flow.round(4))
 
 # %% [markdown]
-# ## 7. Rung 3 — counterfactuals: abduction → action → prediction
+# ## 8. Rung 3 — counterfactuals: abduction → action → prediction
 #
 # Because the flow is **bijective in the continuous variables**, Pearl's three
 # steps are exact:
 #
-# 1. **Abduction** — invert the flow on the *factual* data:
-#    $u = h^{-1}(x \mid \mathrm{pa})$ per node (`flow.abduct(df)`). Each row's $u$
+# 1. **Abduction** — map the *factual* data to its latent (the training
+#    direction): $u = h(x \mid \mathrm{pa})$ per node (`flow.abduct(df)`). Each row's $u$
 #    is its individual "noise", everything about the unit that the model does not
 #    attribute to the parents. (For ordinal nodes $u$ is only
 #    interval-identified, so it is drawn from the logistic truncated to the
@@ -454,12 +554,12 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 8. Where to go from here
+# ## 9. Where to go from here
 #
-# * **Complex intercepts (`ci`)** — the one component not exercised here: declare
-#   `parents={"Age": "ci"}` and the *parameters* of the Bernstein transform become
-#   a function of the parent (several `ci` parents feed one joint network, i.e.
-#   they may interact). The stroke experiments in `experiments/` use `ci` heavily;
+# * **Complex intercepts (`I(...)`)** — the one component not exercised here: declare
+#   `terms=[I("Age")]` and the *parameters* of the Bernstein transform become
+#   a function of the parent (several `I(...)` parents feed one joint network, i.e.
+#   they may interact). The stroke experiments in `experiments/` use `I(...)` heavily;
 #   run `uv run python experiments/sim_flow.py nl` for the full storyline on the
 #   synthetic cohort with known ground truth.
 # * **Early stopping vs. exact MLE** — this notebook's DGP has no unobserved

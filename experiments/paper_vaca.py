@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from paper_common import fit_chunked, results_dir, save_json
-from tramdag import ContinuousNode
+from tramdag import ContinuousNode, I
 from tramdag.simulations import VacaTriangle
 from tramdag.simulations.vaca import DO_X2_VALUES
 
@@ -25,8 +25,8 @@ train, val = df.iloc[: int(N * 0.9)], df.iloc[int(N * 0.9):]
 out = results_dir("paper-vaca")
 
 spec = {"x1": ContinuousNode(),
-        "x2": ContinuousNode(parents={"x1": "ci"}),
-        "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"})}
+        "x2": ContinuousNode(terms=[I("x1")]),
+        "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
 
 print(f"fitting all-ci flow on the VACA triangle, n={N} ...")
 flow, _ = fit_chunked(spec, train, val, epochs=400, lr=1e-2, chunk=50)

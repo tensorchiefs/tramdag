@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CS, CausalFlowDAG, ContinuousNode, LS, OrdinalNode
 from tramdag.spec import validate_and_sort
 from tramdag.transforms import (BernsteinUT, SplineUT, AffineUT,
                                  ordinal_cutpoints, ordinal_log_prob, ordinal_pmf)
@@ -67,8 +67,8 @@ def test_ordinal_cutpoints_increasing_and_pmf_sums_to_one():
 # ----------------------------------------------------------------------- dag
 def test_cycle_detection():
     spec = {
-        "A": ContinuousNode(parents={"B": "ls"}),
-        "B": ContinuousNode(parents={"A": "ls"}),
+        "A": ContinuousNode(terms=[LS("B")]),
+        "B": ContinuousNode(terms=[LS("A")]),
     }
     with pytest.raises(ValueError, match="cycle"):
         validate_and_sort(spec)
@@ -76,8 +76,8 @@ def test_cycle_detection():
 
 def test_topological_order():
     spec = {
-        "C": OrdinalNode(levels=3, parents={"A": "ls", "B": "ls"}),
-        "B": ContinuousNode(parents={"A": "cs"}),
+        "C": OrdinalNode(levels=3, terms=[LS("A"), LS("B")]),
+        "B": ContinuousNode(terms=[CS("A")]),
         "A": ContinuousNode(),
     }
     order = validate_and_sort(spec)
@@ -96,8 +96,8 @@ def fitted_flow():
     df = pd.DataFrame({"X": x, "Y": y, "W": w})
     spec = {
         "X": ContinuousNode(transform="bernstein"),
-        "Y": OrdinalNode(levels=4, parents={"X": "ls"}),
-        "W": ContinuousNode(transform="bernstein", parents={"X": "ls", "Y": "ls"}),
+        "Y": OrdinalNode(levels=4, terms=[LS("X")]),
+        "W": ContinuousNode(transform="bernstein", terms=[LS("X"), LS("Y")]),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(df.iloc[:2400], df.iloc[2400:], epochs=300, learning_rate=0.05,
@@ -172,7 +172,7 @@ def test_ls_node_equals_proportional_odds():
     spec = {
         "X1": ContinuousNode(transform="affine"),
         "X2": ContinuousNode(transform="affine"),
-        "Y": OrdinalNode(levels=4, parents={"X1": "ls", "X2": "ls"}),
+        "Y": OrdinalNode(levels=4, terms=[LS("X1"), LS("X2")]),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(df, df, epochs=400, learning_rate=0.05, batch_size=1000,

@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode, term
 from tramdag.simulations import MagicMrClean
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "magic-mrclean"
@@ -23,13 +23,11 @@ def _spec(style: str) -> dict:
         t = {"Age": "ci", "mRS_pre": "ls", "NIHSSa": "cs", "T": "ls"}
     return {
         "Age": ContinuousNode(transform="bernstein"),
-        "mRS_pre": OrdinalNode(levels=6, parents={"Age": t["Age"]}),
+        "mRS_pre": OrdinalNode(levels=6, terms=[term(t["Age"], "Age")]),
         "NIHSSa": ContinuousNode(transform="bernstein",
-                                 parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"]}),
-        "T": OrdinalNode(levels=2, parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"],
-                                            "NIHSSa": t["NIHSSa"]}),
-        "mRS_3m": OrdinalNode(levels=7, parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"],
-                                                 "NIHSSa": t["NIHSSa"], "T": t["T"]}),
+                                 terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre")]),
+        "T": OrdinalNode(levels=2, terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre"), term(t["NIHSSa"], "NIHSSa")]),
+        "mRS_3m": OrdinalNode(levels=7, terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre"), term(t["NIHSSa"], "NIHSSa"), term(t["T"], "T")]),
     }
 
 

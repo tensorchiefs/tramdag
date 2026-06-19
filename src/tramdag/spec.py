@@ -75,6 +75,20 @@ LinShift = LS
 CShift = CS
 
 
+def term(effect: str, *parents: str) -> Term:
+    """Build a :class:`Term` from an effect *label* — useful when the effect type
+    is data-driven (e.g. sweeping ``"ls"`` vs ``"cs"``). Accepts both the legacy
+    labels ``"ls"``/``"cs"``/``"ci"`` and the new ``"LS"``/``"CS"``/``"I"``."""
+    e = _LEGACY.get(effect.lower(), effect.upper())
+    if e == "I":
+        return I(*parents)
+    if e == "LS":
+        return LS(*parents)
+    if e == "CS":
+        return CS(*parents)
+    raise ValueError(f"unknown term effect '{effect}'.")
+
+
 def _post_init_check(node: "NodeSpec") -> None:
     """Validate the term/parents inputs and warn on the deprecated dict form."""
     if node.terms is not None and node.parents:

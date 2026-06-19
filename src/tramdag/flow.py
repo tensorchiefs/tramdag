@@ -63,12 +63,21 @@ class _Node(nn.Module):
         else:
             self.intercept = SimpleIntercept(n_params)
 
+        # shift terms: one network per term, over the term's (possibly joint)
+        # parents. Single-parent terms key the ModuleDict by the parent name (so
+        # ls_coefficients/introspection keep working); a joint CS over several
+        # parents keys by "a+b" and runs over their concatenated features.
         self.shifts = nn.ModuleDict()
+        self._shift_groups: list[tuple[str, tuple[str, ...]]] = []
         for term in terms:
-            if term.effect in ("LS", "CS"):
-                p = term.parents[0]
-                self.shifts[p] = (LinearShift(width(p)) if term.effect == "LS"
-                                  else ComplexShift(width(p)))
+            if term.effect not in ("LS", "CS"):
+                continue
+            ps = tuple(term.parents)
+            key = ps[0] if len(ps) == 1 else "+".join(ps)
+            feat_width = sum(width(p) for p in ps)
+            self.shifts[key] = (LinearShift(feat_width) if term.effect == "LS"
+                                else ComplexShift(feat_width))
+            self._shift_groups.append((key, ps))
 
     def theta_shift(self, feats: dict[str, Tensor], n: int) -> tuple[Tensor, Tensor]:
         """Transform parameters (n, P) and total shift (n,) from parent features."""
@@ -77,8 +86,9 @@ class _Node(nn.Module):
         else:
             theta = self.intercept(n)
         shift = torch.zeros(n, dtype=theta.dtype, device=theta.device)
-        for parent, module in self.shifts.items():
-            shift = shift + module(feats[parent])
+        for key, ps in self._shift_groups:
+            feat = feats[ps[0]] if len(ps) == 1 else torch.cat([feats[p] for p in ps], dim=1)
+            shift = shift + self.shifts[key](feat)
         return theta, shift
 
 

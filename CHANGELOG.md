@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-06-19)
+
+### Removed (breaking)
+
+- **The legacy `parents={parent: "ls"|"cs"|"ci"}` constructor argument** is gone.
+  Use the term-formula notation `terms=[I(...), LS(...), CS(...)]` (see below);
+  `tramdag.term(effect, *parents)` helps when the effect is data-driven. Old
+  *checkpoints* saved with the dict layout still load.
 
 ### Added
 

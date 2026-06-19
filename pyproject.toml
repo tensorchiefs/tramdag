@@ -1,6 +1,6 @@
 [project]
 name = "tramdag"
-version = "0.2.0"
+version = "0.3.0"
 description = "Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch: one causal normalizing flow for observational, interventional and counterfactual queries"
 readme = "README.md"
 license = "MIT"

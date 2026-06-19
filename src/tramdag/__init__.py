@@ -24,4 +24,4 @@ __all__ = ["CausalFlowDAG", "ContinuousNode", "OrdinalNode", "machine_info",
            "simulations",
            # term-formula notation
            "Term", "I", "LS", "CS", "term", "Intercept", "LinShift", "CShift"]
-__version__ = "0.2.0"
+__version__ = "0.3.0"

@@ -39,7 +39,7 @@ import pandas as pd  # noqa: E402
 import torch  # noqa: E402
 
 from common import build_spec  # noqa: E402  (stroke all-ls spec)
-from tramdag import CausalFlowDAG, ContinuousNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode, I  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "results" / "bench-training"
@@ -63,8 +63,8 @@ def vaca_data():
 
 def vaca_spec():
     return {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ci"}),
-            "x3": ContinuousNode(parents={"x1": "ci", "x2": "ci"})}
+            "x2": ContinuousNode(terms=[I("x1")]),
+            "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
 
 WORKLOADS = {
     "stroke-ls": dict(data=stroke_data, spec=lambda: build_spec("ls")),

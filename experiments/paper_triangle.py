@@ -20,7 +20,7 @@ import numpy as np
 from paper_common import (PAPER_N, cs_curve, fit_chunked, ls_weight,
                           plot_hist_grid, plot_trajectories, results_dir,
                           save_json)
-from tramdag import ContinuousNode
+from tramdag import ContinuousNode, LS, term
 from tramdag.simulations import TriangleContinuous
 
 f_name = sys.argv[1] if len(sys.argv) > 1 else "atan"
@@ -33,8 +33,8 @@ train, val = df.iloc[: int(PAPER_N * 0.9)], df.iloc[int(PAPER_N * 0.9):]
 out = results_dir(f"paper-triangle-{f_name}-{model}")
 
 spec = {"x1": ContinuousNode(),
-        "x2": ContinuousNode(parents={"x1": "ls"}),
-        "x3": ContinuousNode(parents={"x1": "ls", "x2": model})}
+        "x2": ContinuousNode(terms=[LS("x1")]),
+        "x3": ContinuousNode(terms=[term("ls", "x1"), term(model, "x2")])}
 
 truths = {"beta12": 2.0, "beta13": -0.2}
 if model == "ls":

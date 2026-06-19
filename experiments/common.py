@@ -25,7 +25,7 @@ from statsmodels.stats.proportion import proportion_confint
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode  # noqa: E402
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode, term  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RESULTS_ROOT = Path(__file__).resolve().parents[1] / "results"
@@ -116,15 +116,13 @@ def build_spec(style: str) -> dict:
         raise ValueError(f"unknown style '{style}'")
     return {
         "Age":     ContinuousNode(transform="bernstein"),
-        "mRS_pre": OrdinalNode(levels=6, parents={"Age": t["Age"]}),
+        "mRS_pre": OrdinalNode(levels=6, terms=[term(t["Age"], "Age")]),
         "NIHSSa":  ContinuousNode(transform="bernstein",
-                                  parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"]}),
+                                  terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre")]),
         "T":       OrdinalNode(levels=2,
-                               parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"],
-                                        "NIHSSa": t["NIHSSa"]}),
+                               terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre"), term(t["NIHSSa"], "NIHSSa")]),
         "mRS_3m":  OrdinalNode(levels=7,
-                               parents={"Age": t["Age"], "mRS_pre": t["mRS_pre"],
-                                        "NIHSSa": t["NIHSSa"], "T": t["T"]}),
+                               terms=[term(t["Age"], "Age"), term(t["mRS_pre"], "mRS_pre"), term(t["NIHSSa"], "NIHSSa"), term(t["T"], "T")]),
     }
 
 

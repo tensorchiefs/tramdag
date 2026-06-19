@@ -6,13 +6,13 @@ import pandas as pd
 import torch
 
 import tramdag as td
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, LS, OrdinalNode
 
 
 def _spec():
     return {"x1": ContinuousNode(),
-            "x2": ContinuousNode(parents={"x1": "ls"}),
-            "y": OrdinalNode(levels=3, parents={"x1": "ls"})}
+            "x2": ContinuousNode(terms=[LS("x1")]),
+            "y": OrdinalNode(levels=3, terms=[LS("x1")])}
 
 
 # -------------------------------------------------- #1 constructor seeding

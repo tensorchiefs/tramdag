@@ -44,7 +44,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, LS, OrdinalNode
 from tramdag.simulations import VacaTriangle
 
 warnings.filterwarnings("ignore")
@@ -68,8 +68,8 @@ df = VacaTriangle(seed=42).observational(20_000)
 
 spec_vaca = {
     "x1": ContinuousNode(),
-    "x2": ContinuousNode(parents={"x1": "ls"}),
-    "x3": ContinuousNode(parents={"x1": "ls", "x2": "ls"}),
+    "x2": ContinuousNode(terms=[LS("x1")]),
+    "x3": ContinuousNode(terms=[LS("x1"), LS("x2")]),
 }
 
 torch.manual_seed(0)
@@ -149,12 +149,10 @@ obs = pd.read_csv(DATA / "magic-mrclean" / "ls" / "obs.csv")
 
 spec_stroke = {
     "Age": ContinuousNode(),
-    "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ls"}),
-    "NIHSSa": ContinuousNode(parents={"Age": "ls", "mRS_pre": "ls"}),
-    "T": OrdinalNode(levels=2, parents={"Age": "ls", "mRS_pre": "ls",
-                                        "NIHSSa": "ls"}),
-    "mRS_3m": OrdinalNode(levels=7, parents={"Age": "ls", "mRS_pre": "ls",
-                                             "NIHSSa": "ls", "T": "ls"}),
+    "mRS_pre": OrdinalNode(levels=6, terms=[LS("Age")]),
+    "NIHSSa": ContinuousNode(terms=[LS("Age"), LS("mRS_pre")]),
+    "T": OrdinalNode(levels=2, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa")]),
+    "mRS_3m": OrdinalNode(levels=7, terms=[LS("Age"), LS("mRS_pre"), LS("NIHSSa"), LS("T")]),
 }
 
 torch.manual_seed(7)

@@ -25,8 +25,8 @@ import torch
 from torch import Tensor, nn
 
 from .conditioners import ComplexIntercept, ComplexShift, LinearShift, SimpleIntercept
-from .spec import (ContinuousNode, NodeSpec, OrdinalNode, spec_from_dict,
-                   spec_to_dict, validate_and_sort)
+from .spec import (ContinuousNode, NodeSpec, OrdinalNode, node_parents,
+                   node_terms, spec_from_dict, spec_to_dict, validate_and_sort)
 from .transforms import (StandardLogistic, make_univariate_transform,
                          ordinal_abduct, ordinal_log_prob, ordinal_pmf,
                          ordinal_sample)
@@ -41,8 +41,9 @@ class _Node(nn.Module):
         super().__init__()
         self.name = name
         self.kind = node.kind
-        self.parents = dict(node.parents)
-        self.ci_parents = [p for p, t in node.parents.items() if t == "ci"]
+        terms = node_terms(node)
+        self.parents = tuple(node_parents(node))   # ordered parent names
+        self.ci_parents = [p for term in terms if term.effect == "I" for p in term.parents]
 
         if isinstance(node, ContinuousNode):
             self.ut = make_univariate_transform(node.transform, **node.transform_kwargs)
@@ -63,11 +64,11 @@ class _Node(nn.Module):
             self.intercept = SimpleIntercept(n_params)
 
         self.shifts = nn.ModuleDict()
-        for parent, term in node.parents.items():
-            if term == "ls":
-                self.shifts[parent] = LinearShift(width(parent))
-            elif term == "cs":
-                self.shifts[parent] = ComplexShift(width(parent))
+        for term in terms:
+            if term.effect in ("LS", "CS"):
+                p = term.parents[0]
+                self.shifts[p] = (LinearShift(width(p)) if term.effect == "LS"
+                                  else ComplexShift(width(p)))
 
     def theta_shift(self, feats: dict[str, Tensor], n: int) -> tuple[Tensor, Tensor]:
         """Transform parameters (n, P) and total shift (n,) from parent features."""
@@ -365,8 +366,8 @@ class CausalFlowDAG(nn.Module):
 
     # --------------------------------------------------------- classical fit
     def _is_all_ls(self) -> bool:
-        return all(t == "ls" for node in self.spec.values()
-                   for t in node.parents.values())
+        return all(term.effect == "LS" for node in self.spec.values()
+                   for term in node_terms(node))
 
     def ls_coefficients(self) -> dict[str, dict[str, np.ndarray]]:
         """Per-node linear-shift weights {node: {parent: weight array}} — the
@@ -378,6 +379,21 @@ class CausalFlowDAG(nn.Module):
                 out[name] = {p: m.weight.detach().cpu().numpy().ravel().copy()
                              for p, m in shifts.items()}
         return out
+
+    def to_matrix(self) -> pd.DataFrame:
+        """Labelled adjacency matrix (rows = parent, cols = child) of term
+        effects — the paper's meta-adjacency view. Cells hold "LS"/"CS"/"CI"
+        (empty = no edge); a multi-parent term is suffixed with its parent group."""
+        labels = {"I": "CI", "LS": "LS", "CS": "CS"}
+        m = pd.DataFrame("", index=list(self.order), columns=list(self.order))
+        for child in self.order:
+            for term in node_terms(self.spec[child]):
+                tag = labels[term.effect]
+                if len(term.parents) > 1:
+                    tag = f"{tag}{list(term.parents)}"
+                for p in term.parents:
+                    m.loc[p, child] = tag
+        return m
 
     def fit_classical(self, train_df: pd.DataFrame, *, max_iter: int = 400,
                       tol: float = 1e-6, verbose: bool = True) -> dict:

@@ -4,6 +4,16 @@
 
 ### Added
 
+- **Term-formula spec notation** — declare a node's transformation as an additive
+  list of terms, `terms=[I(...), LS(...), CS(...)]`, replacing the per-edge
+  `parents={parent: "ls"|"cs"|"ci"}` dict (now **deprecated**, still accepted with
+  a `DeprecationWarning`). Each term names the parent(s) it depends on; **joint
+  (multi-parent) terms** express interactions — `CS("x1", "x2")` is one shift
+  network over both parents and `I("x1", "x2")` one joint intercept — while
+  separate terms (`CS("x1") + CS("x2")`) stay additive (the grouping *is* the
+  joint/additive choice). A `term(effect, *parents)` factory helps data-driven
+  specs, and `flow.to_matrix()` renders the paper's meta-adjacency view.
+
 - **API papercuts (issue #12):** `CausalFlowDAG(spec, seed=...)` seeds weight
   initialization deterministically (one obvious reproducibility knob — `fit(seed=)`
   only seeds shuffling); `save`/`load` now also carry a provenance `meta` block

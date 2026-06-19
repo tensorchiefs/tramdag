@@ -83,12 +83,15 @@ def test_ls_requires_exactly_one_parent():
         LS("X1", "X2")
 
 
-@pytest.mark.parametrize("term", [CS("X1", "X2"), I("X1", "X2")])
-def test_multiparent_terms_not_implemented(term):
+@pytest.mark.parametrize("term,n_shift,n_ci", [(CS("X1", "X2"), 1, 0),
+                                               (I("X1", "X2"), 0, 2)])
+def test_joint_terms_build(term, n_shift, n_ci):
+    """Joint (multi-parent) terms build one network over the parent group."""
     spec = {"X1": ContinuousNode(), "X2": ContinuousNode(),
             "X3": ContinuousNode(terms=[term])}
-    with pytest.raises(NotImplementedError):
-        CausalFlowDAG(spec)
+    node = CausalFlowDAG(spec, seed=0).nodes["X3"]
+    assert len(node.shifts) == n_shift          # joint CS -> a single shift module
+    assert len(node.ci_parents) == n_ci         # joint I  -> both parents pooled
 
 
 def test_duplicate_parent_across_terms_raises():

@@ -14,9 +14,9 @@ Term constructors name the parent(s) a term depends on:
 - :func:`CS` — *complex shift*: an additive MLP ``g(x)`` on the latent scale.
 
 The intercept slot sums in coefficient space; the shift slot sums on the latent
-scale. "Joint vs additive" is just argument grouping — ``CS("a","b")`` (joint)
-vs ``CS("a") + CS("b")`` (additive). Multi-parent terms are reserved for a later
-round and currently raise :class:`NotImplementedError`.
+scale. "Joint vs additive" is just argument grouping — a multi-parent term such
+as ``CS("a","b")`` is one **joint** network over both parents (an interaction),
+whereas ``CS("a") + CS("b")`` are two **additive** terms.
 
 .. deprecated::
    The legacy ``parents={parent: "ls"|"cs"|"ci"}`` dict is still accepted (it is
@@ -167,10 +167,6 @@ def validate_and_sort(spec: dict[str, NodeSpec]) -> list[str]:
         for term in node_terms(node):
             if term.effect not in EFFECTS:
                 raise ValueError(f"Node '{name}': unknown term effect '{term.effect}'.")
-            if len(term.parents) > 1:
-                raise NotImplementedError(
-                    f"Node '{name}': joint {term.effect}{term.parents} (multi-parent "
-                    "terms) are not implemented yet — coming in a later round.")
             if term.effect == "LS" and len(term.parents) != 1:
                 raise ValueError(f"Node '{name}': LS term must have exactly one parent.")
             for p in term.parents:

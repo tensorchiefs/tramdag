@@ -570,10 +570,13 @@ plt.show()
 # * **Validation against classical models** — an all-`ls` flow trained to
 #   convergence *is* the classical proportional-odds MLE
 #   (`experiments/validate_ls.py` pins flow ≡ `statsmodels` ≡ R `polr`).
+# * **Joint terms** — write several parents inside one term to model an
+#   *interaction*: `CS("x1", "x2")` is a single shift network $g(x_1, x_2)$, and
+#   `I("x1", "x2")` a single intercept network over both parents. Separate terms
+#   (`CS("x1") + CS("x2")`) stay additive — the grouping *is* the joint/additive
+#   choice.
 # * **Current limitations** (vs. the general formulation): the latent is fixed to
-#   the standard logistic, and multiple `cs` parents enter as *separate* additive
-#   MLPs $\sum_k g_k(x_k)$ — a joint $g(x_4, x_6)$ complex shift is not yet
-#   expressible (joint networks exist for `ci` groups only).
+#   the standard logistic.
 
 # %% [markdown]
 # ---

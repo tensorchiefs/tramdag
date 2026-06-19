@@ -30,9 +30,14 @@ Experiments default to the synthetic data (`magic-mrclean/nl`). The `magic` sour
 ## Architecture (src/tramdag/)
 
 - `spec.py` — user-facing DAG spec: `{name: ContinuousNode|OrdinalNode}`, each node
-  declares `parents={parent: term}` with term ∈ `ls` (linear shift), `cs` (complex
-  shift MLP), `ci` (complex intercept — transform params from parents; multiple ci
-  parents feed ONE joint network).
+  declares `terms=[...]` (term-formula notation, since 0.3.0; the legacy
+  `parents={parent: term}` dict was removed). Term constructors: `LS(parent)`
+  (linear shift), `CS(*parents)` (complex shift MLP), `I(*parents)` (complex
+  intercept — transform params from parents). A **multi-parent** term is one
+  *joint* network over the group (`CS("a","b")`, `I("a","b")`); **separate** terms
+  are *additive* (`CS("a")+CS("b")`; `I("a")+I("b")` = per-parent intercept nets
+  summed in unconstrained coeff space). `term(effect, *parents)` builds a term from
+  a data-driven label. No intercept term → `SimpleIntercept` baseline.
 - `transforms.py` — monotone 1-D transforms wrapping zuko (`BernsteinUT`, `SplineUT`,
   `AffineUT`; pre-scaled from train 5%/95% quantiles to [-5,5], expanding-bracket
   bisection inverse) + the ordinal ordered-logit transform

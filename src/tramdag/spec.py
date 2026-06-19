@@ -17,21 +17,15 @@ The intercept slot sums in coefficient space; the shift slot sums on the latent
 scale. "Joint vs additive" is just argument grouping — a multi-parent term such
 as ``CS("a","b")`` is one **joint** network over both parents (an interaction),
 whereas ``CS("a") + CS("b")`` are two **additive** terms.
-
-.. deprecated::
-   The legacy ``parents={parent: "ls"|"cs"|"ci"}`` dict is still accepted (it is
-   translated to terms) but emits a :class:`DeprecationWarning`; it will be
-   removed in a future release.
 """
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass, field
 
-# legacy dict term labels -> term effect
+# legacy dict term labels -> term effect (still accepted by ``term()`` and by the
+# checkpoint loader, so old saved models keep loading)
 _LEGACY = {"ls": "LS", "cs": "CS", "ci": "I"}
-TERMS = tuple(_LEGACY)  # ("ls", "cs", "ci") — kept for backwards reference
 
 EFFECTS = ("I", "LS", "CS")
 
@@ -89,36 +83,20 @@ def term(effect: str, *parents: str) -> Term:
     raise ValueError(f"unknown term effect '{effect}'.")
 
 
-def _post_init_check(node: "NodeSpec") -> None:
-    """Validate the term/parents inputs and warn on the deprecated dict form."""
-    if node.terms is not None and node.parents:
-        raise ValueError("Specify either `terms=` or the legacy `parents=`, not both.")
-    if node.parents:
-        warnings.warn(
-            "`parents={...}` is deprecated; use `terms=[...]` with I()/LS()/CS() "
-            "(e.g. terms=[I('X1'), CS('X2')]).",
-            DeprecationWarning, stacklevel=3)
-
-
 @dataclass
 class ContinuousNode:
     """Continuous variable, modelled by a monotone 1-D transform + shifts.
 
     Args:
-        terms: additive formula, a list of :func:`I`/:func:`LS`/:func:`CS` terms.
-        parents: **deprecated** ``{parent: "ls"|"cs"|"ci"}`` dict (translated to
-            terms; mutually exclusive with ``terms``).
+        terms: additive formula, a list of :func:`I`/:func:`LS`/:func:`CS` terms
+            (``None`` / omitted = a source node).
         transform: "bernstein" (TRAM-faithful), "spline" or "affine".
         transform_kwargs: forwarded to the transform.
     """
     terms: list[Term] | None = None
-    parents: dict[str, str] = field(default_factory=dict)
     transform: str = "bernstein"
     transform_kwargs: dict = field(default_factory=dict)
     kind: str = field(default="continuous", init=False)
-
-    def __post_init__(self):
-        _post_init_check(self)
 
 
 @dataclass
@@ -127,28 +105,15 @@ class OrdinalNode:
     modelled by increasing cutpoints (ordered logit) + shifts."""
     levels: int
     terms: list[Term] | None = None
-    parents: dict[str, str] = field(default_factory=dict)
     kind: str = field(default="ordinal", init=False)
-
-    def __post_init__(self):
-        _post_init_check(self)
 
 
 NodeSpec = ContinuousNode | OrdinalNode
 
 
 def node_terms(node: NodeSpec) -> list[Term]:
-    """Canonical term list for a node (translates the legacy ``parents`` dict)."""
-    if node.terms is not None:
-        return list(node.terms)
-    out: list[Term] = []
-    for parent, label in node.parents.items():
-        if label not in _LEGACY:
-            raise ValueError(f"parent '{parent}': term '{label}' not in {TERMS}.")
-        effect = _LEGACY[label]
-        out.append(I(parent) if effect == "I" else
-                   (LS(parent) if effect == "LS" else CS(parent)))
-    return out
+    """Canonical term list for a node (empty for a source node)."""
+    return list(node.terms) if node.terms is not None else []
 
 
 def node_parents(node: NodeSpec) -> list[str]:

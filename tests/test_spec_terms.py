@@ -1,6 +1,6 @@
-"""Round-1 tests for the term-formula notation (I/LS/CS) and its equivalence
-to the deprecated ``parents={...}`` dict. Single-parent only — multi-parent
-(joint) terms must raise ``NotImplementedError`` until a later round."""
+"""Tests for the term-formula notation (I/LS/CS) — construction, validation,
+serialization, and the meta-adjacency view. (The legacy ``parents={...}`` dict
+API was removed in 0.3.0; only old *checkpoints* are still read.)"""
 
 import warnings
 
@@ -22,17 +22,6 @@ def _toy_df(n=64, seed=0):
     return pd.DataFrame({"X1": x1, "X2": x2, "X3": x3, "Y": y})
 
 
-def _legacy_spec():
-    with warnings.catch_warnings():           # silence the intended deprecation
-        warnings.simplefilter("ignore", DeprecationWarning)
-        return {
-            "X1": ContinuousNode(),
-            "X2": ContinuousNode(parents={"X1": "ls"}),
-            "X3": ContinuousNode(parents={"X1": "ci", "X2": "cs"}),
-            "Y":  OrdinalNode(levels=4, parents={"X3": "ls"}),
-        }
-
-
 def _terms_spec():
     return {
         "X1": ContinuousNode(),
@@ -42,22 +31,14 @@ def _terms_spec():
     }
 
 
-# --------------------------------------------------------------- equivalence
-def test_terms_equivalent_to_legacy_dict():
-    """Both front-ends build the *same* flow: identical parameter structure and
-    identical per-node log-likelihood on a fixed batch."""
-    df = _toy_df()
-    flow_legacy = CausalFlowDAG(_legacy_spec(), seed=0)
-    flow_terms = CausalFlowDAG(_terms_spec(), seed=0)
-
-    sd_a, sd_b = flow_legacy.state_dict(), flow_terms.state_dict()
-    assert sd_a.keys() == sd_b.keys()
-
-    vals_a = flow_legacy.node_log_prob(flow_legacy._tensorize(df))
-    vals_b = flow_terms.node_log_prob(flow_terms._tensorize(df))
-    assert vals_a.keys() == vals_b.keys()
-    for k in vals_a:
-        assert torch.allclose(vals_a[k], vals_b[k]), k
+# --------------------------------------------------------------- construction
+def test_terms_spec_builds_and_scores():
+    """A term spec builds a flow whose per-node log-likelihood is finite."""
+    flow = CausalFlowDAG(_terms_spec(), seed=0)
+    per_node = flow.node_log_prob(flow._tensorize(_toy_df()))
+    assert set(per_node) == {"X1", "X2", "X3", "Y"}
+    for v in per_node.values():
+        assert torch.isfinite(v).all()
 
 
 def test_node_internal_structure_matches():
@@ -68,16 +49,6 @@ def test_node_internal_structure_matches():
 
 
 # ---------------------------------------------------------------- validation
-def test_deprecation_warning_on_parents_dict():
-    with pytest.warns(DeprecationWarning):
-        ContinuousNode(parents={"X1": "ls"})
-
-
-def test_terms_and_parents_mutually_exclusive():
-    with pytest.raises(ValueError):
-        ContinuousNode(terms=[LS("X1")], parents={"X1": "ls"})
-
-
 def test_ls_requires_exactly_one_parent():
     with pytest.raises(ValueError):
         LS("X1", "X2")

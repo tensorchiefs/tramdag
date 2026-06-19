@@ -42,17 +42,17 @@ Pin the dev install to a commit for reproducibility, e.g. `...tramdag.git@<sha>`
 
 ```python
 import tramdag as td
-from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import CausalFlowDAG, ContinuousNode, OrdinalNode, I, LS, CS
 
 spec = {                                  # the spec IS the labelled DAG
     "Age":     ContinuousNode(),
-    "mRS_pre": OrdinalNode(levels=6, parents={"Age": "ci"}),
-    "NIHSSa":  ContinuousNode(parents={"Age": "ci", "mRS_pre": "ls"}),
+    "mRS_pre": OrdinalNode(levels=6, terms=[I("Age")]),
+    "NIHSSa":  ContinuousNode(terms=[I("Age"), LS("mRS_pre")]),
     "T":       OrdinalNode(levels=2,
-                           parents={"Age": "ci", "mRS_pre": "ls", "NIHSSa": "cs"}),
+                           terms=[I("Age"), LS("mRS_pre"), CS("NIHSSa")]),
     "mRS_3m":  OrdinalNode(levels=7,
-                           parents={"Age": "ci", "mRS_pre": "ls",
-                                    "NIHSSa": "cs", "T": "ls"}),
+                           terms=[I("Age"), LS("mRS_pre"),
+                                  CS("NIHSSa"), LS("T")]),
 }
 flow = CausalFlowDAG(spec)                # validates acyclicity, builds the flow
 

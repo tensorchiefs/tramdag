@@ -10,9 +10,12 @@
   a `DeprecationWarning`). Each term names the parent(s) it depends on; **joint
   (multi-parent) terms** express interactions — `CS("x1", "x2")` is one shift
   network over both parents and `I("x1", "x2")` one joint intercept — while
-  separate terms (`CS("x1") + CS("x2")`) stay additive (the grouping *is* the
-  joint/additive choice). A `term(effect, *parents)` factory helps data-driven
-  specs, and `flow.to_matrix()` renders the paper's meta-adjacency view.
+  separate terms stay additive: `CS("x1") + CS("x2")` are two additive shifts, and
+  `I("x1") + I("x2")` is an **additive complex intercept** (each parent reshapes the
+  transform independently, the per-term coefficient vectors summed in unconstrained
+  space). The grouping *is* the joint/additive choice. A `term(effect, *parents)`
+  factory helps data-driven specs, and `flow.to_matrix()` renders the paper's
+  meta-adjacency view.
 
 - **API papercuts (issue #12):** `CausalFlowDAG(spec, seed=...)` seeds weight
   initialization deterministically (one obvious reproducibility knob — `fit(seed=)`

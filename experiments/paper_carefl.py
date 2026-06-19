@@ -28,8 +28,8 @@ train, val = df.iloc[: int(N * 0.9)], df.iloc[int(N * 0.9):]
 out = results_dir("paper-carefl")
 
 spec = {"x1": ContinuousNode(), "x2": ContinuousNode(),
-        "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
-        "x4": ContinuousNode(terms=[I("x1"), I("x2")])}
+        "x3": ContinuousNode(terms=[I("x1", "x2")]),
+        "x4": ContinuousNode(terms=[I("x1", "x2")])}
 
 print(f"fitting all-ci flow on the CAREFL SCM, n={N} ...")
 flow, _ = fit_chunked(spec, train, val, epochs=300, lr=1e-2, chunk=50)

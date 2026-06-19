@@ -43,7 +43,9 @@ class _Node(nn.Module):
         self.kind = node.kind
         terms = node_terms(node)
         self.parents = tuple(node_parents(node))   # ordered parent names
-        self.ci_parents = [p for term in terms if term.effect == "I" for p in term.parents]
+        i_groups = [tuple(t.parents) for t in terms if t.effect == "I" and t.parents]
+        self._intercept_groups = i_groups
+        self.ci_parents = [p for grp in i_groups for p in grp]   # flat, for introspection
 
         if isinstance(node, ContinuousNode):
             self.ut = make_univariate_transform(node.transform, **node.transform_kwargs)
@@ -58,10 +60,20 @@ class _Node(nn.Module):
             pn = spec[parent]
             return pn.levels if isinstance(pn, OrdinalNode) else 1
 
-        if self.ci_parents:
-            self.intercept = ComplexIntercept(sum(width(p) for p in self.ci_parents), n_params)
-        else:
+        # intercept: no I-terms -> free SimpleIntercept theta_0; one I-term (single
+        # or joint multi-parent) -> one ComplexIntercept IS theta (unchanged); two+
+        # separate I-terms -> additive CI: one net per term summed in unconstrained
+        # coefficient space (each parent reshapes the transform independently).
+        if not i_groups:
             self.intercept = SimpleIntercept(n_params)
+            self.intercept_nets = None
+        elif len(i_groups) == 1:
+            self.intercept = ComplexIntercept(sum(width(p) for p in i_groups[0]), n_params)
+            self.intercept_nets = None
+        else:
+            self.intercept = None
+            self.intercept_nets = nn.ModuleList(
+                ComplexIntercept(sum(width(p) for p in grp), n_params) for grp in i_groups)
 
         # shift terms: one network per term, over the term's (possibly joint)
         # parents. Single-parent terms key the ModuleDict by the parent name (so
@@ -81,9 +93,12 @@ class _Node(nn.Module):
 
     def theta_shift(self, feats: dict[str, Tensor], n: int) -> tuple[Tensor, Tensor]:
         """Transform parameters (n, P) and total shift (n,) from parent features."""
-        if self.ci_parents:
+        if self.intercept_nets is not None:          # additive complex intercept
+            theta = sum(net(torch.cat([feats[p] for p in grp], dim=1))
+                        for net, grp in zip(self.intercept_nets, self._intercept_groups))
+        elif self.ci_parents:                        # single or joint complex intercept
             theta = self.intercept(torch.cat([feats[p] for p in self.ci_parents], dim=1))
-        else:
+        else:                                        # simple (free) intercept
             theta = self.intercept(n)
         shift = torch.zeros(n, dtype=theta.dtype, device=theta.device)
         for key, ps in self._shift_groups:

@@ -204,7 +204,7 @@ def test_vaca_ci_flow_matches_interventional_moments():
     df = VacaTriangle(seed=42).observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(),
             "x2": ContinuousNode(terms=[I("x1")]),
-            "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
+            "x3": ContinuousNode(terms=[I("x1", "x2")])}
     flow = _fit(spec, df, epochs=(400, 120))
     # L1: bimodality of x1 is captured (the paper's headline vs CNF) — both
     # modes present: density mass on each side of the saddle near -0.3
@@ -230,8 +230,8 @@ def test_carefl_ci_flow_recovers_counterfactuals():
     gen = Carefl4(seed=42)
     df = gen.observational(N_FIT, seed_offset=100)
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(),
-            "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
-            "x4": ContinuousNode(terms=[I("x1"), I("x2")])}
+            "x3": ContinuousNode(terms=[I("x1", "x2")]),
+            "x4": ContinuousNode(terms=[I("x1", "x2")])}
     flow = _fit(spec, df, epochs=(300, 100))
     rows = gen.observational(300, seed_offset=999)
     u = flow.abduct(rows)

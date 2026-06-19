@@ -74,7 +74,7 @@ WORKLOADS = {
         spec=lambda: {
             "x1": ContinuousNode(),
             "x2": ContinuousNode(terms=[I("x1")]),
-            "x3": ContinuousNode(terms=[I("x1"), I("x2")]),
+            "x3": ContinuousNode(terms=[I("x1", "x2")]),
         },
     ),
 }

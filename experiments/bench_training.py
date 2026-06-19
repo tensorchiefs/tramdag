@@ -64,7 +64,7 @@ def vaca_data():
 def vaca_spec():
     return {"x1": ContinuousNode(),
             "x2": ContinuousNode(terms=[I("x1")]),
-            "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
+            "x3": ContinuousNode(terms=[I("x1", "x2")])}
 
 WORKLOADS = {
     "stroke-ls": dict(data=stroke_data, spec=lambda: build_spec("ls")),

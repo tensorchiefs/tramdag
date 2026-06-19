@@ -127,7 +127,9 @@
 # | `[CS("X1")]` | $f_\theta(x_3) + g(x_1)$ | `ComplexShift` — additive MLP $g$ |
 # | `[I("X1")]` | $f_{\theta(x_1)}(x_3)$ | `ComplexIntercept` — **no shift term**; $\theta$ (the whole shape) bends with $x_1$ |
 # | `[LS("X1"), CS("X2")]` | $f_\theta(x_3) + \beta x_1 + g(x_2)$ | one `LinearShift` + one `ComplexShift` (the model fitted below) |
-# | `[I("X1"), I("X2")]` | $f_{\theta(x_1,x_2)}(x_3)$ | **one joint** `ComplexIntercept` over both parents (they interact) |
+# | `[CS("X1", "X2")]` | $f_\theta(x_3) + g(x_1, x_2)$ | **one joint** `ComplexShift` — an interaction in the shift |
+# | `[I("X1"), I("X2")]` | $f_{\theta(x_1) + \theta(x_2)}(x_3)$ | **additive** CI — each parent reshapes the transform independently (two nets summed) |
+# | `[I("X1", "X2")]` | $f_{\theta(x_1,x_2)}(x_3)$ | **one joint** `ComplexIntercept` over both parents (they interact) |
 #
 # For an **ordinal** target the intercept is not a Bernstein curve but the vector of
 # ordered cutpoints $\vartheta_k(\mathrm{pa})$, and the shift is **subtracted**:

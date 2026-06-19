@@ -26,7 +26,7 @@ out = results_dir("paper-vaca")
 
 spec = {"x1": ContinuousNode(),
         "x2": ContinuousNode(terms=[I("x1")]),
-        "x3": ContinuousNode(terms=[I("x1"), I("x2")])}
+        "x3": ContinuousNode(terms=[I("x1", "x2")])}
 
 print(f"fitting all-ci flow on the VACA triangle, n={N} ...")
 flow, _ = fit_chunked(spec, train, val, epochs=400, lr=1e-2, chunk=50)

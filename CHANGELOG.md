@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.1 (unreleased)
+
+### Added
+
+- **`flow.intercept_contributions(node, data)`** (issue #20, Option A) — post-hoc,
+  mean-centered decomposition of an **additive complex intercept**
+  (`terms=[I("x1"), I("x2")]`). The per-term networks are summed in unconstrained
+  parameter space, so the sum is identified but each term's contribution only up to
+  a constant; this returns each term's **sum-to-zero** (GAM-style mean-centered over
+  `data`) contribution to the transform parameters plus the absorbed `baseline`, for
+  plotting per-parent partial effects. Exact (`baseline + Σ contributions == theta`)
+  and purely interpretive — it reads the fitted weights and changes nothing about the
+  model or any frozen number. Shift terms remain a separate slot (`ls_coefficients`).
+
 ## 0.3.0 (2026-06-19)
 
 ### Removed (breaking)

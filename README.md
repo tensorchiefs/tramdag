@@ -74,6 +74,10 @@ flow.pmf(df, node="mRS_3m", do={"T": 1})   # L2: analytic interventional PMF
 u  = flow.abduct(df)                       # L3 step 1: latents from observations
 cf = flow.sample(do={"T": 1}, u=u)         # L3 steps 2+3: counterfactuals
 
+flow.ls_coefficients()                     # interpret: per-edge log-odds-ratios
+flow.intercept_contributions("NIHSSa", df) # interpret: per-parent partial effects
+                                           # of an additive complex intercept (centered)
+
 flow.save("flow.pt"); flow = CausalFlowDAG.load("flow.pt")
 
 td.simulations.REGISTRY                    # synthetic DGPs with known ground truth

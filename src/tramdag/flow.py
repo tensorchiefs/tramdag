@@ -420,6 +420,81 @@ class CausalFlowDAG(nn.Module):
                     m.loc[p, child] = tag
         return m
 
+    @torch.no_grad()
+    def intercept_contributions(self, node: str, data: pd.DataFrame) -> dict:
+        """Mean-centered per-term contributions to a node's **complex intercept**
+        (the transform parameters), for plotting additive partial effects.
+
+        An additive complex intercept ``terms=[I("x1"), I("x2")]`` builds one
+        network per ``I``-term and **sums their outputs in unconstrained
+        parameter space**: ``theta(pa) = net_1(x1) + net_2(x2)``. The sum is
+        identified (so every L1/L2/L3 query is correct), but each term's output is
+        identified only up to a constant — a constant moves freely between the
+        nets. This makes the *raw* per-term outputs not directly comparable.
+
+        Following the usual additive-model / GAM convention, this resolves the
+        ambiguity by a **sum-to-zero (mean-centering) constraint applied over the
+        rows of** ``data``: each term's contribution is centered to mean zero
+        (per parameter), and the removed constants are collected into a single
+        ``baseline``. The decomposition is exact —
+
+            ``theta(pa) = baseline + sum_terms contribution_term(pa)``
+
+        — so ``baseline`` plus the (uncentered) row sum of the contributions
+        reproduces the model's transform parameters. This is **post-hoc only**:
+        it reads the fitted weights and changes nothing about the model or any
+        frozen number (issue #20, Option A). Shift terms (``LS``/``CS``) are a
+        separate, already-interpretable slot — see :meth:`ls_coefficients`.
+
+        Args:
+            node: name of a node with at least one complex-intercept (``I``) term
+                that has parents.
+            data: rows over which to center (and at which to evaluate the
+                contributions); must contain every intercept-parent column.
+
+        Returns a dict with:
+            ``"baseline"``: ``(P,)`` array — the absorbed constant (sum of the
+                per-term means), where ``P`` is the number of transform
+                parameters (Bernstein coefficients for a continuous node,
+                ``levels - 1`` cutpoint parameters for an ordinal node).
+            ``"contributions"``: ``{term_label: (n, P) array}`` — each term's
+                mean-centered contribution at each row (columns sum to ~0 over
+                rows). ``term_label`` is the term's parents joined by ``"+"``.
+            ``"parents"``: ``{term_label: tuple(parent_names)}``.
+        """
+        if node not in self.nodes:
+            raise KeyError(f"unknown node {node!r}")
+        nd = self.nodes[node]
+        groups = nd._intercept_groups
+        if not groups:
+            raise ValueError(
+                f"node {node!r} has no complex-intercept (I) terms with parents; "
+                "there is nothing to decompose (its intercept is unconditional).")
+        missing = [p for p in nd.ci_parents if p not in data.columns]
+        if missing:
+            raise KeyError(f"data is missing intercept-parent column(s): {missing}")
+
+        np_dtype = np.float64 if self._dtype == torch.float64 else np.float32
+        vals = {p: torch.as_tensor(data[p].to_numpy(dtype=np_dtype),
+                                   device=self.device) for p in nd.ci_parents}
+        feats = self._features(vals)
+        # one net per group: the additive case stores them in intercept_nets;
+        # a single (possibly joint) I-term is the lone `intercept` network.
+        nets = list(nd.intercept_nets) if nd.intercept_nets is not None else [nd.intercept]
+
+        contributions: dict[str, np.ndarray] = {}
+        parents: dict[str, tuple] = {}
+        baseline = None
+        for net, grp in zip(nets, groups):
+            raw = net(torch.cat([feats[p] for p in grp], dim=1))   # (n, P)
+            mean = raw.mean(dim=0, keepdim=True)                    # (1, P)
+            label = "+".join(grp)
+            contributions[label] = (raw - mean).cpu().numpy()
+            parents[label] = grp
+            baseline = mean if baseline is None else baseline + mean
+        return {"baseline": baseline.cpu().numpy().ravel(),
+                "contributions": contributions, "parents": parents}
+
     def fit_classical(self, train_df: pd.DataFrame, *, max_iter: int = 400,
                       tol: float = 1e-6, verbose: bool = True) -> dict:
         """Fit an **all-``ls``** model classically: full-batch, **float64**,

@@ -30,8 +30,8 @@
 # up to a constant moving between the nets, so the **raw** per-parent outputs are
 # not comparable. `flow.intercept_contributions(node, data)` resolves this with a
 # sum-to-zero (mean-centering) constraint and returns each parent's centered
-# contribution — exactly the partial effect you'd want to plot.
-#
+# contribution.
+
 # This notebook fits both models and shows the interpretability difference. The
 # punchline is perhaps surprising: the two models fit the **data** almost
 # identically — the difference is **structural**, visible only in parameter
@@ -87,8 +87,11 @@ def make_flow(joint: bool):
 
 flow_joint = make_flow(joint=True)
 flow_add = make_flow(joint=False)
+#flow_add.fit(train, val, epochs=10, learning_rate=1e-2, verbose=0)
+# TC: Using a net with I("x1"), I("x2") adds the coefficients of the two nets together (see theta_shift in flow.py)
+
 for f in (flow_joint, flow_add):
-    f.fit(train, val, epochs=1200, learning_rate=1e-2, verbose=0)
+    f.fit(train, val, epochs=1200, learning_rate=1e-2, verbose=0, restore_best=True)
 
 # Both fit the data well; the joint model is only marginally better on held-out
 # likelihood. A flexible additive Bernstein intercept can *mimic* a lot of
@@ -181,3 +184,5 @@ plt.show()
 # space (where the additive terms are summed, before the monotonicity
 # constraint), so they are exact partial effects on the parameters but not, in
 # general, an additive split of the curve `h` itself.
+
+# %%

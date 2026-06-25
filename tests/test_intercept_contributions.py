@@ -85,6 +85,31 @@ def test_ordinal_additive_ci():
         np.testing.assert_allclose(contrib.mean(axis=0), 0.0, atol=1e-6)
 
 
+# --------------------------------------- transform-agnostic (spline / affine too)
+@pytest.mark.parametrize("transform,P", [("bernstein", None),
+                                         ("spline", 3 * 8 - 1),
+                                         ("affine", 2)])
+def test_works_for_any_continuous_transform(transform, P):
+    spec = {"x1": ContinuousNode(),
+            "x2": ContinuousNode(),
+            "x3": ContinuousNode(terms=[I("x1"), I("x2")], transform=transform)}
+    flow = CausalFlowDAG(spec, seed=5)
+    df = _data()
+    res = flow.intercept_contributions("x3", df)
+    if P is not None:
+        assert res["baseline"].shape == (P,)
+    # exactness + sum-to-zero hold in unconstrained theta-space regardless of transform
+    recon = res["baseline"][None, :] + sum(res["contributions"].values())
+    nd = flow.nodes["x3"]
+    feats = flow._features(flow._tensorize(df))
+    with torch.no_grad():
+        theta = sum(net(torch.cat([feats[p] for p in grp], dim=1))
+                    for net, grp in zip(nd.intercept_nets, nd._intercept_groups))
+    np.testing.assert_allclose(recon, theta.numpy(), rtol=1e-5, atol=1e-5)
+    for contrib in res["contributions"].values():
+        np.testing.assert_allclose(contrib.mean(axis=0), 0.0, atol=1e-6)
+
+
 # -------------------------------------------------------------------- guard rails
 def test_raises_on_node_without_complex_intercept():
     spec = {"x1": ContinuousNode(),

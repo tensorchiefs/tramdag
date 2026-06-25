@@ -454,9 +454,15 @@ class CausalFlowDAG(nn.Module):
 
         Returns a dict with:
             ``"baseline"``: ``(P,)`` array — the absorbed constant (sum of the
-                per-term means), where ``P`` is the number of transform
-                parameters (Bernstein coefficients for a continuous node,
-                ``levels - 1`` cutpoint parameters for an ordinal node).
+                per-term means), where ``P`` is the node's transform-parameter
+                count: ``ut.n_params`` for a continuous node (e.g. Bernstein
+                coefficients, the [widths|heights|derivatives] block of an RQ
+                spline, or the 2 affine parameters), ``levels - 1`` cutpoint
+                parameters for an ordinal node. The contributions live in the
+                transform's **unconstrained** parameter space (where the model
+                sums the additive terms, before the monotonicity constraint), so
+                they are exact partial effects on those parameters but not, in
+                general, an additive shift of the curve itself.
             ``"contributions"``: ``{term_label: (n, P) array}`` — each term's
                 mean-centered contribution at each row (columns sum to ~0 over
                 rows). ``term_label`` is the term's parents joined by ``"+"``.

@@ -114,6 +114,11 @@ There are two ways to fit the model: a stochastic deep learning optimizer (`fit`
   cd experiments && uv run python paper_triangle.py atan cs   # etc., see paper_*.py
   ```
 
+  Beyond the paper, `ite-observational` (`simulations.ITEObservational`) is a
+  confounded-treatment **ITE** benchmark with per-individual ground truth; an
+  all-CI S-learner TRAM-DAG recovers individual + average effects in
+  `notebooks/ite_observational.py`.
+
   Sign note: ordinal shifts are *subtracted* here but *added* in the paper, so
   fitted ordinal weights are the paper's with flipped sign (`truth.json` records
   both conventions per family).
@@ -163,7 +168,7 @@ See the [`tests/README.md`](tests/README.md) file for more details.
 
 ```
 src/tramdag/            spec.py transforms.py conditioners.py flow.py
-                        simulations/   (magic_mrclean, triangle, vaca, carefl + CLIs)
+                        simulations/   (magic_mrclean, triangle, vaca, carefl, ite_observational + CLIs)
 data/                   frozen synthetic CSVs + truth.json — a test contract
 experiments/            stroke pipeline, paper replications, training benchmark
 notebooks/              intro (didactic) + Colab demo   (jupytext .py — see README there)

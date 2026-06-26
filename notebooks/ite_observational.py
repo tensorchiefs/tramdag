@@ -158,6 +158,101 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
+# ## Prospective: the ITE *distribution* for a new, untreated patient
+#
+# The recovery above used each patient's **full** observed row (including the
+# post-treatment `X5, X6, Y`) to *abduct* their latent noise — an L3 query that
+# only works once a patient has been treated and observed. The realistic
+# prospective question is different: a **new patient** arrives with only the
+# baseline covariates `X1, X2, X3` and **no treatment yet**, so there is nothing
+# downstream to abduct.
+#
+# What is identifiable is then not a single number but the **conditional
+# distribution of the individual effect given the covariates**,
+# `P(ITE | X1, X2, X3)` — the *prior-predictive* ITE. Monte-Carlo recipe: hold
+# `X1, X2, X3` fixed, draw the post-treatment latents (`X5, X6, Y`) from their
+# **prior** (standard logistic), and push each draw through both `do(Tr=1)` and
+# `do(Tr=0)` **using the same latents** — a within-patient contrast (common random
+# numbers; *independent* draws per arm would instead give the variance of two
+# unrelated patients). The mean of the resulting cloud is the estimated **CATE**;
+# its spread is the patient's effect **uncertainty**.
+#
+# That spread (i) is **aleatoric** — it comes from the patient's unrealized noise,
+# and shrinks only once they are treated and observed (then you can abduct), *not*
+# with more training data; and (ii) is **conditional on the model** — it omits
+# estimation error and its width encodes the flow's counterfactual coupling. Here
+# we can *validate* it against the simulator's true ITE distribution.
+
+# %%
+M = 4000   # latent draws per patient
+
+
+def model_ite_dist(flow, x1, x2, x3, m=M, seed=0):
+    """Prior-predictive ITE samples from the fitted flow, using ONLY X1,X2,X3.
+    Post-treatment latents are drawn from the prior; the same draw is pushed
+    through both arms (shared latents => a within-patient contrast)."""
+    rng = np.random.default_rng(seed)
+    u = pd.DataFrame({"X1": 0.0, "X2": 0.0, "X3": 0.0, "Tr": 0.0,  # overwritten by do
+                      "X5": rng.logistic(size=m), "X6": rng.logistic(size=m),
+                      "Y": rng.logistic(size=m)})
+    fixed = {"X1": x1, "X2": x2, "X3": x3}
+    y1 = flow.sample(do={**fixed, "Tr": 1.0}, u=u)["Y"].to_numpy()
+    y0 = flow.sample(do={**fixed, "Tr": 0.0}, u=u)["Y"].to_numpy()
+    return y1 - y0                                      # shared latents per row
+
+
+def true_ite_dist(gen, x1, x2, x3, m=M, seed=1):
+    """The DGP's true ITE samples for a patient with these covariates."""
+    rng = np.random.default_rng(seed)
+    lat = {"x123": np.tile([x1, x2, x3], (m, 1)), "u_tr": rng.uniform(size=m),
+           "u5": rng.uniform(size=m), "u6": rng.uniform(size=m), "u7": rng.uniform(size=m)}
+    y1 = gen.simulate(latents=lat, do={"Tr": 1.0})["Y"].to_numpy()
+    y0 = gen.simulate(latents=lat, do={"Tr": 0.0})["Y"].to_numpy()
+    return y1 - y0
+
+
+# five new patients — we use ONLY their baseline covariates X1, X2, X3
+patients = gen.observational(5, seed_offset=2024)[["X1", "X2", "X3"]]
+print(f"{'patient':>7} {'X2':>6} {'X3':>6}  {'CATE(model)':>12} {'CATE(true)':>11}"
+      f"  {'80% PI (model)':>18}")
+dists = []
+for i, (x1, x2, x3) in enumerate(patients.itertuples(index=False)):
+    md = model_ite_dist(flow, x1, x2, x3, seed=i)
+    td = true_ite_dist(gen, x1, x2, x3, seed=100 + i)
+    dists.append((md, td))
+    lo, hi = np.percentile(md, [10, 90])
+    print(f"{i:>7} {x2:>+6.2f} {x3:>+6.2f}  {md.mean():>+12.3f} {td.mean():>+11.3f}"
+          f"   [{lo:+.2f}, {hi:+.2f}]")
+
+# %% [markdown]
+# Each panel is one new patient's **ITE distribution** from the fitted model
+# (filled), with the simulator's **true** distribution overlaid (outline) and both
+# means marked. The distributions are wide — a single patient's effect is
+# genuinely uncertain from baseline data alone — yet the model tracks both the
+# **location** (CATE, shifting with the effect modifiers `X2, X3`) and the
+# **spread** of the truth. (`0` marks "no effect".)
+
+# %%
+fig, axes = plt.subplots(1, len(patients), figsize=(3.0 * len(patients), 3.4),
+                         sharex=True, sharey=True)
+for ax, (i, row), (md, td) in zip(axes, patients.iterrows(), dists):
+    bins = np.linspace(min(md.min(), td.min()), max(md.max(), td.max()), 40)
+    ax.hist(md, bins=bins, density=True, color="#1b9e77", alpha=0.55, label="model")
+    ax.hist(td, bins=bins, density=True, histtype="step", color="0.2", lw=1.5,
+            label="true")
+    ax.axvline(md.mean(), color="#1b9e77", lw=1.5)
+    ax.axvline(td.mean(), color="0.2", lw=1.0, ls="--")
+    ax.axvline(0, color="0.7", lw=0.8)
+    ax.set_title(f"patient {i}\nX2={row.X2:+.2f}, X3={row.X3:+.2f}", fontsize=9)
+    ax.set_xlabel("ITE")
+axes[0].set_ylabel("density")
+axes[0].legend(fontsize=8)
+fig.suptitle("Prior-predictive ITE per new patient (only X1, X2, X3 known) "
+             "vs DGP truth", fontsize=11)
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
 # ## Takeaway
 #
 # - The **naive** observational contrast is biased by confounding (treatment
@@ -170,3 +265,8 @@ plt.show()
 #   scenarios) with per-individual ground truth, so this is a self-contained,
 #   reproducible ITE benchmark. Switch `scenario=` to 2 (main effect only),
 #   3 (interaction only) or 4 (null effect) to vary the truth.
+# - For a **new, untreated** patient (only `X1, X2, X3` known) the sharp individual
+#   counterfactual is not available — but the model still returns the
+#   *prior-predictive* ITE **distribution** `P(ITE | X1, X2, X3)`: its mean is the
+#   CATE driving the treat/don't-treat decision, its spread the (aleatoric)
+#   per-patient uncertainty, here validated against the DGP's true ITE spread.

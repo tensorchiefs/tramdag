@@ -211,26 +211,31 @@ def true_ite_dist(gen, x1, x2, x3, m=M, seed=1):
     return y1 - y0
 
 
-# five new patients — we use ONLY their baseline covariates X1, X2, X3
+# five new patients — we use ONLY their baseline covariates X1, X2, X3.
+# All three are conditioned on: X2, X3 are the explicit effect-modifiers (the
+# (X2,X3)·Tr interaction), while X1 has no interaction and cancels on the *logit*
+# scale — but it still shifts the patient's operating point on the saturating
+# baseline h_y, so it modulates the effect *magnitude* through the nonlinearity.
 patients = gen.observational(5, seed_offset=2024)[["X1", "X2", "X3"]]
-print(f"{'patient':>7} {'X2':>6} {'X3':>6}  {'CATE(model)':>12} {'CATE(true)':>11}"
-      f"  {'80% PI (model)':>18}")
+print(f"{'patient':>7} {'X1':>6} {'X2':>6} {'X3':>6}  {'CATE(model)':>12} "
+      f"{'CATE(true)':>11}  {'80% PI (model)':>18}")
 dists = []
 for i, (x1, x2, x3) in enumerate(patients.itertuples(index=False)):
     md = model_ite_dist(flow, x1, x2, x3, seed=i)
     td = true_ite_dist(gen, x1, x2, x3, seed=100 + i)
     dists.append((md, td))
     lo, hi = np.percentile(md, [10, 90])
-    print(f"{i:>7} {x2:>+6.2f} {x3:>+6.2f}  {md.mean():>+12.3f} {td.mean():>+11.3f}"
-          f"   [{lo:+.2f}, {hi:+.2f}]")
+    print(f"{i:>7} {x1:>+6.2f} {x2:>+6.2f} {x3:>+6.2f}  {md.mean():>+12.3f} "
+          f"{td.mean():>+11.3f}   [{lo:+.2f}, {hi:+.2f}]")
 
 # %% [markdown]
 # Each panel is one new patient's **ITE distribution** from the fitted model
 # (filled), with the simulator's **true** distribution overlaid (outline) and both
 # means marked. The distributions are wide — a single patient's effect is
 # genuinely uncertain from baseline data alone — yet the model tracks both the
-# **location** (CATE, shifting with the effect modifiers `X2, X3`) and the
-# **spread** of the truth. (`0` marks "no effect".)
+# **location** (CATE, shifting with `X2, X3` — the interaction modifiers — and,
+# more weakly, with `X1` via the operating point on the saturating baseline) and
+# the **spread** of the truth. (`0` marks "no effect".)
 
 # %%
 fig, axes = plt.subplots(1, len(patients), figsize=(3.0 * len(patients), 3.4),
@@ -243,7 +248,8 @@ for ax, (i, row), (md, td) in zip(axes, patients.iterrows(), dists):
     ax.axvline(md.mean(), color="#1b9e77", lw=1.5)
     ax.axvline(td.mean(), color="0.2", lw=1.0, ls="--")
     ax.axvline(0, color="0.7", lw=0.8)
-    ax.set_title(f"patient {i}\nX2={row.X2:+.2f}, X3={row.X3:+.2f}", fontsize=9)
+    ax.set_title(f"patient {i}\nX1={row.X1:+.2f}, X2={row.X2:+.2f}, X3={row.X3:+.2f}",
+                 fontsize=8)
     ax.set_xlabel("ITE")
 axes[0].set_ylabel("density")
 axes[0].legend(fontsize=8)

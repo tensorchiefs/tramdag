@@ -4,6 +4,15 @@
 
 ### Added
 
+- **`flow.intercept_contributions(node, data)`** (issue #20, Option A) — post-hoc,
+  mean-centered decomposition of an **additive complex intercept**
+  (`terms=[I("x1"), I("x2")]`). The per-term networks are summed in unconstrained
+  parameter space, so the sum is identified but each term's contribution only up to
+  a constant; this returns each term's **sum-to-zero** (GAM-style mean-centered over
+  `data`) contribution to the transform parameters plus the absorbed `baseline`, for
+  plotting per-parent partial effects. Exact (`baseline + Σ contributions == theta`)
+  and purely interpretive — it reads the fitted weights and changes nothing about the
+  model or any frozen number. Shift terms remain a separate slot (`ls_coefficients`).
 - **`simulations.ITEObservational`** — observational individual-treatment-effect
   (ITE) benchmark DGP (registry key `ite-observational`; ported from the master's
   thesis repo `mikekr97/MA_Mike`). A 7-variable mediation SCM with a **binary treatment

@@ -7,6 +7,7 @@ regenerate only deliberately via each module's CLI.
 """
 
 from .carefl import Carefl4
+from .ite_observational import ITEObservational
 from .magic_mrclean import MagicMrClean
 from .triangle import TriangleContinuous, TriangleMixed
 from .vaca import VacaTriangle
@@ -17,7 +18,8 @@ REGISTRY = {
     "triangle-mixed": TriangleMixed,
     "vaca": VacaTriangle,
     "carefl": Carefl4,
+    "ite-observational": ITEObservational,
 }
 
 __all__ = ["MagicMrClean", "TriangleContinuous", "TriangleMixed",
-           "VacaTriangle", "Carefl4", "REGISTRY"]
+           "VacaTriangle", "Carefl4", "ITEObservational", "REGISTRY"]

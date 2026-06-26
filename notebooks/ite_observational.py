@@ -18,8 +18,8 @@
 # **S-learner TRAM-DAG** on a confounded *observational* cohort, and validates the
 # recovered effects against the simulator's known per-individual ground truth.
 #
-# The DGP (`tramdag.simulations.ITEObservational`, ported from Krause's MA, repo
-# `mikekr97/MA_Mike`) is a 7-variable mediation SCM with a **binary treatment
+# The DGP (`tramdag.simulations.ITEObservational`, ported from the master's
+# thesis repo `mikekr97/MA_Mike`) is a 7-variable mediation SCM with a **binary treatment
 # `Tr`** confounded by `X1, X2`:
 #
 # ```

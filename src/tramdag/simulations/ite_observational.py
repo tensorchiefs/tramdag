@@ -1,4 +1,4 @@
-"""Observational ITE benchmark DGP (Krause, MA experiment 4).
+"""Observational ITE benchmark DGP (master's-thesis experiment 4).
 
 A 7-variable mediation SCM with a binary treatment, used to study
 individual-treatment-effect (ITE) estimation with an S-learner TRAM-DAG in an

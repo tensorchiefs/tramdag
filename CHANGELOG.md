@@ -5,8 +5,8 @@
 ### Added
 
 - **`simulations.ITEObservational`** — observational individual-treatment-effect
-  (ITE) benchmark DGP (registry key `ite-observational`; ported from Krause's MA,
-  `mikekr97/MA_Mike`). A 7-variable mediation SCM with a **binary treatment
+  (ITE) benchmark DGP (registry key `ite-observational`; ported from the master's
+  thesis repo `mikekr97/MA_Mike`). A 7-variable mediation SCM with a **binary treatment
   confounded by `X1, X2`**, two Colr mediators `X5 → X6`, and a continuous outcome
   `Y` with a nonlinear baseline `h_y(y)=tan(y/2)/0.2` and `(X2, X3)·Tr`
   interactions (four scenarios toggle the main/interaction effects). Exposes

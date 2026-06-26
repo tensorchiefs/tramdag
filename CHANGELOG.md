@@ -26,6 +26,10 @@
   per-individual ITEs (abduction + `do`, including the mediated `X5 → X6 → Y` path
   and the treatment heterogeneity) on this DGP, validated against the known truth
   (r ≈ 0.99, ATE within ~0.01) and contrasted with the biased naive contrast.
+- `experiments/ite_train_size.py` — ITE/ATE recovery vs training-set size
+  (n = 500..20000) for that all-CI model, evaluated on a fixed 5k test set, with
+  the **train-vs-test NLL gap** as an overfitting diagnostic (the gap, and the ITE
+  error, shrink systematically as n grows).
 
 ## 0.3.0 (2026-06-19)
 

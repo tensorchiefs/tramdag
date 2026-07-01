@@ -13,23 +13,14 @@
   plotting per-parent partial effects. Exact (`baseline + Σ contributions == theta`)
   and purely interpretive — it reads the fitted weights and changes nothing about the
   model or any frozen number. Shift terms remain a separate slot (`ls_coefficients`).
-- **`simulations.ITEObservational`** — observational individual-treatment-effect
-  (ITE) benchmark DGP (registry key `ite-observational`; ported from the master's
-  thesis repo `mikekr97/MA_Mike`). A 7-variable mediation SCM with a **binary treatment
-  confounded by `X1, X2`**, two Colr mediators `X5 → X6`, and a continuous outcome
-  `Y` with a nonlinear baseline `h_y(y)=tan(y/2)/0.2` and `(X2, X3)·Tr`
-  interactions (four scenarios toggle the main/interaction effects). Exposes
-  per-individual ground truth (`ITE_true` at the observed latent, `ITE_median` at
-  the median latent) and the Monte-Carlo `ATE`; frozen `data/ite-observational/`
-  CSV (scenario 1) + CLI, mirroring the other portfolio DGPs.
-- `notebooks/ite_observational.py` — an **all-CI S-learner TRAM-DAG** that recovers
-  per-individual ITEs (abduction + `do`, including the mediated `X5 → X6 → Y` path
-  and the treatment heterogeneity) on this DGP, validated against the known truth
-  (r ≈ 0.99, ATE within ~0.01) and contrasted with the biased naive contrast.
-- `experiments/ite_train_size.py` — ITE/ATE recovery vs training-set size
-  (n = 500..20000) for that all-CI model, evaluated on a fixed 5k test set, with
-  the **train-vs-test NLL gap** as an overfitting diagnostic (the gap, and the ITE
-  error, shrink systematically as n grows).
+
+### Changed
+
+- The **observational ITE study** (the `ITEObservational` DGP, its didactic
+  notebook, and the train-size experiment) has **moved out of tramdag** to the
+  simulation-study companion repo `tensorchiefs/tramdag-simu`. The package keeps
+  only DGPs that validate the implementation; a benchmark comparing tramdag to
+  other methods belongs in the (method-neutral) paper repo.
 
 ## 0.3.0 (2026-06-19)
 

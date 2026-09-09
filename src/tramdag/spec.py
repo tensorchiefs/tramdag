@@ -86,8 +86,8 @@ def _subclasses(cls) -> list[type]:
     return out
 
 
-def _term_class(term: str) -> type[Term]:
-    """Give the :class:`Term` subclass whose ``term`` name this is.
+def _term_class(name: str) -> type[Term]:
+    """Give the :class:`Term` subclass carrying this ``name``.
 
     Raises
     ------
@@ -96,10 +96,10 @@ def _term_class(term: str) -> type[Term]:
         imported before a spec naming it is loaded.
     """
     for cls in _subclasses(Term):
-        if cls.term == term:
+        if cls.name == name:
             return cls
     raise ValueError(
-        f"unknown term '{term}'. A custom term is a tramdag.Term "
+        f"unknown term '{name}'. A custom term is a tramdag.Term "
         "subclass; import it before the spec is built or loaded."
     )
 
@@ -388,7 +388,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
             "kind": node.kind,
             "terms": [
                 {
-                    "term": t.term,
+                    "term": t.name,
                     "parents": list(t.parents),
                     "options": {k: _mapped(v) for k, v in t.options().items()},
                 }
@@ -452,8 +452,8 @@ class Term:
     that trains it lives in :mod:`tramdag.terms` and declares which term
     class it builds (``data = CS``).
 
-    Subclass to add a term: the class name is the term name (its
-    serialized ``term``), every annotated attribute with a default is an
+    Subclass to add a term: the class name becomes its ``name`` (what the
+    ``term`` key serializes), every annotated attribute with a default is an
     option, and ``__post_init__`` holds the construction-time checks::
 
         class Scaled(Term):
@@ -470,7 +470,7 @@ class Term:
 
     parents: tuple[str, ...] = ()
 
-    term: ClassVar[str] = "Term"
+    name: ClassVar[str] = "Term"
     cell_tag: ClassVar[str | None] = None  # to_matrix tag; None -> the term name
 
     def __init_subclass__(cls, **kwargs):
@@ -483,7 +483,7 @@ class Term:
             make the term unhashable and its serialization non-canonical).
         """
         super().__init_subclass__(**kwargs)
-        cls.term = cls.__dict__.get("term", cls.__name__)
+        cls.name = cls.__dict__.get("name", cls.__name__)
         dataclass(frozen=True, init=False, repr=False)(cls)  # decorates in place
         missing = [
             f.name for f in dataclasses.fields(cls) if f.default is dataclasses.MISSING
@@ -498,7 +498,7 @@ class Term:
         unknown = sorted(set(options) - set(names))
         if unknown:
             raise ValueError(
-                f"term '{self.term}' takes no option(s) {unknown}; "
+                f"term '{self.name}' takes no option(s) {unknown}; "
                 f"it takes {sorted(names)}."
             )
         object.__setattr__(self, "parents", tuple(parents))
@@ -512,7 +512,7 @@ class Term:
         value = getattr(self, "input_transform", None)
         if value is not None and not (callable(value) or value in INPUT_TRANSFORMS):
             raise ValueError(
-                f"{self.term}(): input_transform must be 'minmax', "
+                f"{self.name}(): input_transform must be 'minmax', "
                 f"'standardize' or a callable fn(x, train), got {value!r}."
             )
         units = getattr(self, "units", None)
@@ -551,7 +551,7 @@ class Term:
 
         A multi-parent term carries its parent group as a suffix.
         """
-        tag = self.cell_tag or self.term
+        tag = self.cell_tag or self.name
         if len(self.parents) > 1:
             tag = f"{tag}{list(self.parents)}"
         return [(p, tag) for p in self.parents]
@@ -560,7 +560,7 @@ class Term:
         """Show the call that builds the term: parents, then non-default options."""
         args = [repr(p) for p in self.parents]
         args += [f"{k}={v!r}" for k, v in self.options().items()]
-        return f"{self.term}({', '.join(args)})"
+        return f"{self.name}({', '.join(args)})"
 
     def __add__(self, other: Term | list[Term]) -> list[Term]:
         """Concatenate into a plain term list."""
@@ -636,7 +636,7 @@ class Intercept(Term):
         interaction to disallow needs two).
     """
 
-    term = "I"
+    name = "I"
     cell_tag = "CI"
 
     transform: str | type | None = None
@@ -683,7 +683,7 @@ class Intercept(Term):
         kwargs = dict(opts.pop("transform_kwargs", None) or ())
         args = [repr(p) for p in self.parents]
         args += [f"{k}={v!r}" for k, v in {**opts, **kwargs}.items()]
-        return f"{self.term}({', '.join(args)})"
+        return f"{self.name}({', '.join(args)})"
 
 
 class LinearShift(Term):
@@ -701,7 +701,7 @@ class LinearShift(Term):
         If the parent count is not one.
     """
 
-    term = "LS"
+    name = "LS"
 
     def __post_init__(self) -> None:
         """Refuse any parent count but one."""
@@ -740,7 +740,7 @@ class ComplexShift(Term):
         If no parent is given.
     """
 
-    term = "CS"
+    name = "CS"
 
     units: tuple[int, ...] | None = None
     activation: str | None = None
@@ -832,7 +832,7 @@ class VaryingCoefficient(Term):
     uncentered term only.
     """
 
-    term = "VC"
+    name = "VC"
 
     penalty: float = 1.0
     center: str | bool = False
@@ -915,7 +915,7 @@ class VaryingCoefficient(Term):
         """Show the modifiers, then ``t=``, then the non-default options."""
         args = [repr(p) for p in self.parents[1:]] + [f"t={self.parents[0]!r}"]
         args += [f"{k}={v!r}" for k, v in self.options().items()]
-        return f"{self.term}({', '.join(args)})"
+        return f"{self.name}({', '.join(args)})"
 
 
 class FnShift(Term):
@@ -947,7 +947,7 @@ class FnShift(Term):
         If no parent is given or ``fn`` is not callable.
     """
 
-    term = "Fn"
+    name = "Fn"
 
     fn: object = None
     input_transform: object = None

@@ -31,7 +31,7 @@ def test_sum_list_and_mixed_forms_are_identical():
 
 def test_sum_chains_flatten_in_order():
     node = ContinuousNode(I("a") + CS("b") + LS("c") + VC("b", t="t"))
-    assert [t.term for t in node.terms] == ["I", "CS", "LS", "VC"]
+    assert [t.name for t in node.terms] == ["I", "CS", "LS", "VC"]
 
 
 def test_bare_i_and_single_term():

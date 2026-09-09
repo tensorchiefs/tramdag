@@ -42,21 +42,18 @@ additive on the latent scale.
 
 What ``h`` looks like per transformation, for a continuous ``x3``:
 
-======================================== =======================================
-``terms=``                               ``u_3 = h(x_3 | pa)``
-======================================== =======================================
-``None`` / ``[I]``                       ``h_theta(x3)``
-``[LS("X1")]``                           ``h_theta(x3) + beta*x1``
-``[I("X1")]``                            ``h_theta(x1)(x3)``
-``[CS("X1")]``                           ``h_theta(x3) + g_1(x1)``
-``[LS("X1"), CS("X2")]``                 ``h_theta(x3) + beta*x1 + g_2(x2)``
-``[CS("X1", "X2")]``                     ``h_theta(x3) + g_12(x1, x2)``
-``[CS("X1"), CS("X2")]``                 ``h_theta(x3) + g_1(x1) + g_2(x2)``
-``[I("X1", "X2")]``                      ``h_theta(x1,x2)(x3)``  (joint)
-``[I("X1","X2", allow_interaction=       ``h_theta(x1)+theta(x2)(x3)``  (additive:
-False)]``                                one net per parent, summed coefficients)
-``[I, CS("X1"), VC("X2", t="T")]``       ``h_theta(x3) + g_1(x1) + beta(x2)*t``
-======================================== =======================================
+| `terms=` | `u_3 = h(x_3 given pa)` |
+|---------------------------------|--------------------------------------------|
+| `None` / `[I]` | `h_theta(x3)` |
+| `[LS("X1")]` | `h_theta(x3) + beta*x1` |
+| `[I("X1")]` | `h_theta(x1)(x3)` |
+| `[CS("X1")]` | `h_theta(x3) + g_1(x1)` |
+| `[LS("X1"), CS("X2")]` | `h_theta(x3) + beta*x1 + g_2(x2)` |
+| `[CS("X1", "X2")]` | `h_theta(x3) + g_12(x1, x2)` |
+| `[CS("X1"), CS("X2")]` | `h_theta(x3) + g_1(x1) + g_2(x2)` |
+| `[I("X1", "X2")]` | `h_theta(x1,x2)(x3)`, joint |
+| `[I("X1","X2", allow_interaction=False)]` | `h_theta(x1)+theta(x2)(x3)`, additive |
+| `[I, CS("X1"), VC("X2", t="T")]` | `h_theta(x3) + g_1(x1) + beta(x2)*t` |
 
 Each parent enters through exactly one *edge-owning* term (I/LS/CS parents,
 and a VC term's treatment ``t``). VC **modifiers** are exempt:

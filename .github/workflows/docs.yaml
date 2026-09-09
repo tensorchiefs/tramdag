@@ -40,14 +40,27 @@ jobs:
           https://github.com/jgm/pandoc/releases/download/3.5/pandoc-3.5-1-amd64.deb
         sudo dpkg -i /tmp/pandoc.deb
         mkdir -p build/pdf/nb
-        # badges are noise in a PDF, and a remote .svg badge makes pandoc emit
-        # \includesvg, which needs inkscape and fails the whole build
-        strip_badges() { sed -E -e 's#\[!\[[^]]*\]\([^)]*\)\]\([^)]*\)##g' -e 's#!\[[^]]*\]\(https?://[^)]*\)##g' "$1"; }
-        strip_badges README.md > build/pdf/README.md
+        # every input is staged through the same two rewrites:
+        #   badges  -- noise in a PDF, and a remote .svg badge makes pandoc emit
+        #              \includesvg, which needs inkscape and fails the build
+        #   [x][ref] -- mkdocstrings cross-references. The site resolves them;
+        #              pandoc prints them raw, and the reference is one long
+        #              unbreakable token that overflows its table column. The
+        #              visible half already carries its own backticks.
+        stage() {
+          sed -E -e 's#\[!\[[^]]*\]\([^)]*\)\]\([^)]*\)##g' \
+                 -e 's#!\[[^]]*\]\(https?://[^)]*\)##g' \
+                 -e 's#\[([^]]+)\]\[[^]]+\]#\1#g' "$1" > "$2"
+        }
+        stage README.md build/pdf/README.md
+        for d in notation fitting training-speed scores varying-coefficients \
+                 paper-replication code-map zuko-upstream; do
+          stage "docs/$d.md" "build/pdf/$d.md"
+        done
         for n in demo_tram_dag_colab intro_tram_dag additive_vs_joint_ci varying_coefficients classical_fit_tram_dag; do
           uv run jupytext --to notebook --execute --output "build/pdf/nb/$n.ipynb" "notebooks/$n.py"
           uv run jupyter nbconvert --to markdown "build/pdf/nb/$n.ipynb" --output "$n" --output-dir build/pdf/nb
-          strip_badges "build/pdf/nb/$n.md" > "build/pdf/nb/$n.stripped" && mv "build/pdf/nb/$n.stripped" "build/pdf/nb/$n.md"
+          stage "build/pdf/nb/$n.md" "build/pdf/nb/$n.staged" && mv "build/pdf/nb/$n.staged" "build/pdf/nb/$n.md"
         done
         # pandoc's own `markdown` reader, not `gfm`: only it derives the table
         # column widths from the separator row, so a wide table wraps inside
@@ -55,8 +68,9 @@ jobs:
         pandoc -f markdown+tex_math_dollars --pdf-engine=xelatex \
           --resource-path=.:docs:build/pdf:build/pdf/nb -V mainfont="DejaVu Serif" -V monofont="DejaVu Sans Mono" \
           -V geometry:margin=2.2cm --toc --toc-depth=2 --metadata title="tramdag documentation" \
-          build/pdf/README.md docs/notation.md docs/fitting.md docs/training-speed.md docs/scores.md \
-          docs/varying-coefficients.md docs/paper-replication.md docs/code-map.md docs/zuko-upstream.md build/pdf/nb/*.md \
+          build/pdf/README.md build/pdf/notation.md build/pdf/fitting.md build/pdf/training-speed.md \
+          build/pdf/scores.md build/pdf/varying-coefficients.md build/pdf/paper-replication.md \
+          build/pdf/code-map.md build/pdf/zuko-upstream.md build/pdf/nb/*.md \
           -o docs/tramdag-docs.pdf
 
     - name: keep the previous PDF when this build produced none

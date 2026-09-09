@@ -2,6 +2,33 @@
 
 ## 1.0.0-rc (unreleased, branch rc/1.0-architecture)
 
+### Changed (breaking) — a term serializes as `term:`, and carries `name`
+
+- The word "effect" named two things: the causal quantity the model
+  estimates, and the kind of a term. Only the first meaning survives. A
+  serialized term is keyed `term:`, not `effect:`, and the class variable
+  holding the symbol is `Term.name`, not `Term.effect`. A spec YAML or
+  checkpoint written with `effect:` needs the key renamed; nothing else
+  moves, and every call spelling is unchanged.
+
+### Added — optional batch norm, an empirical marginal start, `log_prob(nodes=)`
+
+- `I`, `CS` and `VC` take `batch_norm=`, off by default, which puts a
+  `BatchNorm1d` between each hidden layer and its activation. Every knob of
+  the term networks is now reachable from a serialized spec.
+- `init_marginals` starts a continuous node at the Bernstein approximation
+  of its column's `logit(F_hat(y))`, the same quantity the ordinal cutpoints
+  carry, instead of a linear rescale of the domain. Still a pure
+  initialization: the converged MLE is unchanged.
+- `log_prob(df, nodes=[...])` sums a subset of the nodes, which is exact and
+  is the log-space way to read one node's conditional likelihood per row.
+
+### Fixed
+
+- An ordinal value that is not a level index is refused at every entry
+  point, by node name. Inference used to truncate `1.5` to level 1 in
+  silence and to let torch raise an unnamed error for an out-of-range value.
+
 ### Changed (breaking) — an effect is a `Term` subclass; the registry is gone
 
 - `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient` and
@@ -12,8 +39,8 @@
   `simple_intercept`, `complex_intercept`) are gone; `SI()` and `CI()` stay. Every call
   spelling stays the same — `CS("a", "b", units=[16])`, `I(transform=
   "spline", bins=6)`, `VC("m", t="t")`, the `+` sums, `SI()`/`CI()`, the
-  pythonic aliases — and so do YAML specs and checkpoints (`effect` is the
-  class name). Options are typed fields with defaults; an option the effect
+  pythonic aliases — and so do YAML specs and checkpoints, under the
+  `term` key above. Options are typed fields with defaults; an option the effect
   does not take fails at construction, so a hand-built or serialized term
   can no longer carry a foreign key. `Term.options` (the canonical pairs)
   and `Term.__getattr__` are gone; `term.options()` gives the non-default

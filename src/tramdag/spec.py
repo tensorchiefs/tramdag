@@ -65,6 +65,7 @@ prognostically through the shift *and* modifies the treatment effect.
 from __future__ import annotations
 
 import dataclasses
+import inspect
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -480,9 +481,16 @@ class Term:
         ------
         TypeError
             If an option has no plain default (a ``default_factory`` would
-            make the term unhashable and its serialization non-canonical).
+            make the term unhashable and its serialization non-canonical), or
+            if a subclass annotates ``name``, which is the term's identity and
+            not an option.
         """
         super().__init_subclass__(**kwargs)
+        if "name" in inspect.get_annotations(cls):
+            raise TypeError(
+                f"{cls.__name__}: `name` is the term's identity, not an option; "
+                "set it as a plain class attribute or let the class name stand."
+            )
         cls.name = cls.__dict__.get("name", cls.__name__)
         dataclass(frozen=True, init=False, repr=False)(cls)  # decorates in place
         missing = [
@@ -518,6 +526,18 @@ class Term:
         units = getattr(self, "units", None)
         if units is not None:
             object.__setattr__(self, "units", tuple(units))
+
+    def net_options(self) -> dict:
+        """Give the term's network settings, for the conditioner constructor.
+
+        The three options every networked term shares. A term without a
+        network never asks.
+        """
+        return {
+            "units": self.units,
+            "activation": self.activation,
+            "batch_norm": self.batch_norm,
+        }
 
     @classmethod
     def option_names(cls) -> list[str]:

@@ -277,16 +277,10 @@ class InterceptTerm(TermDef):
         )
         if len(groups) == 1:
             m = ComplexInterceptTerm(
-                feat_width(spec, groups[0]),
-                n_params,
-                units=term.units,
-                activation=term.activation,
-                batch_norm=term.batch_norm,
+                feat_width(spec, groups[0]), n_params, **term.net_options()
             )
         else:  # additive intercept: one net per parent, coefficients summed
-            m = AdditiveInterceptTerm(
-                groups, n_params, spec, term.units, term.activation, term.batch_norm
-            )
+            m = AdditiveInterceptTerm(groups, n_params, spec, term.net_options())
         m.groups = groups
         m.ci_parents = [p for grp in groups for p in grp]
         _attach_input_transform(m, term, tuple(term.parents), spec)
@@ -349,16 +343,10 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
     coefficient space.
     """
 
-    def __init__(self, groups, n_params: int, spec, units, activation, batch_norm):
+    def __init__(self, groups, n_params: int, spec, net_options: dict):
         nn.Module.__init__(self)
         self.nets = nn.ModuleList(
-            ComplexIntercept(
-                feat_width(spec, grp),
-                n_params,
-                units=units,
-                activation=activation,
-                batch_norm=batch_norm,
-            )
+            ComplexIntercept(feat_width(spec, grp), n_params, **net_options)
             for grp in groups
         )
 
@@ -408,12 +396,7 @@ class ComplexShiftTerm(ShiftTerm, ComplexShift):
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftTerm:
         """One net over the concatenated parents; keyed 'a' or 'a+b'."""
         ps = tuple(term.parents)
-        m = cls(
-            feat_width(spec, ps),
-            units=term.units,
-            activation=term.activation,
-            batch_norm=term.batch_norm,
-        )
+        m = cls(feat_width(spec, ps), **term.net_options())
         m.key = "+".join(ps)  # the parent itself for a single-parent term
         _attach_input_transform(m, term, ps, spec)
         return m
@@ -434,13 +417,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> VaryingCoefficientTerm:
         """Build the effect head over the modifiers; keyed by the treatment name."""
         on, mods = term.parents[0], tuple(term.parents[1:])
-        m = cls(
-            feat_width(spec, mods),
-            penalty=term.penalty,
-            units=term.units,
-            activation=term.activation,
-            batch_norm=term.batch_norm,
-        )
+        m = cls(feat_width(spec, mods), penalty=term.penalty, **term.net_options())
         m.key = on
         m.mods = mods
         m.on_is_ord = isinstance(spec[on], OrdinalNode)

@@ -321,6 +321,8 @@ class VaryingCoef(nn.Module):
         implementations, so the size comes from that measurement.
     activation : str | None, optional
         Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+    batch_norm : bool, optional
+        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
 
     Notes
     -----

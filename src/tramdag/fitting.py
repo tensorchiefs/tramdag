@@ -186,6 +186,8 @@ def _fit_epoch(
     n = len(next(iter(vals.values())))
     acc = dict.fromkeys(flow.order, 0.0)
     for idx in torch.randperm(n, device=flow.device).split(batch_size):
+        if idx.numel() < 2:
+            continue  # batch norm needs two rows, and one row is no gradient
         batch = {k: v[idx] for k, v in vals.items()}
         per_node = flow.node_log_prob(batch)
         nlls = {k: -v.mean() for k, v in per_node.items()}

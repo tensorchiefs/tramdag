@@ -215,3 +215,31 @@ def test_log_prob_takes_a_node_subset(ls_chain):
     torch.testing.assert_close(parts[0] + parts[1], flow.log_prob(df))
     # the conditional NLL of one node matches its mean over the same rows
     assert float(-parts[1].mean()) == pytest.approx(flow.nll(df)["x2"], abs=1e-5)
+
+
+def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
+    """`n % batch_size == 1` used to hand BatchNorm1d a single row and crash."""
+    from tramdag import CS
+
+    df = ls_chain["draw"](101, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(
+        {
+            "x1": td.ContinuousNode(),
+            "x2": td.ContinuousNode([CS("x1", units=[4], batch_norm=True)]),
+        },
+        seed=0,
+    )
+    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2)
+    assert bool(torch.isfinite(flow.log_prob(df)).all())
+
+
+def test_log_prob_names_an_unknown_node_and_refuses_an_empty_list(ls_chain):
+    df = ls_chain["draw"](50, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode([LS("x1")])}, seed=0
+    )
+    flow.calibrate(df)
+    with pytest.raises(KeyError, match="unknown node 'nope'"):
+        flow.log_prob(df, nodes=["nope"])
+    with pytest.raises(ValueError, match="sums nothing"):
+        flow.log_prob(df, nodes=[])

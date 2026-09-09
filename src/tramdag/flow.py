@@ -158,27 +158,38 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         return np.float64 if self._dtype == torch.float64 else np.float32
 
     def _tensorize(
-        self, df: pd.DataFrame, cols: list[str] | tuple[str, ...] | None = None
+        self,
+        df: pd.DataFrame,
+        cols: list[str] | tuple[str, ...] | None = None,
+        *,
+        levels: bool = True,
     ) -> dict[str, Tensor]:
         """DataFrame columns -> one ``(n,)`` tensor each, in the model dtype.
 
-        ``cols=None`` takes every node, in topological order.
+        ``cols=None`` takes every node, in topological order. ``levels=False``
+        skips the ordinal level check, for a frame of *latents* whose columns
+        carry node names but real values.
 
         Raises
         ------
         KeyError
             If the frame lacks one of the columns, by name — a spec/data
             mismatch would otherwise surface deep inside a tensor op.
+        ValueError
+            If an ordinal column is not a level index of its node. The
+            one-hot encoding would otherwise truncate 1.5 to level 1 in
+            silence, or fail inside ``one_hot`` without naming the node.
         """
         cols = self.order if cols is None else cols
         self._check_columns(df, cols)
         dtype = self._np_dtype
-        return {
-            c: torch.as_tensor(
-                df[c].to_numpy(dtype=dtype, copy=True), device=self.device
-            )
-            for c in cols
-        }
+        out = {}
+        for c in cols:
+            values = df[c].to_numpy(dtype=dtype, copy=True)
+            if levels and c in self.nodes and self.nodes[c].kind == "ordinal":
+                self._check_level_values(c, values)
+            out[c] = torch.as_tensor(values, device=self.device)
+        return out
 
     @staticmethod
     def _check_columns(df: pd.DataFrame, cols) -> None:
@@ -396,14 +407,18 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         node.intercept.marginal_start(theta)
 
     def _check_levels(self, name: str, train_df: pd.DataFrame) -> None:
-        """Reject an ordinal column that is not a level index of its node.
+        """Reject an ordinal column of the frame that is not a level index."""
+        self._check_level_values(name, train_df[name].to_numpy(dtype=np.float64))
 
-        ``bincount`` and the cutpoint likelihood both take the column as
-        ``0..levels-1``; a 1-based or non-integer column would silently be
-        truncated instead of failing.
+    def _check_level_values(self, name: str, values) -> None:
+        """Reject ordinal values that are not level indices of their node.
+
+        ``bincount``, the cutpoint likelihood and the one-hot parent
+        encoding all take the values as ``0..levels-1``; a 1-based or
+        non-integer value would silently be truncated instead of failing.
         """
         levels = self.spec[name].levels
-        v = train_df[name].to_numpy(dtype=np.float64)
+        v = np.asarray(values, dtype=np.float64)
         fractional = bool((v != np.round(v)).any())
         if fractional or v.min() < 0 or v.max() >= levels:
             raise ValueError(
@@ -491,9 +506,12 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             If both ``n`` and ``u`` are omitted.
         """
         do = do or {}
+        for name, value in do.items():
+            if self._node(name).kind == "ordinal":
+                self._check_level_values(name, [value])
         if u is not None:
             n = len(u)
-            u_vals = self._tensorize(u)
+            u_vals = self._tensorize(u, levels=False)  # latents, not levels
         elif n is not None:
             gen = self._generator(seed)
             u_vals = {

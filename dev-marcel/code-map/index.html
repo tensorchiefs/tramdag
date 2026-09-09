@@ -1594,7 +1594,7 @@ is the same object, so <code>LS is LinearShift</code>.</p>
   
       dataclass
   " href="../api/spec/#tramdag.spec.Term"><code>Term</code></a></td>
-<td>One additive term of a node's transformation, frozen data; each term is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new effect; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
+<td>One additive term of a node's transformation, frozen data; each term is a subclass whose class name is its <code>name</code> and whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new effect; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SI" href="../api/spec/#tramdag.spec.SI"><code>SI()</code></a></td>

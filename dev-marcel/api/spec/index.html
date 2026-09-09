@@ -2539,8 +2539,8 @@ serializable by :func:<code>spec_to_dict</code> — and knows its own spec-level
 rules (<code>edge_parents</code>, <code>cells</code>, <code>classical</code>). The module
 that trains it lives in :mod:<code>tramdag.terms</code> and declares which term
 class it builds (<code>data = CS</code>).</p>
-<p>Subclass to add a term: the class name is the term name (its
-serialized <code>term</code>), every annotated attribute with a default is an
+<p>Subclass to add a term: the class name becomes its <code>name</code> (what the
+<code>term</code> key serializes), every annotated attribute with a default is an
 option, and <code>__post_init__</code> holds the construction-time checks::</p>
 <pre><code>class Scaled(Term):
     scale: float = 1.0

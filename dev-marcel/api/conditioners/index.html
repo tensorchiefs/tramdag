@@ -1718,15 +1718,42 @@ activations for the triangle experiments, and a 10-100 tanh net for the
 CAREFL/VACA comparisons. Every replication in <code>experiments/paper/</code> therefore
 sets <code>units=</code> and <code>activation=</code> explicitly from its own reference script,
 and none of them relies on the defaults here.</p>
-<p>===================== ============================================ ======
-Conditioner           Architecture                                 Term
-===================== ============================================ ======
-<code>LinearShift</code>       <code>Linear(n, 1, bias=False)</code>                 <code>LS</code>
-<code>ComplexShift</code>      64-128-64 ReLU NN to 1, no bias             <code>CS</code>
-<code>ComplexIntercept</code>  8-8 ReLU NN to <code>n_params</code>, bias-free out  <code>I</code>
-<code>SimpleIntercept</code>   free parameter vector, no parent             none
-<code>VaryingCoef</code>       <code>beta0</code> + penalized 16-unit NN            <code>VC</code>
-===================== ============================================ ======</p>
+<table>
+<thead>
+<tr>
+<th>Conditioner</th>
+<th>Architecture</th>
+<th>Term</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LinearShift</code></td>
+<td><code>Linear(n, 1, bias=False)</code></td>
+<td><code>LS</code></td>
+</tr>
+<tr>
+<td><code>ComplexShift</code></td>
+<td>64-128-64 ReLU NN to 1, no bias</td>
+<td><code>CS</code></td>
+</tr>
+<tr>
+<td><code>ComplexIntercept</code></td>
+<td>8-8 ReLU NN to <code>n_params</code>, bias-free out</td>
+<td><code>I</code></td>
+</tr>
+<tr>
+<td><code>SimpleIntercept</code></td>
+<td>free parameter vector, no parent</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>VaryingCoef</code></td>
+<td><code>beta0</code> + penalized 16-unit NN</td>
+<td><code>VC</code></td>
+</tr>
+</tbody>
+</table>
 <p><code>ComplexShift</code> and <code>ComplexIntercept</code> correspond to
 <code>ComplexShiftDefaultTabular</code> and <code>ComplexInterceptDefaultTabular</code>.
 <code>VaryingCoef</code> (issue #28) has no counterpart in the original code.</p>

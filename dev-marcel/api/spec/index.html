@@ -2439,21 +2439,56 @@ additive intercept. Several <code>I</code> terms with parents on one node are an
 error — the flag is the only way to say it, so a term list is always purely
 additive on the latent scale.</p>
 <p>What <code>h</code> looks like per transformation, for a continuous <code>x3</code>:</p>
-<p>======================================== =======================================
-<code>terms=</code>                               <code>u_3 = h(x_3 | pa)</code>
-======================================== =======================================
-<code>None</code> / <code>[I]</code>                       <code>h_theta(x3)</code>
-<code>[LS("X1")]</code>                           <code>h_theta(x3) + beta*x1</code>
-<code>[I("X1")]</code>                            <code>h_theta(x1)(x3)</code>
-<code>[CS("X1")]</code>                           <code>h_theta(x3) + g_1(x1)</code>
-<code>[LS("X1"), CS("X2")]</code>                 <code>h_theta(x3) + beta*x1 + g_2(x2)</code>
-<code>[CS("X1", "X2")]</code>                     <code>h_theta(x3) + g_12(x1, x2)</code>
-<code>[CS("X1"), CS("X2")]</code>                 <code>h_theta(x3) + g_1(x1) + g_2(x2)</code>
-<code>[I("X1", "X2")]</code>                      <code>h_theta(x1,x2)(x3)</code>  (joint)
-<code>[I("X1","X2", allow_interaction=</code>h_theta(x1)+theta(x2)(x3)<code>(additive:
-False)]</code>                                one net per parent, summed coefficients)
-<code>[I, CS("X1"), VC("X2", t="T")]</code>       <code>h_theta(x3) + g_1(x1) + beta(x2)*t</code>
-======================================== =======================================</p>
+<table>
+<thead>
+<tr>
+<th><code>terms=</code></th>
+<th><code>u_3 = h(x_3 given pa)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>None</code> / <code>[I]</code></td>
+<td><code>h_theta(x3)</code></td>
+</tr>
+<tr>
+<td><code>[LS("X1")]</code></td>
+<td><code>h_theta(x3) + beta*x1</code></td>
+</tr>
+<tr>
+<td><code>[I("X1")]</code></td>
+<td><code>h_theta(x1)(x3)</code></td>
+</tr>
+<tr>
+<td><code>[CS("X1")]</code></td>
+<td><code>h_theta(x3) + g_1(x1)</code></td>
+</tr>
+<tr>
+<td><code>[LS("X1"), CS("X2")]</code></td>
+<td><code>h_theta(x3) + beta*x1 + g_2(x2)</code></td>
+</tr>
+<tr>
+<td><code>[CS("X1", "X2")]</code></td>
+<td><code>h_theta(x3) + g_12(x1, x2)</code></td>
+</tr>
+<tr>
+<td><code>[CS("X1"), CS("X2")]</code></td>
+<td><code>h_theta(x3) + g_1(x1) + g_2(x2)</code></td>
+</tr>
+<tr>
+<td><code>[I("X1", "X2")]</code></td>
+<td><code>h_theta(x1,x2)(x3)</code>, joint</td>
+</tr>
+<tr>
+<td><code>[I("X1","X2", allow_interaction=False)]</code></td>
+<td><code>h_theta(x1)+theta(x2)(x3)</code>, additive</td>
+</tr>
+<tr>
+<td><code>[I, CS("X1"), VC("X2", t="T")]</code></td>
+<td><code>h_theta(x3) + g_1(x1) + beta(x2)*t</code></td>
+</tr>
+</tbody>
+</table>
 <p>Each parent enters through exactly one <em>edge-owning</em> term (I/LS/CS parents,
 and a VC term's treatment <code>t</code>). VC <strong>modifiers</strong> are exempt:
 <code>CS("x2")</code> + <code>VC("x2", t="T")</code> is the intended pattern — <code>x2</code> acts

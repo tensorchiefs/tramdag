@@ -68,28 +68,28 @@ paper_protocol: &paper_protocol
 x1: &x1
   kind: continuous
   terms:
-  - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
 
 x2: &x2
   kind: continuous
   terms:
-  - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
-  - {effect: LS, parents: [x1], options: {}}
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
 
 x3_ls: &x3_ls
   kind: continuous
   terms:
-  - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
-  - {effect: LS, parents: [x1], options: {}}
-  - {effect: LS, parents: [x2], options: {}}
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
+  - {term: LS, parents: [x2], options: {}}
 
 x3_cs: &x3_cs
   kind: continuous
   terms:
-  - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
-  - {effect: LS, parents: [x1], options: {}}
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
   # hidden (25, 25), sigmoid: create_param_net's reference CS net
-  - {effect: CS, parents: [x2], options: {units: [25, 25], activation: sigmoid}}
+  - {term: CS, parents: [x2], options: {units: [25, 25], activation: sigmoid}}
 
 variants:
   # the linear DGP is the only one with a true beta23 (+0.3) to recover

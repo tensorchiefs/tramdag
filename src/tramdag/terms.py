@@ -1,4 +1,4 @@
-"""The term modules: one class per effect, built from the effect's spec class.
+"""The term modules: one class per term, built from the term's spec class.
 
 A spec term (:class:`tramdag.spec.Term` subclass — ``LS``, ``CS``, ``VC``,
 ``Fn``, ``I``) is frozen data and carries the spec-level rules; the module
@@ -8,7 +8,7 @@ runtime behaviour: ``build``, ``shift_value``/``theta_value``,
 side-input contract. :func:`module_for` finds the module of a term by that
 declaration, so subclassing is the whole registration.
 
-A custom effect is two classes: a :class:`tramdag.spec.Term` subclass for
+A custom term is two classes: a :class:`tramdag.spec.Term` subclass for
 the options and checks, and a :class:`ShiftTerm` subclass with ``data =``
 that term class, ``build`` and ``shift_value``.
 """

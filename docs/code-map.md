@@ -6,12 +6,12 @@ The last section lists every training hyperparameter and where it lives.
 
 ## `spec.py` — declare the model
 
-Every effect is a `Term` subclass under its pythonic name; the paper's symbol
+Every term is a `Term` subclass under its pythonic name; the paper's symbol
 is the same object, so `LS is LinearShift`.
 
 | Name | Role |
 |---|---|
-| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, frozen data; each effect is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). `+` on terms builds plain lists. Carries the spec-level rules: `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new effect; its module goes in `terms.py` and read as attributes (`term.penalty`, `term.units`, ...). |
+| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, frozen data; each term is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). `+` on terms builds plain lists. Carries the spec-level rules: `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new effect; its module goes in `terms.py` and read as attributes (`term.penalty`, `term.units`, ...). |
 | [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
 | [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. The bare names `I` and `SI` in a term list both mean the simple intercept. |
@@ -22,8 +22,8 @@ is the same object, so `LS is LinearShift`.
 | [`OrdinalNode`][tramdag.spec.OrdinalNode] | Ordinal variable with `levels` classes: ordered logit (cutpoints) plus shifts. |
 | [`node_parents()`][tramdag.spec.node_parents] | Ordered de-duplicated parent names of a node (the canonical term list is `node.terms`). |
 | [`validate_and_sort()`][tramdag.spec.validate_and_sort] | Edge-ownership validation plus Kahn topological sort. The returned order makes the flow triangular. |
-| [`spec_to_dict()`][tramdag.spec.spec_to_dict] / [`spec_from_dict()`][tramdag.spec.spec_from_dict] | Checkpoint (de)serialization. A term serializes as `{effect, parents, options}` and nothing else, since `options` is already canonical. No compatibility shims: `spec_from_dict` rejects a term without `options`, the node constructors normalize the formula, and `validate_and_sort` checks the DAG. |
-| (`_normalize_terms`, `_as_term`, `_effect_class`) | Formula flattening and per-entry validation (a `+` sum nested in a list is rejected), the one-parented-`I` rule plus transform hoisting in one pass, canonical option storage against each effect's `option_defaults` (a wrong-effect option errors). |
+| [`spec_to_dict()`][tramdag.spec.spec_to_dict] / [`spec_from_dict()`][tramdag.spec.spec_from_dict] | Checkpoint (de)serialization. A term serializes as `{term, parents, options}` and nothing else, since `options` is already canonical. No compatibility shims: `spec_from_dict` rejects a term without `options`, the node constructors normalize the formula, and `validate_and_sort` checks the DAG. |
+| (`_normalize_terms`, `_as_term`, `_term_class`) | Formula flattening and per-entry validation (a `+` sum nested in a list is rejected), the one-parented-`I` rule plus transform hoisting in one pass, canonical option storage against each effect's `option_defaults` (a wrong-effect option errors). |
 | (`_check_node`, `_kahn_sort`) | The stages behind `validate_and_sort`: parents exist, then each term's `edge_parents` (the VC treatment and centering rules), then edge ownership; a term's own shape (arity, option values) and a node's own (ordinal levels, the transform) are checked when they are built. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic. |
 
 ## `transforms.py` — the monotone map h and the ordinal transform
@@ -79,7 +79,7 @@ config in `experiments/paper/` states `units=` and `activation=` itself.
 | [`intercept_contributions()`][tramdag.flow.CausalFlowDAG.intercept_contributions] | Post-hoc GAM-style decomposition of a complex intercept into mean-centered per-term parts. |
 | [`ls_coefficients()`][tramdag.flow.CausalFlowDAG.ls_coefficients] | The per-node linear-shift weights — the interpretable coefficients. |
 | [`design_matrix()`][tramdag.flow.CausalFlowDAG.design_matrix] | Parent encoding as a DataFrame (`drop_first=` gives the classical statsmodels/`polr` design). |
-| [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term effects. |
+| [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
 | [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with history and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
 | (`_node`, `_encode_parent`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_np_dtype`) | Node lookup with one shared error; parent encoding (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset; seeded-generator and dtype plumbing. |
 | (`_check_side_columns`, `_binary_p1`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftTerm` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
@@ -88,7 +88,7 @@ config in `experiments/paper/` states `units=` and `activation=` itself.
 
 ## `terms.py` — the term modules (the 1.0 architecture's core)
 
-One module class per effect, declaring the `Term` subclass it builds
+One module class per term, declaring the `Term` subclass it builds
 (`data = CS`); see [architecture.md](architecture.md) for the contract
 diagram.
 

@@ -56,7 +56,7 @@ def small_fitted(vc_hetero):
 def test_vc_constructor():
     t = VC("X2", "X3", penalty=2.5, t="T")
     # internal layout: treatment first, modifiers positional
-    assert (t.effect, t.parents, t.penalty) == ("VC", ("T", "X2", "X3"), 2.5)
+    assert (t.term, t.parents, t.penalty) == ("VC", ("T", "X2", "X3"), 2.5)
     assert VC(t="T").penalty == 1.0  # the documented default
     with pytest.raises(TypeError):
         VC("T", "X2")  # the treatment is the keyword t=
@@ -172,7 +172,7 @@ def test_save_load_roundtrip_vc(tmp_path, small_fitted):
     p = tmp_path / "vc.pt"
     flow.save(p)
     flow2 = CausalFlowDAG.load(p)
-    vc = next(t for t in flow2.spec["Y"].terms if t.effect == "VC")
+    vc = next(t for t in flow2.spec["Y"].terms if t.term == "VC")
     assert vc.penalty == 1.0
     np.testing.assert_allclose(
         flow2.varying_coef(new, "Y"), flow.varying_coef(new, "Y"), atol=1e-7
@@ -182,7 +182,7 @@ def test_save_load_roundtrip_vc(tmp_path, small_fitted):
 
 def test_serialization_roundtrip_spec():
     spec2 = spec_from_dict(spec_to_dict(_vc_spec(penalty=3.0)))
-    t = next(t for t in spec2["Y"].terms if t.effect == "VC")
+    t = next(t for t in spec2["Y"].terms if t.term == "VC")
     assert t == VC("X2", "X3", penalty=3.0, t="T")
 
 

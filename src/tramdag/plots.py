@@ -22,7 +22,7 @@ import pandas as pd
 from .spec import NodeSpec, node_parents, validate_and_sort
 
 # %% global variables ------------------------------------------------------------------
-# how each effect draws its edge; an unregistered effect falls back to dotted gray
+# how each term draws its edge; an unregistered term falls back to dotted gray
 EDGE_STYLE = {
     "LS": dict(color="0.25", ls="-", lw=1.3),
     "CS": dict(color="C0", ls="-", lw=2.4),
@@ -86,16 +86,16 @@ def _layout(spec: dict[str, NodeSpec]) -> tuple[dict[str, tuple[float, float]], 
 
 
 def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
-    """Give ``(parent, child, effect, joint)`` for the edges one term owns.
+    """Give ``(parent, child, term_name, joint)`` for the edges one term owns.
 
-    Read off the term's adjacency ``cells``: the tag is the effect (``CI``
+    Read off the term's adjacency ``cells``: the tag is the term name (``CI``
     for an intercept edge, ``VCm`` for a VC modifier), with the parent group
     appended for a multi-parent net — that suffix marks a ``joint`` edge.
     """
     edges = []
     for parent, tag in term.cells():
-        effect, joint = tag.split("[")[0], "[" in tag
-        edges.append((parent, child, EDGE_LABEL.get(effect, effect), joint))
+        name, joint = tag.split("[")[0], "[" in tag
+        edges.append((parent, child, EDGE_LABEL.get(name, name), joint))
     return edges
 
 
@@ -149,9 +149,9 @@ def _bulge(pos, layer_dx: float, edge, lane: float) -> float:
 def _draw_edge(ax, patches, pos, edge, labels: bool, bulge: float) -> None:
     from matplotlib.patches import FancyArrowPatch
 
-    parent, child, effect, joint = edge
+    parent, child, name, joint = edge
     (x0, y0), (x1, y1) = pos[parent], pos[child]
-    style = EDGE_STYLE.get(effect, dict(color="0.5", ls=":", lw=1.2))
+    style = EDGE_STYLE.get(name, dict(color="0.5", ls=":", lw=1.2))
     # arc3 bulges by rad * length / 2 to the right of its direction of travel
     dist = float(np.hypot(x1 - x0, y1 - y0))
     rad = -2 * bulge / dist
@@ -168,7 +168,7 @@ def _draw_edge(ax, patches, pos, edge, labels: bool, bulge: float) -> None:
     )
     ax.add_patch(arrow)
     if labels:
-        text = effect + (" joint" if joint else "")
+        text = name + (" joint" if joint else "")
         # the arc's midpoint: the chord's midpoint pushed out by the bulge
         mx = (x0 + x1) / 2 - bulge * (y1 - y0) / dist
         my = (y0 + y1) / 2 + bulge * (x1 - x0) / dist
@@ -184,11 +184,11 @@ def _draw_edge(ax, patches, pos, edge, labels: bool, bulge: float) -> None:
         )
 
 
-def _legend(ax, effects: set[str]) -> None:
+def _legend(ax, names: set[str]) -> None:
     from matplotlib.lines import Line2D
 
     handles = [
-        Line2D([], [], label=e, **EDGE_STYLE[e]) for e in EDGE_STYLE if e in effects
+        Line2D([], [], label=e, **EDGE_STYLE[e]) for e in EDGE_STYLE if e in names
     ]
     if handles:
         ax.legend(
@@ -239,9 +239,9 @@ def plot_dag(
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure sized to the layout.
     labels : bool, optional
-        Write the effect on each edge, by default True.
+        Write the term name on each edge, by default True.
     legend : bool, optional
-        Add a legend of the effects used, by default True.
+        Add a legend of the terms used, by default True.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
 

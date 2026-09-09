@@ -7,7 +7,7 @@ positional argument, written as a list or as a ``+`` sum::
     "X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
     "X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
 
-Each effect is a :class:`Term` subclass, called with the parent(s) it
+Each term is a :class:`Term` subclass, called with the parent(s) it
 depends on: :class:`Intercept`, :class:`LinearShift`, :class:`ComplexShift`,
 :class:`VaryingCoefficient` and :class:`FnShift`. The paper's symbols
 ``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are the same objects (``SI``/``CI`` build
@@ -89,20 +89,20 @@ def _subclasses(cls) -> list[type]:
     return out
 
 
-def _effect_class(effect: str) -> type[Term]:
-    """Give the :class:`Term` subclass whose ``effect`` name this is.
+def _term_class(term: str) -> type[Term]:
+    """Give the :class:`Term` subclass whose ``term`` name this is.
 
     Raises
     ------
     ValueError
-        If no term class carries the name — a custom effect must be
+        If no term class carries the name — a custom term must be
         imported before a spec naming it is loaded.
     """
     for cls in _subclasses(Term):
-        if cls.effect == effect:
+        if cls.term == term:
             return cls
     raise ValueError(
-        f"unknown term effect '{effect}'. A custom effect is a tramdag.Term "
+        f"unknown term '{term}'. A custom term is a tramdag.Term "
         "subclass; import it before the spec is built or loaded."
     )
 
@@ -364,7 +364,7 @@ def validate_and_sort(spec: dict[str, NodeSpec]) -> list[str]:
 def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     """Give the serialized representation of a spec, for checkpoints.
 
-    A term serializes as its effect name, its parents and the options that
+    A term serializes as its term name, its parents and the options that
     differ from their defaults — nothing else, so the form is canonical.
     The result is JSON- and YAML-safe: plain tuples become lists and
     nested kwargs tuples (``transform_kwargs``) become mappings, which is
@@ -391,7 +391,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
             "kind": node.kind,
             "terms": [
                 {
-                    "effect": t.effect,
+                    "term": t.term,
                     "parents": list(t.parents),
                     "options": {k: _mapped(v) for k, v in t.options().items()},
                 }
@@ -423,14 +423,14 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     Raises
     ------
     ValueError
-        If a term names an unknown effect or an option its effect does
+        If a term names an unknown term or an option that term does
         not take.
     """
     spec: dict[str, NodeSpec] = {}
     for name, nd in d.items():
         terms = []
         for t in nd["terms"]:
-            cls = _effect_class(t["effect"])
+            cls = _term_class(t["term"])
             options = {k: _tupled(v) for k, v in t["options"].items()}
             try:
                 terms.append(cls.from_serialized(tuple(t["parents"]), options))
@@ -446,17 +446,17 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
 # %% public classes --------------------------------------------------------------------
 @dataclass(frozen=True, init=False, repr=False)
 class Term:
-    """One additive term of a node's transformation; each effect is a subclass.
+    """One additive term of a node's transformation; each kind is a subclass.
 
     Terms add: ``I("a") + CS("b")`` is the same transformation as
     ``[I("a"), CS("b")]``. A term is frozen data — hashable, comparable,
-    serializable by :func:`spec_to_dict` — and knows the spec-level rules
-    of its effect (``edge_parents``, ``cells``, ``classical``). The module
+    serializable by :func:`spec_to_dict` — and knows its own spec-level
+    rules (``edge_parents``, ``cells``, ``classical``). The module
     that trains it lives in :mod:`tramdag.terms` and declares which term
     class it builds (``data = CS``).
 
-    Subclass to add an effect: the class name is the effect name (its
-    serialized ``effect``), every annotated attribute with a default is an
+    Subclass to add a term: the class name is the term name (its
+    serialized ``term``), every annotated attribute with a default is an
     option, and ``__post_init__`` holds the construction-time checks::
 
         class Scaled(Term):
@@ -473,11 +473,11 @@ class Term:
 
     parents: tuple[str, ...] = ()
 
-    effect: ClassVar[str] = "Term"
-    cell_tag: ClassVar[str | None] = None  # to_matrix tag; None -> the effect
+    term: ClassVar[str] = "Term"
+    cell_tag: ClassVar[str | None] = None  # to_matrix tag; None -> the term name
 
     def __init_subclass__(cls, **kwargs):
-        """Make every subclass a frozen dataclass named after its effect.
+        """Make every subclass a frozen dataclass named after its term.
 
         Raises
         ------
@@ -486,7 +486,7 @@ class Term:
             make the term unhashable and its serialization non-canonical).
         """
         super().__init_subclass__(**kwargs)
-        cls.effect = cls.__dict__.get("effect", cls.__name__)
+        cls.term = cls.__dict__.get("term", cls.__name__)
         dataclass(frozen=True, init=False, repr=False)(cls)  # decorates in place
         missing = [
             f.name for f in dataclasses.fields(cls) if f.default is dataclasses.MISSING
@@ -501,7 +501,7 @@ class Term:
         unknown = sorted(set(options) - set(names))
         if unknown:
             raise ValueError(
-                f"effect '{self.effect}' takes no option(s) {unknown}; "
+                f"term '{self.term}' takes no option(s) {unknown}; "
                 f"it takes {sorted(names)}."
             )
         object.__setattr__(self, "parents", tuple(parents))
@@ -515,7 +515,7 @@ class Term:
         value = getattr(self, "input_transform", None)
         if value is not None and not (callable(value) or value in INPUT_TRANSFORMS):
             raise ValueError(
-                f"{self.effect}(): input_transform must be 'minmax', "
+                f"{self.term}(): input_transform must be 'minmax', "
                 f"'standardize' or a callable fn(x, train), got {value!r}."
             )
         units = getattr(self, "units", None)
@@ -524,7 +524,7 @@ class Term:
 
     @classmethod
     def option_names(cls) -> list[str]:
-        """Give the option names this effect takes."""
+        """Give the option names this term takes."""
         return [f.name for f in dataclasses.fields(cls) if f.name != "parents"]
 
     @classmethod
@@ -554,7 +554,7 @@ class Term:
 
         A multi-parent term carries its parent group as a suffix.
         """
-        tag = self.cell_tag or self.effect
+        tag = self.cell_tag or self.term
         if len(self.parents) > 1:
             tag = f"{tag}{list(self.parents)}"
         return [(p, tag) for p in self.parents]
@@ -563,7 +563,7 @@ class Term:
         """Show the call that builds the term: parents, then non-default options."""
         args = [repr(p) for p in self.parents]
         args += [f"{k}={v!r}" for k, v in self.options().items()]
-        return f"{self.effect}({', '.join(args)})"
+        return f"{self.term}({', '.join(args)})"
 
     def __add__(self, other: Term | list[Term]) -> list[Term]:
         """Concatenate into a plain term list."""
@@ -637,7 +637,7 @@ class Intercept(Term):
         interaction to disallow needs two).
     """
 
-    effect = "I"
+    term = "I"
     cell_tag = "CI"
 
     transform: str | type | None = None
@@ -683,7 +683,7 @@ class Intercept(Term):
         kwargs = dict(opts.pop("transform_kwargs", None) or ())
         args = [repr(p) for p in self.parents]
         args += [f"{k}={v!r}" for k, v in {**opts, **kwargs}.items()]
-        return f"{self.effect}({', '.join(args)})"
+        return f"{self.term}({', '.join(args)})"
 
 
 class LinearShift(Term):
@@ -701,7 +701,7 @@ class LinearShift(Term):
         If the parent count is not one.
     """
 
-    effect = "LS"
+    term = "LS"
 
     def __post_init__(self) -> None:
         """Refuse any parent count but one."""
@@ -738,7 +738,7 @@ class ComplexShift(Term):
         If no parent is given.
     """
 
-    effect = "CS"
+    term = "CS"
 
     units: tuple[int, ...] | None = None
     activation: str | None = None
@@ -769,7 +769,7 @@ class VaryingCoefficient(Term):
     is a nested question. Read the fitted effect out with
     :meth:`CausalFlowDAG.varying_coef`.
 
-    Unlike other effects, VC *modifiers* can also appear in the node's
+    Unlike other terms, VC *modifiers* can also appear in the node's
     prognostic terms (``CS``/``LS``/``I``). Only ``t`` owns its edge.
 
     Parameters
@@ -827,7 +827,7 @@ class VaryingCoefficient(Term):
     uncentered term only.
     """
 
-    effect = "VC"
+    term = "VC"
 
     penalty: float = 1.0
     center: str | bool = False
@@ -909,7 +909,7 @@ class VaryingCoefficient(Term):
         """Show the modifiers, then ``t=``, then the non-default options."""
         args = [repr(p) for p in self.parents[1:]] + [f"t={self.parents[0]!r}"]
         args += [f"{k}={v!r}" for k, v in self.options().items()]
-        return f"{self.effect}({', '.join(args)})"
+        return f"{self.term}({', '.join(args)})"
 
 
 class FnShift(Term):
@@ -923,7 +923,7 @@ class FnShift(Term):
 
     Checkpoints pickle ``fn``, so it must be a module-level function or an
     importable ``nn.Module`` — ``save()`` refuses a lambda. For a whole new
-    effect (own options, penalty, side inputs) subclass :class:`Term` and
+    term (own options, penalty, side inputs) subclass :class:`Term` and
     :class:`tramdag.terms.ShiftTerm` instead.
 
     Parameters
@@ -941,7 +941,7 @@ class FnShift(Term):
         If no parent is given or ``fn`` is not callable.
     """
 
-    effect = "Fn"
+    term = "Fn"
 
     fn: object = None
     input_transform: object = None

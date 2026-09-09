@@ -1,4 +1,4 @@
-"""``tramdag.plots``: every effect draws, and the missing extra is named."""
+"""``tramdag.plots``: every term draws, and the missing extra is named."""
 
 # %% imports ---------------------------------------------------------------------------
 import sys
@@ -14,7 +14,7 @@ from tramdag.plots import plot_marginals, plot_training
 
 
 # %% private functions -----------------------------------------------------------------
-def _every_effect_spec():
+def _every_term_spec():
     return {
         "x1": ContinuousNode(),
         "x2": OrdinalNode(3, [CI("x1")]),
@@ -26,7 +26,7 @@ def _every_effect_spec():
 # %% public functions ------------------------------------------------------------------
 def test_plot_dag_draws_every_node_and_edge():
     """One patch per node, one arrow per edge, a label per edge, a legend."""
-    spec = _every_effect_spec()
+    spec = _every_term_spec()
     ax = plot_dag(spec)
     n_edges = 1 + 2 + 2 + 1 + 1  # CI, LS+CS, joint CS (2 parents), VC, VC mod
     arrows = [p for p in ax.patches if type(p).__name__ == "FancyArrowPatch"]
@@ -52,7 +52,7 @@ def test_plot_dag_layers_children_past_their_parents():
     """A node sits one layer right of its deepest parent."""
     from tramdag.plots import _layout
 
-    pos, layer_dx = _layout(_every_effect_spec())
+    pos, layer_dx = _layout(_every_term_spec())
     assert [pos[n][0] / layer_dx for n in ("x1", "x2", "t", "y")] == [0, 1, 2, 3]
 
 
@@ -96,4 +96,4 @@ def test_plots_name_the_optional_dependency(monkeypatch):
     """Without matplotlib the error says what to install."""
     monkeypatch.setitem(sys.modules, "matplotlib.pyplot", None)
     with pytest.raises(ImportError, match=r"tramdag\[plots\]"):
-        plot_dag(_every_effect_spec())
+        plot_dag(_every_term_spec())

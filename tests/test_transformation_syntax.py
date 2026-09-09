@@ -31,7 +31,7 @@ def test_sum_list_and_mixed_forms_are_identical():
 
 def test_sum_chains_flatten_in_order():
     node = ContinuousNode(I("a") + CS("b") + LS("c") + VC("b", t="t"))
-    assert [t.effect for t in node.terms] == ["I", "CS", "LS", "VC"]
+    assert [t.term for t in node.terms] == ["I", "CS", "LS", "VC"]
 
 
 def test_bare_i_and_single_term():
@@ -216,15 +216,15 @@ def test_malformed_serialized_spec_is_rejected():
             "y": {"kind": "continuous", "terms": [term_dict]},
         }
 
-    two_parent_ls = {"effect": "LS", "parents": ["a", "b"], "options": {}}
+    two_parent_ls = {"term": "LS", "parents": ["a", "b"], "options": {}}
     with pytest.raises(ValueError, match="exactly one parent"):
         validate_and_sort(spec_from_dict(spec_with(two_parent_ls)))
 
-    unknown = {"effect": "XX", "parents": ["a"], "options": {}}
-    with pytest.raises(ValueError, match="unknown term effect"):
+    unknown = {"term": "XX", "parents": ["a"], "options": {}}
+    with pytest.raises(ValueError, match="unknown term"):
         validate_and_sort(spec_from_dict(spec_with(unknown)))
 
-    unknown_parent = {"effect": "LS", "parents": ["nope"], "options": {}}
+    unknown_parent = {"term": "LS", "parents": ["nope"], "options": {}}
     with pytest.raises(ValueError, match="unknown parent"):
         validate_and_sort(spec_from_dict(spec_with(unknown_parent)))
 
@@ -293,8 +293,8 @@ def test_spec_survives_a_json_roundtrip():
     assert hash(back["y"].terms[1]) == hash(spec["y"].terms[1])
 
 
-def test_wrong_effect_option_errors_instead_of_defaulting():
-    """A key another effect takes raises — no silent foreign defaults."""
+def test_wrong_term_option_errors_instead_of_defaulting():
+    """A key another term takes raises — no silent foreign defaults."""
     with pytest.raises(ValueError, match="takes no option"):
         CS("a", penalty=1.0)  # penalty is VC's
     with pytest.raises(AttributeError):
@@ -302,13 +302,13 @@ def test_wrong_effect_option_errors_instead_of_defaulting():
     d = {
         "x": {
             "kind": "continuous",
-            "terms": [{"effect": "I", "parents": [], "options": {}}],
+            "terms": [{"term": "I", "parents": [], "options": {}}],
         },
         "y": {
             "kind": "continuous",
             "terms": [
-                {"effect": "I", "parents": [], "options": {}},
-                {"effect": "LS", "parents": ["x"], "options": {"pnealty": 1.0}},
+                {"term": "I", "parents": [], "options": {}},
+                {"term": "LS", "parents": ["x"], "options": {"pnealty": 1.0}},
             ],
         },
     }
@@ -352,7 +352,7 @@ def test_ls_takes_no_input_transform():
             "kind": "continuous",
             "terms": [
                 {
-                    "effect": "LS",
+                    "term": "LS",
                     "parents": ["a"],
                     "options": {"input_transform": "minmax"},
                 }

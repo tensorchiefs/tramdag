@@ -36,7 +36,7 @@ the "paper" column names the figure and what it shows.
 ## What is common to all eight
 
 | item | reference | here |
-|---|---|---|
+|--------------------|----------------------------------|----------------------------------------------------------|
 | latent | standard logistic, shifts added on the continuous scale, subtracted for ordinal `P(Y<=k) = sigmoid(theta_k - shift)` | same (tests pin both signs) |
 | Bernstein basis | `len_theta` unconstrained coefficients, `to_theta` softplus-cumsum, domain → [0, 1] with tangent-linear extrapolation outside; the domain comes from the train **5 %/95 % quantiles in the triangle scripts** (`quantile(..., c(0.05, 0.95))`, the min/max lines commented out) and from **min/max** in the comparison scripts (`scale_df`) | zuko Bernstein, `n_coeffs` unconstrained (zuko ties two control points on, so the free-parameter count matches), domain = train `range_q`/1−`range_q` quantiles → [−5, 5], linear extrapolation; `range_q` is an intercept option since 2026-09-03, default 0.05. Triangle: a match up to the reparametrization [0,1] vs [−5,5], the tail rule and order 21 vs 19. CAREFL: `range_q: 0` = the reference's min/max, a match. VACA: quantiles **kept deliberately — deviation D1**, measured (see VACA) |
 | init | triangle scripts: `LinearMasked` layers with Keras `random_normal` (N(0, 0.05²)) on weights and biases, the LS `beta` layer included; comparison scripts: `layer_dense` default, glorot-uniform weights and zero biases | `init: normal` (triangle) and `init: glorot` (VACA/CAREFL), `CausalFlowDAG(init=)`; torch's default init remains the framework default and was the decisive deviation under the full-batch protocol, see VACA |
@@ -170,7 +170,7 @@ cut (inputs min-max scaled unless stated; do(x2) errors at the then-current
 grid −3 / −2 / 0):
 
 | variant | error | reading |
-|---|---|---|
+|----------------------|----------------------|-------------------------------------------------------------------|
 | raw parents into the nets | 0.731 / 0.426 / 0.017 | the tanh nets saturate: 40 % of the rows have \|x1\| > 2, 43 % \|x2\| > 2 |
 | per-node plateau, torch init | 0.026 / 0.034 / 0.077 | the 2026-08-25 approximation |
 | global plateau (R's rule), torch init | 0.523 / 0.334 / 0.129 | the summed NLL keeps improving through x1 while x3 overfits |
@@ -301,7 +301,7 @@ loosened several. The full decision trail is in
 each config's YAML header.
 
 | experiment | was | now |
-|---|---|---|
+|-----------------------------|----------------------------------|-------------------------------------------------|
 | triangle `linear-ls` / `atan-cs` / `sin-cs` | 500 epochs | 300 epochs |
 | triangle `linear-cs` | 500 epochs | 500 epochs (kept) |
 | triangle-mixed `exp-cs` | 500 epochs | 350 epochs |

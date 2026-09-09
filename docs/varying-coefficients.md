@@ -65,7 +65,8 @@ framework.
   modifiers, `VC(t="T")` *is* `LS("T")` (identical model, testably
   bit-exact). Thus `VC` versus `LS` is a nested question.
 - **Penalty**: the fitting objective is the penalized likelihood
-  `Σᵢ NLLᵢ + penalty · ‖b_theta weights‖²` on the total-NLL scale. This is a
+  $\sum_i \mathrm{NLL}_i + \lambda \lVert b_\Theta \rVert^2$ (`penalty=` is
+  $\lambda$) on the total-NLL scale. This is a
   fixed Gaussian prior whose shrinkage vanishes as n grows. The penalty
   never applies to `beta0`. `penalty → ∞` shrinks `b_theta` to the zero
   function and recovers the classical `LS` fit. The default is

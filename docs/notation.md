@@ -27,7 +27,7 @@ $\boldsymbol{\vartheta}$.
 ## The model's symbols
 
 | Symbol | Meaning | In code |
-|---|---|---|
+|----------------|----------------------------------------------------|---------------------------------------------|
 | $X_j$, $Y$ | the variables of the DAG | node names in the spec |
 | $\mathrm{pa}(X_j)$ | the causal parents of $X_j$ | `node_parents` |
 | $U_j$ | the standard-logistic latent of node $j$ | `u = flow.abduct(df)` |

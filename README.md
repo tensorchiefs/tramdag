@@ -121,7 +121,7 @@ intercept term `I` plus any number of shifts (notation:
 `u = h_ϑ(x) + Σ β·x_pa + Σ g(x_pa) + (β₀ + b_Θ(x_mod))·x_t`
 
 | term | math | what gets built | interpretability |
-|---|---|---|---|
+|------------------|------------------|---------------------------------------------|-------------------------------|
 | `I()` / bare `I` / omitted | `h_ϑ(x)` — constant ϑ | `SimpleIntercept`: one free parameter vector, no network | the baseline transform |
 | `I("A")` | `h_ϑ(a)(x)` — ϑ bends with the parent | `ComplexIntercept`: NN `[8, 8] → n_params` | the parent reshapes the whole distribution; no single coefficient |
 | `I("A","B")` (default `allow_interaction=True`) | `h_ϑ(a,b)(x)` | **one joint** NN over both parents — they interact in ϑ | maximal flexibility |
@@ -182,7 +182,7 @@ file and its expected results committed under each area's `ground_truth/`. A
 dedicated workflow runs them and compares.
 
 | experiment | paper | demonstrates |
-|---|---|---|
+|----------------------|-------------|----------------------------------------------------------------------------|
 | `triangle.py` (`linear-ls`, `linear-cs`, `atan-cs`, `sin-cs`) | §6.1, C.3 | LS coefficient recovery (β = 2, −0.2, +0.3), CS curve ≡ −f(x₂) for non-monotone f |
 | `triangle_mixed.py` (`linear-ls`, `exp-cs`) | §6.2 | mixed data L1/L2 + the C.4 odds-ratio check (OR ≈ 7.4) |
 | `vaca.py` | §5.1–5.2 | the bimodal L1 case a default CNF misses; L2 `p(x₃ \| do(x₂))` against analytic means |

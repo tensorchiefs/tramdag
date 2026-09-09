@@ -2094,7 +2094,7 @@ are independent. <code>None</code> (default) computes every node.</p>
 
 
 <a href="#tramdag.flow.CausalFlowDAG.log_prob" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">log_prob</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">log_prob</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2127,6 +2127,26 @@ are independent. <code>None</code> (default) computes every node.</p>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>nodes</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sum only these nodes' contributions. A subset is exact, because
+the per-node losses are independent — <code>nodes=["Y"]</code> is the
+conditional log-likelihood of <code>Y</code> given its parents, per row,
+in log space (safer than the log of :meth:<code>pmf</code>, which
+underflows in the tail). <code>None</code> (default) is the joint.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>

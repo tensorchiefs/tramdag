@@ -110,6 +110,7 @@ unrelated acceptance bars.
 | [`test_vc_centered.py`](test_vc_centered.py) | propensity-centered VC — out-of-fold structure, zero-gradient freeze, bias reduction |
 | [`test_scores.py`](test_scores.py) | analytic scores vs finite differences, the effect-modifier scan |
 | [`test_marginal_init.py`](test_marginal_init.py) | calibrated marginal initialization — pure-init property |
+| [`test_ordinal_encoding.py`](test_ordinal_encoding.py) | the one-hot parent encoding — level-index validation at every entry point, and the one flat direction it costs per ordinal `LS` parent |
 | [`test_api_papercuts.py`](test_api_papercuts.py) | error messages, `save`/`load` meta, small API contracts |
 
 ## Adding tests

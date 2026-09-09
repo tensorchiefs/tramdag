@@ -118,7 +118,14 @@ class _ReadoutsMixin:
         """Give the per-node linear-shift weights.
 
         For an all-``ls`` model these are the interpretable log-odds-ratio
-        coefficients.
+        coefficients. A continuous parent has one weight, and that weight is
+        the estimate. An **ordinal parent has one weight per level** (its
+        one-hot encoding), and those are identified only up to a common
+        constant: the one-hot columns sum to 1 in every row, so adding c to
+        all of them and subtracting c from the node's intercept leaves the
+        likelihood unchanged. Read them as differences — ``w[k] - w[0]`` is
+        the level-k-vs-0 log-odds ratio, and the column
+        :meth:`design_matrix` drops with ``drop_first=True``.
 
         Only ``LS`` terms have a weight to give. A node's ``CS`` and ``VC``
         shifts are networks, so they are skipped — reading them needs

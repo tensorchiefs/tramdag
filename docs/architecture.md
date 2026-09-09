@@ -52,7 +52,7 @@ classDiagram
     class Term {
         <<spec.py, frozen data>>
         parents
-        term: the class name
+        name: the class name
         option fields with defaults
         __post_init__(): arity, option values
         edge_parents(name, spec)

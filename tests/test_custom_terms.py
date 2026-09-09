@@ -139,7 +139,7 @@ def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
     df = ls_chain["draw"](600, 0)[["x1", "x2"]]
     term = SLS("x1", scale=3.0)
     assert module_for(term) is _ScaledLS
-    assert term.term == "SLS"
+    assert term.name == "SLS"
     assert repr(term) == "SLS('x1', scale=3.0)"
     with pytest.raises(ValueError, match="exactly one parent"):
         SLS("x1", "x2")

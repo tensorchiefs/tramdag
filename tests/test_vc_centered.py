@@ -52,7 +52,7 @@ def _oof_propensity(df, folds=5, seed=0) -> tuple[np.ndarray, np.ndarray]:
 
 def _fit(spec, df, epochs=250):
     train = df.iloc[:5400]
-    if any(t.term == "VC" and t.center for t in spec["Y"].terms):
+    if any(t.name == "VC" and t.center for t in spec["Y"].terms):
         train = train.assign(ps=_oof_propensity(train)[0])
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(train, epochs=epochs, learning_rate=1e-2, batch_size=512, seed=0)
@@ -96,7 +96,7 @@ def test_center_serialization_roundtrip():
         "Y": ContinuousNode([VC("X", center="ps", t="T")]),
     }
     round_tripped = spec_from_dict(spec_to_dict(spec))
-    t = next(t for t in round_tripped["Y"].terms if t.term == "VC")
+    t = next(t for t in round_tripped["Y"].terms if t.name == "VC")
     assert t.center == "ps"
 
 
@@ -248,7 +248,7 @@ def test_centered_save_load_and_queries(tmp_path, confounded):
     p = tmp_path / "c.pt"
     flow.save(p)
     flow2 = CausalFlowDAG.load(p)
-    t = next(t for t in flow2.spec["Y"].terms if t.term == "VC")
+    t = next(t for t in flow2.spec["Y"].terms if t.name == "VC")
     assert t.center == "ps"
     with torch.no_grad():
         np.testing.assert_allclose(

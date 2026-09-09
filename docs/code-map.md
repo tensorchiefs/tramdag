@@ -10,7 +10,7 @@ Every term is a `Term` subclass under its pythonic name; the paper's symbol
 is the same object, so `LS is LinearShift`.
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, frozen data; each term is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). `+` on terms builds plain lists. Carries the spec-level rules: `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new effect; its module goes in `terms.py` and read as attributes (`term.penalty`, `term.units`, ...). |
 | [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
 | [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
@@ -29,7 +29,7 @@ is the same object, so `LS is LinearShift`.
 ## `transforms.py` — the monotone map h and the ordinal transform
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`StandardLogistic`][tramdag.transforms.StandardLogistic] | The TRAM base distribution: `log_prob`, `sample` (generator-aware), `icdf`. |
 | [`BernsteinUT`][tramdag.transforms.BernsteinUT] | Bernstein-polynomial transform (the default, `n_coeffs=20`). Linear tail extrapolation follows the boundary derivative. `marginal_init_theta(column)` gives the marginal start `init_marginals` applies: the Bernstein approximation of `logit(F_hat(y))`, or the plain linear map onto the latent's `range_q` quantiles when called without a column. |
 | [`SplineUT`][tramdag.transforms.SplineUT] | Monotone rational-quadratic spline (`bins=8`). Tails extrapolate with a *fixed* slope — the structural reason spline trails Bernstein on tail-heavy data. |
@@ -51,7 +51,7 @@ experiments and a 10-100 tanh net for its CAREFL/VACA comparisons, so each
 config in `experiments/paper/` states `units=` and `activation=` itself.
 
 | Name | Term | Role |
-|---|---|---|
+|-------------------------|---------|------------------------------------------------------------------------------|
 | [`SimpleIntercept`][tramdag.conditioners.SimpleIntercept] | bare `I` | Free parameter vector; no parents. |
 | [`ComplexIntercept`][tramdag.conditioners.ComplexIntercept] | `I(...)` | 8-8 ReLU NN from parent features to the transform parameters. |
 | [`LinearShift`][tramdag.conditioners.LinearShift] | `LS` | `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
@@ -62,7 +62,7 @@ config in `experiments/paper/` states `units=` and `activation=` itself.
 ## `flow.py` — the model
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one `_Node` per variable in topological order. Construction seeds the weights (`seed=` is the reproducibility knob). |
 | [`calibrate()`][tramdag.flow.CausalFlowDAG.calibrate] | Once, from the training rows, each term for itself: transform ranges (train `range_q` quantiles onto the domain), input-transform statistics. Never touches the weights. Called by the first fit; a checkpoint carries the flag. |
 | [`init_marginals()`][tramdag.flow.CausalFlowDAG.init_marginals] | The calibrated start as an explicit step, callable any time: resets every simple intercept to its column's marginal (Bernstein map / ordinal class log-odds; spline and affine have no calibrated start). Not once-guarded — on a trained flow it restarts those intercepts. Calibrates a fresh flow's ranges itself. |
@@ -93,7 +93,7 @@ One module class per term, declaring the `Term` subclass it builds
 diagram.
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`module_for()`][tramdag.terms.module_for] | The dispatch: a `TermDef` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
 | [`ShiftTerm`][tramdag.terms.ShiftTerm] / [`InterceptTerm`][tramdag.terms.InterceptTerm] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
 | [`LinearShiftTerm`][tramdag.terms.LinearShiftTerm] / [`ComplexShiftTerm`][tramdag.terms.ComplexShiftTerm] / [`VaryingCoefficientTerm`][tramdag.terms.VaryingCoefficientTerm] / [`FnShiftTerm`][tramdag.terms.FnShiftTerm] | The built-in shift terms, subclassing their conditioners (state-dict paths and the seeded RNG stream stay bit-stable). `VaryingCoefficientTerm.regressor` is both the forward regressor and the `beta0` score. |
@@ -102,7 +102,7 @@ diagram.
 ## `nodes.py` — the node model
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | (`_Node`) | One sub-model per variable: builds its intercept and shift terms through `module_for`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
 | (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
 | (`kind_log_prob`, `kind_sample`, `kind_abduct`, `kind_marginal_theta`) | The ONLY continuous-vs-ordinal branches in the package, adjacent. |
@@ -111,21 +111,21 @@ diagram.
 ## `fitting.py` — `_FitMixin`
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Defined here once, methods of the flow via the mixin. |
 | (`_split_validation`, `_normalize_callbacks`, `_check_epoch_hook`, `_check_fit_sizes`, `_epoch_pass`, `_log_epoch`, `_val_nll`, `_fit_epoch`, `_FnCallback`) | The loop plumbing: Keras-shaped validation split, callback normalization and pre-fit signature checks, the epoch/validation passes, verbose printing. |
 
 ## `readouts.py` — `_ReadoutsMixin`
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`shift_curve()`][tramdag.flow.CausalFlowDAG.shift_curve] | One fitted shift term on a 1-D grid, through the term's own `shift_value` — the public replacement for reaching into `nd.shifts[..]`. |
 | the read-out methods | `varying_coef`, `ls_coefficients`, `to_matrix`, `intercept_contributions`, `design_matrix` — defined here once, methods of the flow via the mixin. |
 
 ## `scores.py` — effect-modifier detection (issue #29)
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`node_scores()`][tramdag.scores.node_scores] | Analytic, exact per-observation scores `psi_i = d l_i / d theta` for every `LS` weight and VC `beta0`. No autograd. |
 | [`effect_modifier_scan()`][tramdag.scores.effect_modifier_scan] | Zeileis-Hornik fluctuation scan: order the treatment scores by each candidate, `sup|CUSUM|` against the Kolmogorov 5% value. A measured shortlist for VC modifiers from a seconds-long classical fit. |
 | [`sup_bb_pvalue()`][tramdag.scores.sup_bb_pvalue] | `P(sup |Brownian bridge| > stat)`, the Kolmogorov series. |
@@ -134,7 +134,7 @@ diagram.
 ## `callbacks.py` — the shipped `fit` callbacks
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Snapshots the weights of the best summed validation NLL (read from `history["val"]`) and restores them automatically at fit end (`restore_best=False` keeps the final weights), before the VC re-centering; an optional `patience` also stops the fit once the best is that many epochs old. |
 | [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] | Per-node lr decay and freezing on each node's own validation NLL (from `history["val"]`); stops the fit once every node froze, and records `frozen = {node: epoch}`. The pre-0.4 `fit(schedule="plateau")` recipe, opt-in. `step(nll, opt)` for a hand-computed NLL. |
 | [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodePlateau` needs. |
@@ -142,7 +142,7 @@ diagram.
 ## `plots.py` — the figures (matplotlib optional: `tramdag[plots]`)
 
 | Name | Role |
-|---|---|
+|----------------------------------|------------------------------------------------------------------------------|
 | [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers / Fn, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
 | [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each. |
 | [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with the freeze marks read off `history["lr"]` (or a given `frozen=`). |
@@ -163,7 +163,7 @@ Everything that shapes a fit is either a keyword you pass or a documented
 default you can read at the call site. Nothing numeric is buried.
 
 | Knob | Where | Default |
-|---|---|---|
+|----------------------|-------------------------------|----------------------------------------------------------|
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, validation_batch_size=, verbose=)` | per-node val NLL into `history["val"]` each epoch; `verbose=N` prints every Nth + final epoch (default 0, silent) |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodePlateau`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |

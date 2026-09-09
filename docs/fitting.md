@@ -113,7 +113,7 @@ weights; flexible (CI/CS/VC) models validate and keep the best weights**
 (they overfit observational confounding at the MLE, see the finding below).
 
 | Strategy | When |
-|---|---|
+|-----------------------------|-----------------------------------------------------------------------------------|
 | exact MLE — `fit_classical` (Path B, below) | all-`ls` spec; deterministic, seconds |
 | plain Adam | all-`ls` with a shift `fit_classical` refuses, quick looks |
 | multi-phase Adam | a tighter MLE without a scheduler |

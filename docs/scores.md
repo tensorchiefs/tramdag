@@ -1,13 +1,13 @@
 # Per-observation scores & the effect-modifier scan
 
-`flow.scores(df, node)` returns the score ψᵢ = ∂ℓᵢ/∂θ of each observation
+`flow.scores(df, node)` returns the score $\psi_i = \partial \ell_i / \partial \theta$ of each observation
 for the node's interpretable shift coefficients. These coefficients are every
 `LS` weight and every `VC` term's `beta0`. An `LS` weight gives one column per
 continuous parent and one column per one-hot level of an ordinal parent. The
 `beta0` column is named after the treatment.
 
 The computation is **analytic and exact**, with no autograd. Shifts enter the
-latent additively. Thus ∂ℓᵢ/∂β = (∂ℓᵢ/∂sᵢ)·xᵢ, with ∂ℓᵢ/∂s in closed form
+latent additively. Thus $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i$, with $\partial \ell_i / \partial s$ in closed form
 (`src/tramdag/scores.py`). The function is a pure read-out. It does not touch
 the fitting or sampling code paths. At a fitted MLE, the sum of each column is
 ≈ 0. Tests pin this behavior and include a float64 finite-difference check.

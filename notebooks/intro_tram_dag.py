@@ -44,13 +44,13 @@
 # variable's parents:
 #
 # $$
-# \begin{align*}
+# \begin{aligned}
 # u_1 &= h(x_1) \\
 # u_2 &= h(x_2 \mid x_1)\\
 # u_3 &= h(x_3 \mid x_1, x_2) \\
 # \dots &\\
 # u_p &= h(x_p \mid x_1, x_2, \dots, x_{p-1})
-# \end{align*}
+# \end{aligned}
 # $$
 #
 # This **observed → latent** map is the convention of the paper (Eq. 2,

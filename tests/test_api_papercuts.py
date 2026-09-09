@@ -169,3 +169,36 @@ def test_glorot_init_is_keras_dense_default(tmp_path):
     assert all(torch.equal(a[k], b[k]) for k in a)
     flow.save(tmp_path / "g.pt")
     assert td.CausalFlowDAG.load(tmp_path / "g.pt").init == "glorot"
+
+
+def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
+    """``batch_norm=True`` inserts a BatchNorm1d per hidden layer, and only then."""
+    from torch import nn
+
+    from tramdag import CI, CS, VC, I, spec_from_dict, spec_to_dict
+
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(),
+        "t": OrdinalNode(2, [I()]),
+        "y": ContinuousNode(
+            [
+                CI("x1", units=[4], batch_norm=True),
+                CS("x2", units=[4], batch_norm=True),
+                VC("x1", t="t", units=[4], batch_norm=True),
+            ]
+        ),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    norms = [m for m in flow.nodes["y"].modules() if isinstance(m, nn.BatchNorm1d)]
+    assert len(norms) == 3  # one hidden layer each, in CI, CS and VC
+    assert spec_from_dict(spec_to_dict(spec)) == spec
+
+    plain = CausalFlowDAG({**spec, "y": ContinuousNode([CS("x2", units=[4])])}, seed=0)
+    assert not [m for m in plain.modules() if isinstance(m, nn.BatchNorm1d)]
+
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    df["t"] = (df["x1"] > 0).astype(int)
+    df["y"] = df["x1"] * 0.5 + df["x2"]
+    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2)
+    assert bool(torch.isfinite(flow.log_prob(df)).all())

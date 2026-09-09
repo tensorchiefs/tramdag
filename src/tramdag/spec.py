@@ -624,6 +624,8 @@ class Intercept(Term):
     activation : str | None, optional
         Activation of the network's hidden layers, by default the
         conditioners' ``relu``.
+    batch_norm : bool, optional
+        Batch-normalize the network's hidden layers, by default False.
     input_transform : str | callable | None, optional
         ``"minmax"``, ``"standardize"`` or a callable ``fn(x, train)``
         applied per continuous parent column (``train`` is that column's
@@ -644,6 +646,7 @@ class Intercept(Term):
     transform_kwargs: tuple | None = None
     units: tuple[int, ...] | None = None
     activation: str | None = None
+    batch_norm: bool = False
     input_transform: object = None
     allow_interaction: bool = True
 
@@ -729,6 +732,8 @@ class ComplexShift(Term):
     activation : str | None, optional
         Activation of the hidden layers, by default the conditioners'
         ``relu``.
+    batch_norm : bool, optional
+        Batch-normalize the hidden layers, by default False.
     input_transform : str | callable | None, optional
         As for :class:`I`.
 
@@ -742,6 +747,7 @@ class ComplexShift(Term):
 
     units: tuple[int, ...] | None = None
     activation: str | None = None
+    batch_norm: bool = False
     input_transform: object = None
 
     def __post_init__(self) -> None:
@@ -804,6 +810,8 @@ class VaryingCoefficient(Term):
     activation : str | None, optional
         Activation of ``b_theta``'s hidden layers, by default the
         conditioners' ``relu``.
+    batch_norm : bool, optional
+        Batch-normalize ``b_theta``'s hidden layers, by default False.
     input_transform : str | callable | None, optional
         As for :class:`I`, over the modifiers.
 
@@ -833,6 +841,7 @@ class VaryingCoefficient(Term):
     center: str | bool = False
     units: tuple[int, ...] | None = None
     activation: str | None = None
+    batch_norm: bool = False
     input_transform: object = None
 
     def __init__(self, *modifiers: str, t: str, **options):

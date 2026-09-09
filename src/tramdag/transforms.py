@@ -55,9 +55,10 @@ BOUND = 5.0
 # only calibrate each other if they use the same level.
 RANGE_Q = 0.05
 
-# floor on an empirical class frequency, and on the gap between two initial
-# cutpoints, in ordinal_marginal_init_theta. 1e-3 bounds the initial cutpoints
-# at +-logit(1e-3) ~ +-6.9, so an empty class starts implausible but finite.
+# floor on an empirical CDF value, and on the gap between two initial
+# cutpoints / Bernstein control points, in the two marginal starts. 1e-3 bounds
+# them at +-logit(1e-3) ~ +-6.9, so an empty class or a saturated tail starts
+# implausible but finite.
 _CDF_EPS = 1e-3
 
 # clamp margin of the uniform draw in StandardLogistic. 1e-7 keeps u off 0 and 1
@@ -347,11 +348,18 @@ class _ScaledUT(torch.nn.Module):
         self.register_buffer("xmin", torch.tensor(0.0))
         self.register_buffer("xmax", torch.tensor(1.0))
 
-    def marginal_init_theta(self) -> Tensor | None:
+    def marginal_init_theta(self, column: np.ndarray | None = None) -> Tensor | None:
         """Give the calibrated marginal start, or ``None`` — no such start.
 
-        ``BernsteinUT`` overrides with its linear-map start; a spline or
-        affine transform has none and silently skips the marginal init.
+        ``BernsteinUT`` overrides with its empirical-marginal start; a
+        spline or affine transform has none and silently skips the
+        marginal init.
+
+        Parameters
+        ----------
+        column : numpy.ndarray | None, optional
+            The node's raw training column. ``None`` asks for the
+            data-free start.
         """
         return None
 
@@ -517,12 +525,23 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
-    def marginal_init_theta(self) -> Tensor:
-        """Give the unconstrained Bernstein coefficients of the calibrated map.
+    def marginal_init_theta(self, column: np.ndarray | None = None) -> Tensor:
+        """Give the unconstrained Bernstein coefficients of the marginal start.
 
-        The coefficients describe the linear map from the pre-scaled domain
-        ``[-B, B]`` onto the standard-logistic quantiles
-        ``[logit(range_q), logit(1-range_q)]``.
+        With ``column`` the control points follow the node's **empirical
+        marginal**: control point ``k`` is ``logit(F_hat(y_k))`` at the
+        value ``y_k`` sitting at ``k / order`` of the pre-scaled domain, so
+        the polynomial starts as the Bernstein approximation of
+        ``logit(F_hat(y))`` — the continuous counterpart of the ordinal
+        cutpoints' class log-odds. Without it the control points are
+        equally spaced, the plain linear map from the pre-scaled domain
+        ``[-B, B]`` onto ``[logit(range_q), logit(1-range_q)]``.
+
+        Parameters
+        ----------
+        column : numpy.ndarray | None, optional
+            The node's raw training column. ``None`` gives the linear map,
+            which needs no data.
 
         Raises
         ------
@@ -538,15 +557,19 @@ class BernsteinUT(_ScaledUT):
 
         Notes
         -----
-        After ``set_range``, each node's 5%/95% data quantiles already sit
-        at the domain bounds -+B. A single canonical theta therefore maps
-        every node's body onto the latent's 5%/95% quantiles — the right
-        *scale* from step 0. zuko's default (zero) theta instead maps -+B
-        onto about -6.93/+7.63, about 2.5x too steep, so early training is
-        spent on rescaling. This is a pure initialization: the converged
-        MLE is unchanged. See the inversion of
-        ``BernsteinTransform._constrain_theta`` (cumsum of softplus
-        diffs).
+        After ``set_range``, each node's ``range_q``/``1 - range_q`` data
+        quantiles sit at the domain bounds -+B, so both starts pin the
+        domain ends to the latent's ``range_q`` quantiles and get the
+        *scale* right from step 0; zuko's default (zero) theta instead maps
+        -+B onto about -6.93/+7.63, about 2.5x too steep. The empirical
+        start additionally gets the *shape* right, which is what a skewed
+        or multi-modal marginal costs early training.
+
+        Both are pure initializations: the converged MLE is unchanged. The
+        unconstrained coefficients come from inverting
+        ``BernsteinTransform._constrain_theta`` (a cumsum of softplus
+        diffs, with the first two and the last two tied for its smooth
+        bounds — hence the two averaged pairs below).
         """
         n = self._n
         if self.range_q == 0:
@@ -558,18 +581,36 @@ class BernsteinUT(_ScaledUT):
             )
         q = self.range_q
         a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
-        span = -2.0 * a  # logit(1-q) - logit(q)
         order = n + 1  # constrained control points: n+2
-        b = span / order  # per-step increment (constant)
+        points = self._init_control_points(column, a, order)
+        diffs = np.maximum(np.diff(points), _CDF_EPS)
+        # zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);
+        # averaging each pair keeps every later control point where it was
+        diffs[:2] = diffs[:2].mean()
+        diffs[-2:] = diffs[-2:].mean()
         shift = math.log(2.0) * n / 2.0  # zuko's centering offset
-        theta = torch.full(
-            (n,),
-            math.log(math.expm1(b)),
-            dtype=self.xmin.dtype,
-            device=self.xmin.device,
-        )
-        theta[0] = a + shift
-        return theta
+        theta = np.empty(n)
+        theta[0] = points[0] + shift
+        theta[1:] = np.log(np.expm1(diffs[1:n]))
+        return torch.as_tensor(theta, dtype=self.xmin.dtype, device=self.xmin.device)
+
+    def _init_control_points(
+        self, column: np.ndarray | None, a: float, order: int
+    ) -> np.ndarray:
+        """Give the ``order + 1`` target control points of the marginal start.
+
+        ``logit`` of the empirical CDF at the equally spaced domain values
+        when a column is given, an equally spaced ramp from ``a`` to ``-a``
+        otherwise.
+        """
+        lo, hi = float(self.xmin), float(self.xmax)
+        u = np.arange(order + 1) / order
+        if column is None or hi <= lo:
+            return a + u * (-2.0 * a)
+        values = np.sort(np.asarray(column, dtype=float))
+        cdf = np.searchsorted(values, lo + u * (hi - lo), side="right") / values.size
+        cdf = np.clip(cdf, _CDF_EPS, 1 - _CDF_EPS)
+        return np.log(cdf) - np.log1p(-cdf)
 
 
 class SplineUT(_ScaledUT):

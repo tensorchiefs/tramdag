@@ -32,11 +32,11 @@ make `spline` a first-class transform choice.
 ## 3. Public inverse of `_constrain_theta`
 
 `BernsteinUT.marginal_init_theta` closed-form-inverts zuko's *private*
-`_constrain_theta` (cumsum-of-softplus), hard-coding its internal
-`log(2)·n/2` centering — any upstream reparametrization silently breaks the
-calibrated start. A public `unconstrain_theta(theta)` (or a
-`linear_theta(a, b, n, bound)` classmethod) is ~15 lines upstream and removes
-the private-detail coupling. Framing: "identity/linear initialization
+`_constrain_theta` (cumsum-of-softplus), hard-coding both its internal
+`log(2)·n/2` centering and its tying of the first two and the last two
+diffs — any upstream reparametrization silently breaks the calibrated
+start. A public `unconstrain_theta(theta)` taking the target control points
+is ~15 lines upstream and removes the private-detail coupling. Framing: "identity/linear initialization
 support", a standard flow trick.
 
 ## 4. Docstring fix: the Bernstein θ-shape off-by-one

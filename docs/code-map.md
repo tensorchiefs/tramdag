@@ -31,7 +31,7 @@ is the same object, so `LS is LinearShift`.
 | Name | Role |
 |---|---|
 | [`StandardLogistic`][tramdag.transforms.StandardLogistic] | The TRAM base distribution: `log_prob`, `sample` (generator-aware), `icdf`. |
-| [`BernsteinUT`][tramdag.transforms.BernsteinUT] | Bernstein-polynomial transform (the default, `n_coeffs=20`). Linear tail extrapolation follows the boundary derivative. `marginal_init_theta()` gives the calibrated start `init_marginals` applies. |
+| [`BernsteinUT`][tramdag.transforms.BernsteinUT] | Bernstein-polynomial transform (the default, `n_coeffs=20`). Linear tail extrapolation follows the boundary derivative. `marginal_init_theta(column)` gives the marginal start `init_marginals` applies: the Bernstein approximation of `logit(F_hat(y))`, or the plain linear map onto the latent's `range_q` quantiles when called without a column. |
 | [`SplineUT`][tramdag.transforms.SplineUT] | Monotone rational-quadratic spline (`bins=8`). Tails extrapolate with a *fixed* slope — the structural reason spline trails Bernstein on tail-heavy data. |
 | [`AffineUT`][tramdag.transforms.AffineUT] | Monotone affine transform: the node-conditional is a logistic GLM. |
 | [`make_univariate_transform()`][tramdag.transforms.make_univariate_transform] | Transform registry: name → transform instance. |

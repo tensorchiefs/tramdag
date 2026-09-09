@@ -281,10 +281,11 @@ class InterceptTerm(TermDef):
                 n_params,
                 units=term.units,
                 activation=term.activation,
+                batch_norm=term.batch_norm,
             )
         else:  # additive intercept: one net per parent, coefficients summed
             m = AdditiveInterceptTerm(
-                groups, n_params, spec, term.units, term.activation
+                groups, n_params, spec, term.units, term.activation, term.batch_norm
             )
         m.groups = groups
         m.ci_parents = [p for grp in groups for p in grp]
@@ -348,11 +349,15 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
     coefficient space.
     """
 
-    def __init__(self, groups, n_params: int, spec, units, activation):
+    def __init__(self, groups, n_params: int, spec, units, activation, batch_norm):
         nn.Module.__init__(self)
         self.nets = nn.ModuleList(
             ComplexIntercept(
-                feat_width(spec, grp), n_params, units=units, activation=activation
+                feat_width(spec, grp),
+                n_params,
+                units=units,
+                activation=activation,
+                batch_norm=batch_norm,
             )
             for grp in groups
         )
@@ -403,7 +408,12 @@ class ComplexShiftTerm(ShiftTerm, ComplexShift):
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftTerm:
         """One net over the concatenated parents; keyed 'a' or 'a+b'."""
         ps = tuple(term.parents)
-        m = cls(feat_width(spec, ps), units=term.units, activation=term.activation)
+        m = cls(
+            feat_width(spec, ps),
+            units=term.units,
+            activation=term.activation,
+            batch_norm=term.batch_norm,
+        )
         m.key = "+".join(ps)  # the parent itself for a single-parent term
         _attach_input_transform(m, term, ps, spec)
         return m
@@ -429,6 +439,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
             penalty=term.penalty,
             units=term.units,
             activation=term.activation,
+            batch_norm=term.batch_norm,
         )
         m.key = on
         m.mods = mods

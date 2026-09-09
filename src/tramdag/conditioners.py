@@ -58,12 +58,15 @@ def _nn(
     n_out: int,
     *,
     activation: str | None = None,
+    batch_norm: bool = False,
     zero_init_last: bool = False,
 ) -> nn.Sequential:
     """Build the one NN shape every conditioner uses.
 
     Hidden layers of the given ``units``, each followed by ``activation``,
-    then a bias-free output layer.
+    then a bias-free output layer. With ``batch_norm`` a
+    :class:`~torch.nn.BatchNorm1d` sits between each hidden layer and its
+    activation.
 
     Parameters
     ----------
@@ -79,6 +82,12 @@ def _nn(
         ``create_param_net``) or ``"tanh"`` (the paper's ``make_model``, used
         for its CAREFL/VACA comparisons). ``None`` takes
         :data:`DEFAULT_ACTIVATION`.
+    batch_norm : bool, optional
+        Normalize each hidden layer before its activation, by default
+        ``False`` — neither reference implementation uses it. It needs more
+        than one row per batch and makes the fitted function depend on the
+        training batch statistics, so ``fit`` must leave the flow in
+        ``eval()`` mode for inference to be reproducible (it does).
     zero_init_last : bool, optional
         Zero the output layer, by default ``False``.
 
@@ -101,7 +110,10 @@ def _nn(
     layers: list[nn.Module] = []
     width = n_in
     for u in units:
-        layers += [nn.Linear(width, u), make_activation()]
+        layers.append(nn.Linear(width, u))
+        if batch_norm:
+            layers.append(nn.BatchNorm1d(u))
+        layers.append(make_activation())
         width = u
     out = nn.Linear(width, n_out, bias=False)
     if zero_init_last:
@@ -157,6 +169,8 @@ class ComplexIntercept(nn.Module):
         this explicitly.
     activation : str | None, optional
         Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+    batch_norm : bool, optional
+        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
     """
 
     def __init__(
@@ -165,9 +179,16 @@ class ComplexIntercept(nn.Module):
         n_params: int,
         units: tuple[int, ...] | None = None,
         activation: str | None = None,
+        batch_norm: bool = False,
     ):
         super().__init__()
-        self.net = _nn(n_features, units or (8, 8), n_params, activation=activation)
+        self.net = _nn(
+            n_features,
+            units or (8, 8),
+            n_params,
+            activation=activation,
+            batch_norm=batch_norm,
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         """Map parent features to transform parameters.
@@ -235,6 +256,8 @@ class ComplexShift(nn.Module):
         set this explicitly.
     activation : str | None, optional
         Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+    batch_norm : bool, optional
+        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
     """
 
     def __init__(
@@ -242,9 +265,16 @@ class ComplexShift(nn.Module):
         n_features: int,
         units: tuple[int, ...] | None = None,
         activation: str | None = None,
+        batch_norm: bool = False,
     ):
         super().__init__()
-        self.net = _nn(n_features, units or (64, 128, 64), 1, activation=activation)
+        self.net = _nn(
+            n_features,
+            units or (64, 128, 64),
+            1,
+            activation=activation,
+            batch_norm=batch_norm,
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         """Compute the shift contribution.
@@ -311,6 +341,7 @@ class VaryingCoef(nn.Module):
         penalty: float = 1.0,
         units: tuple[int, ...] | None = None,
         activation: str | None = None,
+        batch_norm: bool = False,
     ):
         super().__init__()
         self.penalty = float(penalty)
@@ -323,6 +354,7 @@ class VaryingCoef(nn.Module):
                 units or (16,),
                 1,
                 activation=activation,
+                batch_norm=batch_norm,
                 zero_init_last=True,
             )
         else:

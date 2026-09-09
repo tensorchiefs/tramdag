@@ -16,15 +16,13 @@ CAREFL/VACA comparisons. Every replication in ``experiments/paper/`` therefore
 sets ``units=`` and ``activation=`` explicitly from its own reference script,
 and none of them relies on the defaults here.
 
-===================== ============================================ ======
-Conditioner           Architecture                                 Term
-===================== ============================================ ======
-``LinearShift``       ``Linear(n, 1, bias=False)``                 ``LS``
-``ComplexShift``      64-128-64 ReLU NN to 1, no bias             ``CS``
-``ComplexIntercept``  8-8 ReLU NN to ``n_params``, bias-free out  ``I``
-``SimpleIntercept``   free parameter vector, no parent             none
-``VaryingCoef``       ``beta0`` + penalized 16-unit NN            ``VC``
-===================== ============================================ ======
+| Conditioner | Architecture | Term |
+|-----------------|-------------------------------------------|------|
+| `LinearShift` | `Linear(n, 1, bias=False)` | `LS` |
+| `ComplexShift` | 64-128-64 ReLU NN to 1, no bias | `CS` |
+| `ComplexIntercept` | 8-8 ReLU NN to `n_params`, bias-free out | `I` |
+| `SimpleIntercept` | free parameter vector, no parent | none |
+| `VaryingCoef` | `beta0` + penalized 16-unit NN | `VC` |
 
 ``ComplexShift`` and ``ComplexIntercept`` correspond to
 ``ComplexShiftDefaultTabular`` and ``ComplexInterceptDefaultTabular``.

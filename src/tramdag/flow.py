@@ -319,6 +319,10 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         Tensor
             ``log p(x)`` per row, shape ``(n,)``.
         """
+        for name in nodes or ():
+            self._node(name)  # name the unknown node, not its KeyError
+        if nodes is not None and not nodes:
+            raise ValueError("nodes=[] sums nothing; omit it for the joint")
         with torch.no_grad():
             per_node = self.node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
@@ -368,7 +372,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         for name in self.order:
             node = self.nodes[name]
             if node.kind == "ordinal":
-                self._check_levels(name, train_df)
+                self._check_level_values(name, train_df[name].to_numpy())
             node.intercept.calibrate(train_df, own=train_df[name], ut=node.ut)
             for term in node.shifts.values():
                 term.calibrate(train_df)
@@ -400,7 +404,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             self.calibrate(train_df)
         for name in self.order:
             if self.nodes[name].kind == "ordinal":
-                self._check_levels(name, train_df)
+                self._check_level_values(name, train_df[name].to_numpy())
             self._marginal_start(name, train_df)
         return self
 
@@ -412,10 +416,6 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             return
         node.intercept.marginal_start(theta)
 
-    def _check_levels(self, name: str, train_df: pd.DataFrame) -> None:
-        """Reject an ordinal column of the frame that is not a level index."""
-        self._check_level_values(name, train_df[name].to_numpy(dtype=np.float64))
-
     def _check_level_values(self, name: str, values) -> None:
         """Reject ordinal values that are not level indices of their node.
 
@@ -425,6 +425,8 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         """
         levels = self.spec[name].levels
         v = np.asarray(values, dtype=np.float64)
+        if v.size == 0:
+            return
         fractional = bool((v != np.round(v)).any())
         if fractional or v.min() < 0 or v.max() >= levels:
             raise ValueError(

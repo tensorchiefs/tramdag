@@ -55,10 +55,12 @@ BOUND = 5.0
 # only calibrate each other if they use the same level.
 RANGE_Q = 0.05
 
-# floor on an empirical CDF value, and on the gap between two initial
-# cutpoints / Bernstein control points, in the two marginal starts. 1e-3 bounds
-# them at +-logit(1e-3) ~ +-6.9, so an empty class or a saturated tail starts
-# implausible but finite.
+# used twice in the marginal starts, for two different things. As a floor on
+# an empirical CDF value it bounds the initial cutpoints at +-logit(1e-3) ~
+# +-6.9, so an empty class or a saturated tail starts implausible but finite.
+# As a floor on the latent-scale gap between two neighbouring cutpoints or
+# Bernstein control points it only keeps the sequence strictly increasing,
+# which the softplus inverse needs.
 _CDF_EPS = 1e-3
 
 # clamp margin of the uniform draw in StandardLogistic. 1e-7 keeps u off 0 and 1
@@ -558,12 +560,14 @@ class BernsteinUT(_ScaledUT):
         Notes
         -----
         After ``set_range``, each node's ``range_q``/``1 - range_q`` data
-        quantiles sit at the domain bounds -+B, so both starts pin the
-        domain ends to the latent's ``range_q`` quantiles and get the
-        *scale* right from step 0; zuko's default (zero) theta instead maps
-        -+B onto about -6.93/+7.63, about 2.5x too steep. The empirical
-        start additionally gets the *shape* right, which is what a skewed
-        or multi-modal marginal costs early training.
+        quantiles sit at the domain bounds -+B. The linear start therefore
+        pins the domain ends exactly onto the latent's ``range_q``
+        quantiles, and the empirical one lands near them, at the empirical
+        CDF of those same ends. Either way the *scale* is right from step 0,
+        where zuko's default (zero) theta maps -+B onto about -6.93/+7.63,
+        about 2.5x too steep. The empirical start additionally gets the
+        *shape* right, which is what a skewed or multi-modal marginal costs
+        early training.
 
         Both are pure initializations: the converged MLE is unchanged. The
         unconstrained coefficients come from inverting
@@ -579,30 +583,31 @@ class BernsteinUT(_ScaledUT):
                 "range_q=0 (min-max domain) model has no marginal start; "
                 "skip init_marginals for it"
             )
-        q = self.range_q
-        a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
         order = n + 1  # constrained control points: n+2
-        points = self._init_control_points(column, a, order)
+        points = self._init_control_points(column if n >= 3 else None, order)
         diffs = np.maximum(np.diff(points), _CDF_EPS)
         # zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);
-        # averaging each pair keeps every later control point where it was
-        diffs[:2] = diffs[:2].mean()
-        diffs[-2:] = diffs[-2:].mean()
+        # averaging each pair keeps every later control point where it was. The
+        # two pairs overlap below n=3, which is why such a transform takes the
+        # equally spaced start: with 4 control points and both ends tied there
+        # is no shape left to fit.
+        first, last = diffs[:2].mean(), diffs[-2:].mean()
+        diffs[:2], diffs[-2:] = first, last
         shift = math.log(2.0) * n / 2.0  # zuko's centering offset
         theta = np.empty(n)
         theta[0] = points[0] + shift
         theta[1:] = np.log(np.expm1(diffs[1:n]))
         return torch.as_tensor(theta, dtype=self.xmin.dtype, device=self.xmin.device)
 
-    def _init_control_points(
-        self, column: np.ndarray | None, a: float, order: int
-    ) -> np.ndarray:
+    def _init_control_points(self, column: np.ndarray | None, order: int) -> np.ndarray:
         """Give the ``order + 1`` target control points of the marginal start.
 
         ``logit`` of the empirical CDF at the equally spaced domain values
         when a column is given, an equally spaced ramp from ``a`` to ``-a``
         otherwise.
         """
+        q = self.range_q
+        a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
         lo, hi = float(self.xmin), float(self.xmax)
         u = np.arange(order + 1) / order
         if column is None or hi <= lo:

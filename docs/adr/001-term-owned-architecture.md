@@ -30,7 +30,7 @@ drafted against a seven-subsystem survey and judged from three lenses
    (`shift_value`/`theta_value`), `post_init`, `regularizer`, post-fit
    `finalize`, `score_columns`, the side-input contract
    (`side_keys`/`check_side`/`live_side`/`extra_columns`), adjacency `cells`,
-   `term_is_classical` and its `option_defaults`.
+   `classical` and its dataclass fields.
 3. The intercept slot is a term too (`SimpleInterceptTerm`/`ComplexInterceptTerm`/`AdditiveInterceptTerm`);
    the theta read is inline in `theta_shift` and the marginal init is a hook
    (`marginal_start`, `transform.marginal_init_theta`).

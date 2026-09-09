@@ -1,10 +1,10 @@
-"""Custom shift terms: ``Fn`` and the two-class effect contract.
+"""Custom shift terms: ``Fn`` and the two-class term contract.
 
 The extension contract of 1.0: a callable (or ``nn.Module``) drops into the
-additive shifts via ``Fn``; a whole new effect is a ``tramdag.Term``
+additive shifts via ``Fn``; a whole new term is a ``tramdag.Term``
 subclass (its options and checks) plus a ``tramdag.terms.ShiftTerm`` subclass
 declaring ``data =`` that term class. Subclassing is the registration:
-checkpoints carry the effect NAME only, so loading a custom spec needs the
+checkpoints carry the term NAME only, so loading a custom spec needs the
 classes imported first — and a lambda ``fn`` refuses to save.
 """
 
@@ -188,3 +188,11 @@ def test_shift_curve_covers_fn_terms(ls_chain):
     np.testing.assert_allclose(
         flow.shift_curve("x2", "x1", grid), 2.0 * grid, atol=1e-6
     )
+
+
+def test_a_subclass_cannot_turn_the_term_name_into_an_option():
+    """``name`` is the term's identity; annotating it would shadow it."""
+    with pytest.raises(TypeError, match="not an option"):
+
+        class Named(Term):
+            name: str = "whatever"

@@ -362,17 +362,17 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         """Set every simple intercept to the marginal of its column — any time.
 
         The calibrated start, always explicit — nothing runs it for you: a
-        Bernstein simple intercept starts at the data marginal instead of
-        zuko's default (about 2.5x too steep), an ordinal simple intercept
-        at the marginal class log-odds; spline/affine intercepts and
-        intercepts with parents are untouched. The optimum is unchanged, the
-        path to it is shorter (docs/training-speed.md). It is NOT guarded by
-        the calibrated flag, so calling it on a loaded or already-trained
-        flow **discards those intercepts' weights** and restarts them at the
-        marginal. An uncalibrated flow takes its ranges from the same rows
-        first. On a calibrated flow the Bernstein start comes from the
-        stored range alone (the canonical map; the df is not read) — only
-        ordinal intercepts re-read the rows.
+        Bernstein simple intercept starts at the Bernstein approximation of
+        its column's ``logit(F_hat(y))`` instead of zuko's default (about
+        2.5x too steep), an ordinal simple intercept at the marginal class
+        log-odds; spline/affine intercepts and intercepts with parents are
+        untouched. The optimum is unchanged, the path to it is shorter
+        (docs/training-speed.md). It is NOT guarded by the calibrated flag,
+        so calling it on a loaded or already-trained flow **discards those
+        intercepts' weights** and restarts them at the marginal. An
+        uncalibrated flow takes its ranges from the same rows first. Every
+        start reads the rows: the Bernstein one takes the domain from the
+        stored range and the shape from the column.
 
         Returns
         -------

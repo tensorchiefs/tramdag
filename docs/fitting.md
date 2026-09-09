@@ -74,8 +74,9 @@ learning rates and freezing (a callback, below) and the all-`ls` classical fit.
   touches the weights. A checkpoint carries the flag, so a loaded model is
   never recalibrated. The calibrated start is a separate, always-explicit
   step: `flow.init_marginals(train_df)` resets every Bernstein/ordinal
-  simple intercept to its column's marginal — a pure init that leaves the
-  MLE unchanged (spline, affine and `range_q=0` transforms have none) —
+  simple intercept to its column's empirical marginal — `logit(F_hat)` in
+  both cases, as control points or as cutpoints; a pure init that leaves
+  the MLE unchanged (spline, affine and `range_q=0` transforms have none) —
   any time, including on a trained or loaded flow.
 - **Validation, Keras-shaped** — `validation_data=` (a DataFrame) or
   `validation_split=` (a float: the LAST fraction of `train_df`, no shuffle,

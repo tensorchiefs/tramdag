@@ -193,9 +193,10 @@ def kind_marginal_theta(node: _Node, column: np.ndarray):
     """Give the marginal-start theta of a simple intercept, or ``None``.
 
     Ordinal: the empirical class log-odds. Continuous: the transform's own
-    calibrated start (``None`` for spline/affine — nothing to set).
+    marginal start over the same column (``None`` for spline/affine —
+    nothing to set).
     """
     if node.kind == "ordinal":
         counts = np.bincount(column.astype(np.int64), minlength=node.levels)
         return ordinal_marginal_init_theta(counts)
-    return node.ut.marginal_init_theta()
+    return node.ut.marginal_init_theta(column)

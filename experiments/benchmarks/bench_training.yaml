@@ -37,36 +37,36 @@ workloads:
       Age:
         kind: continuous
         terms:
-        - {effect: I, parents: [], options: {}}
+        - {term: I, parents: [], options: {}}
       mRS_pre:
         kind: ordinal
         levels: 6
         terms:
-        - {effect: I, parents: [], options: {}}
-        - {effect: LS, parents: [Age], options: {}}
+        - {term: I, parents: [], options: {}}
+        - {term: LS, parents: [Age], options: {}}
       NIHSSa:
         kind: continuous
         terms:
-        - {effect: I, parents: [], options: {}}
-        - {effect: LS, parents: [Age], options: {}}
-        - {effect: LS, parents: [mRS_pre], options: {}}
+        - {term: I, parents: [], options: {}}
+        - {term: LS, parents: [Age], options: {}}
+        - {term: LS, parents: [mRS_pre], options: {}}
       T:
         kind: ordinal
         levels: 2
         terms:
-        - {effect: I, parents: [], options: {}}
-        - {effect: LS, parents: [Age], options: {}}
-        - {effect: LS, parents: [mRS_pre], options: {}}
-        - {effect: LS, parents: [NIHSSa], options: {}}
+        - {term: I, parents: [], options: {}}
+        - {term: LS, parents: [Age], options: {}}
+        - {term: LS, parents: [mRS_pre], options: {}}
+        - {term: LS, parents: [NIHSSa], options: {}}
       mRS_3m:
         kind: ordinal
         levels: 7
         terms:
-        - {effect: I, parents: [], options: {}}
-        - {effect: LS, parents: [Age], options: {}}
-        - {effect: LS, parents: [mRS_pre], options: {}}
-        - {effect: LS, parents: [NIHSSa], options: {}}
-        - {effect: LS, parents: [T], options: {}}
+        - {term: I, parents: [], options: {}}
+        - {term: LS, parents: [Age], options: {}}
+        - {term: LS, parents: [mRS_pre], options: {}}
+        - {term: LS, parents: [NIHSSa], options: {}}
+        - {term: LS, parents: [T], options: {}}
 
   # W2: all-`ci` flow on the frozen VACA cohort (n=5000, 90/10 split)
   vaca-ci:
@@ -84,15 +84,15 @@ workloads:
       x1:
         kind: continuous
         terms:
-        - {effect: I, parents: [], options: {}}
+        - {term: I, parents: [], options: {}}
       x2:
         kind: continuous
         terms:
-        - {effect: I, parents: [x1], options: {}}
+        - {term: I, parents: [x1], options: {}}
       x3:
         kind: continuous
         terms:
-        - {effect: I, parents: [x1, x2], options: {}}
+        - {term: I, parents: [x1, x2], options: {}}
 
 # full-batch LBFGS on stroke-ls, cold and Adam-warm-started
 lbfgs:

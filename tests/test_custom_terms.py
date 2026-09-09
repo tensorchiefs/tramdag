@@ -30,7 +30,7 @@ def _two_node(term):
 
 # %% private classes -------------------------------------------------------------------
 class SLS(Term):
-    """A minimal custom effect: ``w * x`` with a fixed scale option."""
+    """A minimal custom term: ``w * x`` with a fixed scale option."""
 
     scale: float = 1.0
 
@@ -132,14 +132,14 @@ def test_fn_shift_validates_its_arguments():
         Fn("x1", fn=3)
 
 
-def test_custom_effect_builds_fits_and_round_trips(ls_chain, tmp_path):
-    """A Term subclass plus a ShiftTerm with ``data =`` is a whole effect:
+def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
+    """A Term subclass plus a ShiftTerm with ``data =`` is a whole term:
     it validates, builds, fits, serializes by name and loads back.
     """
     df = ls_chain["draw"](600, 0)[["x1", "x2"]]
     term = SLS("x1", scale=3.0)
     assert module_for(term) is _ScaledLS
-    assert term.effect == "SLS"
+    assert term.term == "SLS"
     assert repr(term) == "SLS('x1', scale=3.0)"
     with pytest.raises(ValueError, match="exactly one parent"):
         SLS("x1", "x2")
@@ -154,18 +154,18 @@ def test_custom_effect_builds_fits_and_round_trips(ls_chain, tmp_path):
     assert torch.equal(loaded.log_prob(df), flow.log_prob(df))
 
 
-def test_unknown_effect_and_orphan_term_fail_by_name():
-    """A serialized effect no class carries, and a term class no module
+def test_unknown_term_and_orphan_term_fail_by_name():
+    """A serialized term name no class carries, and a term class no module
     builds, both say what to define.
     """
     d = {
         "x1": {"kind": "continuous", "terms": []},
         "x2": {
             "kind": "continuous",
-            "terms": [{"effect": "NOPE", "parents": ["x1"], "options": {}}],
+            "terms": [{"term": "NOPE", "parents": ["x1"], "options": {}}],
         },
     }
-    with pytest.raises(ValueError, match="unknown term effect 'NOPE'"):
+    with pytest.raises(ValueError, match="unknown term 'NOPE'"):
         spec_from_dict(d)
     with pytest.raises(ValueError, match="data = Orphan"):
         CausalFlowDAG(_two_node(Orphan("x1")))

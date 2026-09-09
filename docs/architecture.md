@@ -1,6 +1,6 @@
 # Architecture
 
-Ten modules, one rule: **term-specific behavior lives on the effect's two
+Ten modules, one rule: **term-specific behavior lives on the term's two
 classes — its `Term` subclass (spec) and its module (`terms.py`); node-kind
 behavior lives in four adjacent functions; everything else is framework.** The decisions and their refused alternatives are recorded in
 [ADR 001](adr/001-term-owned-architecture.md).
@@ -10,10 +10,10 @@ behavior lives in four adjacent functions; everything else is framework.** The d
 ```mermaid
 graph TD
     subgraph data["pure data"]
-        spec["spec.py<br/>DSL: Term + one subclass per effect<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>nodes, normalization, Kahn sort, (de)serialization"]
+        spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        terms["terms.py<br/>one module per effect, data = its Term class;<br/>ShiftTerm/InterceptTerm hooks; module_for;<br/>LinearShiftTerm ComplexShiftTerm<br/>VaryingCoefficientTerm FnShiftTerm,<br/>SimpleInterceptTerm ComplexInterceptTerm<br/>AdditiveInterceptTerm"]
+        terms["terms.py<br/>one module per term, data = its Term class;<br/>ShiftTerm/InterceptTerm hooks; module_for;<br/>LinearShiftTerm ComplexShiftTerm<br/>VaryingCoefficientTerm FnShiftTerm,<br/>SimpleInterceptTerm ComplexInterceptTerm<br/>AdditiveInterceptTerm"]
         conditioners["conditioners.py<br/>raw nn heads (frozen:<br/>anchors checkpoints + RNG)"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
         nodes["nodes.py<br/>_Node (intercept + shifts),<br/>_InputTransform,<br/>kind_log_prob/sample/abduct/<br/>marginal_theta"]
@@ -52,7 +52,7 @@ classDiagram
     class Term {
         <<spec.py, frozen data>>
         parents
-        effect: the class name
+        term: the class name
         option fields with defaults
         __post_init__(): arity, option values
         edge_parents(name, spec)
@@ -104,7 +104,7 @@ classDiagram
 
 Built-in terms subclass their conditioners, so state-dict paths
 (`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream are those of 0.4.
-A custom effect is two classes: a `tramdag.Term` subclass (its annotated
+A custom term is two classes: a `tramdag.Term` subclass (its annotated
 attributes are the options; `__post_init__`, `edge_parents`, `cells` its
 rules) and a `ShiftTerm` subclass declaring `data =` that class and
 implementing `build` (which must set `key`) +

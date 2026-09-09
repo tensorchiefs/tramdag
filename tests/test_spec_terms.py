@@ -91,7 +91,7 @@ def test_serialization_roundtrip_terms():
         assert torch.allclose(a[k], b[k]), k
 
 
-def test_to_matrix_labels_every_effect_and_leaves_non_edges_empty():
+def test_to_matrix_labels_every_term_and_leaves_non_edges_empty():
     """The paper's meta-adjacency view: rows are parents, columns children."""
     spec = {
         "a": ContinuousNode(),

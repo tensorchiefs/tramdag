@@ -105,7 +105,7 @@ flow = CausalFlowDAG.load("flow.pt")
 
 ```python
 from tramdag import plot_dag
-plot_dag(spec)   # or plot_dag(flow) — layers left to right, one edge style per effect
+plot_dag(spec)   # or plot_dag(flow) — layers left to right, one edge style per term
 ```
 
 Continuous nodes are ellipses, ordinal nodes rounded boxes with their level

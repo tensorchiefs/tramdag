@@ -4,7 +4,7 @@ Date: 2026-09-02 · Status: accepted · Branch: `rc/1.0-architecture`
 
 ## Context
 
-At 0.4 the package was seven modules with flow.py a 2020-line monolith; per-effect
+At 0.4 the package was seven modules with flow.py a 2020-line monolith; per-term
 behavior (validation, construction, evaluation, penalty, post-fit steps, score
 columns, adjacency cells, classical-fit eligibility) lived in five parallel string
 switches across spec.py/flow.py/scores.py — VC alone had ~27 sites. Three
@@ -23,7 +23,7 @@ drafted against a seven-subsystem survey and judged from three lenses
    `CausalFlowDAG` (it composes the two mixins), each defined once in its
    module; a first draft used free functions behind one-line delegates and
    the delegate layer was cut as duplication.
-2. The **registry** (`terms.py`): one definition per effect. Built-in shift terms
+2. The **registry** (`terms.py`): one definition per term. Built-in shift terms
    subclass their conditioners (`LinearShiftTerm(ShiftTerm, LinearShift)` …), so
    checkpoints and RNG draws stay bit-stable; each term owns validation
    (`check_arity`/`edge_parents`), construction (`build`), evaluation
@@ -46,11 +46,11 @@ drafted against a seven-subsystem survey and judged from three lenses
 ## Refused (deliberately, so a later proposal can find the reasoning)
 
 - No per-kind node protocol (n=2), no new node kinds at 1.0.
-- ~~No per-effect `Term` subclasses in the data layer~~ — **revised
+- ~~No per-term `Term` subclasses in the data layer~~ — **revised
   2026-09-07**: one string-dispatched `Term` meant the spec knowledge of an
-  effect lived in three places (a constructor, `option_defaults` served
+  term lived in three places (a constructor, `option_defaults` served
   through `__getattr__`, and static `check_arity`/`edge_parents`/`cells`
-  hooks on the module class), glued by a registry. Each effect is now a
+  hooks on the module class), glued by a registry. Each term is now a
   `Term` subclass (its options are dataclass fields, its spec-level rules its
   methods) and the module class declares `data =` it; the registry is gone.
   The runtime polymorphism still lives once, in terms.py.
@@ -70,8 +70,8 @@ drafted against a seven-subsystem survey and judged from three lenses
 
 ## Consequences
 
-- flow.py ≈ 900 lines of framework only; no effect string-switch survives
-  outside terms.py; a new effect touches one class.
+- flow.py ≈ 900 lines of framework only; no term string-switch survives
+  outside terms.py; a new term touches one class.
 - One deliberate checkpoint break (0.4 unreleased): additive-CI keys
   `nodes.*.intercept_nets.*` → `nodes.*.intercept.nets.*` (parameters proven
   bit-identical under the rename).

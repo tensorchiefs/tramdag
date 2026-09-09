@@ -99,7 +99,7 @@ Since 2026-09 every variant carries the **whole model and training recipe**
 top to bottom):
 
 - `spec:` — the full DAG in `tramdag.spec_from_dict` form: per node `kind`
-  (+ `levels` for ordinal), and one `{effect, parents, options}` entry per
+  (+ `levels` for ordinal), and one `{term, parents, options}` entry per
   term. Everything about the model — transform, `n_coeffs`, `range_q`, network
   `units`/`activation`, `input_transform` — is a term option here, not a
   separate config key.

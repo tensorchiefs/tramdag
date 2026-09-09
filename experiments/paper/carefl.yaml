@@ -61,17 +61,17 @@ variants:
       x1:
         kind: continuous
         terms:
-        - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
+        - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
       x2:
         kind: continuous
         terms:
-        - {effect: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
+        - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
       x3:
         kind: continuous
         terms:
         # make_model: dense(10, tanh) -> dense(100, tanh) -> dense(31)
-        - {effect: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}
+        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}
       x4:
         kind: continuous
         terms:
-        - {effect: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}
+        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}

@@ -1309,13 +1309,13 @@
 
 
 <h1 id="per-observation-scores-the-effect-modifier-scan">Per-observation scores &amp; the effect-modifier scan<a class="headerlink" href="#per-observation-scores-the-effect-modifier-scan" title="Permanent link">&para;</a></h1>
-<p><code>flow.scores(df, node)</code> returns the score ψᵢ = ∂ℓᵢ/∂θ of each observation
+<p><code>flow.scores(df, node)</code> returns the score <span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation
 for the node's interpretable shift coefficients. These coefficients are every
 <code>LS</code> weight and every <code>VC</code> term's <code>beta0</code>. An <code>LS</code> weight gives one column per
 continuous parent and one column per one-hot level of an ordinal parent. The
 <code>beta0</code> column is named after the treatment.</p>
 <p>The computation is <strong>analytic and exact</strong>, with no autograd. Shifts enter the
-latent additively. Thus ∂ℓᵢ/∂β = (∂ℓᵢ/∂sᵢ)·xᵢ, with ∂ℓᵢ/∂s in closed form
+latent additively. Thus <span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i\)</span>, with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form
 (<code>src/tramdag/scores.py</code>). The function is a pure read-out. It does not touch
 the fitting or sampling code paths. At a fitted MLE, the sum of each column is
 ≈ 0. Tests pin this behavior and include a float64 finite-difference check.</p>

@@ -1430,7 +1430,8 @@ framework.</p>
   modifiers, <code>VC(t="T")</code> <em>is</em> <code>LS("T")</code> (identical model, testably
   bit-exact). Thus <code>VC</code> versus <code>LS</code> is a nested question.</li>
 <li><strong>Penalty</strong>: the fitting objective is the penalized likelihood
-  <code>Σᵢ NLLᵢ + penalty · ‖b_theta weights‖²</code> on the total-NLL scale. This is a
+  <span class="arithmatex">\(\sum_i \mathrm{NLL}_i + \lambda \lVert b_\Theta \rVert^2\)</span> (<code>penalty=</code> is
+  <span class="arithmatex">\(\lambda\)</span>) on the total-NLL scale. This is a
   fixed Gaussian prior whose shrinkage vanishes as n grows. The penalty
   never applies to <code>beta0</code>. <code>penalty → ∞</code> shrinks <code>b_theta</code> to the zero
   function and recovers the classical <code>LS</code> fit. The default is

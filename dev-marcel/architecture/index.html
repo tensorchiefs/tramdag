@@ -1497,17 +1497,17 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>Ten modules, one rule: <strong>term-specific behavior lives on the effect's two
+<p>Ten modules, one rule: <strong>term-specific behavior lives on the term's two
 classes — its <code>Term</code> subclass (spec) and its module (<code>terms.py</code>); node-kind
 behavior lives in four adjacent functions; everything else is framework.</strong> The decisions and their refused alternatives are recorded in
 <a href="../adr/001-term-owned-architecture/">ADR 001</a>.</p>
 <h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TD
     subgraph data["pure data"]
-        spec["spec.py&lt;br/&gt;DSL: Term + one subclass per effect&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient FnShift = I LS CS VC Fn),&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
+        spec["spec.py&lt;br/&gt;DSL: Term + one subclass per term&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient FnShift = I LS CS VC Fn),&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        terms["terms.py&lt;br/&gt;one module per effect, data = its Term class;&lt;br/&gt;ShiftTerm/InterceptTerm hooks; module_for;&lt;br/&gt;LinearShiftTerm ComplexShiftTerm&lt;br/&gt;VaryingCoefficientTerm FnShiftTerm,&lt;br/&gt;SimpleInterceptTerm ComplexInterceptTerm&lt;br/&gt;AdditiveInterceptTerm"]
+        terms["terms.py&lt;br/&gt;one module per term, data = its Term class;&lt;br/&gt;ShiftTerm/InterceptTerm hooks; module_for;&lt;br/&gt;LinearShiftTerm ComplexShiftTerm&lt;br/&gt;VaryingCoefficientTerm FnShiftTerm,&lt;br/&gt;SimpleInterceptTerm ComplexInterceptTerm&lt;br/&gt;AdditiveInterceptTerm"]
         conditioners["conditioners.py&lt;br/&gt;raw nn heads (frozen:&lt;br/&gt;anchors checkpoints + RNG)"]
         transforms["transforms.py&lt;br/&gt;Bernstein/Spline/Affine,&lt;br/&gt;ordinal_* likelihood,&lt;br/&gt;StandardLogistic"]
         nodes["nodes.py&lt;br/&gt;_Node (intercept + shifts),&lt;br/&gt;_InputTransform,&lt;br/&gt;kind_log_prob/sample/abduct/&lt;br/&gt;marginal_theta"]
@@ -1541,7 +1541,7 @@ only — the graph is acyclic.)</p>
     class Term {
         &lt;&lt;spec.py, frozen data&gt;&gt;
         parents
-        effect: the class name
+        term: the class name
         option fields with defaults
         __post_init__(): arity, option values
         edge_parents(name, spec)
@@ -1591,7 +1591,7 @@ only — the graph is acyclic.)</p>
     ComplexInterceptTerm --|&gt; ComplexIntercept : nn</code></pre>
 <p>Built-in terms subclass their conditioners, so state-dict paths
 (<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream are those of 0.4.
-A custom effect is two classes: a <code>tramdag.Term</code> subclass (its annotated
+A custom term is two classes: a <code>tramdag.Term</code> subclass (its annotated
 attributes are the options; <code>__post_init__</code>, <code>edge_parents</code>, <code>cells</code> its
 rules) and a <code>ShiftTerm</code> subclass declaring <code>data =</code> that class and
 implementing <code>build</code> (which must set <code>key</code>) +

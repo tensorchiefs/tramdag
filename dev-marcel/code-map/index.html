@@ -1577,7 +1577,7 @@
 parentheses are private machinery: useful to know, not part of the API.
 The last section lists every training hyperparameter and where it lives.</p>
 <h2 id="specpy-declare-the-model"><code>spec.py</code> — declare the model<a class="headerlink" href="#specpy-declare-the-model" title="Permanent link">&para;</a></h2>
-<p>Every effect is a <code>Term</code> subclass under its pythonic name; the paper's symbol
+<p>Every term is a <code>Term</code> subclass under its pythonic name; the paper's symbol
 is the same object, so <code>LS is LinearShift</code>.</p>
 <table>
 <thead>
@@ -1594,7 +1594,7 @@ is the same object, so <code>LS is LinearShift</code>.</p>
   
       dataclass
   " href="../api/spec/#tramdag.spec.Term"><code>Term</code></a></td>
-<td>One additive term of a node's transformation, frozen data; each effect is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new effect; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
+<td>One additive term of a node's transformation, frozen data; each term is a subclass whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new effect; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SI" href="../api/spec/#tramdag.spec.SI"><code>SI()</code></a></td>
@@ -1648,10 +1648,10 @@ is the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="spec_to_dict" href="../api/spec/#tramdag.spec.spec_to_dict"><code>spec_to_dict()</code></a> / <a class="autorefs autorefs-internal" title="spec_from_dict" href="../api/spec/#tramdag.spec.spec_from_dict"><code>spec_from_dict()</code></a></td>
-<td>Checkpoint (de)serialization. A term serializes as <code>{effect, parents, options}</code> and nothing else, since <code>options</code> is already canonical. No compatibility shims: <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
+<td>Checkpoint (de)serialization. A term serializes as <code>{term, parents, options}</code> and nothing else, since <code>options</code> is already canonical. No compatibility shims: <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
 </tr>
 <tr>
-<td>(<code>_normalize_terms</code>, <code>_as_term</code>, <code>_effect_class</code>)</td>
+<td>(<code>_normalize_terms</code>, <code>_as_term</code>, <code>_term_class</code>)</td>
 <td>Formula flattening and per-entry validation (a <code>+</code> sum nested in a list is rejected), the one-parented-<code>I</code> rule plus transform hoisting in one pass, canonical option storage against each effect's <code>option_defaults</code> (a wrong-effect option errors).</td>
 </tr>
 <tr>
@@ -1675,7 +1675,7 @@ is the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="BernsteinUT" href="../api/transforms/#tramdag.transforms.BernsteinUT"><code>BernsteinUT</code></a></td>
-<td>Bernstein-polynomial transform (the default, <code>n_coeffs=20</code>). Linear tail extrapolation follows the boundary derivative. <code>marginal_init_theta()</code> gives the calibrated start <code>init_marginals</code> applies.</td>
+<td>Bernstein-polynomial transform (the default, <code>n_coeffs=20</code>). Linear tail extrapolation follows the boundary derivative. <code>marginal_init_theta(column)</code> gives the marginal start <code>init_marginals</code> applies: the Bernstein approximation of <code>logit(F_hat(y))</code>, or the plain linear map onto the latent's <code>range_q</code> quantiles when called without a column.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SplineUT" href="../api/transforms/#tramdag.transforms.SplineUT"><code>SplineUT</code></a></td>
@@ -1755,7 +1755,7 @@ config in <code>experiments/paper/</code> states <code>units=</code> and <code>a
 <tr>
 <td>(<code>_nn</code>)</td>
 <td>—</td>
-<td>The one NN builder: a stack of the given <code>units</code> with the term's <code>activation</code> (relu by default), then a bias-free output layer.</td>
+<td>The one NN builder: a stack of the given <code>units</code> with the term's <code>activation</code> (relu by default, optional <code>batch_norm</code> before it), then a bias-free output layer.</td>
 </tr>
 </tbody>
 </table>
@@ -1834,7 +1834,7 @@ config in <code>experiments/paper/</code> states <code>units=</code> and <code>a
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="to_matrix" href="../api/flow/#tramdag.flow.CausalFlowDAG.to_matrix"><code>to_matrix()</code></a></td>
-<td>The labeled meta-adjacency matrix of term effects.</td>
+<td>The labeled meta-adjacency matrix of term tags.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="save" href="../api/flow/#tramdag.flow.CausalFlowDAG.save"><code>save()</code></a> / <a class="autorefs autorefs-internal" title="load
@@ -1847,7 +1847,7 @@ config in <code>experiments/paper/</code> states <code>units=</code> and <code>a
 </tr>
 <tr>
 <td>(<code>_node</code>, <code>_encode_parent</code>, <code>_features</code>, <code>_tensorize</code>, <code>_generator</code>, <code>_dtype</code>, <code>_np_dtype</code>)</td>
-<td>Node lookup with one shared error; parent encoding (continuous raw, ordinal one-hot); <code>_tensorize(df, cols=None)</code> for any column subset; seeded-generator and dtype plumbing.</td>
+<td>Node lookup with one shared error; parent encoding (continuous raw, ordinal one-hot); <code>_tensorize(df, cols=None)</code> for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing.</td>
 </tr>
 <tr>
 <td>(<code>_check_side_columns</code>, <code>_binary_p1</code>, <code>_side_feats</code>, <code>_query_side_columns</code>, <code>_recenter_vc</code>)</td>
@@ -1860,7 +1860,7 @@ config in <code>experiments/paper/</code> states <code>units=</code> and <code>a
 </tbody>
 </table>
 <h2 id="termspy-the-term-modules-the-10-architectures-core"><code>terms.py</code> — the term modules (the 1.0 architecture's core)<a class="headerlink" href="#termspy-the-term-modules-the-10-architectures-core" title="Permanent link">&para;</a></h2>
-<p>One module class per effect, declaring the <code>Term</code> subclass it builds
+<p>One module class per term, declaring the <code>Term</code> subclass it builds
 (<code>data = CS</code>); see <a href="../architecture/">architecture.md</a> for the contract
 diagram.</p>
 <table>
@@ -2099,6 +2099,11 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <td>activation</td>
 <td><code>activation=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></td>
 <td><code>"relu"</code> (the reference default classes); <code>"sigmoid"</code> and <code>"tanh"</code> are the paper's</td>
+</tr>
+<tr>
+<td>batch norm</td>
+<td><code>batch_norm=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></td>
+<td><code>False</code> — neither reference uses it. <code>True</code> puts a <code>BatchNorm1d</code> between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs <code>eval()</code> mode (<code>fit</code> and <code>load</code> leave the flow there)</td>
 </tr>
 <tr>
 <td>transform class</td>

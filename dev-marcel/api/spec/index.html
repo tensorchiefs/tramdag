@@ -2406,7 +2406,7 @@ positional argument, written as a list or as a <code>+</code> sum::</p>
 <pre><code>"X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
 "X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
 </code></pre>
-<p>Each effect is a :class:<code>Term</code> subclass, called with the parent(s) it
+<p>Each term is a :class:<code>Term</code> subclass, called with the parent(s) it
 depends on: :class:<code>Intercept</code>, :class:<code>LinearShift</code>, :class:<code>ComplexShift</code>,
 :class:<code>VaryingCoefficient</code> and :class:<code>FnShift</code>. The paper's symbols
 <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>Fn</code> are the same objects (<code>SI</code>/<code>CI</code> build
@@ -2497,15 +2497,15 @@ prognostically through the shift <em>and</em> modifies the treatment effect.</p>
 
 
 
-        <p>One additive term of a node's transformation; each effect is a subclass.</p>
+        <p>One additive term of a node's transformation; each kind is a subclass.</p>
 <p>Terms add: <code>I("a") + CS("b")</code> is the same transformation as
 <code>[I("a"), CS("b")]</code>. A term is frozen data — hashable, comparable,
-serializable by :func:<code>spec_to_dict</code> — and knows the spec-level rules
-of its effect (<code>edge_parents</code>, <code>cells</code>, <code>classical</code>). The module
+serializable by :func:<code>spec_to_dict</code> — and knows its own spec-level
+rules (<code>edge_parents</code>, <code>cells</code>, <code>classical</code>). The module
 that trains it lives in :mod:<code>tramdag.terms</code> and declares which term
 class it builds (<code>data = CS</code>).</p>
-<p>Subclass to add an effect: the class name is the effect name (its
-serialized <code>effect</code>), every annotated attribute with a default is an
+<p>Subclass to add a term: the class name is the term name (its
+serialized <code>term</code>), every annotated attribute with a default is an
 option, and <code>__post_init__</code> holds the construction-time checks::</p>
 <pre><code>class Scaled(Term):
     scale: float = 1.0
@@ -2597,7 +2597,7 @@ other built-in term's parents all own their edges.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Make every subclass a frozen dataclass named after its effect.</p>
+        <p>Make every subclass a frozen dataclass named after its term.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -2665,7 +2665,7 @@ make the term unhashable and its serialization non-canonical).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the option names this effect takes.</p>
+        <p>Give the option names this term takes.</p>
 
 
     </div>
@@ -2976,6 +2976,22 @@ replication sets this explicitly.</p>
               <div class="doc-md-description">
                 <p>Activation of the network's hidden layers, by default the
 conditioners' <code>relu</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_norm</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Batch-normalize the network's hidden layers, by default False.</p>
               </div>
             </td>
             <td>
@@ -3371,6 +3387,22 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>batch_norm</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Batch-normalize the hidden layers, by default False.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>input_transform</code>
             </td>
             <td>
@@ -3496,7 +3528,7 @@ interpretable main effect on the log-odds scale — the classical
 or exactly zero modifiers, reduces the term to <code>LS(t)</code>, so VC-vs-LS
 is a nested question. Read the fitted effect out with
 :meth:<code>CausalFlowDAG.varying_coef</code>.</p>
-<p>Unlike other effects, VC <em>modifiers</em> can also appear in the node's
+<p>Unlike other terms, VC <em>modifiers</em> can also appear in the node's
 prognostic terms (<code>CS</code>/<code>LS</code>/<code>I</code>). Only <code>t</code> owns its edge.</p>
 
 
@@ -3621,6 +3653,22 @@ measures a 5-10x bias reduction from turning it on.</p>
               <div class="doc-md-description">
                 <p>Activation of <code>b_theta</code>'s hidden layers, by default the
 conditioners' <code>relu</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_norm</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Batch-normalize <code>b_theta</code>'s hidden layers, by default False.</p>
               </div>
             </td>
             <td>
@@ -3876,7 +3924,7 @@ shape <code>(n,)</code> or <code>(n, 1)</code>. A plain function is a fixed offs
 <code>nn.Module</code> registers as a submodule and trains with the flow.</p>
 <p>Checkpoints pickle <code>fn</code>, so it must be a module-level function or an
 importable <code>nn.Module</code> — <code>save()</code> refuses a lambda. For a whole new
-effect (own options, penalty, side inputs) subclass :class:<code>Term</code> and
+term (own options, penalty, side inputs) subclass :class:<code>Term</code> and
 :class:<code>tramdag.terms.ShiftTerm</code> instead.</p>
 
 
@@ -4728,7 +4776,7 @@ cycle.</p>
     <div class="doc doc-contents ">
 
         <p>Give the serialized representation of a spec, for checkpoints.</p>
-<p>A term serializes as its effect name, its parents and the options that
+<p>A term serializes as its term name, its parents and the options that
 differ from their defaults — nothing else, so the form is canonical.
 The result is JSON- and YAML-safe: plain tuples become lists and
 nested kwargs tuples (<code>transform_kwargs</code>) become mappings, which is
@@ -4885,7 +4933,7 @@ option key and a wrong arity fail here, by name.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If a term names an unknown effect or an option its effect does
+                <p>If a term names an unknown term or an option that term does
 not take.</p>
               </div>
             </td>

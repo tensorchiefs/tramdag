@@ -2304,17 +2304,17 @@ explicit step, :meth:<code>init_marginals</code>.</p>
 
         <p>Set every simple intercept to the marginal of its column — any time.</p>
 <p>The calibrated start, always explicit — nothing runs it for you: a
-Bernstein simple intercept starts at the data marginal instead of
-zuko's default (about 2.5x too steep), an ordinal simple intercept
-at the marginal class log-odds; spline/affine intercepts and
-intercepts with parents are untouched. The optimum is unchanged, the
-path to it is shorter (docs/training-speed.md). It is NOT guarded by
-the calibrated flag, so calling it on a loaded or already-trained
-flow <strong>discards those intercepts' weights</strong> and restarts them at the
-marginal. An uncalibrated flow takes its ranges from the same rows
-first. On a calibrated flow the Bernstein start comes from the
-stored range alone (the canonical map; the df is not read) — only
-ordinal intercepts re-read the rows.</p>
+Bernstein simple intercept starts at the Bernstein approximation of
+its column's <code>logit(F_hat(y))</code> instead of zuko's default (about
+2.5x too steep), an ordinal simple intercept at the marginal class
+log-odds; spline/affine intercepts and intercepts with parents are
+untouched. The optimum is unchanged, the path to it is shorter
+(docs/training-speed.md). It is NOT guarded by the calibrated flag,
+so calling it on a loaded or already-trained flow <strong>discards those
+intercepts' weights</strong> and restarts them at the marginal. An
+uncalibrated flow takes its ranges from the same rows first. Every
+start reads the rows: the Bernstein one takes the domain from the
+stored range and the shape from the column.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -3457,7 +3457,14 @@ node has several VC terms.</p>
 
         <p>Give the per-node linear-shift weights.</p>
 <p>For an all-<code>ls</code> model these are the interpretable log-odds-ratio
-coefficients.</p>
+coefficients. A continuous parent has one weight, and that weight is
+the estimate. An <strong>ordinal parent has one weight per level</strong> (its
+one-hot encoding), and those are identified only up to a common
+constant: the one-hot columns sum to 1 in every row, so adding c to
+all of them and subtracting c from the node's intercept leaves the
+likelihood unchanged. Read them as differences — <code>w[k] - w[0]</code> is
+the level-k-vs-0 log-odds ratio, and the column
+:meth:<code>design_matrix</code> drops with <code>drop_first=True</code>.</p>
 <p>Only <code>LS</code> terms have a weight to give. A node's <code>CS</code> and <code>VC</code>
 shifts are networks, so they are skipped — reading them needs
 :meth:<code>varying_coef</code> or an evaluation of the network itself.</p>

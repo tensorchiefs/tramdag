@@ -1445,11 +1445,11 @@ design, so the framing must be back-compatible. Would delete the caveats and
 make <code>spline</code> a first-class transform choice.</p>
 <h2 id="3-public-inverse-of-_constrain_theta">3. Public inverse of <code>_constrain_theta</code><a class="headerlink" href="#3-public-inverse-of-_constrain_theta" title="Permanent link">&para;</a></h2>
 <p><code>BernsteinUT.marginal_init_theta</code> closed-form-inverts zuko's <em>private</em>
-<code>_constrain_theta</code> (cumsum-of-softplus), hard-coding its internal
-<code>log(2)·n/2</code> centering — any upstream reparametrization silently breaks the
-calibrated start. A public <code>unconstrain_theta(theta)</code> (or a
-<code>linear_theta(a, b, n, bound)</code> classmethod) is ~15 lines upstream and removes
-the private-detail coupling. Framing: "identity/linear initialization
+<code>_constrain_theta</code> (cumsum-of-softplus), hard-coding both its internal
+<code>log(2)·n/2</code> centering and its tying of the first two and the last two
+diffs — any upstream reparametrization silently breaks the calibrated
+start. A public <code>unconstrain_theta(theta)</code> taking the target control points
+is ~15 lines upstream and removes the private-detail coupling. Framing: "identity/linear initialization
 support", a standard flow trick.</p>
 <h2 id="4-docstring-fix-the-bernstein-shape-off-by-one">4. Docstring fix: the Bernstein θ-shape off-by-one<a class="headerlink" href="#4-docstring-fix-the-bernstein-shape-off-by-one" title="Permanent link">&para;</a></h2>
 <p>zuko's docstring says θ has shape <code>(*, M-2)</code> for a degree-M polynomial; <code>n</code>

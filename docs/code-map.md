@@ -72,7 +72,7 @@ config in `experiments/paper/` states `units=` and `activation=` itself.
 | [`abduct()`][tramdag.flow.CausalFlowDAG.abduct] | Pearl step 1: recover the latents. Continuous exactly, ordinal by truncated draw. |
 | [`pmf()`][tramdag.flow.CausalFlowDAG.pmf] | Analytic class probabilities of an ordinal node, with `do=` overrides. |
 | [`density()`][tramdag.flow.CausalFlowDAG.density] | Analytic conditional density of a continuous node on a grid, with `do=` overrides — the continuous counterpart of `pmf`. |
-| [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`nll()`][tramdag.flow.CausalFlowDAG.nll] | Joint per-row log-likelihood / mean per-node NLL diagnostic. |
+| [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`nll()`][tramdag.flow.CausalFlowDAG.nll] | Joint per-row log-likelihood, or a `nodes=` subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic. |
 | [`node_log_prob()`][tramdag.flow.CausalFlowDAG.node_log_prob] | The per-node decomposition everything trains and evaluates through. |
 | [`varying_coef()`][tramdag.flow.CausalFlowDAG.varying_coef] | Closed-form read-out `beta(x)` of a fitted VC term. Deterministic, y-free. |
 | [`scores()`][tramdag.flow.CausalFlowDAG.scores] / [`effect_modifier_scan()`][tramdag.flow.CausalFlowDAG.effect_modifier_scan] | Analytic per-observation scores and the CUSUM modifier scan (delegate to `scores.py`). |

@@ -300,13 +300,19 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             out[name] = kind_log_prob(node, theta, shift, values[name])
         return out
 
-    def log_prob(self, df: pd.DataFrame) -> Tensor:
+    def log_prob(self, df: pd.DataFrame, *, nodes: list[str] | None = None) -> Tensor:
         """Compute the joint log-likelihood per row.
 
         Parameters
         ----------
         df : pd.DataFrame
             Observations, one column per node.
+        nodes : list[str] | None, optional
+            Sum only these nodes' contributions. A subset is exact, because
+            the per-node losses are independent — ``nodes=["Y"]`` is the
+            conditional log-likelihood of ``Y`` given its parents, per row,
+            in log space (safer than the log of :meth:`pmf`, which
+            underflows in the tail). ``None`` (default) is the joint.
 
         Returns
         -------
@@ -314,7 +320,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             ``log p(x)`` per row, shape ``(n,)``.
         """
         with torch.no_grad():
-            per_node = self.node_log_prob(self._tensorize(df))
+            per_node = self.node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
     def nll(self, df: pd.DataFrame) -> dict[str, float]:

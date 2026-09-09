@@ -2366,12 +2366,14 @@ latent quantile target <code>logit(0)</code> is undefined — skip
 <details class="note" open>
   <summary>Notes</summary>
   <p>After <code>set_range</code>, each node's <code>range_q</code>/<code>1 - range_q</code> data
-quantiles sit at the domain bounds -+B, so both starts pin the
-domain ends to the latent's <code>range_q</code> quantiles and get the
-<em>scale</em> right from step 0; zuko's default (zero) theta instead maps
--+B onto about -6.93/+7.63, about 2.5x too steep. The empirical
-start additionally gets the <em>shape</em> right, which is what a skewed
-or multi-modal marginal costs early training.</p>
+quantiles sit at the domain bounds -+B. The linear start therefore
+pins the domain ends exactly onto the latent's <code>range_q</code>
+quantiles, and the empirical one lands near them, at the empirical
+CDF of those same ends. Either way the <em>scale</em> is right from step 0,
+where zuko's default (zero) theta maps -+B onto about -6.93/+7.63,
+about 2.5x too steep. The empirical start additionally gets the
+<em>shape</em> right, which is what a skewed or multi-modal marginal costs
+early training.</p>
 <p>Both are pure initializations: the converged MLE is unchanged. The
 unconstrained coefficients come from inverting
 <code>BernsteinTransform._constrain_theta</code> (a cumsum of softplus

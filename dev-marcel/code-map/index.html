@@ -1594,7 +1594,7 @@ is the same object, so <code>LS is LinearShift</code>.</p>
   
       dataclass
   " href="../api/spec/#tramdag.spec.Term"><code>Term</code></a></td>
-<td>One additive term of a node's transformation, frozen data; each term is a subclass whose class name is its <code>name</code> and whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new effect; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
+<td>One additive term of a node's transformation, frozen data; each term is a subclass whose class name is its <code>name</code> and whose annotated attributes are its options (defaults dropped on serialization, so equality is canonical). <code>+</code> on terms builds plain lists. Carries the spec-level rules: <code>edge_parents</code>, <code>cells</code>, <code>classical</code>, <code>options()</code>, <code>from_serialized</code>. Subclass <code>Term</code> for a new term; its module goes in <code>terms.py</code> and read as attributes (<code>term.penalty</code>, <code>term.units</code>, ...).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SI" href="../api/spec/#tramdag.spec.SI"><code>SI()</code></a></td>
@@ -1651,8 +1651,8 @@ is the same object, so <code>LS is LinearShift</code>.</p>
 <td>Checkpoint (de)serialization. A term serializes as <code>{term, parents, options}</code> and nothing else, since <code>options</code> is already canonical. No compatibility shims: <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
 </tr>
 <tr>
-<td>(<code>_normalize_terms</code>, <code>_as_term</code>, <code>_term_class</code>)</td>
-<td>Formula flattening and per-entry validation (a <code>+</code> sum nested in a list is rejected), the one-parented-<code>I</code> rule plus transform hoisting in one pass, canonical option storage against each effect's <code>option_defaults</code> (a wrong-effect option errors).</td>
+<td>(<code>_normalize_terms</code>, <code>_as_term</code>, <code>_term_class</code>, <code>net_options</code>)</td>
+<td>Formula flattening and per-entry validation (a <code>+</code> sum nested in a list is rejected), the one-parented-<code>I</code> rule plus transform hoisting in one pass, canonical option storage against each term class's dataclass fields (an option another term takes errors).</td>
 </tr>
 <tr>
 <td>(<code>_check_node</code>, <code>_kahn_sort</code>)</td>

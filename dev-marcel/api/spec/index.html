@@ -1030,6 +1030,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tramdag.spec.Term.net_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tramdag.spec.Term.option_names" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1873,6 +1884,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tramdag.spec.Term.net_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tramdag.spec.Term.option_names" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2651,7 +2673,9 @@ other built-in term's parents all own their edges.</p>
             <td>
               <div class="doc-md-description">
                 <p>If an option has no plain default (a <code>default_factory</code> would
-make the term unhashable and its serialization non-canonical).</p>
+make the term unhashable and its serialization non-canonical), or
+if a subclass annotates <code>name</code>, which is the term's identity and
+not an option.</p>
               </div>
             </td>
           </tr>
@@ -2677,6 +2701,28 @@ make the term unhashable and its serialization non-canonical).</p>
     <div class="doc doc-contents ">
 
         <p>Check the term's own shape; subclasses extend this.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.spec.Term.net_options" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">net_options</span>
+
+
+<a href="#tramdag.spec.Term.net_options" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">net_options</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Give the term's network settings, for the conditioner constructor.</p>
+<p>The three options every networked term shares. A term without a
+network never asks.</p>
 
 
     </div>

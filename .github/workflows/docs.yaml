@@ -53,6 +53,8 @@ jobs:
                  -e 's#\[([^]]+)\]\[[^]]+\]#\1#g' "$1" > "$2"
         }
         stage README.md build/pdf/README.md
+        # architecture.md and adr/001 are deliberately absent: both are mostly
+        # mermaid fences, which the site renders and pandoc prints as raw code
         for d in model notation interpretation fitting training-speed scores \
                  varying-coefficients paper-replication code-map zuko-upstream; do
           stage "docs/$d.md" "build/pdf/$d.md"

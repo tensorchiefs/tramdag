@@ -53,18 +53,15 @@ the sample, which is seeded and therefore reproducible. The file is tracked so
 that the R snippet in the same section reads the identical rows the flow was
 fitted on.
 
-The notebook pins R's reference coefficients from that file:
+The notebook pins R's reference coefficients for this file in its `R_COLR`
+constant, and `classical_fit_tram_dag.R` is the script that produces them.
+Use `order = 21`, not 19: the notebook's `n_coeffs = 20` counts
+unconstrained coefficients, and `tram` counts one more. The notebook
+explains that difference where it makes the comparison.
 
-```r
-library(tram)
-d <- read.csv("notebooks/data/vaca.csv")
-m <- Colr(x3 ~ x1 + x2, data = d, order = 19)
-coef(m)     # -> x1 -1.778313   x2 -0.455721
-logLik(m)   # -> -1412.012824
-```
-
-(R 4.2.3, tram 1.0.4.) A change to `n` or to the seed changes those numbers, so
-re-run the snippet and update `R_COLR` in the notebook when you change either.
+A change to `n` or to the seed changes those numbers. Re-run
+`Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
+change either.
 
 Not to be confused with `experiments/paper/data/vaca/` — that is the frozen
 5000-row benchmark of the TRAM-DAG paper replications, under the testing

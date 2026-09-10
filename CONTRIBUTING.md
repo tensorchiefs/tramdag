@@ -37,16 +37,16 @@ uvx ruff format --diff  # what formatting would change
 
 Rules live in `pyproject.toml`: ruff's default set plus the extras listed
 under `extend-select`, at 88 columns with the numpy docstring convention.
-Cognitive complexity is gated by the complexipy hooks (`src/` at 15;
-`experiments/`, `notebooks/` and `tests/` at 10). Docstrings are not required in `tests/`,
-`experiments/` or `notebooks/`.
+The complexipy hooks gate cognitive complexity. The limit is 15 for `src/`
+and `tools/`. The limit is 10 for `experiments/`, `notebooks/` and `tests/`.
+Docstrings are not required in `tests/`, `experiments/` or `notebooks/`.
 
 The hooks in `.pre-commit-config.yaml` are enforced by
 `.github/workflows/pre-commit.yaml` on every push and pull request. Install
 them locally so a push cannot fail on formatting:
 
 ```bash
-pre-commit install --install-hooks -t pre-commit -t commit-msg -t pre-push
+pre-commit install --install-hooks -t pre-commit -t commit-msg
 ```
 
 ## Module layout
@@ -66,21 +66,27 @@ padded with dashes to column 88:
 ```
 
 A module carries only the sections it has. These eight are the only section
-names; there are no sub-section banners of any other kind. Notebooks are
-jupytext `py:percent` files and keep their narrative cell structure instead.
+names. There are no sub-section banners of any other kind. Notebooks are
+jupytext `py:percent` files, and they keep their narrative cell structure
+instead.
 
 ## Notebooks
 
 `notebooks/*.py` are [jupytext](https://github.com/mwouts/jupytext)
 percent-format files and are the source of truth. Edit those, never an
-`.ipynb`. One `.ipynb` is tracked on purpose —
-`demo_tram_dag_colab.ipynb`, because the README's Colab badge links to it —
-and it is regenerated from the `.py`; see
+`.ipynb`. One `.ipynb` is tracked on purpose. It is
+`demo_tram_dag_colab.ipynb`, because the README's Colab badge links to it.
+Regenerate it from the `.py`. See
 [`notebooks/README.md`](notebooks/README.md).
 
 ## Conventions worth knowing
 
-The implementation conventions that are easy to get wrong — latent-scale
-signs, raw vs one-hot parent encoding, the log-space ordinal likelihood,
-seeding — are documented in [`CLAUDE.md`](CLAUDE.md) and pinned by tests.
-Read that before changing anything in `src/tramdag/`.
+Four implementation conventions are easy to get wrong:
+
+- the latent-scale signs,
+- the raw parent encoding against the one-hot parent encoding,
+- the log-space ordinal likelihood,
+- the seeding.
+
+[`CLAUDE.md`](CLAUDE.md) documents all four, and tests pin them. Read that
+document before you change anything in `src/tramdag/`.

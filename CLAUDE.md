@@ -2,23 +2,36 @@
 
 ## What this is
 
-A causal normalizing-flow implementation of **TRAM-DAG** (transformation models on a
-DAG) built on [zuko](https://zuko.readthedocs.io/stable/). One triangular flow from iid
-standard-logistic latents to the observed variables; Jacobian sparsity = the DAG.
-Supports the do-operator, Pearl abduction (counterfactuals), analytic interventional
-PMFs, and per-node configurable monotone transforms (Bernstein / RQ-spline / affine).
+This repository is a causal normalizing-flow implementation of **TRAM-DAG**
+(transformation models on a DAG). It builds on
+[zuko](https://zuko.readthedocs.io/stable/). One triangular flow maps iid
+standard-logistic latents to the observed variables. The Jacobian sparsity is
+the DAG.
 
-Origin: extracted from the private `tensorchiefs/tram-dag-stroke` paper repo (as
-`zuko_dag`; renamed to `tramdag` in June 2026, repo `tensorchiefs/tramdag`). The
-clinical stroke storyline of that paper lives in its own repository — it is **not**
-here, and neither is any patient data.
+The package supports these features:
 
-**The split that matters:** `src/tramdag/` is framework code only. Research code —
-the SCM generators, frozen datasets and paper replications — lives in
-`experiments/`, outside the installed package (`pre-experiments-cut` is the tag
-before that separation; use it to recover deleted research code). The test suite
-does not import `experiments/`: it measures against three inline DGPs in
-`tests/conftest.py`.
+- the do-operator,
+- Pearl abduction (counterfactuals),
+- analytic interventional PMFs,
+- per-node configurable monotone transforms (Bernstein, RQ-spline or affine).
+
+**Origin:** the code came out of the private `tensorchiefs/tram-dag-stroke`
+paper repository as `zuko_dag`. It became `tramdag` in June 2026, in the
+repository `tensorchiefs/tramdag`. The clinical stroke storyline of that paper
+lives in its own repository. That storyline is **not** here. No patient data is
+here either.
+
+**The split that matters:** `src/tramdag/` holds framework code only. Research
+code lives in `experiments/`, outside the installed package. Research code
+covers three groups:
+
+- the SCM generators,
+- the frozen datasets,
+- the paper replications.
+
+`pre-experiments-cut` is the tag before that separation. Use it to recover
+deleted research code. The test suite does not import `experiments/`. It
+measures against three inline DGPs in `tests/conftest.py`.
 
 ## Commands
 
@@ -32,289 +45,481 @@ uv run python -m check paper triangle-atan-cs  # metrics vs committed ground tru
 uv run python -m paper.check_data            # frozen data still regenerates
 ```
 
-Every experiment reads its hyperparameters from its sibling `<script>.yaml` and
-has **no defaults in code**; `experiments/common.py::load_variant` parses it.
-The blueprint (2026-09, experiments/README.md): each variant carries the FULL
-model as `spec:` (`tramdag.spec_from_dict` form — transform, n_coeffs, range_q,
-units, activation, input_transform are term options there, not config keys),
-`flow_kwargs:` (CausalFlowDAG construction) and `fit_kwargs:` (flow.fit
-verbatim); learning_rate/schedule stay top-level (they build the optimizer).
-Deliberately verbose — duplication over indirection. bench_training.yaml is
-workloads-shaped, same rule; perf_machine.py is exempt (curl-and-run single
-file). `experiments/` is split into `paper/`, `benchmarks/` and
-`misc/`, with `experiments/tests/` for the shared `check.py`. `paper` and `misc`
-each own their `data/`, `ground_truth/`, `tests/` and `results/`; `benchmarks/` measures speed on the other two's data and pins
-no ground truth, writing up its numbers in `docs/` instead. Only `common.py`
-(output layout) and `check.py` (ground-truth comparison) are shared. The area tests run in the ordinary `uv run pytest`.
+Every experiment reads its hyperparameters from its sibling `<script>.yaml`.
+The code holds **no defaults**. `experiments/common.py::load_variant` parses
+that file.
+
+The blueprint (2026-09, experiments/README.md) gives each variant the FULL
+model in three keys:
+
+- `spec:` — the model in `tramdag.spec_from_dict` form,
+- `flow_kwargs:` — the arguments for CausalFlowDAG construction,
+- `fit_kwargs:` — the arguments for flow.fit, verbatim.
+
+Inside `spec:`, these names are term options and not config keys:
+
+- transform,
+- n_coeffs,
+- range_q,
+- units,
+- activation,
+- input_transform.
+
+learning_rate and schedule stay top-level, because they build the optimizer.
+The blueprint is verbose on purpose, and it prefers duplication over
+indirection. bench_training.yaml is workloads-shaped and follows the same rule.
+perf_machine.py is exempt, because it is a single curl-and-run file.
+
+`experiments/` splits into `paper/`, `benchmarks/` and `misc/`.
+`experiments/tests/` holds the shared `check.py`. `paper` and `misc` each own
+four directories:
+
+- `data/`,
+- `ground_truth/`,
+- `tests/`,
+- `results/`.
+
+`benchmarks/` measures speed on the data of the other two areas. It pins no
+ground truth. It writes up its numbers in `docs/` instead. The areas share only
+two files: `common.py` for the output layout and `check.py` for the
+ground-truth comparison. The area tests run in the ordinary `uv run pytest`.
 See `experiments/README.md`.
 
 ## Architecture (src/tramdag/)
 
-Since the 1.0-RC refactor (branch rc/1.0-architecture, docs/adr/001, and
-the 2026-09 term-classes revision): an effect is TWO classes. Its spec
-class is a `tramdag.Term` subclass in `spec.py` — frozen data whose
-annotated attributes are the options (`Intercept`, `LinearShift`,
-`ComplexShift`, `VaryingCoefficient`, `FnShift`, aliased `I`/`LS`/`CS`/
-`VC`/`Fn`; `effect` is the short name, the serialized form) and which owns the spec-level rules
-(`__post_init__` arity/option checks, `edge_parents`, `cells`,
-`classical`). Its module class in `terms.py` declares `data = <that
-class>` and owns the runtime (build, shift_value/theta_value, post_init,
-regularizer, finalize, score_columns, side inputs — built-ins subclass
-their conditioners so checkpoints and the seeded RNG stream stay
-bit-stable); `terms.module_for(term)` dispatches on `data`, so
-subclassing is the registration (no registry, no `register_term`).
-Node-kind branches live ONLY in nodes.py's four kind_* functions;
-`fitting.py`/`readouts.py` are mixins CausalFlowDAG composes (methods
-defined once, no delegate layer); public: `flow.shift_curve`,
-`Fn`, `ordinal_bounds`, spec exports
-(`spec_to_dict`/`spec_from_dict`/`validate_and_sort`/`node_parents`),
-`effect_modifier_scan(column=)`. docs/architecture.md carries the module
-map and the term-contract diagram.
+The 1.0-RC refactor makes an effect TWO classes. That refactor covers three
+references:
 
-- `spec.py` — user-facing DAG spec: `{name: ContinuousNode|OrdinalNode}`, each node
-  declares its transformation as the first positional argument — a list of terms
-  or a `+` sum (`I("a") + LS("b")`). Term classes: `I(*parents)` (the
-  intercept — without parents the paper's SI, with parents the CI; `SI()`
-  and `CI(*parents)` are the arity-checked spellings), `LS(parent)` (linear
-  shift), `CS(*parents)` (complex shift MLP), `VC(*modifiers, t=, penalty=)`
-  (varying-coefficient effect head `beta(modifiers)·x_t`, small penalized
-  zero-init net; read out with `flow.varying_coef` — see
-  docs/varying-coefficients.md), `Fn(*parents, fn=)`. The paper's symbols
-  are the classes (`LS is LinearShift`); there are no snake_case aliases. `transform=` on an intercept picks the monotone transform class and **extra
-  keyword arguments pass straight to the transform class**
-  (`SI(transform="spline", bins=16)`); `units=[...]` on CI/CS/VC sizes the
-  term's network. A node takes at most ONE intercept term with parents; a
-  **multi-parent** `CI("a","b")` is one *joint* network (interaction on the
-  thetas, the default), and `CI("a","b", allow_interaction=False)` is the
-  *additive* intercept (one net per parent, coefficient vectors summed). For
-  shifts, grouping decides: `CS("a","b")` is joint, `CS("a")+CS("b")` additive.
-  When the effect type comes from config or the CLI, put the constructor itself
-  in the table (`{"x2": CS}`). A formula without an intercept gets `SI()` prepended during normalization, so `node.terms[0]` is always the intercept.
-  Every parent enters through exactly one edge-owning term (VC modifiers exempt —
-  they may also appear prognostically).
-- `transforms.py` — monotone 1-D transforms wrapping zuko (`BernsteinUT`, `SplineUT`,
-  `AffineUT`; pre-scaled from the train `range_q`/1−`range_q` quantiles to
-  [-5,5] — an intercept option, default 0.05, `SI(range_q=0.0)` = the
-  reference comparisons' min-max `scale_df` domain — zuko's own
-  inverse with its closed-form tail) + the ordinal ordered-logit transform
-  (`P(Y<=k) = sigmoid(theta_k - shift)`, cutpoints `[t0, t0+cumsum(exp(...))]`).
-- `conditioners.py` — the LS/CS/intercept networks. Default widths and `relu`
-  replicate the PyTorch reference (`buehlpa/TramDag`, `tram_models.py`:
-  `ComplexShiftDefaultTabular` 64-128-64, `ComplexInterceptDefaultTabular` 8-8,
-  `n_thetas=20`) — **not** the paper's R nets, which every `experiments/paper/`
-  config sets explicitly instead.
-- `callbacks.py` — the shipped `fit` callbacks on the `Callback` base
-  (`on_fit_begin`/`on_epoch_end`/`on_fit_end`, state reset at fit begin):
-  `EarlyStopping` (best-validation weights restored automatically at fit
-  end; optional stopping `patience`) and
-  `PerNodePlateau` + `per_node_adam` (per-node lr decay and freezing, the
-  pre-0.4 plateau recipe; `frozen = {node: epoch}` afterwards). All read
-  `history["val"]`, which `fit(validation_data=|validation_split=)` fills
-  per epoch; `fit` also records the optimizer's rate per epoch in
-  `history["lr"]`; `verbose=` owns progress printing. Optional; `fit` itself
-  stays one plain loop.
-- `plots.py` — `plot_dag(spec|flow)` (the labelled DAG, layered, one edge
-  style per effect), `plot_marginals`, `plot_training(frozen=)`. matplotlib is
-  the optional extra `tramdag[plots]`, imported on first call — the package
-  import never needs it. `plot_dag` is exported at top level.
-- (no `utils.py` any more: `config_section` moved to
-  `experiments/common.py`, `machine_info` to
-  `experiments/benchmarks/perf_machine.py` — each next to its only caller, so
-  the package is modelling code only.)
-- `flow.py` — `CausalFlowDAG`: `fit`, `fit_classical` (float64 full-batch
-  L-BFGS, exact MLE for all-`ls` specs), `sample(n, do=, u=)`, `abduct`, `pmf`,
-  `density` (its continuous counterpart, on a grid),
-  `log_prob`, `save/load`, `ls_coefficients` (LS weights only — network shifts
-  are skipped), `varying_coef` (VC read-out), `scores` /
-  `effect_modifier_scan` (analytic per-row ∂ℓᵢ/∂θ + CUSUM modifier scan,
-  `scores.py`). NLL decomposes per node → one Adam fits all nodes jointly.
+- the branch rc/1.0-architecture,
+- docs/adr/001,
+- the 2026-09 term-classes revision.
+
+The spec class is a `tramdag.Term` subclass in `spec.py`. It is frozen data,
+and its annotated attributes are the options. The spec classes are:
+
+- `Intercept`, aliased `I`,
+- `LinearShift`, aliased `LS`,
+- `ComplexShift`, aliased `CS`,
+- `VaryingCoefficient`, aliased `VC`,
+- `FnShift`, aliased `Fn`.
+
+`Term.name` carries the symbol, and `term:` is the serialized key. The spec
+class also owns the spec-level rules:
+
+- the `__post_init__` arity and option checks,
+- `edge_parents`,
+- `cells`,
+- `classical`.
+
+The module class in `terms.py` declares `data = <that class>` and owns the
+runtime:
+
+- build,
+- shift_value and theta_value,
+- post_init,
+- regularizer,
+- finalize,
+- score_columns,
+- side inputs.
+
+Built-ins subclass their conditioners, so checkpoints and the seeded RNG stream
+stay bit-stable. `terms.module_for(term)` dispatches on `data`. Subclassing is
+therefore the registration. There is no registry and no `register_term`.
+
+Node-kind branches live ONLY in the four kind_* functions of nodes.py.
+`fitting.py` and `readouts.py` are mixins that CausalFlowDAG composes. Each
+method is defined once, and there is no delegate layer. The public names are:
+
+- `flow.shift_curve`,
+- `Fn`,
+- `ordinal_bounds`,
+- the spec exports `spec_to_dict`, `spec_from_dict`, `validate_and_sort` and
+  `node_parents`,
+- `effect_modifier_scan(column=)`.
+
+docs/architecture.md carries the module map and the term-contract diagram.
+
+- `spec.py` — the user-facing DAG spec. The spec is
+  `{name: ContinuousNode|OrdinalNode}`. Each node declares its transformation
+  as the first positional argument. That argument is a list of terms or a `+`
+  sum, for example `I("a") + LS("b")`. The term classes are:
+
+  - `I(*parents)` — the intercept. Without parents it is the paper's SI. With
+    parents it is the CI. `SI()` and `CI(*parents)` are the arity-checked
+    spellings.
+  - `LS(parent)` — the linear shift.
+  - `CS(*parents)` — the complex shift MLP.
+  - `VC(*modifiers, t=, penalty=)` — the varying-coefficient effect head
+    `beta(modifiers)·x_t`. It is a small penalized zero-init net. Read it out
+    with `flow.varying_coef`. See docs/varying-coefficients.md.
+  - `Fn(*parents, fn=)`.
+
+  The paper's symbols are the classes, for example `LS is LinearShift`. There
+  are no snake_case aliases. `transform=` on an intercept picks the monotone
+  transform class, and **extra keyword arguments pass straight to the transform
+  class**, for example `SI(transform="spline", bins=16)`. `units=[...]` on CI,
+  CS or VC sizes the network of that term.
+
+  A node takes at most ONE intercept term with parents. A **multi-parent**
+  `CI("a","b")` is one *joint* network, which puts the interaction on the
+  thetas. That form is the default. `CI("a","b", allow_interaction=False)` is
+  the *additive* intercept, which builds one net per parent and sums the
+  coefficient vectors. For shifts, the grouping decides: `CS("a","b")` is
+  joint, and `CS("a")+CS("b")` is additive.
+
+  If the effect type comes from config or from the CLI, then put the
+  constructor itself in the table, for example `{"x2": CS}`. A formula without
+  an intercept gets `SI()` prepended during normalization, so `node.terms[0]`
+  is always the intercept. Every parent enters through exactly one edge-owning
+  term. VC modifiers are exempt, because they can also appear prognostically.
+- `transforms.py` — the monotone 1-D transforms that wrap zuko. There are three
+  of them:
+
+  - `BernsteinUT`,
+  - `SplineUT`,
+  - `AffineUT`.
+
+  Each one pre-scales the data from the train `range_q`/1−`range_q` quantiles
+  to [-5,5]. `range_q` is an intercept option and its default is 0.05.
+  `SI(range_q=0.0)` gives the min-max `scale_df` domain of the reference
+  comparisons. The transforms use zuko's own inverse with its closed-form tail.
+  This module also holds the ordinal ordered-logit transform
+  `P(Y<=k) = sigmoid(theta_k - shift)`, with cutpoints
+  `[t0, t0+cumsum(exp(...))]`.
+- `conditioners.py` — the LS, CS and intercept networks. The default widths and
+  `relu` replicate the PyTorch reference `buehlpa/TramDag`, file
+  `tram_models.py`:
+
+  - `ComplexShiftDefaultTabular` 64-128-64,
+  - `ComplexInterceptDefaultTabular` 8-8,
+  - `n_thetas=20`.
+
+  These defaults are **not** the paper's R nets. Every `experiments/paper/`
+  config sets those R nets explicitly instead.
+- `callbacks.py` — the shipped `fit` callbacks on the `Callback` base. The base
+  has three hooks, `on_fit_begin`, `on_epoch_end` and `on_fit_end`, and it
+  resets its state at fit begin. The module ships:
+
+  - `EarlyStopping` — it restores the best-validation weights automatically at
+    fit end, and it takes an optional stopping `patience`.
+  - `PerNodePlateau` and `per_node_adam` — per-node lr decay and freezing, the
+    pre-0.4 plateau recipe. Afterwards `frozen = {node: epoch}`.
+
+  All callbacks read `history["val"]`, which
+  `fit(validation_data=|validation_split=)` fills per epoch. `fit` also records
+  the rate of the optimizer per epoch in `history["lr"]`. `verbose=` owns the
+  progress printing. The callbacks are optional, and `fit` itself stays one
+  plain loop.
+- `plots.py` — three plot functions:
+
+  - `plot_dag(spec|flow)` — the labelled DAG, layered, with one edge style per
+    effect.
+  - `plot_marginals`.
+  - `plot_training(frozen=)`.
+
+  matplotlib is the optional extra `tramdag[plots]`. The module imports it on
+  first call, so the package import never needs it. `plot_dag` is exported at
+  top level.
+- There is no `utils.py` any more. `config_section` moved to
+  `experiments/common.py`. `machine_info` moved to
+  `experiments/benchmarks/perf_machine.py`. Each one now sits next to its only
+  caller, so the package holds modelling code only.
+- `flow.py` — the `CausalFlowDAG` class. Its methods are:
+
+  - `fit`.
+  - `fit_classical` — float64 full-batch L-BFGS, the exact MLE for all-`ls`
+    specs.
+  - `sample(n, do=, u=)`.
+  - `abduct`.
+  - `pmf`.
+  - `density` — the continuous counterpart of `pmf`, on a grid.
+  - `log_prob`.
+  - `save/load`.
+  - `ls_coefficients` — the LS weights only, because it skips the network
+    shifts.
+  - `varying_coef` — the VC read-out.
+  - `scores` and `effect_modifier_scan` — the analytic per-row ∂ℓᵢ/∂θ plus the
+    CUSUM modifier scan, in `scores.py`.
+
+  The NLL decomposes per node, so one Adam fits all nodes jointly.
 
 ## Conventions that matter (easy to get wrong)
 
-- **Latent scale**: continuous `z = h(x) + shift` (shifts ADDED); ordinal
-  `P(Y<=k) = sigmoid(theta_k − shift)` (shift SUBTRACTED). Both follow the original TRAM-DAG
-  conventions; tests pin them.
-- **Parent encoding**: continuous parents enter RAW (no standardization) unless
-  a term-level `input_transform=` ("minmax", "standardize", or a callable
-  `fn(x, train)` over frozen train columns), which feeds that term's *network*
-  (CI/CS/VC modifiers) the transformed parent (minmax like the reference's
-  `scale_df`, standardize, or the callable over frozen train columns) — LS and the VC treatment stay raw either way; ordinal
-  parents one-hot (all levels). With cutpoints, only shift *differences* between
-  one-hot levels are identified — compare `w[k] − w[0]` against classical references.
-- **Ordinal log-prob is computed in log-space** (`logsigmoid` + stable `log1mexp`,
-  better-conditioned side chosen per element). The naive sigmoid difference saturates
-  in float32 → *exactly zero* gradients → a node can freeze at init forever. Do not
-  "simplify" it back.
-- **Seeding**: weight init happens at construction. Use `CausalFlowDAG(spec, seed=...)`
-  (the one obvious knob) — or call `torch.manual_seed` BEFORE `CausalFlowDAG(spec)`.
-  `fit(seed=...)` only seeds minibatch shuffling, not init.
-- **Spline tails are slope-clamped**: zuko's RQS extrapolates with a *fixed* slope
-  outside [-5,5] regardless of θ, so the ~10% of data beyond the 5%/95% pre-scaling
-  range is misweighted whenever the true tail slope differs — the structural reason
-  `spline` consistently trails `bernstein` (whose linear extrapolation follows the
-  boundary derivative). Demonstrated in `notebooks/demo_tram_dag_colab.py` section 6.
-- **`fit` keeps the final weights and is one minibatch Adam loop** — an
-  all-`ls` model then matches statsmodels/R-polr to ~1e-3. Validation, lr
-  schedules, early stopping / best-weight restoration and logging are the
-  caller's, through `fit(validation_data=|validation_split=,
-  validation_batch_size=, verbose=, optimizer=, callbacks=)` — fit fills
-  `history["val"]` per epoch and `verbose=N` prints every Nth line;
-  `callbacks=` takes `Callback` instances
-  (`on_fit_begin`/`on_epoch_end`/`on_fit_end`; epoch hooks get
-  `(flow, epoch, opt)`, any `True` stops, `on_fit_end` runs before the VC
-  re-centering) or bare `on_epoch_end` callables; `tramdag/callbacks.py`
-  ships `EarlyStopping` (auto-restores best weights; optional patience),
-  `PerNodePlateau`+`per_node_adam` (they read `history["val"]`); `flow.calibrate(train_df)`
-  takes the data-dependent state once (each term calibrates itself: ranges,
-  input-transform stats — never the weights) and is called by the first fit;
-  `init_marginals(train_df)` applies the calibrated start — always an
-  explicit call, nothing runs it for you. Key empirical finding (stroke storyline):
-  **flexible (CI/CS) models overfit observational confounding at the MLE and
-  need best-validation weights to recover the causal effect; all-`ls` models
-  don't** — `callbacks.EarlyStopping` now, see docs/fitting.md.
+- **Latent scale**: the continuous scale is `z = h(x) + shift`, which ADDS the
+  shift. The ordinal scale is `P(Y<=k) = sigmoid(theta_k − shift)`, which
+  SUBTRACTS the shift. Both follow the original TRAM-DAG conventions. The tests
+  pin them.
+- **Parent encoding**: continuous parents enter RAW, with no standardization. A
+  term-level `input_transform=` changes that. It takes one of three values:
+
+  - "minmax", like the reference's `scale_df`,
+  - "standardize",
+  - a callable `fn(x, train)` over frozen train columns.
+
+  `input_transform=` feeds the transformed parent to the *network* of that
+  term, which means the CI, CS and VC modifiers. LS and the VC treatment stay
+  raw either way. Ordinal parents enter one-hot, with all levels. With
+  cutpoints, only the shift *differences* between one-hot levels are
+  identified. Compare `w[k] − w[0]` against classical references.
+- **Ordinal log-prob stays in log-space**: it uses `logsigmoid` plus a stable
+  `log1mexp`, and it picks the better-conditioned side per element. The naive
+  sigmoid difference saturates in float32. The gradients then become *exactly
+  zero*, and a node can freeze at init forever. Do not "simplify" it back.
+- **Seeding**: the weight init happens at construction. Use
+  `CausalFlowDAG(spec, seed=...)`, which is the one obvious knob. As an
+  alternative, call `torch.manual_seed` BEFORE `CausalFlowDAG(spec)`.
+  `fit(seed=...)` seeds the minibatch shuffling only, and not the init.
+- **Spline tails are slope-clamped**: zuko's RQS extrapolates with a *fixed*
+  slope outside [-5,5], whatever θ is. If the true tail slope differs, then the
+  model misweights the ~10% of data beyond the 5%/95% pre-scaling range. This
+  is the structural reason why `spline` always trails `bernstein`. The linear
+  extrapolation of `bernstein` follows the boundary derivative instead.
+  docs/zuko-upstream.md writes this up. The demo notebook measures the affine
+  case and links to that document for the spline case.
+- **`fit` keeps the final weights and is one minibatch Adam loop**: an all-`ls`
+  model then matches statsmodels and R-polr to ~1e-3. The caller owns four
+  concerns:
+
+  - validation,
+  - lr schedules,
+  - early stopping and best-weight restoration,
+  - logging.
+
+  The caller reaches them through
+  `fit(validation_data=|validation_split=, validation_batch_size=, verbose=, optimizer=, callbacks=)`.
+  `fit` fills `history["val"]` per epoch, and `verbose=N` prints every Nth
+  line.
+
+  `callbacks=` takes `Callback` instances with the `on_fit_begin`,
+  `on_epoch_end` and `on_fit_end` hooks, or bare `on_epoch_end` callables. The
+  epoch hooks get `(flow, epoch, opt)`. Any `True` return stops the fit.
+  `on_fit_end` runs before the VC re-centering.
+
+  `tramdag/callbacks.py` ships `EarlyStopping`, which auto-restores the best
+  weights and takes an optional patience. It also ships `PerNodePlateau` and
+  `per_node_adam`, which read `history["val"]`.
+
+  `flow.calibrate(train_df)` takes the data-dependent state once, and the first
+  fit calls it. Each term calibrates itself: its ranges and its
+  input-transform statistics, never its weights. `init_marginals(train_df)`
+  applies the calibrated start. It is always an explicit call, and nothing runs
+  it for you.
+
+  The stroke storyline produced one key empirical finding. **Flexible CI and CS
+models overfit observational confounding at the MLE.** They need
+best-validation weights to recover the causal effect. **All-`ls` models do
+not.** Use `callbacks.EarlyStopping` for that now. See docs/fitting.md.
 
 ## Ground truth & reference numbers
 
 Framework tests (inline DGPs, `tests/conftest.py`):
 
-- `ls_chain` — every conditional an exact linear shift; the outcome node is a
-  proportional-odds model, so the flow's MLE must equal `statsmodels`
-  `OrderedModel` on the same design matrix. True weights: x2←x1 +1.2,
+- `ls_chain` — every conditional is an exact linear shift. The outcome node is
+  a proportional-odds model. The flow's MLE must therefore equal
+  `statsmodels` `OrderedModel` on the same design matrix. True weights: x2←x1 +1.2,
   y←(x1 +0.4, x2 +0.6, t −0.8), cutpoints (−1.5, 0, +1.5).
-- `vc_hetero` — known `beta(x) = −1 + 0.8·X2 − 0.6·X3`, confounded assignment;
-  the VC acceptance bar is corr ≥ 0.9 (measured ≈ 0.99).
-- `confounded` — constant effect τ = −1 with a quadratic prognostic part;
-  propensity centering must cut the bias of `beta_hat` by ≥ 2× (measured 5–10×).
+- `vc_hetero` — known `beta(x) = −1 + 0.8·X2 − 0.6·X3`, with confounded
+  assignment. The VC acceptance bar is corr ≥ 0.9, and the measurement is
+  ≈ 0.99.
+- `confounded` — constant effect τ = −1 with a quadratic prognostic part.
+  Propensity centering must cut the bias of `beta_hat` by ≥ 2×, and the
+  measurement is 5–10×.
 
 Experiments (`experiments/`, seed 42 unless stated, arXiv:2503.16206). The
-paper states only three training numbers — n=40000, 500 epochs, Bernstein
-order 20; the Adam lr 1e-3 is the R code's `optimizer_adam()` default. The configs follow the paper's own R code 1:1 where the
-framework allows: the triangle scripts train one continuous Adam run with a
-separate validation draw (40k / 10k mixed) and read the coefficients after
-every epoch (`fit(callbacks=)`) — at batch 256 / lr 0.004 for 300
-epochs (linear-cs 500, mixed exp-cs 350, mixed linear-ls 200 @ lr 0.002)
-instead of the paper's 500 at Keras-default batch 32 / lr 0.001, the
-deviations taken for CI runtime (every metric kept; grid, epoch floors and
-the 2026-09-01 tuning round in docs/paper-replication.md); the
-VACA/CAREFL comparisons take one full-batch step per epoch on nTrain = 2500 —
-VACA 10000 epochs at lr 0.001 with the reference's ReduceLROnPlateau
-(factor 0.1, patience 50, min_lr 1e-7; torch's scheduler on the summed
-validation NLL, global as in `update_learning_rate`; restored 1:1
-2026-09-02), CAREFL the reference run 1:1 since 2026-09-03 — trained on
-CAREFL's own committed 2500 rows (frozen under
-`experiments/paper/data/carefl-cf` with xObs and the truth/pred curves,
-sd-standardized units) with `val = train`, 7000 @ 0.001, the same plateau
-rule, and `range_q: 0` (the reference's min-max Bernstein domain), which
-puts the Fig. 6 curves on the paper's (fig6 x4 max 0.204 vs CAREFL's own
-0.174; the earlier 3000@0.002-vs-7000 trade-off was an artifact of the
-fresh-draw data; minibatch and raw-parent alternatives measurably fail,
-see docs/paper-replication.md).
-Seeds: the triangle scripts run
-unseeded, the comparison scripts seed R's RNG with 42 (not replayable in
-torch), so every seed here is a repo choice. Init follows each reference:
-`init: normal` (Keras `random_normal`, the triangle scripts' `LinearMasked`
-layers) and `init: glorot` (Keras `Dense`, `make_model`) — under the
-full-batch protocol the init decides the fit (VACA do(x2) errors
-0.52/0.33/0.13 with torch's default init, 0.098/0.159/0.026 with glorot at
-the config's seed — both measured on the earlier −3/−2/0 grid; on the shipped
-−3/−1/0 grid glorot scored 0.097/0.088/0.019 under the old 10000-epoch
-plateau protocol and 0.096/0.086/0.018 under the restored reference
-protocol). Known, documented deviations: the triangle scripts also
-use 5%/95% quantiles for the Bernstein domain (a match; the comparison
-scripts use min-max, `scale_df` — matched for CAREFL via `range_q: 0`,
-kept at the quantiles for VACA where min-max measures worse,
-0.289/0.040/0.067 vs 0.096/0.080/0.022); both comparisons scale the
-*network inputs* min-max (`input_transform: minmax` on the CI terms; raw parents saturate
-the tanh nets: `do(x2=-3)` error 0.731 → 0.098, and the 2026-09-01 relu/sigmoid
-raw-parent attempts fail too); a bias-free intercept
-output layer; Adam eps 1e-8 vs Keras 1e-7 (no effect);
-no marginal init anywhere in the comparisons (`validate_ls` calls
-`init_marginals` explicitly — the framework never does).
+paper states only three training numbers: n=40000, 500 epochs, and Bernstein
+order 20. The Adam lr 1e-3 is the default of the R code's `optimizer_adam()`.
+Each config follows the paper's own R code 1:1 where the framework allows.
+
+**The triangle scripts.** One continuous Adam run with a separate validation
+draw, 40k / 10k mixed. The coefficients are read after every epoch, through
+`fit(callbacks=)`. The protocol is batch 256 at lr 0.004 for 300 epochs, with
+these exceptions:
+
+- linear-cs 500 epochs,
+- mixed exp-cs 350 epochs,
+- mixed linear-ls 200 epochs at lr 0.002.
+
+The paper runs 500 epochs at the Keras defaults, batch 32 and lr 0.001. The
+deviation buys CI runtime and keeps every metric. For the grid, the epoch
+floors and the 2026-09-01 tuning round, see docs/paper-replication.md.
+
+**The VACA and CAREFL comparisons.** Both take one full-batch step per epoch
+on nTrain = 2500.
+
+- VACA: 10000 epochs at lr 0.001, with the reference's `ReduceLROnPlateau`
+  (factor 0.1, patience 50, min_lr 1e-7). This is torch's scheduler on the
+  summed validation NLL, global as in `update_learning_rate`. Restored 1:1 on
+  2026-09-02.
+- CAREFL: the reference run 1:1 since 2026-09-03. It trains on CAREFL's own
+  committed 2500 rows, frozen under `experiments/paper/data/carefl-cf` with
+  xObs and the truth and prediction curves, in sd-standardized units. The
+  settings are `val = train`, 7000 epochs at 0.001, the same plateau rule, and
+  `range_q: 0`, which is the reference's min-max Bernstein domain. That puts
+  the Fig. 6 curves on the paper's own: fig6 x4 max 0.204 against CAREFL's
+  0.174. The earlier 3000@0.002-against-7000 trade-off was an artifact of the
+  fresh-draw data. Minibatch and raw-parent alternatives measurably fail, as
+  docs/paper-replication.md records.
+
+**Seeds.** The triangle scripts run unseeded. The comparison scripts seed R's
+RNG with 42, which torch cannot replay. Every seed here is therefore a repo
+choice.
+
+**Init follows each reference.** `init: normal` is Keras `random_normal`, the
+triangle scripts' `LinearMasked` layers. `init: glorot` is Keras `Dense`,
+`make_model`. Under the full-batch protocol the init decides the fit. The VACA
+do(x2) errors measure that:
+
+- 0.52/0.33/0.13 with torch's default init,
+- 0.098/0.159/0.026 with glorot at the config's seed.
+
+Both were measured on the earlier −3/−2/0 grid. On the shipped −3/−1/0 grid,
+glorot scored 0.097/0.088/0.019 under the old 10000-epoch plateau protocol,
+and 0.096/0.086/0.018 under the restored reference protocol.
+
+**Known, documented deviations.**
+
+- The triangle scripts use the 5%/95% quantiles for the Bernstein domain,
+  which matches the reference. The comparison scripts use min-max, `scale_df`.
+  CAREFL matches that through `range_q: 0`. VACA keeps the quantiles, because
+  min-max measures worse there: 0.289/0.040/0.067 against 0.096/0.080/0.022.
+- Both comparisons scale the *network inputs* min-max, through
+  `input_transform: minmax` on the CI terms. Raw parents saturate the tanh
+  nets: the `do(x2=-3)` error goes 0.731 → 0.098. The 2026-09-01 relu and
+  sigmoid raw-parent attempts fail too.
+- The intercept output layer carries no bias.
+- Adam eps is 1e-8 against Keras 1e-7, which has no effect.
+- No marginal init anywhere in the comparisons. `validate_ls` calls
+  `init_marginals` explicitly, and the framework never does.
 
 **Each config takes its architecture from *its own* reference script**, and the
-reference uses two different ones. The triangle experiments
-(`summerof24/triangle_structured_*.R`): `hidden_features_I = hidden_features_CS`
-= `c(2,25,25,2)` continuous / `c(2,2,2,2)` mixed, **sigmoid** (the ReLU line is
-commented out), `len_theta = 20`. CORRECTED 2026-09-02: the c(...) vector
-reads as in/out dims around the hidden stack — hidden (25,25) continuous,
-(2,2) mixed. The earlier literal [2,25,25,2] reading put a 2-sigmoid
-bottleneck on the input: sin could not reproduce paper Fig. 18 at any
-protocol (curve err 1.22), (25,25) lands on the figure (0.24); linear-cs
-0.13 -> 0.025, atan edge flattening gone. The VACA/CAREFL comparisons
-(`comparison/utils.R::make_model`): one net per node, `dense(10, tanh) ->
-dense(100, tanh) -> dense(len_theta)`, `M = 30`. Applying the triangle net to
-CAREFL — which an earlier revision did — cost an order of magnitude on the
-counterfactual MAE (x4, measured on the old 18k-row protocol, under the
-misread bottleneck net and M = 20).
-Note also that `n_coeffs` counts *unconstrained* coefficients: zuko ties two
-extra control points on, so `n_coeffs=20` is order 21 where the reference's
-`len_theta=20` is order 19. The free-parameter count is what matches.
+reference uses two different scripts.
 
-- **Paper DGPs**: `triangle` true coefficients β12=+2, β13=−0.2 (+0.3 on x2 for
-  `linear`); a fitted `cs` learns −f(x2)+const. `triangle-mixed` cutpoints
-  θ=(−2, 0.42, 1.02) from `triangle_structured_mixed.R`; the paper's text does
-  not state them;
-  **ordinal sign flip**: the paper ADDS the ordinal shift, the
-  flow SUBTRACTS → fitted weights −0.2 / +0.3; the C.4 odds-ratio check gives
-  OR ≈ e² ≈ 7.4. `vaca`: E[x3|do(x2=a)] = −0.25 + 0.25a (do(x2=−3) is off-manifold
-  extrapolation — looser tolerance). `carefl`: trains on CAREFL's own
-  committed rows (`data/carefl-cf`: X.csv, xObs, the analytic truth curves
-  and CAREFL's own predictions, everything in CAREFL's sd-standardized
-  units, x3/x4 divided by 6.0104/1.9114 — external frozen input, no
-  generator here) and scores the Fig. 6 curves point by point against the
-  committed truth; held-out rows (fresh `Carefl4` draws scaled by the
-  committed sds) are scored next to the single xObs because one point is
-  a noisy yardstick.
-- **`validate_ls`** (`experiments/misc/data/magic-mrclean/ls`, seed 7, n=1275, full data,
-  final weights): flow = statsmodels = R polr at Age 0.0526, NIHSSa 0.1630,
-  T −0.9424; ATE +0.1428 vs +0.1428, true ATE +0.132. The R reference
-  (`fit_ls.R`, needs `tram`/`MASS`) has its outputs committed under `ref_ls/`, so
-  nothing needs R installed.
-- Committed expectations live in `experiments/<area>/ground_truth/<name>.json`;
-  `check.py` enforces them. Two entry forms: `{value, atol}` (two-sided) and
-  `{max}` (an upper bound, for error measures, so a better fit cannot fail).
-  A `{max}` bound belongs in a band — 1.5x to 4x its measurement — and
-  `check.py` notes one that is not, unless the entry carries a `"why"` saying
-  why it is deliberately wide. Centers are re-pinned whenever the code moves
-  them: a stale center is how a variant ends up passing while describing a
-  model that no longer runs.
+The triangle experiments come from `summerof24/triangle_structured_*.R`:
+
+- `hidden_features_I = hidden_features_CS` = `c(2,25,25,2)` continuous,
+  `c(2,2,2,2)` mixed,
+- **sigmoid**, because the ReLU line is commented out,
+- `len_theta = 20`.
+
+CORRECTED 2026-09-02: the c(...) vector reads as the in and out dims around the
+hidden stack. The hidden stack is (25,25) continuous and (2,2) mixed. The
+earlier literal [2,25,25,2] reading put a 2-sigmoid bottleneck on the input.
+Under that reading sin did not reproduce paper Fig. 18 at any protocol, at a
+curve err of 1.22. The (25,25) stack lands on the figure at 0.24. It also moves
+linear-cs from 0.13 to 0.025, and it removes the atan edge flattening.
+
+The VACA and CAREFL comparisons come from `comparison/utils.R::make_model`:
+
+- one net per node,
+- `dense(10, tanh) -> dense(100, tanh) -> dense(len_theta)`,
+- `M = 30`.
+
+An earlier revision applied the triangle net to CAREFL. That cost an order of
+magnitude on the counterfactual MAE for x4. The measurement used the old
+18k-row protocol, the misread bottleneck net and M = 20.
+
+Note also that `n_coeffs` counts *unconstrained* coefficients. zuko ties two
+extra control points on. `n_coeffs=20` is therefore order 21, and the
+reference's `len_theta=20` is order 19. The free-parameter count is what
+matches.
+
+- **Paper DGPs**: the `triangle` true coefficients are β12=+2 and β13=−0.2, and
+  `linear` uses +0.3 on x2. A fitted `cs` learns −f(x2)+const. The
+  `triangle-mixed` cutpoints are θ=(−2, 0.42, 1.02), from
+  `triangle_structured_mixed.R`. The paper's text does not state them.
+
+  **Ordinal sign flip**: the paper ADDS the ordinal shift and the flow
+  SUBTRACTS it, so the fitted weights are −0.2 and +0.3. The C.4 odds-ratio
+  check gives OR ≈ e² ≈ 7.4.
+
+  For `vaca`, E[x3|do(x2=a)] = −0.25 + 0.25a. do(x2=−3) is off-manifold
+  extrapolation, so it takes a looser tolerance.
+
+  `carefl` trains on CAREFL's own committed rows in `data/carefl-cf`, which
+  hold four items:
+
+  - X.csv,
+  - xObs,
+  - the analytic truth curves,
+  - CAREFL's own predictions.
+
+  Everything there is in CAREFL's sd-standardized units, and x3/x4 are divided
+  by 6.0104/1.9114. The rows are external frozen input, and there is no
+  generator here. `carefl` scores the Fig. 6 curves point by point against the
+  committed truth. It also scores held-out rows, which are fresh `Carefl4`
+  draws scaled by the committed sds. Those rows sit next to the single xObs,
+  because one point is a noisy yardstick.
+- **`validate_ls`** runs on `experiments/misc/data/magic-mrclean/ls`, with seed
+  7, n=1275, the full data and the final weights. There flow = statsmodels = R
+  polr at three coefficients:
+
+  - Age 0.0526,
+  - NIHSSa 0.1630,
+  - T −0.9424.
+
+  The ATE is +0.1428 against +0.1428, and the true ATE is +0.132. The R
+  reference is `fit_ls.R`, and it needs `tram` and `MASS`. Its outputs are
+  committed under `ref_ls/`, so nothing needs R installed.
+- Committed expectations live in
+  `experiments/<area>/ground_truth/<name>.json`, and `check.py` enforces them.
+  There are two entry forms:
+
+  - `{value, atol}` — a two-sided check.
+  - `{max}` — an upper bound for error measures, so a better fit cannot fail.
+
+  A `{max}` bound belongs in a band from 1.5x to 4x its measurement.
+  `check.py` notes a bound outside that band, unless the entry carries a
+  `"why"` that says why the bound is deliberately wide. Whenever the code moves
+  the centers, you must re-pin them. A stale center is how a variant ends up
+  passing while it describes a model that no longer runs.
 
 ## Testing policy
 
-- Framework tests must not depend on `experiments/`. A new causal feature is
-  validated against an inline DGP's known truth (add one to `conftest.py` if
-  none fits), never with "runs without error".
-- Frozen CSVs in `experiments/<area>/data/` are a contract — **never regenerate
-  silently**; a new seed or new equations means a **new folder**. `check_data.py`
-  regenerates each from the seed in its `truth.json` and compares at **1e-9**, not
-  bit equality: numpy's transcendental functions move their last bits between
-  releases (measured ~1e-15 after the 2026-08 dependency bump).
-- `experiments/misc/data/magic-mrclean/ls` has no generator here (it left with the
-  stroke storyline); it is frozen input data. Recover the generator from
-  `pre-experiments-cut` if it ever needs regenerating.
-- Fit checks for the paper DGPs train on the paper protocol (n=40k; epochs per
-  the tuned configs, 200-500),
-  not the frozen n=5k CSVs — β13 multiplies x1, whose two mixture components sit at 0.25 and 0.73
-  (sd 0.254, against 0.375 for x2 and 2.918 for x3), so it
-  is too weakly identified at n=5k.
+- Framework tests must not depend on `experiments/`. You must validate a new
+  causal feature against the known truth of an inline DGP. If no DGP fits, then
+  add one to `conftest.py`. Never validate with "runs without error".
+- The frozen CSVs in `experiments/<area>/data/` are a contract. **Never
+  regenerate them silently.** A new seed or new equations means a **new
+  folder**. `check_data.py` regenerates each CSV from the seed in its
+  `truth.json`. It compares at **1e-9** and not at bit equality, because
+  numpy's transcendental functions move their last bits between releases. The
+  measured move was ~1e-15 after the 2026-08 dependency bump.
+- `experiments/misc/data/magic-mrclean/ls` has no generator here, because the
+  generator left with the stroke storyline. That directory holds frozen input
+  data. If it ever needs regeneration, then recover the generator from
+  `pre-experiments-cut`.
+- The fit checks for the paper DGPs train on the paper protocol, which is n=40k
+  with the epochs of the tuned configs, 200-500. They do not train on the
+  frozen n=5k CSVs. β13 multiplies x1, whose two mixture components sit at 0.25
+  and 0.73. The sd of x1 is 0.254, against 0.375 for x2 and 2.918 for x3. β13
+  is therefore too weakly identified at n=5k.
 
 ## Roadmap notes
 
-- Upstream PRs to zuko: five ranked candidates (analytic Bernstein
-  `call_and_ladj`, linear spline tails, public `_constrain_theta` inverse,
-  θ-shape docstring fix, `Logistic` distribution) in docs/zuko-upstream.md.
-- ~~Generalize the generators beyond the stroke DAG~~ — done for the TRAM-DAG
-  paper's DGPs (triangle/triangle-mixed/vaca/carefl, June 2026). Still open:
-  hidden confounding à la DeCaFlow.
-- ~~Package for PyPI~~ — published as `tramdag` (latest 0.3.0, June 2026);
-  release flow since the 1.0-RC: tag-driven (skeleton convention) — the
-  version IS the git tag (hatch-vcs; `cz bump` derives it from the
-  conventional commits, or tag `vX.Y.Z` by hand), pushing the tag runs
-  `.github/workflows/release.yaml` (uv build → PyPI via trusted publishing →
-  sigstore-signed GitHub release). One-time prerequisite: register the
-  GitHub repo as a trusted publisher on pypi.org/manage/project/tramdag
-  (needs the PyPI project owner — Oliver) and create the `pypi` environment
-  in the repo settings. CHANGELOG section stays hand-written.
-- The `experiments/` tree is the candidate for a companion repository
-  (`tensorchiefs/tramdag-simu`); it is already self-contained, so the move is a
-  directory copy plus a workflow.
+- Upstream PRs to zuko: docs/zuko-upstream.md ranks five candidates:
+
+  - analytic Bernstein `call_and_ladj`,
+  - linear spline tails,
+  - a public `_constrain_theta` inverse,
+  - a θ-shape docstring fix,
+  - a `Logistic` distribution.
+- ~~Generalize the generators beyond the stroke DAG~~ — done in June 2026 for
+  the DGPs of the TRAM-DAG paper: triangle, triangle-mixed, vaca and carefl.
+  Hidden confounding in the manner of DeCaFlow stays open.
+- ~~Package for PyPI~~ — the package is on PyPI as `tramdag`, latest 0.3.0,
+  June 2026. Since the 1.0-RC the release flow is tag-driven, by the skeleton
+  convention. The version IS the git tag, through hatch-vcs. `cz bump` derives
+  the tag from the conventional commits, or you tag `vX.Y.Z` by hand. A push of
+  the tag runs `.github/workflows/release.yaml`, which does three steps:
+
+  - uv build,
+  - upload to PyPI through trusted publishing,
+  - a sigstore-signed GitHub release.
+
+  There are two one-time prerequisites. First, register the GitHub repo as a
+  trusted publisher on pypi.org/manage/project/tramdag, which needs the PyPI
+  project owner Oliver. Second, create the `pypi` environment in the repo
+  settings. The CHANGELOG section stays hand-written.
+- The `experiments/` tree is the candidate for a companion repository,
+  `tensorchiefs/tramdag-simu`. The tree is already self-contained, so the move
+  is a directory copy plus a workflow.

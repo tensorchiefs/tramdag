@@ -23,11 +23,60 @@
 - `log_prob(df, nodes=[...])` sums a subset of the nodes, which is exact and
   is the log-space way to read one node's conditional likelihood per row.
 
+### Changed — `I(...)` spells its options out; the docs and notebooks are gated
+
+- `Intercept`, and therefore `I`, `SI` and `CI`, names every option in its
+  signature instead of taking them through `**options`. Every call spelling is
+  unchanged, including the pass-through: a keyword that is not an option still
+  goes to the transform class (`SI(transform="spline", bins=16)`,
+  `I(n_coeffs=40)`), and a written-out keyword still wins over the same key
+  inside a serialized `transform_kwargs` mapping. The serialized form on disk
+  does not change. `CS`, `VC` and `Fn` are untouched.
+- `Term.__init_subclass__` refuses a term whose `__init__` default disagrees
+  with its field default. Without that check the disagreement would silently
+  change what `Term.options()` writes into a checkpoint, and a round-trip test
+  cannot see it, because both sides of the round trip carry the same drift.
+- `mkdocs.yml` sets `strict: true`, so a docstring that documents a parameter
+  the signature does not have now fails the build instead of logging a
+  warning. CI also regenerates the diagrams in `docs/architecture.md` and
+  fails on a diff; the committed copy had drifted to naming `_check_levels`
+  after that method became `_check_level_values`.
+- `tools/` joins the max-15 complexity tier. It matched neither tier before,
+  and `gen_diagrams.py` had drifted to 22.
+
+### Changed — one introduction, and a notebook for the fitting API
+
+- `notebooks/intro_tram_dag.py` is folded into
+  `notebooks/demo_tram_dag_colab.py`, which keeps its filename so the Colab
+  badge URL still resolves. The two carried separate copies of the same
+  three-rung walkthrough, which is what let both drift apart. The merged
+  notebook also writes the same DAG with `LS` terms and reads the
+  coefficients, so the interpretability claim is demonstrated where the badge
+  points. Every numeric claim in it is an assertion.
+- `notebooks/training_strategies.py` is new. It runs every shipped fitting
+  recipe on one workload and is the executable reference for `fit`,
+  `optimizer=` and `callbacks=`. `docs/fitting.md` keeps the decision table
+  and one line per recipe and gives up its six worked examples;
+  `docs/training-speed.md` gives up its recipe-to-API table and keeps the
+  measurements.
+- `docs/model.md` and `docs/interpretation.md` are new. The first holds the
+  model theory that the intro notebook used to carry. The second is the guide
+  that was missing: what a fitted coefficient, cutpoint, density or
+  adjacency read-out actually means.
+- `docs/research/` is removed along with the autoresearch measurement guard it
+  documented.
+
 ### Fixed
 
 - An ordinal value that is not a level index is refused at every entry
   point, by node name. Inference used to truncate `1.5` to level 1 in
   silence and to let torch raise an unnamed error for an out-of-range value.
+- `experiments/benchmarks/bench_training.py` reported a recipe that reached
+  its target in the first recorded epoch as a miss, because it tested a time
+  of `0.0` for truthiness.
+- A whole-tree `ruff check .` reported 53 errors that CI never saw. The
+  per-file-ignore key for the notebooks did not match the tracked symlinks
+  under `docs/notebooks/`, which ruff follows.
 
 ### Changed (breaking) — an effect is a `Term` subclass; the registry is gone
 
@@ -931,7 +980,7 @@ default the paper replication or the tests had to switch off.
   preserved), applied once on the first fit, conditional `ci` intercepts untouched.
   Large time-to-target win where a root's marginal shape dominates the NLL gap
   (vaca-ci ~2.5× faster to target over 6 seeds); small where convergence is
-  coefficient-bound. Defaults unchanged (off). See `docs/research/REPORT.md`.
+  coefficient-bound. Defaults unchanged (off).
 
 - **`CausalFlowDAG.fit_classical()`** — deterministic, full-batch, **float64**
   L-BFGS for all-`ls` models (each node-conditional is then a classical

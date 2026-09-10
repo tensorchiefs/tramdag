@@ -31,6 +31,13 @@ and none of them relies on the defaults here.
 Parent features use the encoding of the original implementation. A continuous
 parent enters raw, in one column. An ordinal parent is one-hot encoded, in
 ``levels`` columns.
+
+:data:`ACTIVATIONS` holds the three activations the reference implementations
+use: ``relu`` in the PyTorch reference's default classes, ``sigmoid`` in the
+paper's ``create_param_net``, and ``tanh`` in the paper's ``make_model`` for
+the CAREFL and VACA comparisons. :data:`DEFAULT_ACTIVATION` is ``relu``,
+because the architectures these conditioners copy use it, so the default
+network and the default activation come from one source.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -40,12 +47,7 @@ import torch
 from torch import Tensor, nn
 
 # %% global variables ------------------------------------------------------------------
-# the activations the reference implementations use: relu in the PyTorch
-# reference's default classes, sigmoid in the paper's create_param_net, tanh in
-# the paper's make_model for the CAREFL/VACA comparisons.
 ACTIVATIONS = {"relu": nn.ReLU, "sigmoid": nn.Sigmoid, "tanh": nn.Tanh}
-# relu, because the architectures these conditioners copy use relu -- the
-# default net and the default activation come from the same source.
 DEFAULT_ACTIVATION = "relu"
 
 
@@ -96,8 +98,8 @@ def _nn(
 
     Raises
     ------
-    KeyError
-        From :data:`ACTIVATIONS` if the name is not one of its keys.
+    ValueError
+        If ``activation`` is not a key of :data:`ACTIVATIONS`.
     """
     name = activation or DEFAULT_ACTIVATION
     if name not in ACTIVATIONS:

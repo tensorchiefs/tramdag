@@ -1807,7 +1807,11 @@ The sample has as many rows as <code>df</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Draw the summed train (and validation) NLL per epoch of the last <code>fit</code>.</p>
+        <p>Draw the summed train and validation NLL per epoch.</p>
+<p><code>flow.history</code> accumulates across <code>fit</code> calls, so the curves cover
+every epoch the flow has trained, not only the last call. Each validation
+entry is drawn at the epoch it was measured in, which is what keeps the two
+curves aligned when one <code>fit</code> validated and another did not.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

@@ -409,13 +409,13 @@ flowchart LR
     n3["_last_val"]
   end
   subgraph conditioners
-    n48["ComplexShift.forward"]
-    n50["LinearShift.forward"]
-    n51["SimpleIntercept.forward"]
+    n49["ComplexShift.forward"]
+    n51["LinearShift.forward"]
+    n52["SimpleIntercept.forward"]
     n6["VaryingCoef.beta"]
     n5["VaryingCoef.forward"]
-    n53["VaryingCoef.l2"]
-    n52["VaryingCoef.recenter"]
+    n54["VaryingCoef.l2"]
+    n53["VaryingCoef.recenter"]
   end
   subgraph fitting
     n7["_FitMixin.fit"]
@@ -439,41 +439,42 @@ flowchart LR
     n16["CausalFlowDAG._recenter_vc"]
     n32["CausalFlowDAG._side_feats"]
     n17["CausalFlowDAG._tensorize"]
+    n35["CausalFlowDAG._theta_shift"]
     n18["CausalFlowDAG.calibrate"]
     n23["CausalFlowDAG.node_log_prob"]
   end
   subgraph nodes
-    n39["_Node.net_input"]
-    n37["_Node.theta_shift"]
-    n38["kind_log_prob"]
+    n40["_Node.net_input"]
+    n36["_Node.theta_shift"]
+    n39["kind_log_prob"]
   end
   subgraph terms
-    n41["ComplexShiftTerm.shift_value"]
-    n35["InterceptTerm.calibrate"]
-    n42["LinearShiftTerm.shift_value"]
+    n42["ComplexShiftTerm.shift_value"]
+    n37["InterceptTerm.calibrate"]
+    n43["LinearShiftTerm.shift_value"]
     n30["ShiftTerm.finalize"]
     n19["ShiftTerm.regularizer"]
     n24["ShiftTerm.side_columns"]
-    n43["SimpleInterceptTerm.theta_value"]
-    n36["TermDef.calibrate"]
-    n40["TermDef.input_transform"]
+    n44["SimpleInterceptTerm.theta_value"]
+    n38["TermDef.calibrate"]
+    n41["TermDef.input_transform"]
     n31["VaryingCoefficientTerm.finalize"]
-    n54["VaryingCoefficientTerm.regressor"]
+    n55["VaryingCoefficientTerm.regressor"]
     n20["VaryingCoefficientTerm.regularizer"]
-    n44["VaryingCoefficientTerm.shift_value"]
+    n45["VaryingCoefficientTerm.shift_value"]
     n25["VaryingCoefficientTerm.side_columns"]
   end
   subgraph transforms
-    n55["BernsteinUT._build"]
-    n45["StandardLogistic.log_prob"]
-    n56["_ScaledUT._log_dt_dx"]
-    n57["_ScaledUT._scale"]
-    n46["_ScaledUT.forward"]
-    n49["_ScaledUT.set_range"]
-    n60["_log1mexp"]
-    n58["ordinal_bounds"]
-    n59["ordinal_cutpoints"]
-    n47["ordinal_log_prob"]
+    n56["BernsteinUT._build"]
+    n46["StandardLogistic.log_prob"]
+    n57["_ScaledUT._log_dt_dx"]
+    n58["_ScaledUT._scale"]
+    n47["_ScaledUT.forward"]
+    n50["_ScaledUT.set_range"]
+    n61["_log1mexp"]
+    n59["ordinal_bounds"]
+    n60["ordinal_cutpoints"]
+    n48["ordinal_log_prob"]
   end
     n0 --> n1
     n2 -- "3x" --> n3
@@ -511,40 +512,41 @@ flowchart LR
     n17 -- "2x" --> n33
     n17 -- "2x" --> n34
     n17 -- "2x" --> n28
+    n35 -- "27x" --> n32
+    n35 -- "27x" --> n36
     n18 --> n33
     n18 --> n34
-    n18 -- "3x" --> n35
-    n18 -- "3x" --> n36
+    n18 -- "3x" --> n37
+    n18 -- "3x" --> n38
     n23 -- "9x" --> n26
-    n23 -- "27x" --> n32
-    n23 -- "27x" --> n37
-    n23 -- "27x" --> n38
-    n39 -- "19x" --> n40
-    n37 -- "9x" --> n41
-    n37 -- "9x" --> n42
-    n37 -- "27x" --> n43
-    n37 -- "9x" --> n44
-    n38 -- "18x" --> n45
-    n38 -- "18x" --> n46
-    n38 -- "9x" --> n47
-    n41 -- "9x" --> n48
-    n41 -- "9x" --> n39
-    n35 -- "3x" --> n36
-    n35 -- "2x" --> n49
-    n42 -- "9x" --> n50
-    n43 -- "27x" --> n51
-    n36 -- "6x" --> n40
-    n31 --> n52
-    n31 --> n39
-    n20 -- "7x" --> n53
-    n44 -- "9x" --> n5
-    n44 -- "9x" --> n39
-    n44 -- "9x" --> n54
-    n46 -- "18x" --> n55
-    n46 -- "18x" --> n56
-    n46 -- "18x" --> n57
-    n58 -- "9x" --> n59
-    n47 -- "9x" --> n60
-    n47 -- "9x" --> n58
+    n23 -- "27x" --> n35
+    n23 -- "27x" --> n39
+    n40 -- "19x" --> n41
+    n36 -- "9x" --> n42
+    n36 -- "9x" --> n43
+    n36 -- "27x" --> n44
+    n36 -- "9x" --> n45
+    n39 -- "18x" --> n46
+    n39 -- "18x" --> n47
+    n39 -- "9x" --> n48
+    n42 -- "9x" --> n49
+    n42 -- "9x" --> n40
+    n37 -- "3x" --> n38
+    n37 -- "2x" --> n50
+    n43 -- "9x" --> n51
+    n44 -- "27x" --> n52
+    n38 -- "6x" --> n41
+    n31 --> n53
+    n31 --> n40
+    n20 -- "7x" --> n54
+    n45 -- "9x" --> n5
+    n45 -- "9x" --> n40
+    n45 -- "9x" --> n55
+    n47 -- "18x" --> n56
+    n47 -- "18x" --> n57
+    n47 -- "18x" --> n58
+    n59 -- "9x" --> n60
+    n48 -- "9x" --> n61
+    n48 -- "9x" --> n59
 ```
 <!-- AUTOGEN:end -->

@@ -37,7 +37,6 @@ from .readouts import _ReadoutsMixin
 from .scores import effect_modifier_scan as _effect_modifier_scan
 from .scores import node_scores as _node_scores
 from .spec import (
-    ContinuousNode,
     NodeSpec,
     OrdinalNode,
     spec_from_dict,
@@ -241,6 +240,35 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             if name in self.spec
         }
 
+    def _require_kind(self, node: str, kind: str, *, method: str, instead: str) -> None:
+        """Refuse a node of the wrong kind, naming the method that fits it.
+
+        A domain error, not a Python type error: the caller named a node that
+        exists and asked the wrong question about it.
+        """
+        self._node(node)  # the friendly unknown-node error, before the kind check
+        actual = self.spec[node].kind
+        if actual != kind:
+            raise ValueError(
+                f"{method}() requires a{'n' if kind[0] in 'aeiou' else ''} "
+                f"{kind} node, {node!r} is {actual}; use {instead}()."
+            )
+
+    def _theta_shift(
+        self, nd: _Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
+    ) -> tuple[Tensor, Tensor]:
+        """Evaluate one node's transform parameters and shift.
+
+        The side columns join here, so every query that reaches a node's
+        parameters gets them. A query that composed the call itself would drop
+        a centered term's propensity column by omission, which is the failure
+        ``VaryingCoefficientTerm`` has to catch at run time.
+
+        ``feats`` is passed in rather than derived, because a caller looping
+        over the nodes encodes the parents once for all of them.
+        """
+        return nd.theta_shift(feats | self._side_feats(nd, values, n), n)
+
     def _side_feats(
         self, nd: _Node, values: dict[str, Tensor], n: int
     ) -> dict[str, Tensor]:
@@ -294,9 +322,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         out = {}
         for name in self.order if nodes is None else nodes:
             node = self.nodes[name]
-            theta, shift = node.theta_shift(
-                feats | self._side_feats(node, values, n), n
-            )
+            theta, shift = self._theta_shift(node, feats, values, n)
             out[name] = kind_log_prob(node, theta, shift, values[name])
         return out
 
@@ -539,9 +565,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             node = self.nodes[name]
             feats = self._features({p: values[p] for p in node.parents})
             # under do, a centered VC re-derives t_do - e_hat(x); never cached
-            theta, shift = node.theta_shift(
-                feats | self._side_feats(node, values, n), n
-            )
+            theta, shift = self._theta_shift(node, feats, values, n)
             values[name] = kind_sample(node, theta, shift, u_vals[name])
         return self._to_frame(values)
 
@@ -574,9 +598,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         u = {}
         for name in self.order:
             node = self.nodes[name]
-            theta, shift = node.theta_shift(
-                feats | self._side_feats(node, values, n), n
-            )
+            theta, shift = self._theta_shift(node, feats, values, n)
             u[name] = kind_abduct(node, theta, shift, values[name], generator=gen)
         return pd.DataFrame({k: v.cpu().numpy() for k, v in u.items()}, index=df.index)
 
@@ -594,7 +616,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         n = len(df)
         values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
         feats = self._features({p: values[p] for p in nd.parents})
-        theta, shift = nd.theta_shift(feats | self._side_feats(nd, values, n), n)
+        theta, shift = self._theta_shift(nd, feats, values, n)
         return nd, theta, shift, n
 
     @torch.no_grad()
@@ -622,12 +644,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is continuous.
         """
-        self._node(node)  # the friendly unknown-node error, before the kind check
-        if not isinstance(self.spec[node], OrdinalNode):
-            # a domain error (wrong node kind), not a Python type error
-            raise ValueError(  # noqa: TRY004
-                f"pmf() requires an ordinal node, '{node}' is continuous."
-            )
+        self._require_kind(node, "ordinal", method="pmf", instead="density")
         _, theta, shift, _ = self._conditional(df, node, do)
         return ordinal_pmf(theta, shift).cpu().numpy()
 
@@ -667,12 +684,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is ordinal; use ``pmf`` for it.
         """
-        self._node(node)  # the friendly unknown-node error, before the kind check
-        if not isinstance(self.spec[node], ContinuousNode):
-            # a domain error (wrong node kind), not a Python type error
-            raise ValueError(  # noqa: TRY004
-                f"density() requires a continuous node, '{node}' is ordinal; use pmf()."
-            )
+        self._require_kind(node, "continuous", method="density", instead="pmf")
         nd, theta, shift, n = self._conditional(df, node, do)
         y = torch.as_tensor(np.asarray(grid, dtype=self._np_dtype), device=self.device)
         m = y.numel()

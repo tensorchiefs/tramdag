@@ -81,6 +81,6 @@ when no content moved.
 uvx jupytext --update --to ipynb notebooks/demo_tram_dag_colab.py
 ```
 
-(A fresh conversion contains no outputs, which is exactly the committed state.)
+(The committed notebook holds no outputs, and `--update` keeps it that way.)
 
 More on the format: [jupytext documentation](https://jupytext.readthedocs.io).

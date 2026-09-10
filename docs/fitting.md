@@ -145,10 +145,10 @@ MLE, as the finding below shows.
 | global plateau schedule | decaying one shared rate beats picking one |
 | per-node plateau — `PerNodePlateau` | nodes converge at different speeds; self-stopping |
 
-The code below gives one line for each of the Adam recipes, as a quick
-reference. The exact-MLE path and the global plateau rule are covered below
-and in the notebook. Every
-strategy runs end to end, with its output and its checks, in
+The code below gives one line for each Adam recipe, as a quick reference. The
+exact-MLE path is Path B below, and the global plateau rule needs a `Callback`
+of your own. Every Adam strategy runs end to end, with its output and its
+checks, in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py).
 Every documentation build executes that notebook, so the notebook is the
 source of truth. If a snippet here disagrees with the notebook, the notebook

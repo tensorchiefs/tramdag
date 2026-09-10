@@ -27,7 +27,7 @@ a local run artifact, and it stays out of the repository.
 Since 0.4, the recipes that this benchmark compares are **callbacks**. They are
 training strategies, and they are not part of the model.
 [fitting.md](fitting.md#training-strategies) says what each recipe is and gives
-one line of code per recipe. The worked version of every recipe is in
+one line of code for each Adam recipe. The worked version of every recipe is in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py). This
 page is only the measurement.
 
@@ -42,7 +42,7 @@ and the stroke run in this benchmark uses 1e-5.
 This behaviour is valid, because the per-node losses have independent
 gradients. It lets the fit delete whole epochs, and not only shorten them.
 
-A third recipe is a global plateau rule, which is one
+One more recipe is a global plateau rule, which is one
 shared rate rather than one rate per node. That is torch's
 `ReduceLROnPlateau` on the summed validation NLL, and it is the rule the paper
 reference uses. `experiments/paper/helpers.py::fit_paper` drives it.

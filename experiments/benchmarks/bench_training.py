@@ -389,7 +389,6 @@ def run_lbfgs(seed: int, warm_epochs: int = 0) -> dict:
     }
 
 
-# %% main ------------------------------------------------------------------------------
 def main():
     args = _parse_args()
     seeds = args.seeds[:1] if (args.quick or args.figures_only) else args.seeds
@@ -406,5 +405,6 @@ def main():
     print(f"\n-> {OUT}")
 
 
+# %% main ------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()

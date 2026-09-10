@@ -163,17 +163,21 @@ for epochs, lr in [(800, 1e-2), (700, 1e-3), (500, 1e-4)]:
     flow.fit(train_df, epochs=epochs, learning_rate=lr)
 
 # best-validation weights: the flexible-model recipe, restored at fit end
-flow.fit(train_df, epochs=4000, validation_data=val_df,
-         callbacks=EarlyStopping())
+flow.fit(train_df, epochs=4000, validation_data=val_df, callbacks=EarlyStopping())
 
 # ... and stop once the best epoch is that old
-flow.fit(train_df, epochs=4000, validation_split=0.1,
-         callbacks=EarlyStopping(patience=200))
+flow.fit(
+    train_df, epochs=4000, validation_split=0.1, callbacks=EarlyStopping(patience=200)
+)
 
 # one rate per node, each freezing on its own score; stops when all froze
-flow.fit(train_df, epochs=4000, validation_split=0.1,
-         optimizer=per_node_adam(flow, lr=1e-2),
-         callbacks=PerNodePlateau())   # patience=15, freeze=50
+flow.fit(
+    train_df,
+    epochs=4000,
+    validation_split=0.1,
+    optimizer=per_node_adam(flow, lr=1e-2),
+    callbacks=PerNodePlateau(),
+)  # patience=15, freeze=50
 ```
 
 Import `EarlyStopping`, `PerNodePlateau` and `per_node_adam` from
@@ -240,10 +244,10 @@ that the classical solution really is the optimum. It is also a way to use the
 classical fit as a fast, principled initialization:
 
 ```python
-flow.fit_classical(train_df)                       # exact MLE, seconds
+flow.fit_classical(train_df)  # exact MLE, seconds
 before = flow.ls_coefficients()["y"]
 flow.fit(train_df, epochs=300, learning_rate=1e-3)  # a gentle Adam phase ...
-after = flow.ls_coefficients()["y"]                 # ... barely moves
+after = flow.ls_coefficients()["y"]  # ... barely moves
 ```
 
 A small drift means that the classical fit was already at the optimum. The

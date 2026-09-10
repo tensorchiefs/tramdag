@@ -673,6 +673,23 @@ read-outs keep their exact signatures as flow methods.
 
 ### Changed (internal, no API surface)
 
+- **Dependencies move to torch 2.14.0 and statsmodels 0.15.0**, with the
+  pre-commit hooks on ruff 0.16.6, uv 0.12.10 and commitizen 4.18.0, and the
+  release workflow's actions on checkout 7.0.1, upload-artifact 7.0.1,
+  download-artifact 8.0.1 and sigstore 3.5.0. `release.yaml` was the one
+  workflow still using bare `@v4` tags, so its actions are now SHA-pinned with
+  a version comment like every other workflow.
+
+  statsmodels is the exact-MLE oracle of four test modules and of the
+  `validate_ls` ground truth, so the bump was verified rather than assumed.
+  Its reference coefficients are unchanged to four decimals: NIHSSa +0.1630
+  and the treatment −0.9424. The seeded state-dict baseline is still
+  bit-identical under the new torch, and all four paper replications hold
+  every committed bound. No ground-truth number was re-pinned.
+
+  ruff 0.16.6 formats the Python blocks inside Markdown, which 0.16.3 left
+  alone, so three documentation pages are reformatted.
+
 - **`transforms` uses zuko's own inverse** (`Transform.inv`: bisection inside
   the bound, closed-form linear or identity tail). The 85-line
   expanding-bracket bisection duplicated it, at measurably identical

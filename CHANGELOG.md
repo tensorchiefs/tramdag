@@ -743,6 +743,31 @@ read-outs keep their exact signatures as flow methods.
 
 ### Fixed
 
+- **`EarlyStopping` blamed its own wiring for a diverged fit.** A NaN
+  validation NLL never beats `inf - min_delta`, so nothing was ever
+  snapshotted and fit end raised "EarlyStopping has seen no epoch". The
+  message now separates the three cases: no epoch ran, every epoch was
+  non-finite, or none improved. The second one names the likely cause.
+
+- **`plot_training` drew the validation curve from epoch 1 whatever epoch it
+  came from.** `history` accumulates across `fit` calls, so a `fit` without
+  validation followed by one with it put the validation curve two epochs
+  before the data it was measured on. `fit` now records `history["val_epoch"]`
+  and the figure draws each curve on its own epochs. The docstring also
+  stopped claiming it shows the last `fit` alone.
+
+- **`fit` trained on nothing and reported an NLL of zero.** The batch loop
+  skips any batch under two rows, so a one-row frame ran its epochs, moved no
+  weight and recorded `0.0` per node. It now raises and says why. The epoch
+  NLL is also averaged over the rows actually stepped on, so a skipped
+  trailing row no longer scales every node's number down by `1/n`.
+
+- **`shift_curve` died inside torch on an ordinal parent.** An ordinal parent
+  enters a term one-hot over all its levels, so a 1-D grid of level indices is
+  not its input, and the mismatch surfaced as
+  "mat1 and mat2 shapes cannot be multiplied". It is named now, and points at
+  `ls_coefficients`, whose weights are the level contrasts.
+
 - **`check.py` had no test, and the escape hatch it grew hid the thing it was
   meant to expose.** A `"why"` on a `{max}` entry silenced *both* edges of the
   band check. Three `validate_ls` bounds therefore sat 12x, 141x and 566x

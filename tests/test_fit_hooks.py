@@ -10,6 +10,7 @@ all-`ls` DGP (see conftest).
 import copy
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
@@ -401,3 +402,42 @@ def test_history_accumulates_across_fit_calls(ls_chain):
     flow.fit(df, epochs=2, batch_size=100)
     flow.fit(df, epochs=3, batch_size=100)
     assert len(flow.history["train"]) == 5
+
+
+def test_a_diverged_fit_says_so_instead_of_blaming_the_callback(ls_chain):
+    """EarlyStopping names a NaN validation curve, not its own wiring.
+
+    A NaN never beats ``inf - min_delta``, so nothing is ever snapshotted and
+    fit end has nothing to restore. The message has to say which of the two
+    happened, because the fix differs.
+    """
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(RuntimeError, match="never finite"):
+        flow.fit(
+            df,
+            epochs=3,
+            learning_rate=1e9,
+            validation_split=0.2,
+            callbacks=EarlyStopping(),
+        )
+
+
+def test_a_frame_it_cannot_batch_raises_instead_of_training_on_nothing(ls_chain):
+    """A single-row frame used to run its epochs and change no weight."""
+    flow = CausalFlowDAG({"a": OrdinalNode(2), "b": OrdinalNode(2, [LS("a")])}, seed=0)
+    one = pd.DataFrame({"a": [1], "b": [0]})
+    with pytest.raises(ValueError, match="trained on no row"):
+        flow.fit(one, epochs=5)
+
+
+def test_the_epoch_nll_averages_over_the_rows_it_trained_on(ls_chain):
+    """A skipped trailing row must not scale every node's epoch NLL down."""
+    df = ls_chain["draw"](201, 1)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.fit(df, epochs=1, batch_size=100)  # 100 + 100 + 1: the last is skipped
+    trimmed = CausalFlowDAG(_two_node_spec(), seed=0)
+    trimmed.fit(df.iloc[:200], epochs=1, batch_size=100)
+    a = sum(flow.history["train"][-1].values())
+    b = sum(trimmed.history["train"][-1].values())
+    assert a == pytest.approx(b, rel=0.05)

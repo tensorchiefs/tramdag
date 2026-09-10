@@ -355,7 +355,12 @@ def plot_marginals(
 
 
 def plot_training(flow, *, frozen=None, ax=None, path=None):
-    """Draw the summed train (and validation) NLL per epoch of the last ``fit``.
+    """Draw the summed train and validation NLL per epoch.
+
+    ``flow.history`` accumulates across ``fit`` calls, so the curves cover
+    every epoch the flow has trained, not only the last call. Each validation
+    entry is drawn at the epoch it was measured in, which is what keeps the two
+    curves aligned when one ``fit`` validated and another did not.
 
     Parameters
     ----------
@@ -380,16 +385,20 @@ def plot_training(flow, *, frozen=None, ax=None, path=None):
     hist = flow.history
     if not hist.get("train"):
         raise ValueError("plot_training needs a fitted flow; its history is empty")
-    curves = {"train": np.array([sum(d.values()) for d in hist["train"]])}
+    train = np.array([sum(d.values()) for d in hist["train"]])
+    curves = {"train": (np.arange(1, len(train) + 1), train)}
     if hist.get("val"):
-        curves["val"] = np.array([sum(d.values()) for d in hist["val"]])
+        val = np.array([sum(d.values()) for d in hist["val"]])
+        # each entry's own epoch, so an unvalidated fit in between leaves a gap
+        # rather than shifting the whole curve back to epoch 1
+        curves["val"] = (np.asarray(hist["val_epoch"], dtype=float), val)
     if ax is None:
         _, ax = plt.subplots(figsize=(7.5, 3.6))
-    for label, curve in curves.items():
-        ax.plot(np.arange(1, len(curve) + 1), curve, label=f"{label} NLL (total)")
+    for label, (x, curve) in curves.items():
+        ax.plot(x, curve, label=f"{label} NLL (total)")
     # zoom past the initial drop: the top is the curves' level after 10 % of the epochs
-    lo = min(c.min() for c in curves.values())
-    hi = max(c[len(c) // 10] for c in curves.values())
+    lo = min(c.min() for _, c in curves.values())
+    hi = max(c[len(c) // 10] for _, c in curves.values())
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
     frozen = getattr(frozen, "frozen", frozen)

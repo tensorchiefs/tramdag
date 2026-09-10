@@ -131,6 +131,8 @@ class EarlyStopping(Callback):
         self.best_nll = math.inf
         self.best_epoch = 0
         self._state = None
+        self._epochs = 0
+        self._finite = 0
 
     def on_fit_begin(self, flow, optimizer) -> None:
         """Start fresh — neither patience nor the snapshot carries over."""
@@ -139,6 +141,8 @@ class EarlyStopping(Callback):
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Snapshot on improvement; ``True`` once the best is ``patience`` old."""
         nll = sum(_last_val(flow).values())
+        self._epochs += 1
+        self._finite += math.isfinite(nll)
         if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
             if self.restore_best:
@@ -150,8 +154,28 @@ class EarlyStopping(Callback):
         if not self.restore_best:
             return
         if self._state is None:
-            raise RuntimeError("EarlyStopping has seen no epoch; nothing to restore")
+            raise RuntimeError(self._nothing_to_restore())
         flow.load_state_dict(self._state)
+
+    def _nothing_to_restore(self) -> str:
+        """Say why no epoch was ever snapshotted."""
+        if self._epochs == 0:
+            return (
+                "EarlyStopping saw no epoch, so it has nothing to restore: "
+                "fit() ran zero epochs, or the callback never reached on_epoch_end"
+            )
+        if self._finite == 0:
+            return (
+                f"EarlyStopping saw {self._epochs} epoch(s) and the validation "
+                "NLL was never finite, so it has nothing to restore: the fit "
+                "diverged. Lower learning_rate, or check the validation frame "
+                "for a column the model cannot score"
+            )
+        return (
+            f"EarlyStopping saw {self._epochs} epoch(s), "
+            f"{self._finite} of them finite, but none improved on "
+            f"{self.best_nll:.6g} by min_delta={self.min_delta:g}"
+        )
 
 
 class PerNodePlateau(Callback):

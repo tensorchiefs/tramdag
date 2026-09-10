@@ -37,6 +37,14 @@ class _ReadoutsMixin:
                 f"node {node!r} has no shift term keyed {parent!r}; "
                 f"available: {sorted(nd.shifts)}"
             )
+        if isinstance(self.spec[parent], OrdinalNode):
+            # a domain error (wrong parent kind), not a Python type error
+            raise ValueError(  # noqa: TRY004
+                f"{parent!r} is an ordinal parent, so it enters the term "
+                "one-hot over all its levels and a 1-D grid of level indices "
+                "is not its input. Read its effect with ls_coefficients() "
+                "instead, whose weights are the level contrasts."
+            )
         # copy, like `_tensorize`: torch warns on a non-writable numpy array,
         # which a broadcast or read-only grid is
         x = torch.as_tensor(np.array(grid), dtype=self._dtype).view(-1, 1)

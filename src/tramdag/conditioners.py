@@ -32,10 +32,10 @@ Parent features use the encoding of the original implementation. A continuous
 parent enters raw, in one column. An ordinal parent is one-hot encoded, in
 ``levels`` columns.
 
-:data:`ACTIVATIONS` holds the three activations the reference implementations
+``ACTIVATIONS`` holds the three activations the reference implementations
 use: ``relu`` in the PyTorch reference's default classes, ``sigmoid`` in the
 paper's ``create_param_net``, and ``tanh`` in the paper's ``make_model`` for
-the CAREFL and VACA comparisons. :data:`DEFAULT_ACTIVATION` is ``relu``,
+the CAREFL and VACA comparisons. ``DEFAULT_ACTIVATION`` is ``relu``,
 because the architectures these conditioners copy use it, so the default
 network and the default activation come from one source.
 """
@@ -65,7 +65,7 @@ def _nn(
 
     Hidden layers of the given ``units``, each followed by ``activation``,
     then a bias-free output layer. With ``batch_norm`` a
-    :class:`~torch.nn.BatchNorm1d` sits between each hidden layer and its
+    ``BatchNorm1d`` sits between each hidden layer and its
     activation.
 
     Parameters
@@ -77,11 +77,11 @@ def _nn(
     n_out : int
         Output width.
     activation : str | None, optional
-        Key of :data:`ACTIVATIONS`: ``"relu"`` (the default, and what the
+        Key of ``ACTIVATIONS``: ``"relu"`` (the default, and what the
         PyTorch reference's default classes use), ``"sigmoid"`` (the paper's
         ``create_param_net``) or ``"tanh"`` (the paper's ``make_model``, used
         for its CAREFL/VACA comparisons). ``None`` takes
-        :data:`DEFAULT_ACTIVATION`.
+        ``DEFAULT_ACTIVATION``.
     batch_norm : bool, optional
         Normalize each hidden layer before its activation, by default
         ``False`` — neither reference implementation uses it. It needs more
@@ -99,7 +99,7 @@ def _nn(
     Raises
     ------
     ValueError
-        If ``activation`` is not a key of :data:`ACTIVATIONS`.
+        If ``activation`` is not a key of ``ACTIVATIONS``.
     """
     name = activation or DEFAULT_ACTIVATION
     if name not in ACTIVATIONS:
@@ -168,9 +168,9 @@ class ComplexIntercept(nn.Module):
         docstring). The paper's own nets are wider; a replication should set
         this explicitly.
     activation : str | None, optional
-        Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
     batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
+        Normalize the hidden layers, by default ``False`` — see ``_nn``.
     """
 
     def __init__(
@@ -255,9 +255,9 @@ class ComplexShift(nn.Module):
         docstring). The paper's own nets are narrower; a replication should
         set this explicitly.
     activation : str | None, optional
-        Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
     batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
+        Normalize the hidden layers, by default ``False`` — see ``_nn``.
     """
 
     def __init__(
@@ -297,7 +297,7 @@ class VaryingCoef(nn.Module):
 
     ``b_theta`` is deliberately small: one hidden layer by default. Its
     weights carry an L2 ``penalty`` in the fitting objective (see
-    :meth:`l2`; ``fit`` adds ``penalty * l2()`` on the total-NLL scale).
+    ``l2``; ``fit`` adds ``penalty * l2()`` on the total-NLL scale).
     ``beta0`` is not penalized.
 
     The output layer starts at zero, so ``beta(x)`` equals ``beta0``
@@ -322,16 +322,16 @@ class VaryingCoef(nn.Module):
         at corr ~ 0.99; this term has no counterpart in the reference
         implementations, so the size comes from that measurement.
     activation : str | None, optional
-        Key of :data:`ACTIVATIONS`, by default :data:`DEFAULT_ACTIVATION`.
+        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
     batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see :func:`_nn`.
+        Normalize the hidden layers, by default ``False`` — see ``_nn``.
 
     Notes
     -----
     A constant can move freely between ``beta0`` and ``b_theta``, so the split is
     not identified by the likelihood alone. The penalty resolves it during
     training, because it shrinks ``b_theta`` toward the zero function. After
-    training, :meth:`recenter` re-splits the two exactly: ``b_theta`` then sums
+    training, ``recenter`` re-splits the two exactly: ``b_theta`` then sums
     to zero over the training data, the GAM convention that
     ``intercept_contributions`` also uses. Recentering is a reparameterization
     through the ``center`` buffer and leaves the modelled function unchanged.

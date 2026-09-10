@@ -20,7 +20,7 @@ from .terms import VaryingCoefficientTerm
 
 # %% private classes -------------------------------------------------------------------
 class _ReadoutsMixin:
-    """The stateless read-outs, mixed into :class:`~tramdag.CausalFlowDAG`."""
+    """The stateless read-outs, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""
 
     @torch.no_grad()
     def shift_curve(self, node: str, parent: str, grid) -> np.ndarray:
@@ -128,11 +128,11 @@ class _ReadoutsMixin:
         all of them and subtracting c from the node's intercept leaves the
         likelihood unchanged. Read them as differences — ``w[k] - w[0]`` is
         the level-k-vs-0 log-odds ratio, and the column
-        :meth:`design_matrix` drops with ``drop_first=True``.
+        [`design_matrix`][] drops with ``drop_first=True``.
 
         Only ``LS`` terms have a weight to give. A node's ``CS`` and ``VC``
         shifts are networks, so they are skipped — reading them needs
-        :meth:`varying_coef` or an evaluation of the network itself.
+        [`varying_coef`][] or an evaluation of the network itself.
 
         Returns
         -------
@@ -204,7 +204,7 @@ class _ReadoutsMixin:
         only**: it reads the fitted weights and changes nothing about the
         model or any frozen number (issue #20, Option A). Shift terms
         (``LS``/``CS``) are a separate, already-interpretable slot — see
-        :meth:`ls_coefficients`.
+        [`ls_coefficients`][].
 
         Parameters
         ----------

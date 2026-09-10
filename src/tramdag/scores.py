@@ -21,8 +21,8 @@ with the latent-scale derivative in closed form —
   observed level's shifted cutpoint bounds.
 
 The public entry points are the ``CausalFlowDAG`` methods
-:meth:`~tramdag.CausalFlowDAG.scores` and
-:meth:`~tramdag.CausalFlowDAG.effect_modifier_scan`. Both delegate here.
+[`scores`][] and
+[`effect_modifier_scan`][]. Both delegate here.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ def effect_modifier_scan(
     flow : CausalFlowDAG
         The fitted flow.
     df : pd.DataFrame
-        Observations, as for :func:`node_scores`.
+        Observations, as for [`node_scores`][tramdag.scores.node_scores].
     node : str
         Name of the outcome node.
     t : str

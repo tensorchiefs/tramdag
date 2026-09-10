@@ -80,7 +80,7 @@ def _split_validation(
 def _normalize_callbacks(cbs) -> list[Callback]:
     """Give ``callbacks=`` as a list of ``Callback``s, or fail loudly now.
 
-    A :class:`~tramdag.callbacks.Callback` instance is trusted — the base
+    A [`Callback`][tramdag.callbacks.Callback] instance is trusted — the base
     class defines all three hooks. A bare callable is an ``on_epoch_end``
     hook and must accept ``(flow, epoch, optimizer)``; checked here so a
     wrong entry fails before the first epoch, not after the last one.
@@ -205,7 +205,7 @@ def _fit_epoch(
 
 # %% private classes -------------------------------------------------------------------
 class _FitMixin:
-    """The two fitting paths, mixed into :class:`~tramdag.CausalFlowDAG`."""
+    """The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""
 
     def fit(
         self,
@@ -232,17 +232,19 @@ class _FitMixin:
         continues the training. Everything else — validation monitoring,
         learning-rate schedules, early stopping, best-weight restoration,
         logging — is the caller's, through ``optimizer`` and ``callbacks``;
-        :mod:`tramdag.callbacks` ships the common recipes::
+        [`callbacks`][tramdag.callbacks] ships the common recipes:
 
-            from tramdag.callbacks import EarlyStopping
+        ```python
+        from tramdag.callbacks import EarlyStopping
 
-            flow.fit(
-                train_df,
-                epochs=4000,
-                validation_data=val_df,
-                verbose=50,
-                callbacks=EarlyStopping(patience=200),
-            )
+        flow.fit(
+            train_df,
+            epochs=4000,
+            validation_data=val_df,
+            verbose=50,
+            callbacks=EarlyStopping(patience=200),
+        )
+        ```
 
         Parameters
         ----------
@@ -259,14 +261,14 @@ class _FitMixin:
             Rows per gradient step, by default 512. ``len(train_df)`` is one
             full-batch step per epoch.
         validation_data : pd.DataFrame | None, optional
-            Validation rows, one column per node. When given (or split off),
-            the per-node validation NLL is computed after every epoch and
-            appended to ``flow.history["val"]`` — once, centrally; the
-            shipped callbacks read it there. ``flow.history["lr"]`` gets the
-            optimizer's learning rate after every epoch (``{node: lr}`` with
-            :func:`per_node_adam`'s tagged groups, else a float, or a list
-            for several untagged groups), so a schedule's decisions are on
-            record without a callback of your own.
+            Validation rows, one column per node. When given (or split off), the
+            per-node validation NLL is computed after every epoch and appended to
+            ``flow.history["val"]`` — once, centrally; the shipped callbacks read it
+            there. ``flow.history["lr"]`` gets the optimizer's learning rate after every
+            epoch (``{node: lr}`` with
+            [`per_node_adam`][tramdag.callbacks.per_node_adam]'s tagged groups, else a
+            float, or a list for several untagged groups), so a schedule's decisions are
+            on record without a callback of your own.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
@@ -290,12 +292,12 @@ class _FitMixin:
             ``Adam(lr=learning_rate)``. Build it yourself to attach a
             ``torch.optim.lr_scheduler`` or to continue with its state.
         callbacks : Callback | callable | list | None, optional
-            One entry or a list. A :class:`~tramdag.callbacks.Callback`
+            One entry or a list. A [`Callback`][tramdag.callbacks.Callback]
             hooks all three points of the fit — its docstring is the
             contract (begin/epoch/end timing, the stop rule, the VC
             re-centering order). A bare callable is an ``on_epoch_end``
             hook, ``cb(flow, epoch, optimizer)`` — use it for schedules and
-            coefficient trajectories. :mod:`tramdag.callbacks` ships
+            coefficient trajectories. [`callbacks`][tramdag.callbacks] ships
             ``EarlyStopping`` and ``PerNodePlateau``, all
             reading ``history["val"]``.
 
@@ -404,7 +406,7 @@ class _FitMixin:
 
         This method is valid only when every edge is ``ls``, because each
         node-conditional is then a classical transformation model. Any other
-        model raises. For a ``cs`` or ``ci`` model use :meth:`fit`, where
+        model raises. For a ``cs`` or ``ci`` model use [`fit`][], where
         the minibatch noise also regularizes the NNs.
 
         Parameters
@@ -427,7 +429,7 @@ class _FitMixin:
         dict
             A convergence report: ``converged``, ``n_iter``, ``final_nll``,
             ``grad_norm``, ``seconds``, and the fitted ``coefficients``
-            from :meth:`ls_coefficients`.
+            from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].
 
         Raises
         ------

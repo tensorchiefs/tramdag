@@ -11,7 +11,7 @@ What is left here is the output layout the experiments workflow reads:
 ``results/<name>/`` with ``metrics.json``, ``report.md`` and ``plots/``.
 
 Reading a script's YAML file is here. Checking the section it yields is not.
-:func:`load_variant` parses the file and gives the variant's section.
+``load_variant`` parses the file and gives the variant's section.
 ``paper/tests/test_configs.py`` checks that the script reads every key in it.
 
 Every function takes the calling script's ``__file__``, so paths resolve

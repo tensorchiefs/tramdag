@@ -4,9 +4,13 @@ Runs two fixed workloads for exactly 200 epochs each (constant lr, no early
 stopping — identical work on every machine), on every available device
 (cpu, cuda, mps), and writes one JSON with timings + a machine fingerprint.
 
-- **intro**  (n=5,000):  the 4-node SCM from ``notebooks/intro_tram_dag.py``
-  (mixed continuous + ordinal, ls/cs terms) — measures per-step overhead,
-  the regime of typical tabular fits.
+- **intro**  (n=5,000):  a 4-node SCM, mixed continuous + ordinal with
+  ls/cs terms, written out in ``intro_dgp`` below — measures per-step
+  overhead, the regime of typical tabular fits. The name is historical:
+  it came from a notebook that has since been folded into
+  ``notebooks/demo_tram_dag_colab.py``. Do not retune the equations or
+  the draw order: ``docs/perf/REPORT.md`` pins the resulting NLL across
+  machines as a cross-machine sanity check.
 - **large**  (n=50,000): all-``ci`` flow on the bimodal VACA benchmark, whose
   generator is copied into this file (the wheel ships ``src/tramdag`` only, and
   this script has to run from a bare ``curl``) — measures throughput, the
@@ -215,7 +219,11 @@ def vaca_dgp(n: int, seed: int = 42) -> pd.DataFrame:
 
 
 def intro_dgp(n: int, seed: int = 1) -> pd.DataFrame:
-    """Sample the SCM of notebooks/intro_tram_dag.py, with known truth."""
+    """Sample this benchmark's own 4-node SCM, with known truth.
+
+    Frozen: the committed ``final_val_nll`` in ``docs/perf/REPORT.md`` is
+    what makes two machines comparable, so the equations must not move.
+    """
     rng = np.random.default_rng(seed)
     z = {k: rng.logistic(size=n) for k in "1234"}
     x1 = (z["1"] + 0.4) / 1.2

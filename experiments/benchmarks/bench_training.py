@@ -62,6 +62,15 @@ CONFIGS = {
 
 
 # %% private functions -----------------------------------------------------------------
+def _secs(seconds: float | None, digits: int = 1) -> str:
+    """Format a time-to-target, or ``MISS`` when the target was never reached.
+
+    The distinction is ``None``, not falsiness: a recipe that reaches its
+    target in the first recorded epoch has ``seconds == 0.0``, which is a hit.
+    """
+    return "  MISS " if seconds is None else f"{seconds:6.{digits}f}s"
+
+
 def _parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="1 seed, cpu only")
@@ -123,8 +132,7 @@ def _run_one(workload, ref, label, phases, extra, batch, device, seed):
         "epochs_run": len(nll),
         "final_nll": float(nll[-1]),
     }
-    tt = f"{t_tight:6.1f}s" if t_tight else "  MISS "
-    tp = f"{t_pract:6.1f}s" if t_pract else "  MISS "
+    tt, tp = _secs(t_tight), _secs(t_pract)
     print(
         f"  {label:16s} b={batch!s:5s} {device:3s} "
         f"seed {seed}: practical @ {tp}  tight @ {tt}  "
@@ -155,14 +163,8 @@ def _run_lbfgs_grid(seeds, rows) -> None:
         for warm in CFG["lbfgs"]["warm_epochs"]:
             r = run_lbfgs(seed, warm_epochs=warm)
             rows.append(r)
-            tt = (
-                f"{r['time_to_target_s']:6.2f}s" if r["time_to_target_s"] else "  MISS "
-            )
-            tp = (
-                f"{r['time_to_practical_s']:6.2f}s"
-                if r["time_to_practical_s"]
-                else "  MISS "
-            )
+            tt = _secs(r["time_to_target_s"], 2)
+            tp = _secs(r["time_to_practical_s"], 2)
             print(
                 f"  {r['schedule']:16s} b=full  cpu seed {seed}: "
                 f"practical @ {tp}  tight @ {tt}"

@@ -23,37 +23,64 @@ PKG = "/src/tramdag/"
 SKIP = {"<genexpr>", "<listcomp>", "<dictcomp>", "<setcomp>", "<lambda>"}
 
 
+def _qualname(code) -> str | None:
+    """Name a frame's function as ``module.qualname``, or None if it is foreign.
+
+    Foreign means outside the package, or one of the comprehension frames in
+    ``SKIP`` — neither belongs in a call graph of the package's own edges.
+    """
+    if PKG not in code.co_filename or code.co_name in SKIP:
+        return None
+    return f"{code.co_filename.split(PKG)[1].removesuffix('.py')}.{code.co_qualname}"
+
+
+def _is_edge(caller: str | None, callee: str) -> bool:
+    """Say whether a traced pair belongs in the call graph.
+
+    Three kinds are dropped: an edge whose caller was foreign code, a
+    self-call, and a dunder other than a constructor.
+    """
+    if caller is None or caller == callee:
+        return False
+    leaf = callee.rsplit(".", 1)[-1]
+    return not leaf.startswith("__") or leaf == "__init__"
+
+
+def _profiler(edges: Counter, stack: list):
+    """Give a ``sys.setprofile`` hook that counts package-internal call edges.
+
+    ``stack`` carries one entry per active frame, so a return always pops what
+    a call pushed. A frame outside the package inherits its caller's name,
+    which keeps the depth aligned without inventing an edge.
+    """
+
+    def prof(frame, event, arg):
+        if event == "return":
+            if stack:
+                stack.pop()
+            return
+        if event != "call":
+            return
+        me = _qualname(frame.f_code)
+        if me is None:
+            stack.append(stack[-1] if stack else None)
+            return
+        if stack:
+            edges[(stack[-1], me)] += 1
+        stack.append(me)
+
+    return prof
+
+
 def trace(fn) -> Counter:
     """Record tramdag-internal caller->callee edges of one call."""
     edges: Counter = Counter()
-    stack: list = []
-
-    def prof(frame, event, arg):
-        if event == "call":
-            code = frame.f_code
-            if PKG in code.co_filename and code.co_name not in SKIP:
-                mod = code.co_filename.split(PKG)[1].removesuffix(".py")
-                me = f"{mod}.{code.co_qualname}"
-                if stack:
-                    edges[(stack[-1], me)] += 1
-                stack.append(me)
-            else:
-                stack.append(stack[-1] if stack else None)
-        elif event == "return" and stack:
-            stack.pop()
-
-    sys.setprofile(prof)
+    sys.setprofile(_profiler(edges, []))
     try:
         fn()
     finally:
         sys.setprofile(None)
-    keep = Counter()
-    for (a, b), n in edges.items():
-        leaf = b.rsplit(".", 1)[-1]
-        if a is None or a == b or (leaf.startswith("__") and leaf != "__init__"):
-            continue
-        keep[(a, b)] = n
-    return keep
+    return Counter({pair: n for pair, n in edges.items() if _is_edge(*pair)})
 
 
 def flowchart(edges: Counter, drop=()) -> str:
@@ -135,11 +162,13 @@ def main() -> None:
     section = f"""{marker}
 ## Generated views
 
-Regenerate with ``uv run python tools/gen_diagrams.py`` — the package and
-class UML come from pyreverse (classes: names and inheritance only), the
-call graphs from a profile trace of one flow construction and one
-three-epoch ``fit`` on a 3-node SI/LS/CS/VC spec (tramdag-internal edges
-only; ``3x`` = once per node).
+To regenerate this section, run ``uv run python tools/gen_diagrams.py``.
+
+The package UML and the class UML come from pyreverse. The class diagram
+carries names and inheritance only. The call graphs come from a profile trace
+of one flow construction and one three-epoch ``fit`` on a 3-node SI/LS/CS/VC
+spec. The graphs keep tramdag-internal edges only, and ``3x`` means once per
+node.
 
 ### Package UML (pyreverse)
 

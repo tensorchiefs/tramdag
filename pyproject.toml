@@ -148,8 +148,6 @@ pythonpath = ["experiments"]
 testpaths = ["tests", "experiments"]
 
 [tool.ruff]
-# .claude/ is agent tooling, not package code
-exclude = [".claude"]
 indent-width = 4
 line-length = 88
 target-version = "py310"
@@ -199,14 +197,17 @@ ignore = [
 max-complexity = 12
 
 [tool.ruff.lint.per-file-ignores]
+# Notebook prose lives in `# %% [markdown]` cells, where a line is a
+# paragraph: E501 would force hard wraps into rendered markdown. Their
+# docstrings are narrative, so the numpydoc summary rules do not apply.
+# The glob must match at any depth: docs/notebooks/ holds tracked symlinks to
+# these same files, and ruff follows them, so a bare `notebooks/*` leaves the
+# symlinked paths unignored and `ruff check .` reports them.
+"**/notebooks/*" = ["D100", "D103", "D205", "D401", "E501"]
 # D103: scripts and tests document themselves in prose and in tests/README.md.
 # A docstring per function adds noise, not clarity. (Measured 2026-08-27: these
 # are the only rules the directories actually raise.)
 "experiments/*" = ["D103"]
-# Notebook prose lives in `# %% [markdown]` cells, where a line is a
-# paragraph: E501 would force hard wraps into rendered markdown. Their
-# docstrings are narrative, so the numpydoc summary rules do not apply.
-"notebooks/*" = ["D100", "D103", "D205", "D401", "E501"]
 # Test docstrings state what a test guarantees, in prose. They are not API
 # documentation, and tests/ is the measurement -- reformatting it is churn.
 "tests/*" = ["D103", "D205", "D401"]

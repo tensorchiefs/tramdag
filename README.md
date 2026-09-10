@@ -266,13 +266,15 @@ experiments/            research code, one directory per area, each self-contain
                         paper/misc: <name>.py + <name>.yaml, data/,
                         ground_truth/, tests/, results/ (benchmarks reads the
                         other areas' data and pins no ground truth)
-notebooks/              five executed examples: the Colab introduction and
-                        demo, training strategies, additive-vs-joint
+notebooks/              five executed examples: the combined Colab
+                        introduction and demo, training strategies,
+                        additive-vs-joint
                         intercepts, varying coefficients, classical fitting
 docs/                   model.md and notation.md (what the model is),
                         interpretation.md (reading a fitted one), fitting.md,
                         training-speed.md, paper-replication.md,
                         varying-coefficients.md, scores.md, code-map.md,
+                        zuko-upstream.md,
                         architecture.md + adr/ (the 1.0 design and its
                         refusals)
 ```

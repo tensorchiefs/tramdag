@@ -72,10 +72,13 @@ committed notebooks are paired to `py:percent` only).
 MPLBACKEND=Agg uv run python notebooks/training_strategies.py
 ```
 
-**Regenerate the tracked Colab demo ipynb** after editing its `.py`:
+**Regenerate the tracked Colab demo ipynb** after editing its `.py`. Use
+`--update`, which keeps the existing cell identifiers. Without it, jupytext
+draws fresh random identifiers and the diff shows every cell as changed even
+when no content moved.
 
 ```bash
-uvx jupytext --to ipynb notebooks/demo_tram_dag_colab.py
+uvx jupytext --update --to ipynb notebooks/demo_tram_dag_colab.py
 ```
 
 (A fresh conversion contains no outputs, which is exactly the committed state.)

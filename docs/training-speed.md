@@ -42,7 +42,7 @@ and the stroke run in this benchmark uses 1e-5.
 This behaviour is valid, because the per-node losses have independent
 gradients. It lets the fit delete whole epochs, and not only shorten them.
 
-The third recipe in the table below is a global plateau rule, which is one
+A third recipe is a global plateau rule, which is one
 shared rate rather than one rate per node. That is torch's
 `ReduceLROnPlateau` on the summed validation NLL, and it is the rule the paper
 reference uses. `experiments/paper/helpers.py::fit_paper` drives it.
@@ -158,9 +158,12 @@ decade. This is why the two-phase recipe existed.
 
 ## Recommendation
 
-The everyday recipe is the global-plateau callback in
-[fitting.md](fitting.md#training-strategies), with a generous `epochs` ceiling.
-The per-node self-stopping variant is `tramdag.callbacks.PerNodePlateau`.
+The everyday recipe is a plateau callback with a generous `epochs` ceiling.
+The shipped per-node variant is `tramdag.callbacks.PerNodePlateau`. For one
+shared rate, carry torch's `ReduceLROnPlateau` in a `Callback` of your own.
+[fitting.md](fitting.md#training-strategies) lists both, and
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py) runs
+each of them.
 
 One finding became a package default. `epochs` has no default, because Finding
 6 shows that a fixed budget cannot be right for every workload. Every in-repo

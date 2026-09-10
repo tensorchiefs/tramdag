@@ -203,7 +203,7 @@ def _fit_epoch(
     return acc
 
 
-# %% public classes --------------------------------------------------------------------
+# %% private classes -------------------------------------------------------------------
 class _FitMixin:
     """The two fitting paths, mixed into :class:`~tramdag.CausalFlowDAG`."""
 

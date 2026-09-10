@@ -16,7 +16,7 @@ import math
 import torch
 
 
-# %% private functions -------------------------------------------------------------
+# %% private functions -----------------------------------------------------------------
 def _last_val(flow) -> dict[str, float]:
     """Give the current epoch's per-node validation NLL, or fail loudly.
 

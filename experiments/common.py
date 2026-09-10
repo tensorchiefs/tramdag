@@ -33,7 +33,7 @@ from pathlib import Path
 import yaml
 
 
-# %% private functions------------------------------------------------------------------
+# %% private functions -----------------------------------------------------------------
 def _variants(script: str) -> dict:
     """Parse the script's sibling YAML file and give its ``variants`` mapping.
 
@@ -44,6 +44,20 @@ def _variants(script: str) -> dict:
     return yaml.safe_load(Path(script).resolve().with_suffix(".yaml").read_text())[
         "variants"
     ]
+
+
+def _report_row(name: str, value, truths: dict) -> str:
+    """One metric row; with truths, a fitted-vs-true row where one exists."""
+
+    def fmt(v):
+        return f"{v:+.4f}" if isinstance(v, float) else f"{v}"
+
+    if not truths:
+        return f"| `{name}` | {fmt(value)} |"
+    if name not in truths:
+        return f"| `{name}` | {fmt(value)} |  |  |"
+    err = abs(float(value) - float(truths[name]))
+    return f"| `{name}` | {fmt(value)} | {fmt(truths[name])} | {err:.4f} |"
 
 
 # %% public functions ------------------------------------------------------------------
@@ -102,20 +116,6 @@ def make_output_dir(script: str, name: str) -> Path:
 def save_metrics(out: Path, metrics: dict) -> None:
     """Write the numbers the ground-truth check reads."""
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2, default=float))
-
-
-def _report_row(name: str, value, truths: dict) -> str:
-    """One metric row; with truths, a fitted-vs-true row where one exists."""
-
-    def fmt(v):
-        return f"{v:+.4f}" if isinstance(v, float) else f"{v}"
-
-    if not truths:
-        return f"| `{name}` | {fmt(value)} |"
-    if name not in truths:
-        return f"| `{name}` | {fmt(value)} |  |  |"
-    err = abs(float(value) - float(truths[name]))
-    return f"| `{name}` | {fmt(value)} | {fmt(truths[name])} | {err:.4f} |"
 
 
 def write_report(

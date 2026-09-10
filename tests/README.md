@@ -11,7 +11,7 @@ uv run pytest tests/ -q -m "not slow"   # fast subset (~2-3 min) — unit + cont
 uv run pytest tests/test_flow.py -q     # one file
 ```
 
-- **`slow` marker** — five long fits carry `@pytest.mark.slow`. The option
+- **`slow` marker** — the long fits carry `@pytest.mark.slow`. The option
   `-m "not slow"` skips these fits. The marker is not "everything that trains a
   flow". A feature's acceptance number (the `VC` recovery bar, the centering
   bias reduction) trains one flow deliberately in the fast subset. Every run
@@ -31,7 +31,7 @@ uv run pytest tests/test_flow.py -q     # one file
 
 ## Testing principles
 
-Five kinds of test, in rough order of how much trust they carry:
+Four kinds of test, in rough order of how much trust they carry:
 
 1. **Known mathematical identities** — properties that must hold by the math,
    independent of any reference implementation:

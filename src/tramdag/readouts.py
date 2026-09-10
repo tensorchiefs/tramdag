@@ -18,7 +18,7 @@ from .spec import OrdinalNode
 from .terms import VaryingCoefficientTerm
 
 
-# %% public classes --------------------------------------------------------------------
+# %% private classes -------------------------------------------------------------------
 class _ReadoutsMixin:
     """The stateless read-outs, mixed into :class:`~tramdag.CausalFlowDAG`."""
 

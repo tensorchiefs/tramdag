@@ -167,6 +167,7 @@ def _check_center(metric: str, measured: float, expected: dict) -> list:
     return out
 
 
+# %% public functions ------------------------------------------------------------------
 def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list[str]]:
     """Compare one result directory against its ground truth.
 

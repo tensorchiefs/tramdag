@@ -48,6 +48,20 @@ if TYPE_CHECKING:
     from .spec import NodeSpec
 
 
+# %% private functions -----------------------------------------------------------------
+def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
+    """Register the term's input transform over its continuous parents.
+
+    Ordinal one-hots pass through untransformed, so a term whose network
+    parents are all ordinal carries none.
+    """
+    if term.input_transform is None:
+        return
+    cps = tuple(p for p in parents if isinstance(spec[p], ContinuousNode))
+    if cps:
+        m.add_module("_input_transform", _InputTransform(term.input_transform, cps))
+
+
 # %% public functions ------------------------------------------------------------------
 def module_for(term: Term) -> type[TermDef]:
     """Give the module class that builds ``term``.
@@ -115,20 +129,6 @@ class _InputTransform(nn.Module):
         if self.kind == "standardize":
             return (x - self.mean[i]) / self.std[i]
         return self.fn(x, self.train_cols[:, i : i + 1])
-
-
-# %% private functions -----------------------------------------------------------------
-def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
-    """Register the term's input transform over its continuous parents.
-
-    Ordinal one-hots pass through untransformed, so a term whose network
-    parents are all ordinal carries none.
-    """
-    if term.input_transform is None:
-        return
-    cps = tuple(p for p in parents if isinstance(spec[p], ContinuousNode))
-    if cps:
-        m.add_module("_input_transform", _InputTransform(term.input_transform, cps))
 
 
 # %% public classes --------------------------------------------------------------------

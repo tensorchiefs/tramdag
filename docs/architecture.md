@@ -190,7 +190,9 @@ classDiagram
   nodes --> transforms
   plots --> spec
   readouts --> conditioners
+  readouts --> spec
   readouts --> terms
+  scores --> spec
   scores --> transforms
   terms --> conditioners
   terms --> spec

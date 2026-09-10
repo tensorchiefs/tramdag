@@ -91,6 +91,11 @@ def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
     Read off the term's adjacency ``cells``: the tag is the term name (``CI``
     for an intercept edge, ``VCm`` for a VC modifier), with the parent group
     appended for a multi-parent net — that suffix marks a ``joint`` edge.
+
+    Do not replace the suffix test with the term's parent count. Arity is not
+    jointness: a ``VC`` term has a treatment plus its modifiers, and it is not
+    one joint network over them, so ``VaryingCoefficient.cells`` deliberately
+    appends no suffix. ``cells`` is the per-term authority here.
     """
     edges = []
     for parent, tag in term.cells():

@@ -14,6 +14,7 @@ import pandas as pd
 import torch
 
 from .conditioners import LinearShift
+from .spec import OrdinalNode
 from .terms import VaryingCoefficientTerm
 
 
@@ -36,7 +37,7 @@ class _ReadoutsMixin:
                 f"node {node!r} has no shift term keyed {parent!r}; "
                 f"available: {sorted(nd.shifts)}"
             )
-        x = torch.as_tensor(np.asarray(grid), dtype=torch.float32).view(-1, 1)
+        x = torch.as_tensor(np.asarray(grid), dtype=self._dtype).view(-1, 1)
         # through the term's own evaluation, so Fn and custom terms work too
         curve = nd.shifts[parent].shift_value(nd, {parent: x})
         return curve.cpu().numpy().ravel()
@@ -257,7 +258,7 @@ class _ReadoutsMixin:
             raise KeyError(f"df is missing intercept-parent column(s): {missing}")
 
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
-        nets = list(getattr(nd.intercept, "nets", None) or [nd.intercept])
+        nets = nd.intercept.net_groups
 
         contributions: dict[str, np.ndarray] = {}
         parents: dict[str, tuple] = {}
@@ -311,7 +312,7 @@ class _ReadoutsMixin:
         cols: dict[str, np.ndarray] = {}
         for p in nd.parents:
             arr = feats[p].cpu().numpy()
-            if arr.shape[1] == 1:  # continuous parent: raw
+            if not isinstance(self.spec[p], OrdinalNode):  # continuous: raw
                 cols[p] = arr[:, 0]
             else:
                 for k in range(1 if drop_first else 0, arr.shape[1]):

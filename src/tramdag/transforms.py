@@ -38,6 +38,7 @@ __all__ = [
     "StandardLogistic",
     "make_univariate_transform",
     "ordinal_abduct",
+    "ordinal_bounds",
     "ordinal_cutpoints",
     "ordinal_log_prob",
     "ordinal_marginal_init_theta",
@@ -70,16 +71,6 @@ _U_EPS = 1e-7
 
 
 # %% private functions -----------------------------------------------------------------
-def ordinal_bounds(
-    theta_tilde: Tensor, shift: Tensor, y: Tensor
-) -> tuple[Tensor, Tensor]:
-    """Give the shifted cutpoint interval of each observed level."""
-    cut = ordinal_cutpoints(theta_tilde) - shift.view(-1, 1)
-    idx = torch.arange(theta_tilde.shape[0], device=theta_tilde.device)
-    y = y.long()
-    return cut[idx, y], cut[idx, y + 1]
-
-
 def _log1mexp(x: Tensor) -> Tensor:
     """log(1 - exp(x)) for x <= 0, numerically stable (Maechler 2012)."""
     branch = x > -math.log(2.0)
@@ -92,6 +83,20 @@ def _log1mexp(x: Tensor) -> Tensor:
 
 
 # %% public functions ------------------------------------------------------------------
+def ordinal_bounds(
+    theta_tilde: Tensor, shift: Tensor, y: Tensor
+) -> tuple[Tensor, Tensor]:
+    """Give the shifted cutpoint interval of each observed level.
+
+    ``scores.py`` reads these bounds to form the latent-scale derivative, and
+    the docs list the function as public.
+    """
+    cut = ordinal_cutpoints(theta_tilde) - shift.view(-1, 1)
+    idx = torch.arange(theta_tilde.shape[0], device=theta_tilde.device)
+    y = y.long()
+    return cut[idx, y], cut[idx, y + 1]
+
+
 def make_univariate_transform(name, **kwargs) -> _ScaledUT:
     """Build a scaled univariate transform by name — or from a class.
 

@@ -268,15 +268,13 @@ experiments/            research code, one directory per area, each self-contain
                         other areas' data and pins no ground truth)
 notebooks/              five executed examples: the combined Colab
                         introduction and demo, training strategies,
-                        additive-vs-joint
-                        intercepts, varying coefficients, classical fitting
+                        additive-vs-joint intercepts, varying coefficients,
+                        classical fitting
 docs/                   model.md and notation.md (what the model is),
                         interpretation.md (reading a fitted one), fitting.md,
-                        training-speed.md, paper-replication.md,
-                        varying-coefficients.md, scores.md, code-map.md,
-                        zuko-upstream.md,
-                        architecture.md + adr/ (the 1.0 design and its
-                        refusals)
+                        training-speed.md, paper-replication.md, scores.md,
+                        varying-coefficients.md, code-map.md, zuko-upstream.md,
+                        architecture.md + adr/ (the 1.0 design and its refusals)
 ```
 
 [`CLAUDE.md`](CLAUDE.md) documents these implementation conventions, and tests

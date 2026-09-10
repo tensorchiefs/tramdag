@@ -119,6 +119,10 @@ acceptance bars.
 | [`test_marginal_init.py`](test_marginal_init.py) | calibrated marginal initialization — pure-init property |
 | [`test_ordinal_encoding.py`](test_ordinal_encoding.py) | the one-hot parent encoding — level-index validation at every entry point, and the one flat direction it costs per ordinal `LS` parent |
 | [`test_api_papercuts.py`](test_api_papercuts.py) | error messages, `save`/`load` meta, small API contracts |
+| [`test_custom_terms.py`](test_custom_terms.py) | the two-class term contract: `Fn`, a `Term` plus `ShiftTerm` subclass, a custom `regularizer`, and the refusals for an unknown or orphan term |
+| [`test_flow_columns.py`](test_flow_columns.py) | the frame a query needs: a missing column is named before any tensor operation sees it |
+| [`test_plots.py`](test_plots.py) | `plot_dag`, `plot_marginals` and `plot_training` draw every node, edge and freeze mark |
+| [`test_statedict_stability.py`](test_statedict_stability.py) | the bit-exact tripwire: four seeded flows compared against a recorded baseline, so a reordered construction fails here and not in a replication |
 
 ## Adding tests
 

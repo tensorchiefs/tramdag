@@ -11,6 +11,7 @@ Usage:  uv run python tools/gen_diagrams.py
 Rewrites everything between the AUTOGEN markers in docs/architecture.md.
 """
 
+# %% imports ---------------------------------------------------------------------------
 import re
 import subprocess
 import sys
@@ -18,11 +19,13 @@ import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
 
+# %% global variables ------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parents[1]
 PKG = "/src/tramdag/"
 SKIP = {"<genexpr>", "<listcomp>", "<dictcomp>", "<setcomp>", "<lambda>"}
 
 
+# %% private functions -----------------------------------------------------------------
 def _qualname(code) -> str | None:
     """Name a frame's function as ``module.qualname``, or None if it is foreign.
 
@@ -72,6 +75,7 @@ def _profiler(edges: Counter, stack: list):
     return prof
 
 
+# %% public functions ------------------------------------------------------------------
 def trace(fn) -> Counter:
     """Record tramdag-internal caller->callee edges of one call."""
     edges: Counter = Counter()
@@ -212,5 +216,6 @@ from ``ShiftTerm``/``InterceptTerm``.
     )
 
 
+# %% main ------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()

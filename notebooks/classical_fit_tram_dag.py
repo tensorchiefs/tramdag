@@ -523,7 +523,8 @@ R_COLR = {  # Colr(..., order = 21) on vaca.csv; R 4.2.3 / tram 1.0.4
 
 # %%
 df = pd.read_csv(NB_DATA / "vaca.csv")
-# stated rather than left to the default, for the reason the cell above gives
+# stated rather than left to the default, for the reason the markdown cell
+# above the R block gives
 N_COEFFS = 20  # -> Bernstein degree 21, which is tram's `order = 21`
 
 spec_vaca = {

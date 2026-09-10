@@ -37,7 +37,7 @@ measures against three inline DGPs in `tests/conftest.py`.
 
 ```bash
 uv sync                              # install (uv.lock pinned: zuko, torch, ...)
-uv run pytest tests/ -q              # full suite; -m "not slow" is ~1 min
+uv run pytest tests/ -q              # full suite; add -m "not slow" for the fast subset
 cd experiments                       # experiments run as modules, per area
 uv run python -m paper.triangle atan-cs      # one replication (config in the YAML)
 uv run python -m misc.validate_ls classical  # flow == statsmodels == R polr
@@ -72,8 +72,8 @@ perf_machine.py is exempt, because it is a single curl-and-run file.
 
 `experiments/` splits into `paper/`, `benchmarks/` and `misc/`.
 `experiments/check.py` is the shared ground-truth comparison, and
-`experiments/tests/` holds its test. `paper` and `misc` each own four
-directories:
+`experiments/tests/` holds its test. `paper` and `misc` each own these
+directories, and `paper` also owns `simulations/`:
 
 - `data/`,
 - `ground_truth/`,
@@ -224,7 +224,7 @@ docs/architecture.md carries the module map and the term-contract diagram.
 - There is no `utils.py` any more. `machine_info` moved to
   `experiments/benchmarks/perf_machine.py`, next to its only caller, so the
   package holds modelling code only.
-- `flow.py` — the `CausalFlowDAG` class. Its methods are:
+- `flow.py` — the `CausalFlowDAG` class. Its main methods are, with the full list in docs/code-map.md:
 
   - `fit`.
   - `fit_classical` — float64 full-batch L-BFGS, the exact MLE for all-`ls`
@@ -326,8 +326,8 @@ Framework tests (inline DGPs, `tests/conftest.py`):
   measurement is 5–10×.
 
 Experiments (`experiments/`, seed 42 unless stated, arXiv:2503.16206). The
-paper states only three training numbers: n=40000, 500 epochs, and Bernstein
-order 20. The Adam lr 1e-3 is the default of the R code's `optimizer_adam()`.
+paper states only four training numbers: n=40000, 500 epochs, Adam, and
+Bernstein order 20. The Adam lr 1e-3 is the default of the R code's `optimizer_adam()`.
 Each config follows the paper's own R code 1:1 where the framework allows.
 
 **The triangle scripts.** One continuous Adam run with a separate validation

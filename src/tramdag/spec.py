@@ -70,9 +70,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 # %% global variables ------------------------------------------------------------------
-# bernstein, because zuko's spline extrapolates with a fixed slope outside
-# [-B, B] while bernstein follows its own boundary derivative -- see the
-# `transform` parameter of I.
+# why bernstein and not spline: the `transform` parameter of Intercept
 DEFAULT_TRANSFORM = "bernstein"
 INPUT_TRANSFORMS = ("minmax", "standardize")
 
@@ -201,6 +199,28 @@ def _normalize_terms(value):
             "I(...) + <shifts>, not the other way around."
         )
     return items
+
+
+def _default_drift(cls) -> list[str]:
+    """Name the options whose ``__init__`` default disagrees with the field.
+
+    A term that spells its options out in ``__init__`` states each default
+    twice. :meth:`Term.options` serializes exactly the fields that differ
+    from ``f.default``, so a disagreement silently changes what a checkpoint
+    carries — and a round-trip test cannot catch it, because both sides of
+    the round trip carry the same drift.
+    """
+    own_init = cls.__dict__.get("__init__")
+    if own_init is None:
+        return []
+    params = inspect.signature(own_init).parameters
+    return [
+        f.name
+        for f in dataclasses.fields(cls)
+        if (p := params.get(f.name)) is not None
+        and p.default is not inspect.Parameter.empty
+        and p.default != f.default
+    ]
 
 
 def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
@@ -500,6 +520,13 @@ class Term:
             raise TypeError(
                 f"{cls.__name__}: option(s) {missing} need a plain default value."
             )
+        drifted = _default_drift(cls)
+        if drifted:
+            raise TypeError(
+                f"{cls.__name__}: option(s) {drifted} carry a different default "
+                "in __init__ than on the field. The two must agree, or the "
+                "serialized form drifts away from what the caller wrote."
+            )
 
     def __init__(self, *parents: str, **options):
         names = self.option_names()
@@ -613,19 +640,21 @@ class Intercept(Term):
         Parent names. Several parents form one **joint** network (an
         interaction) unless ``allow_interaction=False``.
     transform : str | type | None, optional
-        Class of a continuous node's monotone transform: ``"bernstein"``
-        (default), ``"spline"``, ``"affine"``, or a ``_ScaledUT`` subclass.
-        Bernstein is the default because zuko's spline extrapolates outside
+        Class of a continuous node's monotone transform: ``"bernstein"``,
+        ``"spline"``, ``"affine"``, or a ``_ScaledUT`` subclass. ``None``,
+        the default, means the node picks ``"bernstein"``. The name stays
+        ``None`` here rather than becoming the literal, because ``None`` is
+        also how an ordinal node tells that no transform was asked for, and
+        an ordinal intercept is the cutpoint vector, which has none to pick.
+        Bernstein is the choice because zuko's spline extrapolates outside
         ``[-B, B]`` with a *fixed* slope, independent of the fitted
         parameters, so the ~10% of data beyond the 5%/95% pre-scaling range
         is misweighted whenever the true tail slope differs; Bernstein
-        extrapolates linearly along its own boundary derivative. An ordinal
-        node accepts none, because its intercept is the cutpoint vector.
-    **transform_kwargs
-        Any other keyword goes straight to the transform class, for
-        example ``I(transform="spline", bins=16)`` or ``I(n_coeffs=40)``. A
-        serialized term passes them as one ``transform_kwargs`` mapping; a
-        keyword written out wins over the same key inside that mapping.
+        extrapolates linearly along its own boundary derivative.
+    transform_kwargs : Mapping | None, optional
+        The transform's keyword arguments as one mapping. This is the
+        serialized form, which is how a spec YAML and a checkpoint carry
+        them; write them out instead when calling by hand.
     allow_interaction : bool, optional
         ``False`` makes a multi-parent term **additive**: one network per
         parent, their parameter vectors summed in coefficient space. A node
@@ -635,18 +664,26 @@ class Intercept(Term):
         do.
     units : list[int] | tuple[int, ...] | None, optional
         Hidden layers of the term's network, for example ``units=[16]``.
-        Default ``[8, 8]``, from the PyTorch reference — see
-        :mod:`tramdag.conditioners`, which also explains why a paper
+        ``None``, the default, takes the conditioner's own ``(8, 8)`` — the
+        PyTorch reference's widths, which live in
+        :mod:`tramdag.conditioners` next to their provenance, so this class
+        does not restate them. That module also explains why a paper
         replication sets this explicitly.
     activation : str | None, optional
-        Activation of the network's hidden layers, by default the
-        conditioners' ``relu``.
+        Activation of the network's hidden layers. ``None``, the default,
+        takes the conditioners' ``relu``, for the same reason.
     batch_norm : bool, optional
         Batch-normalize the network's hidden layers, by default False.
     input_transform : str | callable | None, optional
         ``"minmax"``, ``"standardize"`` or a callable ``fn(x, train)``
         applied per continuous parent column (``train`` is that column's
         raw training data, frozen at ``calibrate``). Parents only.
+        ``None``, the default, applies no transform.
+    **kwargs
+        Any keyword that is not an option above goes straight to the
+        transform class, for example ``I(transform="spline", bins=16)`` or
+        ``I(n_coeffs=40)``. A keyword written out here wins over the same
+        key inside ``transform_kwargs``.
 
     Raises
     ------
@@ -667,14 +704,34 @@ class Intercept(Term):
     input_transform: object = None
     allow_interaction: bool = True
 
-    def __init__(self, *parents: str, transform_kwargs=None, **options):
-        known = set(self.option_names())
-        extra = {k: options.pop(k) for k in list(options) if k not in known}
-        kwargs = {**dict(transform_kwargs or ()), **extra}
+    def __init__(
+        self,
+        *parents: str,
+        transform: str | type | None = None,
+        transform_kwargs=None,
+        allow_interaction: bool = True,
+        units: tuple[int, ...] | list[int] | None = None,
+        activation: str | None = None,
+        batch_norm: bool = False,
+        input_transform: object = None,
+        **kwargs,
+    ):
+        # Naming every option makes the pass-through boundary visible: what
+        # binds above is an option of the term, and whatever is left in
+        # `kwargs` goes to the transform class. Python's argument binding does
+        # the split that a set-difference over option_names() used to do.
+        # A written-out keyword wins over the same key inside the serialized
+        # transform_kwargs mapping, which is why it is merged second.
+        merged = {**dict(transform_kwargs or ()), **kwargs}
         super().__init__(
             *parents,
-            transform_kwargs=tuple(sorted(kwargs.items())) or None,
-            **options,
+            transform=transform,
+            transform_kwargs=tuple(sorted(merged.items())) or None,
+            allow_interaction=allow_interaction,
+            units=units,
+            activation=activation,
+            batch_norm=batch_norm,
+            input_transform=input_transform,
         )
 
     def __post_init__(self) -> None:
@@ -742,17 +799,21 @@ class ComplexShift(Term):
     *parents : str
         At least one parent name. Several parents feed one joint network;
         ``CS("a") + CS("b")`` are two additive terms instead.
+
+    Other Parameters
+    ----------------
     units : list[int] | tuple[int, ...] | None, optional
-        Hidden layers, for example ``units=[16]``. Default
-        ``[64, 128, 64]``, from the PyTorch reference — see
-        :mod:`tramdag.conditioners`.
+        Hidden layers, for example ``units=[16]``. ``None``, the default,
+        takes the conditioner's own ``(64, 128, 64)`` — the PyTorch
+        reference's widths, which live in :mod:`tramdag.conditioners` next to
+        their provenance, so this class does not restate them.
     activation : str | None, optional
-        Activation of the hidden layers, by default the conditioners'
-        ``relu``.
+        Activation of the hidden layers. ``None``, the default, takes the
+        conditioners' ``relu``, for the same reason.
     batch_norm : bool, optional
         Batch-normalize the hidden layers, by default False.
     input_transform : str | callable | None, optional
-        As for :class:`I`.
+        As for :class:`I`. ``None``, the default, applies no transform.
 
     Raises
     ------
@@ -803,6 +864,9 @@ class VaryingCoefficient(Term):
     t : str
         The treatment (required keyword). Must be a continuous node or a
         binary (2-level) ordinal node. The term is linear in ``x_t``.
+
+    Other Parameters
+    ----------------
     penalty : float, optional
         L2 weight on the ``b_theta`` weights, by default 1.0. Must be
         >= 0. 1.0 is the value at which ``tests/test_vc_term.py`` recovers
@@ -822,15 +886,17 @@ class VaryingCoefficient(Term):
         Requires a binary ordinal ``t``. ``docs/varying-coefficients.md``
         measures a 5-10x bias reduction from turning it on.
     units : list[int] | tuple[int, ...] | None, optional
-        Hidden layers of ``b_theta``, by default ``[16]`` — see
-        :class:`tramdag.conditioners.VaryingCoef` for why that size.
+        Hidden layers of ``b_theta``. ``None``, the default, takes the
+        conditioner's own ``(16,)``, whose size is justified where it is
+        defined — see :class:`tramdag.conditioners.VaryingCoef`.
     activation : str | None, optional
-        Activation of ``b_theta``'s hidden layers, by default the
-        conditioners' ``relu``.
+        Activation of ``b_theta``'s hidden layers. ``None``, the default,
+        takes the conditioners' ``relu``.
     batch_norm : bool, optional
         Batch-normalize ``b_theta``'s hidden layers, by default False.
     input_transform : str | callable | None, optional
-        As for :class:`I`, over the modifiers.
+        As for :class:`I`, over the modifiers. ``None``, the default,
+        applies no transform.
 
     Raises
     ------
@@ -956,15 +1022,23 @@ class FnShift(Term):
     ----------
     *parents : str
         Parent node names feeding ``fn``.
+
+    Other Parameters
+    ----------------
     fn : callable | torch.nn.Module
-        The shift function (required).
+        The shift function. Required in practice: the declared default of
+        ``None`` is never a usable value, and ``__post_init__`` refuses it.
+        The default exists because ``fn`` has to be a dataclass field, which
+        is what carries the callable into :func:`spec_to_dict` and back out
+        of a checkpoint.
     input_transform : str | callable | None, optional
-        As for :class:`CS`, by default None.
+        As for :class:`CS`. ``None``, the default, applies no transform.
 
     Raises
     ------
     ValueError
-        If no parent is given or ``fn`` is not callable.
+        If no parent is given or ``fn`` is not callable, which includes
+        omitting it.
     """
 
     name = "Fn"

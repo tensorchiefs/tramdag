@@ -235,6 +235,10 @@ class _ReadoutsMixin:
 
         Notes
         -----
+        An additive intercept holds one network per parent group in its
+        ``nets``; a single intercept term, joint or not, is itself the one
+        network. This method reads whichever shape is there.
+
         The contributions live in the transform's **unconstrained**
         parameter space, where the model sums the additive terms before the
         monotonicity constraint. They are exact partial effects on those
@@ -253,8 +257,6 @@ class _ReadoutsMixin:
             raise KeyError(f"df is missing intercept-parent column(s): {missing}")
 
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
-        # one net per group: the additive term holds them in .nets; a single
-        # (possibly joint) I-term is itself the one network.
         nets = list(getattr(nd.intercept, "nets", None) or [nd.intercept])
 
         contributions: dict[str, np.ndarray] = {}

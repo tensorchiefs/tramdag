@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -828,7 +884,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -849,14 +905,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1465,34 +1521,67 @@
 <h1 id="paper-replication-protocol-hyperparameters-and-results-per-experiment">Paper replication — protocol, hyperparameters and results, per experiment<a class="headerlink" href="#paper-replication-protocol-hyperparameters-and-results-per-experiment" title="Permanent link">&para;</a></h1>
 <p>The eight variants under <code>experiments/paper/</code> replicate the TRAM-DAG paper
 (Sick &amp; Dürr, CLeaR 2025, arXiv:2503.16206) against its own R code
-(<code>tensorchiefs/tram-dag</code>). This page lists, for each experiment, the DGP, the
-model, every hyperparameter with its source, what deviates from the paper and
-why, and the numbers: what the paper reports, what the previous protocol of
-this repository measured, and what the current 1:1 protocol measures.</p>
-<p>Measured 2026-08-26 on <code>refactor/lean-fit</code> (seeds: DGP 42, init 7, shuffle 0)
-with the exact reference protocol — global plateau rule and Keras init. On
-2026-09-01 the <em>optimization</em> was re-tuned for CI runtime (fewer epochs, lr
-scaled to match; data, model and init untouched); on <strong>2026-09-02 VACA
-was restored to the reference protocol 1:1</strong> (10000 @ 0.001 + plateau —
-every bound holds, do(x2=0) improves) after a visual pass against paper
-Fig. 5; on <strong>2026-09-03 CAREFL became the reference run 1:1</strong> — trained on
-CAREFL's own committed 2500 rows (<code>data/carefl-cf</code>, sd-standardized units)
-with <code>val = train</code>, 7000 @ 0.001 + plateau, and the min-max Bernstein
-domain (<code>range_q: 0</code>), which put the Fig. 6 curves on the paper's
-(the earlier 3000 @ 0.002 trade-off was an artifact of the fresh-draw
-data; the triangle cuts stay). The
-tuning campaign, with what was tried and what failed, is in
-<a href="#the-2026-09-01-tuning-round">the 2026-09-01 tuning round</a> below. The
-2026-08-25 numbers of <code>feat/followups</code> (per-node plateau, torch init; CI run
-32878435001) are kept in the "R 1:1, torch init" column where they differ.
-"Previous" is the protocol before that branch: a 90/10 split of one draw,
-batch 512, the fit restarted in chunks (<code>fit_in_chunks</code>), and for VACA/CAREFL
-a second "polish" fit at a lower rate — a repository recipe, not the paper's.
-Its numbers come from the ground-truth files of that revision (<code>73f9f39</code>;
-<code>{max}</code> bounds were 2.5× the measurement).</p>
-<p>The paper states four training numbers — n = 40000, 500 epochs, Adam,
-Bernstein order 20 — and shows results as figures. Where it gives no number,
-the "paper" column names the figure and what it shows.</p>
+(<code>tensorchiefs/tram-dag</code>). This page lists these items for each experiment:</p>
+<ul>
+<li>the DGP,</li>
+<li>the model,</li>
+<li>every hyperparameter with its source,</li>
+<li>what deviates from the paper, and why,</li>
+<li>the numbers.</li>
+</ul>
+<p>The numbers come from three sources:</p>
+<ul>
+<li>what the paper reports,</li>
+<li>what the previous protocol of this repository measured,</li>
+<li>what the current 1:1 protocol measures.</li>
+</ul>
+<p>The measurement date is 2026-08-26. The branch is <code>refactor/lean-fit</code>. The
+seeds are DGP 42, init 7 and shuffle 0. The protocol is the exact reference
+protocol, which has two parts:</p>
+<ul>
+<li>the global plateau rule,</li>
+<li>the Keras init.</li>
+</ul>
+<p>Three changes followed that measurement. On 2026-09-01 the repository
+re-tuned the <em>optimization</em> for CI runtime. That round used fewer epochs and
+scaled the lr to match. It left the data, the model and the init untouched.</p>
+<p>On <strong>2026-09-02 VACA went back to the reference protocol 1:1</strong> (10000 @ 0.001
++ plateau). The change followed a visual pass against paper Fig. 5. Every
+bound holds under it. The do(x2=0) error improves.</p>
+<p>On <strong>2026-09-03 CAREFL became the reference run 1:1</strong>. It now trains on
+CAREFL's own committed 2500 rows (<code>data/carefl-cf</code>, sd-standardized units).
+It uses these settings:</p>
+<ul>
+<li><code>val = train</code>,</li>
+<li>7000 @ 0.001 + plateau,</li>
+<li>the min-max Bernstein domain (<code>range_q: 0</code>).</li>
+</ul>
+<p>These settings put the Fig. 6 curves on the paper's. The earlier 3000 @ 0.002
+trade-off was an artifact of the fresh-draw data. The triangle cuts stay.</p>
+<p><a href="#the-2026-09-01-tuning-round">The 2026-09-01 tuning round</a> below holds the
+tuning campaign, with what the round tried and what failed.</p>
+<p>The "R 1:1, torch init" column keeps the 2026-08-25 numbers of
+<code>feat/followups</code> where they differ. That branch used the per-node plateau and
+the torch init. Its CI run is 32878435001.</p>
+<p>"Previous" is the protocol before that branch. It has these parts:</p>
+<ul>
+<li>a 90/10 split of one draw,</li>
+<li>batch 512,</li>
+<li>the fit restarted in chunks (<code>fit_in_chunks</code>),</li>
+<li>for VACA/CAREFL, a second "polish" fit at a lower rate.</li>
+</ul>
+<p>That protocol is a repository recipe, not the paper's. Its numbers come from
+the ground-truth files of that revision (<code>73f9f39</code>). The <code>{max}</code> bounds were
+2.5× the measurement.</p>
+<p>The paper states four training numbers:</p>
+<ul>
+<li>n = 40000,</li>
+<li>500 epochs,</li>
+<li>Adam,</li>
+<li>Bernstein order 20.</li>
+</ul>
+<p>The paper shows its results as figures. If the paper gives no number, then
+the "paper" column names the figure and what the figure shows.</p>
 <h2 id="what-is-common-to-all-eight">What is common to all eight<a class="headerlink" href="#what-is-common-to-all-eight" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1545,25 +1634,39 @@ the "paper" column names the figure and what it shows.</p>
 </tr>
 </tbody>
 </table>
-<p>D1 (VACA only since 2026-09-03) and D3 remain; both were measured (below).
-The per-node plateau approximation of 2026-08-25 (D4) is gone with the lean
-<code>fit</code>. CAREFL's two former repo choices — a fresh 2500-row draw with a
-separate validation draw, in raw units — are gone the same day: the
-benchmark now trains on CAREFL's own committed rows with <code>val = train</code>,
-in the reference's sd-standardized units, exactly as <code>carefl_fig5.r</code> does.</p>
+<p>D1 (VACA only since 2026-09-03) and D3 remain. The sections below measure
+both. The per-node plateau approximation of 2026-08-25 (D4) is gone with the
+lean <code>fit</code>.</p>
+<p>CAREFL had two former repository choices: a fresh 2500-row draw with a
+separate validation draw, in raw units. Both are gone the same day. The
+benchmark now trains on CAREFL's own committed rows with <code>val = train</code>, in
+the reference's sd-standardized units. It does exactly what <code>carefl_fig5.r</code>
+does.</p>
 <h2 id="triangle-continuous-trianglepy-paper-sec-61-app-c3">Triangle, continuous (<code>triangle.py</code>) — paper Sec. 6.1, App. C.3<a class="headerlink" href="#triangle-continuous-trianglepy-paper-sec-61-app-c3" title="Permanent link">&para;</a></h2>
-<p><strong>DGP</strong> (<code>summerof24/triangle_structured_continous.R</code>): x1 ~ 0.5 N(0.25, 0.1²) + 0.5 N(0.73, 0.05²);
-h(x2 | x1) = 5 x2 + 2 x1 = u2; h(x3 | x1, x2) = 0.63 x3 − 0.2 x1 − f(x2) = u3, u ~ logistic.
-f: <code>linear</code> −0.3 x, <code>atan</code> 0.75 atan(5 (x + 0.12)), <code>sin</code> 2 sin(3x) + x.
-True weights in the flow's convention: β12 = +2, β13 = −0.2, β23 = +0.3 (linear only).</p>
-<p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: SI + LS(x1)</code>, <code>x3: SI + LS(x1) + {LS(x2) | CS(x2)}</code>, Bernstein.
-CS net = reference <code>hidden_features_CS = c(2, 25, 25, 2)</code>, sigmoid (the ReLU line
-in <code>create_param_net</code> is commented out). <strong>Corrected 2026-09-02</strong>: the vector
-reads as in/out dims around the hidden stack <strong>(25, 25)</strong> — the earlier
-literal <code>[2, 25, 25, 2]</code> reading put a 2-sigmoid bottleneck on the input and
-could not reproduce paper Fig. 18 (sin) at any protocol; (25, 25) lands on
-Figs. 17/18 (linear cs err 0.13 → 0.025, sin 1.22 → 0.24 on the paper's
-[−1, 0] window). Mixed likewise: c(2, 2, 2, 2) → hidden (2, 2).</p>
+<p><strong>DGP</strong> (<code>summerof24/triangle_structured_continous.R</code>):</p>
+<ul>
+<li>x1 ~ 0.5 N(0.25, 0.1²) + 0.5 N(0.73, 0.05²)</li>
+<li>h(x2 | x1) = 5 x2 + 2 x1 = u2</li>
+<li>h(x3 | x1, x2) = 0.63 x3 − 0.2 x1 − f(x2) = u3, u ~ logistic</li>
+</ul>
+<p>f has three forms:</p>
+<ul>
+<li><code>linear</code> −0.3 x</li>
+<li><code>atan</code> 0.75 atan(5 (x + 0.12))</li>
+<li><code>sin</code> 2 sin(3x) + x</li>
+</ul>
+<p>True weights in the flow's convention: β12 = +2, β13 = −0.2, β23 = +0.3
+(linear only).</p>
+<p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: SI + LS(x1)</code>, <code>x3: SI + LS(x1) + {LS(x2) | CS(x2)}</code>,
+Bernstein. The CS net is the reference <code>hidden_features_CS = c(2, 25, 25, 2)</code> with
+sigmoid. The ReLU line in <code>create_param_net</code> is commented out.</p>
+<p><strong>Corrected 2026-09-02</strong>: the vector reads as in/out dims around the hidden
+stack <strong>(25, 25)</strong>. The earlier literal <code>[2, 25, 25, 2]</code> reading put a
+2-sigmoid bottleneck on the input. That reading cannot reproduce paper
+Fig. 18 (sin) at any protocol. The hidden stack (25, 25) lands on
+Figs. 17/18. The linear cs err moves 0.13 → 0.025. The sin err moves
+1.22 → 0.24 on the paper's [−1, 0] window.</p>
+<p>The mixed variant reads the same way: c(2, 2, 2, 2) → hidden (2, 2).</p>
 <table>
 <thead>
 <tr>
@@ -1681,19 +1784,22 @@ Figs. 17/18 (linear cs err 0.13 → 0.025, sin 1.22 → 0.24 on the paper's
 </tr>
 </tbody>
 </table>
-<p>β13 at −0.16 to −0.18 instead of −0.2: x1 has sd 0.254, so SE(β13) ≈ 0.036 at
-n = 40000 — within ~1 SE. The old <code>sin-cs</code> error of ~1.0 was the misread
-2-unit-bottleneck net, not "reference capacity" (retracted 2026-09-02): with
-hidden (25, 25) the fit lands on Fig. 18 including its small −1-endpoint
-deviation, and the paper's figure never plots beyond [−1, 0].</p>
+<p>β13 measures −0.16 to −0.18 instead of −0.2. x1 has sd 0.254, so
+SE(β13) ≈ 0.036 at n = 40000. The value therefore stays within ~1 SE.</p>
+<p>The old <code>sin-cs</code> error of ~1.0 came from the misread 2-unit-bottleneck net,
+not from "reference capacity". This page retracted that claim on 2026-09-02.
+With hidden (25, 25) the fit lands on Fig. 18, including its small
+−1-endpoint deviation. The paper's figure never plots beyond [−1, 0].</p>
 <h2 id="triangle-mixed-triangle_mixedpy-paper-sec-62-app-c4-app-b">Triangle, mixed (<code>triangle_mixed.py</code>) — paper Sec. 6.2, App. C.4, App. B<a class="headerlink" href="#triangle-mixed-triangle_mixedpy-paper-sec-62-app-c4-app-b" title="Permanent link">&para;</a></h2>
-<p><strong>DGP</strong> (<code>triangle_structured_mixed.R</code>): x1, x2 as above; x3 ordinal with four
-levels, cutpoints θ = (−2, 0.42, 1.02) (from the R code — the paper does not
-state them), level = #{k : u3 &gt; θ_k + 0.2 x1 + f(x2)}; f: <code>linear</code> −0.3 x,
-<code>exp</code> 0.5 exp(x). The paper adds the ordinal shift, the flow subtracts it, so
-the fitted weights are β13 = −0.2, β23 = +0.3.</p>
-<p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: SI + LS(x1)</code>, <code>x3: OrdinalNode(4, LS(x1) + {LS(x2) | CS(x2)})</code>.
-CS net = reference <code>c(2, 2, 2, 2)</code>, sigmoid.</p>
+<p><strong>DGP</strong> (<code>triangle_structured_mixed.R</code>): x1 and x2 are as above. x3 is ordinal
+with four levels. Its cutpoints are θ = (−2, 0.42, 1.02), which come from the
+R code. The paper does not state them. The level is #{k : u3 &gt; θ_k + 0.2 x1
++ f(x2)}. f has two forms: <code>linear</code> −0.3 x and <code>exp</code> 0.5 exp(x).</p>
+<p>The paper adds the ordinal shift. The flow subtracts it. The fitted weights
+are therefore β13 = −0.2, β23 = +0.3.</p>
+<p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: SI + LS(x1)</code>,
+<code>x3: OrdinalNode(4, LS(x1) + {LS(x2) | CS(x2)})</code>. The CS net is the reference
+<code>c(2, 2, 2, 2)</code> with sigmoid.</p>
 <table>
 <thead>
 <tr>
@@ -1792,13 +1898,25 @@ CS net = reference <code>c(2, 2, 2, 2)</code>, sigmoid.</p>
 </tbody>
 </table>
 <h2 id="vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1">VACA / CNF benchmark (<code>vaca.py</code>) — paper Sec. 5.1–5.2, App. C.1<a class="headerlink" href="#vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1" title="Permanent link">&para;</a></h2>
-<p><strong>DGP</strong> (Sanchez-Martin et al. 2022, App. E.1): x1 ~ 0.5 N(−2, 1.5) + 0.5 N(1.5, 1);
-x2 = −x1 + N(0, 1); x3 = x1 + 0.25 x2 + N(0, 1). Gaussian noise — outside the
-logistic-latent family, so the all-<code>CI</code> flow has to fit it. Analytic target:
-E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's Sec. 5.2 text says a ∈ {−3, −2, 0}; its Fig. 5 panels and the R code (<code>vaca_triangle.r</code>) intervene at a ∈ {−3, −1, 0} — the code is followed (the frozen <code>data/vaca/truth.json</code> holds the same three).</p>
-<p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: CI(x1)</code>, <code>x3: CI(x1, x2)</code>, Bernstein <code>n_coeffs = 31</code>
-(reference M = 30, <code>len_theta = 31</code>), nets <code>dense(10, tanh) → dense(100, tanh) → dense(31)</code>
-(<code>comparison/utils.R::make_model</code>).</p>
+<p><strong>DGP</strong> (Sanchez-Martin et al. 2022, App. E.1):</p>
+<ul>
+<li>x1 ~ 0.5 N(−2, 1.5) + 0.5 N(1.5, 1)</li>
+<li>x2 = −x1 + N(0, 1)</li>
+<li>x3 = x1 + 0.25 x2 + N(0, 1)</li>
+</ul>
+<p>The noise is Gaussian, which is outside the logistic-latent family. The
+all-<code>CI</code> flow must fit it. The analytic target is
+E[x3 | do(x2 = a)] = −0.25 + 0.25 a.</p>
+<p>The paper's Sec. 5.2 text says a ∈ {−3, −2, 0}. Its Fig. 5 panels and the R
+code (<code>vaca_triangle.r</code>) intervene at a ∈ {−3, −1, 0}. This repository follows
+the code. The frozen <code>data/vaca/truth.json</code> holds the same three values.</p>
+<p><strong>Model</strong>:</p>
+<ul>
+<li><code>x1: SI</code>, <code>x2: CI(x1)</code>, <code>x3: CI(x1, x2)</code></li>
+<li>Bernstein <code>n_coeffs = 31</code> (reference M = 30, <code>len_theta = 31</code>)</li>
+<li>nets <code>dense(10, tanh) → dense(100, tanh) → dense(31)</code>
+  (<code>comparison/utils.R::make_model</code>)</li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -1859,7 +1977,8 @@ E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's Sec. 5.2 text says a ∈ {−
 </tr>
 </tbody>
 </table>
-<p><strong>Results</strong> — the check is the flow's error against the analytic mean, not a pinned flow value.</p>
+<p><strong>Results</strong> — the check is the flow's error against the analytic mean. It is
+not a pinned flow value.</p>
 <table>
 <thead>
 <tr>
@@ -1914,16 +2033,16 @@ E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's Sec. 5.2 text says a ∈ {−
 </tr>
 </tbody>
 </table>
-<p>The 08-25 and 08-26 columns are not the same three interventions: the do(x2)
+<p>The 08-25 and 08-26 columns are not the same three interventions. The do(x2)
 set moved from the paper text's {−3, −2, 0} to the R code's {−3, −1, 0} (see
-the DGP paragraph above), so only do(x2 = −3) and do(x2 = 0) compare directly.
-At the earlier grid and with glorot the errors were 0.098 / 0.159 / 0.026 at
-this seed and 0.268 / 0.119 / 0.005 and 0.217 / 0.031 / 0.021 at init seeds 8
-and 9 — the spread quoted below.</p>
-<p>How the gap was traced, one change at a time under the exact protocol —
-10000 epochs at lr 0.001 with the plateau rule, before the 2026-09-01 epoch
-cut (inputs min-max scaled unless stated; do(x2) errors at the then-current
-grid −3 / −2 / 0):</p>
+the DGP paragraph above). Only do(x2 = −3) and do(x2 = 0) compare directly.</p>
+<p>At the earlier grid and with glorot the errors were 0.098 / 0.159 / 0.026 at
+this seed. At init seeds 8 and 9 they were 0.268 / 0.119 / 0.005 and
+0.217 / 0.031 / 0.021. That is the spread quoted below.</p>
+<p>The table below traces the gap, one change at a time, under the exact
+protocol. That protocol is 10000 epochs at lr 0.001 with the plateau rule,
+before the 2026-09-01 epoch cut. The inputs are min-max scaled unless the row
+states otherwise. The do(x2) errors are at the then-current grid −3 / −2 / 0.</p>
 <table>
 <thead>
 <tr>
@@ -1976,32 +2095,43 @@ grid −3 / −2 / 0):</p>
 </tbody>
 </table>
 <p>Under the exact protocol the result is <strong>seed-sensitive at the off-manifold
-point</strong> do(x2 = −3): 0.03–0.27 over four init draws, 0.005–0.026 at do(x2 = 0)
-(measured under the 10000-epoch protocol; the paper shows one run's
-densities). The committed bound is 2.5× the seed-7 measurement of the
-reference 10000-epoch run (the 2026-09-01 4800-epoch cut was reverted
-2026-09-02), and this table is the honest picture.</p>
+point</strong> do(x2 = −3). The error spans 0.03–0.27 over four init draws. At
+do(x2 = 0) it spans 0.005–0.026. Both spans come from the 10000-epoch
+protocol. The paper shows one run's densities.</p>
+<p>The committed bound is 2.5× the seed-7 measurement of the reference
+10000-epoch run. The repository reverted the 2026-09-01 4800-epoch cut on
+2026-09-02. This table is the honest picture.</p>
 <h2 id="carefl-benchmark-careflpy-paper-sec-53-app-c2">CAREFL benchmark (<code>carefl.py</code>) — paper Sec. 5.3, App. C.2<a class="headerlink" href="#carefl-benchmark-careflpy-paper-sec-53-app-c2" title="Permanent link">&para;</a></h2>
 <p><strong>Since 2026-09-03 this benchmark is the reference run 1:1, on the
-reference's own data.</strong> <code>carefl_fig5.r</code> sets <code>USE_EXTERNAL_DATA = TRUE</code>:
-it trains on CAREFL's own committed 2500 rows (<code>data/CAREFL_CF/X.csv</code>,
-x3/x4 sd-standardized by 6.0104/1.9114) with <strong><code>val = train</code></strong>, and its
-repository also commits the observation (<code>xObs.csv</code>), the analytic truth
-curves and CAREFL's own predictions on the grid <code>seq(-3, 2.9, 0.1)</code>. All
-of it is frozen here under <code>experiments/paper/data/carefl-cf</code> (external
-input, no generator — see its <code>truth.json</code>), so the Fig. 6 curves are
-comparable point by point and every metric is in the reference's
-standardized units.</p>
-<p><strong>DGP</strong> (Khemakhem et al. 2021): x1, x2 ~ Laplace(0, 1/√2); x3 = x1 + 0.5 x2³ + ε;
-x4 = −x2 + 0.5 x1² + ε, ε ~ Laplace(0, 1/√2); x3/x4 divided by their sample
-sds. Counterfactuals are analytic by noise abduction. Observation:
-<code>xObs.csv</code> = (2, 1.5, 0.8465, −0.2616); the paper prints (2, 1.5, 0.81,
-−0.28), slightly off it (CAREFL's own text). <strong>Before <code>feat/followups</code> the
-repository used the printed values as raw coordinates</strong>, a 4σ-off point.
-Queries: x3^cf | do(x2 = α) and x4^cf | do(x1 = α) on the committed grid.</p>
+reference's own data.</strong> <code>carefl_fig5.r</code> sets <code>USE_EXTERNAL_DATA = TRUE</code>. It
+trains on CAREFL's own committed 2500 rows (<code>data/CAREFL_CF/X.csv</code>, x3/x4
+sd-standardized by 6.0104/1.9114) with <strong><code>val = train</code></strong>. Its repository also
+commits three more things:</p>
+<ul>
+<li>the observation (<code>xObs.csv</code>),</li>
+<li>the analytic truth curves,</li>
+<li>CAREFL's own predictions on the grid <code>seq(-3, 2.9, 0.1)</code>.</li>
+</ul>
+<p>This repository freezes all of it under <code>experiments/paper/data/carefl-cf</code>.
+That folder is external input with no generator — see its <code>truth.json</code>. The
+Fig. 6 curves are therefore comparable point by point. Every metric is in the
+reference's standardized units.</p>
+<p><strong>DGP</strong> (Khemakhem et al. 2021):</p>
+<ul>
+<li>x1, x2 ~ Laplace(0, 1/√2)</li>
+<li>x3 = x1 + 0.5 x2³ + ε</li>
+<li>x4 = −x2 + 0.5 x1² + ε, ε ~ Laplace(0, 1/√2)</li>
+</ul>
+<p>The DGP divides x3/x4 by their sample sds. Counterfactuals are analytic by
+noise abduction.</p>
+<p>The observation <code>xObs.csv</code> = (2, 1.5, 0.8465, −0.2616). The paper prints
+(2, 1.5, 0.81, −0.28), which is slightly off it (CAREFL's own text).
+<strong>Before <code>feat/followups</code> the repository used the printed values as raw
+coordinates</strong>, a 4σ-off point. The queries are x3^cf | do(x2 = α) and
+x4^cf | do(x1 = α) on the committed grid.</p>
 <p><strong>Model</strong>: <code>x1, x2: SI</code>, <code>x3, x4: CI(x1, x2)</code>, Bernstein <code>n_coeffs = 31</code>, the
-same <code>make_model</code> nets as VACA; <code>range_q: 0</code> (the reference's <code>scale_df</code>
-min-max Bernstein domain — an intercept option since 2026-09-03).</p>
+same <code>make_model</code> nets as VACA. <code>range_q: 0</code> is the reference's <code>scale_df</code>
+min-max Bernstein domain. It is an intercept option since 2026-09-03.</p>
 <table>
 <thead>
 <tr>
@@ -2044,8 +2174,8 @@ min-max Bernstein domain — an intercept option since 2026-09-03).</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Results</strong> (standardized units; the 09-02-era numbers were raw — divide
-x3 by 6.01 and x4 by 1.91 to compare):</p>
+<p><strong>Results</strong>, in standardized units. The 09-02-era numbers were raw. To
+compare them, divide x3 by 6.01 and x4 by 1.91.</p>
 <table>
 <thead>
 <tr>
@@ -2082,36 +2212,48 @@ x3 by 6.01 and x4 by 1.91 to compare):</p>
 </tr>
 </tbody>
 </table>
-<p>Component attribution of the closed gap, each measured on 2026-09-03 with
-everything else held fixed: the fresh data draw → <code>X.csv</code> cut the Fig. 6
-x4 max from 0.77 (raw ≈ 0.40 std) to 0.34 std; the reference optimization
-(7000 @ 0.001 with <code>val = train</code>) fixed the parabola bottom (err at α = 0
-0.21 → 0.06); the min-max domain cut the grid edges (x4 0.37 → 0.20, x3
-0.20 → 0.07). The earlier 3000-vs-7000 trade-off (3000 won held-out MAEs,
-7000 the single-point curve) was an artifact of the fresh-draw data and is
-settled by using the reference's rows.</p>
-<p><strong>The former Fig. 6 x4 "dip", root-caused 2026-09-03 before the data was
-adopted</strong>: on fresh 2500-row draws the flow's parabola bottom sat well
-below the truth near α = 0 — finite-sample tail-quantile variance, not
-protocol or init (invariant to 3000 vs 7000 epochs, val choice, and init
-seeds 7/8/9 at 0.586/0.601/0.610 raw; the observed noise sits at the
-Laplace 12% quantile, whose fitted value errs +0.27 in the sparse
-observation region x1 = 2, ~190 nearby rows, against −0.19 in the dense
-middle); the magnitude moved with the data draw (0.54/0.31/0.43 raw at dgp
-seeds 42/43/44). CAREFL's own committed draw is a mild one — one more
-reason training on the committed rows is the right comparison.</p>
+<p>Three components closed the gap. The measurements are from 2026-09-03, each
+one with everything else held fixed:</p>
+<ul>
+<li>The fresh data draw → <code>X.csv</code> cut the Fig. 6 x4 max from 0.77
+  (raw ≈ 0.40 std) to 0.34 std.</li>
+<li>The reference optimization (7000 @ 0.001 with <code>val = train</code>) fixed the
+  parabola bottom (err at α = 0 0.21 → 0.06).</li>
+<li>The min-max domain cut the grid edges (x4 0.37 → 0.20, x3 0.20 → 0.07).</li>
+</ul>
+<p>The earlier 3000-vs-7000 trade-off was an artifact of the fresh-draw data. In
+that trade-off 3000 won the held-out MAEs and 7000 won the single-point
+curve. The reference's rows settle it.</p>
+<p><strong>The former Fig. 6 x4 "dip"</strong>: the repository root-caused it on 2026-09-03,
+before it adopted the data. On fresh 2500-row draws the flow's parabola
+bottom sat well below the truth near α = 0. The cause is finite-sample tail-quantile
+variance, not the protocol and not the init. Three things left it invariant:</p>
+<ul>
+<li>3000 vs 7000 epochs,</li>
+<li>the val choice,</li>
+<li>init seeds 7/8/9, at 0.586/0.601/0.610 raw.</li>
+</ul>
+<p>The observed noise sits at the Laplace 12% quantile. That quantile's fitted
+value errs +0.27 in the sparse observation region x1 = 2, which holds ~190
+nearby rows. In the dense middle it errs −0.19. The magnitude moved with the
+data draw: 0.54/0.31/0.43 raw at dgp seeds 42/43/44.</p>
+<p>CAREFL's own committed draw is a mild one. That is one more reason why
+training on the committed rows is the right comparison.</p>
 <h2 id="runtime-and-the-epochs">Runtime and the epochs<a class="headerlink" href="#runtime-and-the-epochs" title="Permanent link">&para;</a></h2>
-<p>The reference protocol's cost, the motivation for every deviation here —
-triangle: 500 epochs × 1250 steps of batch 32, 3.2 s per epoch single-process
-at 2–4 torch threads (5.5 s at 32 threads, the step is overhead-bound), 42–69 min
-per variant on the 2-core CI runners; VACA 355 s, CAREFL 338 s (2026-08-31); the
-workflow's ten jobs run in parallel, 70 min wall against a 300-min cap.</p>
-<p>The first deviation taken for CI runtime (2026-08-26) was the triangle
-<strong>batch size and learning rate</strong>: batch 256 at lr 0.004 instead of the paper's
-batch 32 at lr 0.001, 8× fewer optimizer steps per epoch. This is the earlier
-selection grid, kept as the record of that choice — it ran at the paper's 500
-epochs with glorot init, against the then-committed ground-truth bands (cs max
-err unless noted):</p>
+<p>The reference protocol's cost is the motivation for every deviation here. The
+triangle runs 500 epochs × 1250 steps of batch 32. One epoch takes 3.2 s
+single-process at 2–4 torch threads. At 32 threads it takes 5.5 s, because the
+step is overhead-bound. One variant takes 42–69 min on the 2-core CI runners.
+VACA takes 355 s and CAREFL takes 338 s (2026-08-31).</p>
+<p>The workflow's ten jobs run in parallel. They take 70 min wall against a
+300-min cap.</p>
+<p>The first deviation for CI runtime (2026-08-26) was the triangle <strong>batch size
+and learning rate</strong>. It uses batch 256 at lr 0.004 instead of the paper's
+batch 32 at lr 0.001. That is 8× fewer optimizer steps per epoch.</p>
+<p>The table below is the earlier selection grid. It stays here as the record of
+that choice. It ran at the paper's 500 epochs with glorot init, against the
+then-committed ground-truth bands. Every entry is the cs max err unless the
+column says otherwise.</p>
 <table>
 <thead>
 <tr>
@@ -2182,28 +2324,35 @@ err unless noted):</p>
 </tr>
 </tbody>
 </table>
-<p>Batch 256 / lr 0.004 is the only row that keeps every cs error within ~0.02 (linear-cs: 0.022) of the
-paper protocol; larger batches or rates bend the misspecified linear-cs curve
-(0.16–0.18) and lr 0.008 hurts atan-cs. At 500 epochs and this batch/lr, CI
-run 32974872751 took 7–11 min per triangle job instead of 42–69, the workflow
-about 12 min wall instead of 70. The grid ran with glorot init; the committed
-configs use <code>init: normal</code> (the triangle scripts' initializer). The
-paper-protocol numbers stay in this document as the reference; the ground
-truth is pinned from the CI config, which since 2026-09-01 also cuts the
-epochs — the round below.</p>
+<p>Batch 256 / lr 0.004 is the only row that keeps every cs error within ~0.02
+of the paper protocol (linear-cs: 0.022). Larger batches or rates bend the
+misspecified linear-cs curve (0.16–0.18). lr 0.008 hurts atan-cs.</p>
+<p>At 500 epochs and this batch/lr, CI run 32974872751 took 7–11 min per triangle
+job instead of 42–69. The workflow took about 12 min wall instead of 70.</p>
+<p>The grid ran with glorot init. The committed configs use <code>init: normal</code>, the
+triangle scripts' initializer. The paper-protocol numbers stay in this
+document as the reference. The repository pins the ground truth from the CI
+config, which since 2026-09-01 also cuts the epochs. The round below covers
+that cut.</p>
 <h2 id="the-2026-09-01-tuning-round">The 2026-09-01 tuning round<a class="headerlink" href="#the-2026-09-01-tuning-round" title="Permanent link">&para;</a></h2>
-<p>The frame (repo decision 2026-09-01): the <em>data, model and init</em> stay the reference's;
-allowed were dropping the network-input scaling, trying sigmoid/relu activations,
-and tuning lr / batch size / epochs for CI runtime. Outcome: the triangle
-scripts already ran raw parents + sigmoid (their reference does), so they
-comply by construction and only their epochs moved; VACA and CAREFL <strong>keep
-tanh + min-max network inputs (<code>input_transform: minmax</code>)</strong> because every alternative was tried and
-measurably fails. Every tuned variant's ground truth was re-pinned from its
-final run (centers to the run, <code>{max}</code> at 2.5x; <code>fit_seconds</code> waits for the
-next CI measurement) — <strong>the bounds and pins quoted in this section are the
-pre-repin 2026-08-26 values the round was measured against</strong>, and re-pinning
-loosened several. The full decision trail is in
-each config's YAML header.</p>
+<p>The frame is a repository decision of 2026-09-01. The <em>data, model and init</em>
+stay the reference's. The round allowed three changes:</p>
+<ul>
+<li>dropping the network-input scaling,</li>
+<li>trying sigmoid/relu activations,</li>
+<li>tuning lr / batch size / epochs for CI runtime.</li>
+</ul>
+<p>The outcome has two parts. The triangle scripts already ran raw parents +
+sigmoid, as their reference does, so they comply by construction and only
+their epochs moved. VACA and CAREFL <strong>keep tanh + min-max network inputs
+(<code>input_transform: minmax</code>)</strong>, because the round tried every alternative and
+each one measurably fails.</p>
+<p>The repository re-pinned every tuned variant's ground truth from its final
+run. The centers follow the run, and <code>{max}</code> sits at 2.5x. <code>fit_seconds</code> waits
+for the next CI measurement. <strong>The bounds and pins quoted in this section are
+the pre-repin 2026-08-26 values the round measured against.</strong> Re-pinning
+loosened several of them. Each config's YAML header holds the full decision
+trail.</p>
 <table>
 <thead>
 <tr>
@@ -2251,68 +2400,90 @@ each config's YAML header.</p>
 </tbody>
 </table>
 <p><strong>Triangle</strong> (batch 256 / lr 0.004 / sigmoid / <code>init: normal</code> / raw parents
-all unchanged): at 300 epochs every metric holds its bound; the floor is
-real — 150 epochs fails atan's do(x1) bound (0.235 &gt; 0.206). <code>linear-cs</code>
-keeps 500: at 300 its fitted cs curve visibly flattens past |x2| &gt; 0.5, max
-err 0.140 vs 0.088 — the DGP line spans only ±0.3 and the sigmoid net's slow
-tail convergence is half of that. relu is ruled out: the reference's 2-unit
-input bottleneck dies (atan: β13 +0.53, cs err 1.42).</p>
-<p><strong>Triangle-mixed</strong>: the cs variant's slow parts are the 2-unit sigmoid CS net
-and the do(x1) mean — cs max err 0.344 / 0.177 / 0.156 and do err 0.033 /
-0.060 / 0.022 at 100 / 250 / 350 epochs (0.107 / 0.016 at 500), so 100 failed
-the then-current cs bound (0.344 &gt; 0.2686) and 250 the do bound
-(0.060 &gt; 0.0398); <code>exp-cs</code> trains 350.
-<code>linear-ls</code> has no CS net to wait for and trains 200 at lr 0.002, which reads
-the weakly identified β13/β23 out slightly closer to the 500-epoch pins than
-lr 0.004 does (β23 0.333 vs 0.337, pin 0.306); at 100 epochs β13 sits 57%
-into its tolerance (−0.271 vs the pinned −0.243). relu dies at the sd-0.05
-normal init (cs err 0.859, β13 −0.055).</p>
-<p><strong>VACA</strong> — the instrumented finding: probing the reference trajectory (10000
-@ 0.001, plateau) shows the do(x2) errors descend until epoch ~6000–8500
-(best 0.005–0.10), then creep back up; the plateau anneal happens to fire at
-~9050 and freezes 0.101 / 0.099 / 0.030 (an instrumented re-run; the small
-offset from the 08-26 pins 0.097 / 0.088 / 0.019 is run-to-run sampling of
-the do-means) — the reference protocol's quality IS its anneal landing
-inside that window. At lr 0.002 the same smooth
-full-batch descent runs 2× compressed with an all-bounds window at epochs
-~4350–5000 (binding edges: x1's marginal std enters its 2.0766 ± 0.08 band at
-~4320, the do(x2=+0) error exits after ~5000); 4800 sits inside it, every
-margin ≥ 2×, at under half the reference's wall clock. The plateau rule is
-dropped because on the compressed trajectory the summed validation NLL keeps
-strictly improving past the window, so it cannot fire inside it; lr 0.004 is
-out because x1's std clock does not compress with lr (1.978 at its do-window,
-epochs ~2050–2350). Rejected, both measured: relu + raw parents wanders
-0.17–0.45 on do(x2=−3), holding the bound only at isolated epochs (tanh on
-raw parents saturates outright, 0.731); minibatch stepping (batch 256, even
-with minmax + tanh) converges with a systematic −0.11 common-mode offset of
-all three do-means — 2.4× the do(x2=+0) bound — while the observational fit
-stays perfect.</p>
-<p><strong>CAREFL</strong> (full batch + plateau kept): the round's 3000 @ 0.002 pick was
-an artifact of the then-current fresh-draw data and was reverted on
-2026-09-03 with the move to the reference's own committed rows (see the
-CAREFL section — the 3000-vs-7000 trade-off does not exist on <code>X.csv</code>).
-Still standing from the round: raw parents rejected — sigmoid saturates on the Laplace
-parents just like tanh, and relu underfits x3 (val NLL 1.46–1.47 vs the
-1.403 ± 0.05 band) while growing a fragile Bernstein tail (one held-out row
-inverted to x4 ≈ 580, cf MAE 4.36 vs bound 0.33); minibatch — the fig6 grid
-ends live in the sparse x2 tail that minibatch gradients underweight
-(cf MAE x3 do(x2=+1.5) 0.40 — over the old 0.355 and the re-pinned 0.319
-bound alike — and fig6 x3 err 5.9 against the full-batch run's 2.7).</p>
-<p><strong>validate_ls <code>adam</code></strong> (misc, not a paper experiment but tuned in the same
-round): phases 800/700/500 instead of 4000/2000/1000 — 2000 epochs instead of
-7000 — still lands on the classical MLE, named-coef gap to statsmodels
-1.6e-5 vs the old 1.8e-5, ~3.5× less fit wall clock.</p>
-<p>Local wall times under the tuned protocol (32-core box, 4 torch threads):
-triangle 162–281 s per variant, mixed 88–165 s, vaca 46.5 s, carefl 72–82 s.
-The CI timings quoted above and the <code>fit_seconds</code> pins in <code>ground_truth/</code>
-are still the 2026-08-31 pre-cut measurements; both will be re-measured on
-the next push and the pins updated then.</p>
+all unchanged): at 300 epochs every metric holds its bound. The floor is
+real. At 150 epochs the run fails atan's do(x1) bound (0.235 &gt; 0.206).</p>
+<p><code>linear-cs</code> keeps 500 epochs. At 300 epochs its fitted cs curve visibly
+flattens past |x2| &gt; 0.5, with max err 0.140 vs 0.088. The DGP line spans
+only ±0.3, and the sigmoid net's slow tail convergence is half of that.</p>
+<p>relu is out. The reference's 2-unit input bottleneck dies with it
+(atan: β13 +0.53, cs err 1.42).</p>
+<p><strong>Triangle-mixed</strong>: the cs variant has two slow parts, the 2-unit sigmoid CS
+net and the do(x1) mean. At 100 / 250 / 350 epochs the cs max err is
+0.344 / 0.177 / 0.156. The do err at those epochs is 0.033 / 0.060 / 0.022.
+At 500 epochs they are 0.107 / 0.016. So 100 epochs failed the then-current cs bound
+(0.344 &gt; 0.2686), and 250 epochs failed the do bound (0.060 &gt; 0.0398).
+<code>exp-cs</code> trains 350 epochs.</p>
+<p><code>linear-ls</code> has no CS net to wait for and trains 200 epochs at lr 0.002. That
+rate reads the weakly identified β13/β23 out slightly closer to the 500-epoch
+pins than lr 0.004 does (β23 0.333 vs 0.337, pin 0.306). At 100 epochs β13
+sits 57% into its tolerance (−0.271 vs the pinned −0.243). relu dies at the
+sd-0.05 normal init (cs err 0.859, β13 −0.055).</p>
+<p><strong>VACA</strong> — the instrumented finding: a probe of the reference trajectory
+(10000 @ 0.001, plateau) shows the do(x2) errors descend until epoch
+~6000–8500. The best values in that band are 0.005–0.10. They then creep back
+up. The plateau anneal fires at ~9050 and freezes 0.101 / 0.099 / 0.030. Those
+numbers come from an instrumented re-run. The small offset from the 08-26 pins
+0.097 / 0.088 / 0.019 is run-to-run sampling of the do-means.</p>
+<p>The reference protocol's quality IS its anneal landing inside that window.</p>
+<p>At lr 0.002 the same smooth full-batch descent runs 2× compressed, with an
+all-bounds window at epochs ~4350–5000. Two edges bind that window:</p>
+<ul>
+<li>x1's marginal std enters its 2.0766 ± 0.08 band at ~4320,</li>
+<li>the do(x2=+0) error exits after ~5000.</li>
+</ul>
+<p>4800 epochs sit inside the window, with every margin ≥ 2×, at under half the
+reference's wall clock.</p>
+<p>The round drops the plateau rule at that rate. On the compressed trajectory
+the summed validation NLL still improves strictly past the window, so the
+rule cannot fire inside the window. lr 0.004 is out, because x1's std clock
+does not compress with lr (1.978 at its do-window, epochs ~2050–2350).</p>
+<p>The round rejected two more variants and measured both. relu + raw parents
+wanders 0.17–0.45 on do(x2=−3) and holds the bound only at isolated epochs.
+tanh on raw parents saturates outright, at 0.731. Minibatch stepping
+(batch 256, even with minmax + tanh) converges with a systematic −0.11
+common-mode offset of all three do-means. That offset is 2.4× the do(x2=+0)
+bound.
+The observational fit meanwhile stays perfect.</p>
+<p><strong>CAREFL</strong> (full batch + plateau kept): the round's 3000 @ 0.002 pick was an
+artifact of the then-current fresh-draw data. The move to the reference's own
+committed rows reverted it on 2026-09-03. See the CAREFL section: the
+3000-vs-7000 trade-off does not exist on <code>X.csv</code>.</p>
+<p>Two rejections still stand from the round. The first one is raw parents.
+sigmoid saturates on the Laplace parents in the same way as tanh. relu
+underfits x3 (val NLL 1.46–1.47 vs the 1.403 ± 0.05 band). relu also grows a
+fragile Bernstein tail. One held-out row inverted to x4 ≈ 580, with cf MAE
+4.36 vs bound 0.33.</p>
+<p>The second rejection is minibatch. The fig6 grid ends live in the sparse x2
+tail, which minibatch gradients underweight. The cf MAE x3 do(x2=+1.5) is
+0.40, over the old 0.355 bound and the re-pinned 0.319 bound alike. The fig6
+x3 err is 5.9 against the full-batch run's 2.7.</p>
+<p><strong>validate_ls <code>adam</code></strong> is in misc. It is not a paper experiment, but the same
+round tuned it. Its phases are 800/700/500 instead of 4000/2000/1000, which
+is 2000 epochs instead of 7000. It still lands on the classical MLE. Its
+named-coef gap to statsmodels is 1.6e-5 against the old 1.8e-5. It uses
+~3.5× less fit wall clock.</p>
+<p>Local wall times under the tuned protocol (32-core box, 4 torch threads):</p>
+<ul>
+<li>triangle 162–281 s per variant,</li>
+<li>mixed 88–165 s,</li>
+<li>vaca 46.5 s,</li>
+<li>carefl 72–82 s.</li>
+</ul>
+<p>The CI timings quoted above and the <code>fit_seconds</code> pins in <code>ground_truth/</code> are
+still the 2026-08-31 pre-cut measurements. The next push will re-measure both
+and update the pins.</p>
 <h2 id="repository-choices-the-paper-does-not-state">Repository choices the paper does not state<a class="headerlink" href="#repository-choices-the-paper-does-not-state" title="Permanent link">&para;</a></h2>
-<p>Seeds; the validation draw sizes for the triangle scripts (the R code's
-<code>test</code>); <code>n_compare</code>; <code>n_heldout = 300</code> and the α set {−1.5, 0, 1.5} scored
-next to the single <code>x_obs</code>; the
-mixed cutpoints from the R code; the odds-ratio sample (40000 rows) and the
-counterfactual-PMF sample (2000 rows × 200 draws).</p>
+<p>The paper does not state these choices:</p>
+<ul>
+<li>the seeds,</li>
+<li>the validation draw sizes for the triangle scripts (the R code's <code>test</code>),</li>
+<li><code>n_compare</code>,</li>
+<li><code>n_heldout = 300</code> and the α set {−1.5, 0, 1.5}, scored next to the single
+  <code>x_obs</code>,</li>
+<li>the mixed cutpoints from the R code,</li>
+<li>the odds-ratio sample (40000 rows),</li>
+<li>the counterfactual-PMF sample (2000 rows × 200 draws).</li>
+</ul>
 
 
 

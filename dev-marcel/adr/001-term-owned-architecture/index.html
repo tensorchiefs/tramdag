@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -784,7 +840,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -805,14 +861,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1397,11 +1453,11 @@ drafted against a seven-subsystem survey and judged from three lenses
 <li>The <strong>registry</strong> (<code>terms.py</code>): one definition per term. Built-in shift terms
    subclass their conditioners (<code>LinearShiftTerm(ShiftTerm, LinearShift)</code> …), so
    checkpoints and RNG draws stay bit-stable; each term owns validation
-   (<code>check_arity</code>/<code>edge_parents</code>), construction (<code>build</code>), evaluation
+   (<code>__post_init__</code>/<code>edge_parents</code>), construction (<code>build</code>), evaluation
    (<code>shift_value</code>/<code>theta_value</code>), <code>post_init</code>, <code>regularizer</code>, post-fit
    <code>finalize</code>, <code>score_columns</code>, the side-input contract
-   (<code>side_keys</code>/<code>check_side</code>/<code>live_side</code>/<code>extra_columns</code>), adjacency <code>cells</code>,
-   <code>classical</code> and its dataclass fields.</li>
+   (<code>side_columns</code>/<code>check_column</code>/<code>live_side</code>/<code>extra_columns</code>), adjacency
+   <code>cells</code>, <code>classical</code> and its dataclass fields.</li>
 <li>The intercept slot is a term too (<code>SimpleInterceptTerm</code>/<code>ComplexInterceptTerm</code>/<code>AdditiveInterceptTerm</code>);
    the theta read is inline in <code>theta_shift</code> and the marginal init is a hook
    (<code>marginal_start</code>, <code>transform.marginal_init_theta</code>).</li>
@@ -1418,7 +1474,7 @@ drafted against a seven-subsystem survey and judged from three lenses
 <ul>
 <li>No per-kind node protocol (n=2), no new node kinds at 1.0.</li>
 <li>~~No per-term <code>Term</code> subclasses in the data layer~~ — <strong>revised
-  2026-09-07</strong>: one string-dispatched <code>Term</code> meant the spec knowledge of an
+  2026-09-07</strong>: one string-dispatched <code>Term</code> meant the spec knowledge of a
   term lived in three places (a constructor, <code>option_defaults</code> served
   through <code>__getattr__</code>, and static <code>check_arity</code>/<code>edge_parents</code>/<code>cells</code>
   hooks on the module class), glued by a registry. Each term is now a

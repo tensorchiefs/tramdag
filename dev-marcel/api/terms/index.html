@@ -345,6 +345,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notation/" class="md-nav__link">
         
   
@@ -353,6 +381,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -691,7 +747,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -712,14 +768,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1230,6 +1286,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tramdag.terms.InterceptTerm.net_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tramdag.terms.InterceptTerm.build" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1356,6 +1423,17 @@
   
     <nav class="md-nav" aria-label="AdditiveInterceptTerm">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.terms.AdditiveInterceptTerm.net_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_groups
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#tramdag.terms.AdditiveInterceptTerm.theta_value" class="md-nav__link">
@@ -2095,6 +2173,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tramdag.terms.InterceptTerm.net_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tramdag.terms.InterceptTerm.build" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2221,6 +2310,17 @@
   
     <nav class="md-nav" aria-label="AdditiveInterceptTerm">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.terms.AdditiveInterceptTerm.net_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_groups
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#tramdag.terms.AdditiveInterceptTerm.theta_value" class="md-nav__link">
@@ -3011,6 +3111,32 @@ one tuple for a joint net, one per parent for an additive one — and
 
 
 
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="tramdag.terms.InterceptTerm.net_groups" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">net_groups</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#tramdag.terms.InterceptTerm.net_groups" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">net_groups</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Give this intercept's networks, one per entry of <code>groups</code>.</p>
+<p>An additive intercept holds several in <code>nets</code> and overrides this.
+Every other intercept term is itself the one network.</p>
+
+    </div>
+
+</div>
+
 
 
 
@@ -3304,6 +3430,30 @@ coefficient space.</p>
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="tramdag.terms.AdditiveInterceptTerm.net_groups" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">net_groups</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#tramdag.terms.AdditiveInterceptTerm.net_groups" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">net_groups</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Give the per-parent networks this intercept sums.</p>
+
+    </div>
+
+</div>
 
 
 

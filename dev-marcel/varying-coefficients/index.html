@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -784,7 +840,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -805,14 +861,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1446,8 +1502,8 @@ framework.</p>
   node classically and copy the treatment weight into
   <code>flow.nodes[node].shifts[t].beta0</code> before <code>fit</code>, so training starts at the
   classical answer and only learns deviations. Measured on the <code>vc_hetero</code>
-  DGP: <code>beta0</code> lands within 0.15 of the truth with it, 0.16 from the zero
-  start; the recovery correlation is 0.99 either way.</li>
+  DGP: <code>beta0</code> lands within 0.15 of the truth with it, and 0.16 from the zero
+  start. The recovery correlation is 0.99 either way.</li>
 <li><strong>Treatments</strong>: the treatment <code>x_on</code> can be continuous or binary (2-level)
   ordinal. The term is linear in <code>x_on</code>. A binary ordinal enters as its 0/1
   level, so <code>beta</code> is the identified level-1-vs-0 contrast. Multi-level
@@ -1477,12 +1533,12 @@ misspecification that you do not know you have.</p>
 <p>The naive implementations are wrong. Thus this is a <strong>two-stage frozen</strong>
 design:</p>
 <ul>
-<li><strong>Training</strong> uses <strong>out-of-fold</strong> ê that <em>you</em> compute and pass as
-  the frame column <code>VC(center=)</code> names (<code>df.assign(ps=e_oof)</code>), one value per training row: any
-  propensity model, each fold predicted by a fit that never saw it. This is
-  the DML cross-fitting requirement — in-sample ê reintroduces the
-  own-observation bias and can be <em>worse</em> than no centering. Six lines with
-  the flow's own classical fit:</li>
+<li><strong>Training</strong> uses <strong>out-of-fold</strong> ê that <em>you</em> compute. Pass it as the
+  frame column <code>VC(center=)</code> names (<code>df.assign(ps=e_oof)</code>), one value per
+  training row. Any propensity model works, with each fold predicted by a fit
+  that never saw it. This is the DML cross-fitting requirement. In-sample ê
+  reintroduces the own-observation bias and can be <em>worse</em> than no centering.
+  Six lines with the flow's own classical fit:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="n">fold_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">))</span> <span class="o">%</span> <span class="mi">5</span>
 <span class="n">e_oof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">))</span>

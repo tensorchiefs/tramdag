@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -751,7 +807,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -772,14 +828,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1309,20 +1365,23 @@
 
 
 <h1 id="per-observation-scores-the-effect-modifier-scan">Per-observation scores &amp; the effect-modifier scan<a class="headerlink" href="#per-observation-scores-the-effect-modifier-scan" title="Permanent link">&para;</a></h1>
-<p><code>flow.scores(df, node)</code> returns the score <span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation
-for the node's interpretable shift coefficients. These coefficients are every
+<p><code>flow.scores(df, node)</code> returns the score
+<span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation, for the
+node's interpretable shift coefficients. These coefficients are every
 <code>LS</code> weight and every <code>VC</code> term's <code>beta0</code>. An <code>LS</code> weight gives one column per
 continuous parent and one column per one-hot level of an ordinal parent. The
 <code>beta0</code> column is named after the treatment.</p>
 <p>The computation is <strong>analytic and exact</strong>, with no autograd. Shifts enter the
-latent additively. Thus <span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i\)</span>, with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form
-(<code>src/tramdag/scores.py</code>). The function is a pure read-out. It does not touch
-the fitting or sampling code paths. At a fitted MLE, the sum of each column is
+latent additively. Thus
+<span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i\)</span>,
+with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form (<code>src/tramdag/scores.py</code>).
+The function is a pure read-out. It does not touch the fitting or sampling
+code paths. At a fitted MLE, the sum of each column is
 ≈ 0. Tests pin this behavior and include a float64 finite-difference check.</p>
 <h2 id="worked-example-where-does-x-need-to-bend">Worked example: where does β(x) need to bend?<a class="headerlink" href="#worked-example-where-does-x-need-to-bend" title="Permanent link">&para;</a></h2>
 <p>The score is the cheapest effect-modifier detector available. It uses the
-structural-change logic of model-based recursive partitioning (Zeileis &amp;
-Hornik; Dandl et al. 2024). Before you fit an expensive model, fit the
+structural-change logic of model-based recursive partitioning (Zeileis and
+Hornik, Dandl et al. 2024). Before you fit an expensive model, fit the
 <strong>cheap all-<code>LS</code> model</strong>. This fit takes seconds and is deterministic. Then
 scan the treatment-coefficient scores:</p>
 <div class="highlight"><pre><span></span><code><span class="n">flow</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">all_ls_spec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -1339,21 +1398,21 @@ and forms the scaled cumulative sum <code>B_j = Σ_{i≤j} ψ_(i) / (sd(ψ)·√
 a stable coefficient, <code>B</code> is a Brownian bridge. Thus <code>sup|B|</code> has the
 Kolmogorov distribution (5% critical value 1.358). A coefficient that truly
 varies with the covariate makes the ordered scores drift. The flagged
-covariates are the measured shortlist of <code>VC</code> modifiers
+covariates are the shortlist of <code>VC</code> modifiers to measure
 (<code>docs/varying-coefficients.md</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="n">spec</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(</span>
     <span class="n">td</span><span class="o">.</span><span class="n">CS</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">,</span> <span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">)</span> <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">VC</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="s2">"T"</span><span class="p">)</span>
 <span class="p">)</span>  <span class="c1"># scan-informed</span>
 </code></pre></div>
 <p><strong>Read it as screening, not as a test of effect modification.</strong> The statistic
-measures how unstable the <em>cheap</em> model is along a covariate, and instability
-has two sources: a coefficient that genuinely varies, and a <strong>prognostic part
-the cheap model gets wrong</strong>. In the example above <code>X1</code> is unflagged because
-its prognostic effect is linear; make it quadratic and <code>X1</code> flags as strongly
+measures how unstable the <em>cheap</em> model is along a covariate. Instability has
+two sources: a coefficient that genuinely varies, and a <strong>prognostic part the
+cheap model gets wrong</strong>. In the example above <code>X1</code> is unflagged, because its
+prognostic effect is linear. Make it quadratic and <code>X1</code> flags as strongly
 as the true modifiers (0.56 → 4.14 on the DGP of
 <a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>,
 which demonstrates both cases side by side). A flag therefore means "look
-here", and what you find may be a modifier or a misspecification — both worth
+here", and what you find can be a modifier or a misspecification — both worth
 knowing.</p>
 <p>Notes: For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
 level-1-vs-0 contrast. For a <code>VC</code> treatment, <code>t</code> resolves to <code>beta0</code>.

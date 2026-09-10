@@ -10,27 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/research/REPORT/">
+        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/interpretation/">
       
       
+        <link rel="prev" href="../notation/">
+      
+      
+        <link rel="next" href="../fitting/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Autoresearch report — training-speed study (tramdag) - tramdag</title>
+        <title>Interpretation - tramdag</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#autoresearch-report-training-speed-study-tramdag" class="md-skip">
+        <a href="#reading-a-fitted-tram-dag" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +100,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="tramdag" class="md-header__button md-logo" aria-label="tramdag" data-md-component="logo">
+    <a href=".." title="tramdag" class="md-header__button md-logo" aria-label="tramdag" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Autoresearch report — training-speed study (tramdag)
+              Interpretation
             
           </span>
         </div>
@@ -232,7 +236,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="tramdag" class="md-nav__button md-logo" aria-label="tramdag" data-md-component="logo">
+    <a href=".." title="tramdag" class="md-nav__button md-logo" aria-label="tramdag" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -262,7 +266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -286,8 +290,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -298,11 +304,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -323,7 +329,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -341,7 +347,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notation/" class="md-nav__link">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notation/" class="md-nav__link">
         
   
   
@@ -366,10 +400,151 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#which-term-owns-which-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which term owns which edge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-linear-shift-is-a-log-odds-ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A linear shift is a log-odds ratio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ordinal nodes: cutpoints and the interventional PMF
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#continuous-nodes-density-and-one-fitted-shift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Continuous nodes: density and one fitted shift
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-price-of-a-complex-intercept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The price of a complex intercept
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#an-effect-that-varies-with-a-covariate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An effect that varies with a covariate
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
-      <a href="../../fitting/" class="md-nav__link">
+      <a href="../fitting/" class="md-nav__link">
         
   
   
@@ -397,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
+      <a href="../training-speed/" class="md-nav__link">
         
   
   
@@ -425,7 +600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../scores/" class="md-nav__link">
+      <a href="../scores/" class="md-nav__link">
         
   
   
@@ -453,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../varying-coefficients/" class="md-nav__link">
+      <a href="../varying-coefficients/" class="md-nav__link">
         
   
   
@@ -481,7 +656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../paper-replication/" class="md-nav__link">
+      <a href="../paper-replication/" class="md-nav__link">
         
   
   
@@ -509,7 +684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -537,7 +712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/001-term-owned-architecture/" class="md-nav__link">
+      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
         
   
   
@@ -565,7 +740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../code-map/" class="md-nav__link">
+      <a href="../code-map/" class="md-nav__link">
         
   
   
@@ -593,7 +768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zuko-upstream/" class="md-nav__link">
+      <a href="../zuko-upstream/" class="md-nav__link">
         
   
   
@@ -680,14 +855,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/demo_tram_dag_colab/" class="md-nav__link">
+      <a href="../notebooks/demo_tram_dag_colab/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -708,14 +883,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -736,7 +911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/additive_vs_joint_ci/" class="md-nav__link">
+      <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
   
@@ -764,7 +939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/varying_coefficients/" class="md-nav__link">
+      <a href="../notebooks/varying_coefficients/" class="md-nav__link">
         
   
   
@@ -792,7 +967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/classical_fit_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/classical_fit_tram_dag/" class="md-nav__link">
         
   
   
@@ -879,7 +1054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/tramdag/" class="md-nav__link">
+      <a href="../api/tramdag/" class="md-nav__link">
         
   
   
@@ -907,7 +1082,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/spec/" class="md-nav__link">
+      <a href="../api/spec/" class="md-nav__link">
         
   
   
@@ -935,7 +1110,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/flow/" class="md-nav__link">
+      <a href="../api/flow/" class="md-nav__link">
         
   
   
@@ -963,7 +1138,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/terms/" class="md-nav__link">
+      <a href="../api/terms/" class="md-nav__link">
         
   
   
@@ -991,7 +1166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/fitting/" class="md-nav__link">
+      <a href="../api/fitting/" class="md-nav__link">
         
   
   
@@ -1019,7 +1194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/readouts/" class="md-nav__link">
+      <a href="../api/readouts/" class="md-nav__link">
         
   
   
@@ -1047,7 +1222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/transforms/" class="md-nav__link">
+      <a href="../api/transforms/" class="md-nav__link">
         
   
   
@@ -1075,7 +1250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/conditioners/" class="md-nav__link">
+      <a href="../api/conditioners/" class="md-nav__link">
         
   
   
@@ -1103,7 +1278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/scores/" class="md-nav__link">
+      <a href="../api/scores/" class="md-nav__link">
         
   
   
@@ -1131,7 +1306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/callbacks/" class="md-nav__link">
+      <a href="../api/callbacks/" class="md-nav__link">
         
   
   
@@ -1159,7 +1334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/plots/" class="md-nav__link">
+      <a href="../api/plots/" class="md-nav__link">
         
   
   
@@ -1214,10 +1389,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#summary-table" class="md-nav__link">
+  <a href="#which-term-owns-which-edge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary table
+        Which term owns which edge
       
     </span>
   </a>
@@ -1225,10 +1400,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-one-recommended-change-fitmarginal_inittrue" class="md-nav__link">
+  <a href="#a-linear-shift-is-a-log-odds-ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The one recommended change — fit(marginal_init=True)
+        A linear shift is a log-odds ratio
       
     </span>
   </a>
@@ -1236,10 +1411,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-didnt-work-and-why-the-search-is-near-exhausted" class="md-nav__link">
+  <a href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What didn't work, and why the search is (near) exhausted
+        Ordinal nodes: cutpoints and the interventional PMF
       
     </span>
   </a>
@@ -1247,10 +1422,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recommendations" class="md-nav__link">
+  <a href="#continuous-nodes-density-and-one-fitted-shift" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recommendations
+        Continuous nodes: density and one fitted shift
       
     </span>
   </a>
@@ -1258,10 +1433,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#provenance" class="md-nav__link">
+  <a href="#the-price-of-a-complex-intercept" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provenance
+        The price of a complex intercept
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#an-effect-that-varies-with-a-covariate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An effect that varies with a covariate
       
     </span>
   </a>
@@ -1288,164 +1474,111 @@
   
 
 
-<h1 id="autoresearch-report-training-speed-study-tramdag">Autoresearch report — training-speed study (tramdag)<a class="headerlink" href="#autoresearch-report-training-speed-study-tramdag" title="Permanent link">&para;</a></h1>
-<p><strong>Run:</strong> branch <code>research/2026-06-15-workstation</code> · workstation, NVIDIA TITAN RTX
-(24 GB), torch 2.12.0+cu130 · 2026-06-15.
-<strong>Goal (from <code>MISSION_autoresearch.md</code>):</strong> find changes that make <code>CausalFlowDAG</code>
-training <strong>faster to a fixed quality target</strong> (time-to-target as defined in
-<code>experiments/benchmarks/bench_training.py</code>), with rigor — falsifiable hypotheses, ≥3 seeds,
-opt-in library changes, full suite green before any confirmed win.
-<strong>Outcome:</strong> 7 experiments (#0 baseline + 6 hypotheses). <strong>One confirmed,
-broadly-safe win</strong> — a calibrated marginal-init — shipped as opt-in
-<code>fit(marginal_init=True)</code>. Five negatives that fully map the search space.</p>
-<h2 id="summary-table">Summary table<a class="headerlink" href="#summary-table" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>#</th>
-<th>Experiment</th>
-<th>Verdict</th>
-<th>Headline result</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>Baseline (bench + perf fingerprint)</td>
-<td>—</td>
-<td>CUDA 2–4× <strong>slower</strong> than this box's CPU for these tiny per-node models; this CPU baseline is the only valid reference.</td>
-</tr>
-<tr>
-<td>1</td>
-<td>torch.profiler one-epoch breakdown</td>
-<td>REJECTED (hyp.)</td>
-<td>Not matmul-bound — <strong>dispatch/overhead-bound</strong>: 94% in fwd+bwd over thousands of µs-scale aten ops, no single op dominates.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>CPU thread-count sweep</td>
-<td>REJECTED</td>
-<td>Ops barely parallelize; 1→10 threads &lt;10%. Single-thread-effective.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>torch.compile fusion of per-node loss</td>
-<td>DEAD END</td>
-<td>zuko's Bernstein/RQS log-det uses <code>autograd.grad</code> in forward → <strong>double-backward</strong>, unsupported by aot_autograd. Op-count axis closed in eager.</td>
-</tr>
-<tr>
-<td><strong>4</strong></td>
-<td><strong>Calibrated Bernstein marginal-init</strong></td>
-<td><strong>CONFIRMED</strong></td>
-<td><strong>W2 vaca-ci +56–63%</strong> time-to-practical over two seed triples; W1 +4–8% (no regression); full suite green; identical MLE.</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Extend marginal-init to ordinal cutpoints</td>
-<td>REJECTED</td>
-<td>Only +3% on W1 (kept — coherent, never regresses). W1 is <strong>coefficient-bound</strong>, not init-bound.</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Cache parent encodings (dtype-copy)</td>
-<td>REJECTED</td>
-<td>Bit-identical but <strong>~0%</strong> per-step. The 15% copy overhead is in the per-node math, not feature encoding. Reverted.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="the-one-recommended-change-fitmarginal_inittrue">The one recommended change — <code>fit(marginal_init=True)</code><a class="headerlink" href="#the-one-recommended-change-fitmarginal_inittrue" title="Permanent link">&para;</a></h2>
-<p><strong>What it is (opt-in, defaults untouched).</strong> zuko's default zero-θ Bernstein init
-maps each node's pre-scaled domain <code>[−B, B]</code> onto latent z ∈ <strong>[−6.93, +7.63]</strong> —
-~2.5× steeper than the standard-logistic 5/95 quantiles (±2.944) — and slightly
-off-centre (z(0)=0.347). So the first chunk of training is spent just rescaling the
-marginal. <code>marginal_init=True</code> instead initialises each <em>unconditional</em> intercept to
-the <strong>calibrated</strong> map of its marginal:</p>
-<ul>
-<li><strong>Bernstein continuous roots</strong> → the exact linear map onto [logit .05, logit .95]
-  (<code>BernsteinUT.marginal_init_theta()</code>, a closed-form inversion of zuko's
-  <code>_constrain_theta</code> cumsum-of-softplus). Verified: marginal-init θ → z(±5)=±2.944, z(0)=0.</li>
-<li><strong>Ordinal roots</strong> → cutpoints set to the empirical class log-odds
-  (<code>ordinal_marginal_init_theta()</code>). Verified: reproduces a 7-level marginal to
-  max-abs-err 0.0 (default zeros give P(Y=0)=0.50 vs true 0.30).</li>
-</ul>
-<p>It is a <strong>pure init</strong>: the converged optimum is unchanged, so the exact-MLE
-property of all-<code>ls</code> models survives (the sacred tests pass). Affects only
-<code>SimpleIntercept</code> nodes; conditional <code>ci</code> intercepts are untouched. Applied once
-(first-fit guard), so multi-phase fits don't reset a trained intercept.</p>
-<p><strong>Evidence (median time-to-practical, s; baseline → marginal_init):</strong></p>
-<table>
-<thead>
-<tr>
-<th>workload / config</th>
-<th>seeds 0–2</th>
-<th>seeds 3–5</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>vaca-ci / plateau+freeze (W2)</strong></td>
-<td>6.9 → <strong>2.6</strong> (+62.6%)</td>
-<td>6.5 → <strong>2.8</strong> (+56.2%)</td>
-</tr>
-<tr>
-<td>stroke-ls / plateau+freeze (W1)</td>
-<td>31.8 → 30.4 (+4.3%)</td>
-<td>35.2 → 32.3 (+8.2%)</td>
-</tr>
-<tr>
-<td>stroke-ls / baseline-2phase (W1)</td>
-<td>33.3 → 31.2 (+6.2%)</td>
-<td>35.7 → 34.4 (+3.7%)</td>
-</tr>
-</tbody>
-</table>
-<p>All three improvement criteria met: (1) ≥10% on ≥1 workload — W2 +56–63% across
-two <strong>independent</strong> seed triples; (2) no workload regresses &gt;5% — W1 improves
-+4–8%; (3) full suite <code>uv run pytest tests/ -q</code> passes incl.
-<code>test_plateau_freeze_preserves_exact_mle</code> / <code>test_flow_matches_r_reference</code>.</p>
-<p><strong>Why uneven (the real finding).</strong> The gain scales with how much of the total-NLL
-gap is a continuous/ordinal <strong>root's marginal shape</strong>. W2 (all-continuous): root
-x1's miscalibrated marginal dominates early NLL → marginal-init ~2.5×'s it away (even
-though only 1 of 3 nodes is marginal-initialized). W1 (all-<code>ls</code>): time-to-target is gated
-by the <strong><code>ls</code> shift coefficients</strong> (the proportional-odds regression weights)
-reaching the MLE — which no marginal-calibration init can touch (Exp #5 confirmed:
-marginal-initializing the ordinal cutpoints too adds only +3%). The effect is general — it
-helps any Bernstein/ordinal root — but unevenly <em>leveraged</em> per workload. Not
-harness overfitting: it never regresses and is validated on two seed triples.</p>
-<h2 id="what-didnt-work-and-why-the-search-is-near-exhausted">What didn't work, and why the search is (near) exhausted<a class="headerlink" href="#what-didnt-work-and-why-the-search-is-near-exhausted" title="Permanent link">&para;</a></h2>
-<p>Two orthogonal axes, both now closed:</p>
-<ul>
-<li><strong>Per-step cost</strong> (cut op count): threads (#2, &lt;10%), torch.compile (#3,
-  double-backward), and feature-caching (#6, ~0%) all fail. The dispatch overhead
-  is intrinsic to the per-node transform math in eager PyTorch; reducing it needs a
-  transform rewrite (return analytic log-dets so there's no in-forward autograd) —
-  large, and it risks the numerics core / sacred MLE tests.</li>
-<li><strong>Steps-to-target</strong> (init/schedule): marginal-init (#4/#5) is banked for
-  marginal-shape-bound workloads. The only untried lever is <strong>coefficient-
-  convergence speed</strong> on the <code>ls</code>/shift params (per-group lr, or an LBFGS polish —
-  LBFGS reaches W1 in 4.6s in Exp #0 but is fragile across seeds). It is W1-only
-  and narrow, so the broad-applicability bar makes it low expected value.</li>
-</ul>
-<p>Per the mission's stop rule (top-of-backlog expected gain &lt;5% broadly), the
-productive search is essentially complete.</p>
-<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Merge <code>marginal_init</code></strong> as the opt-in this PR adds. Consider making it the
-   <strong>default for <code>SimpleIntercept</code> roots</strong> in a later release — it never regresses,
-   converges to the identical MLE, and only helps. (Kept opt-in here per the
-   research-run rule of leaving defaults untouched.)</li>
-<li><strong>Follow-ups (not in this PR):</strong> a unit test for <code>marginal_init</code> (could not be added
-   on the research machine — the integrity hook protects <code>tests/</code>); benchmarking the
-   <code>ls</code>-shift LBFGS-polish idea if a W1-specific speedup is wanted.</li>
-</ol>
-<h2 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h2>
-<p>Full lab notebook on the run branch: <code>docs/research/RESEARCH_LOG.md</code> (per-experiment
-hypothesis/numbers/verdict), <code>IDEAS.md</code> (ranked backlog, re-ranked after each
-experiment), <code>LEADERBOARD.md</code>, baseline CSVs in <code>docs/research/baseline/</code>, perf
-fingerprint in <code>docs/perf/</code>. The diagnostic scripts of the run
-(<code>profile_epoch.py</code>, <code>sweep_threads.py</code>, <code>probe_compile.py</code>,
-<code>exp_warmstart.py</code>, <code>exp_ordinal_warmstart.py</code>, <code>probe_feat_cache.py</code>) stayed on
-the run branch and are not in this tree.</p>
+<h1 id="reading-a-fitted-tram-dag">Reading a fitted TRAM-DAG<a class="headerlink" href="#reading-a-fitted-tram-dag" title="Permanent link">&para;</a></h1>
+<p>A TRAM-DAG is a normalizing flow, but it is built so that parts of it stay
+readable. This page collects the read-outs and says what each number means.
+For the model itself see <a href="../model/">model.md</a>, and for the symbols see
+<a href="../notation/">notation.md</a>.</p>
+<p>Every claim on this page is checked somewhere that runs. The links say where,
+so nothing here is a number typed into prose.</p>
+<h2 id="which-term-owns-which-edge">Which term owns which edge<a class="headerlink" href="#which-term-owns-which-edge" title="Permanent link">&para;</a></h2>
+<p><code>flow.to_matrix()</code> gives the labelled adjacency matrix of the model. Rows are
+parents and columns are children. A cell holds the term tag: <code>LS</code>, <code>CS</code>, <code>CI</code>,
+<code>VC</code> for a treatment edge, or <code>VCm</code> for a varying-coefficient modifier. An
+empty cell means no edge. A multi-parent term carries its parent group as a
+suffix, and several terms in one cell join with <code>+</code>.</p>
+<p>This is the meta-adjacency view of the paper. It is also the fastest way to
+confirm that the model you wrote is the model you meant.
+<code>plot_dag(spec)</code> draws the same thing, with one edge style per term.</p>
+<p>Exercised in the <a href="../notebooks/varying_coefficients/">varying-coefficients notebook</a>.</p>
+<h2 id="a-linear-shift-is-a-log-odds-ratio">A linear shift is a log-odds ratio<a class="headerlink" href="#a-linear-shift-is-a-log-odds-ratio" title="Permanent link">&para;</a></h2>
+<p><code>flow.ls_coefficients()</code> gives <code>{node: {parent: weights}}</code> for the <code>LS</code> terms
+only. A <code>CS</code> or <code>VC</code> shift is a network and has no single weight, so those are
+skipped.</p>
+<p>Two things decide how to read a weight.</p>
+<p><strong>The sign follows the latent-scale convention.</strong> A continuous node adds its
+shift, so a parent that raises the child gets a <em>negative</em> weight. An ordinal
+node subtracts its shift, so the sign is the one you expect there. This is
+not a quirk of the implementation. It is the convention of the original
+TRAM-DAG work, and the test suite pins it.</p>
+<p><strong>The scale is the latent scale, not the data scale.</strong> For a continuous node
+the weights carry the transform's scaling. A single weight is therefore not
+comparable to a regression coefficient. Their <em>ratio</em> is comparable, because
+the scaling cancels. An ordinal node has no such scaling, so <span class="arithmatex">\(\exp(\beta)\)</span> is
+an odds ratio directly.</p>
+<p><strong>An ordinal parent gives one weight per level</strong>, from its one-hot encoding.
+Those weights are identified only up to a common constant. The one-hot columns
+sum to one in every row. Adding a constant to all of them, and subtracting it
+from the intercept, leaves the likelihood unchanged. Read them as
+differences.
+<code>w[k] - w[0]</code> is the level-k-against-level-0 log-odds ratio, and it is the
+column that <code>flow.design_matrix(df, node, drop_first=True)</code> drops.</p>
+<p>Checked in <a href="../notebooks/demo_tram_dag_colab/"><code>notebooks/demo_tram_dag_colab.py</code></a>,
+which recovers a coefficient ratio from a known process, and in
+<a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
+which compares the weights against <code>statsmodels</code> and R. The odds-ratio
+reading is pinned in continuous integration by
+<code>experiments/paper/triangle_mixed.py</code>.</p>
+<h2 id="ordinal-nodes-cutpoints-and-the-interventional-pmf">Ordinal nodes: cutpoints and the interventional PMF<a class="headerlink" href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" title="Permanent link">&para;</a></h2>
+<p>An ordinal node's intercept is its cutpoint vector, not a transform. The model
+is</p>
+<div class="arithmatex">\[
+P(Y \le k \mid \mathrm{pa}) = \mathrm{sigmoid}(\theta_k - s(\mathrm{pa})),
+\]</div>
+<p>with increasing cutpoints <span class="arithmatex">\(\theta\)</span> and <span class="arithmatex">\(s\)</span> the total shift.
+<code>tramdag.transforms.ordinal_cutpoints</code> turns the unconstrained parameters into
+those increasing cutpoints, which is how you read a fitted baseline.</p>
+<p><code>flow.pmf(df, node, do=...)</code> gives the class probabilities per row, in closed
+form. It needs no sampling, and <code>do=</code> makes it interventional by overriding
+columns before the parents are read. That combination is what lets a
+treatment-effect question be answered exactly rather than by Monte Carlo.</p>
+<p>Exercised in the <a href="../notebooks/classical_fit_tram_dag/">classical-fitting notebook</a>,
+and under <code>do=</code> in <code>experiments/misc/validate_ls.py</code>, which is checked against
+committed ground truth on every run.</p>
+<h2 id="continuous-nodes-density-and-one-fitted-shift">Continuous nodes: density and one fitted shift<a class="headerlink" href="#continuous-nodes-density-and-one-fitted-shift" title="Permanent link">&para;</a></h2>
+<p><code>flow.density(df, node, grid, do=...)</code> is the continuous counterpart of
+<code>pmf</code>. For every row it evaluates <span class="arithmatex">\(p(\text{node} = g \mid \mathrm{pa})\)</span> at
+each grid value, in closed form from the transform. Use it to look at a fitted
+conditional without sampling it.</p>
+<p><code>flow.shift_curve(node, parent, grid)</code> evaluates one fitted shift term along a
+grid of parent values. Use it to plot a <code>CS</code> term against the function it was
+supposed to learn. It goes through the term's own evaluation, so a custom term
+and an <code>Fn</code> term work too.</p>
+<p>A caution on both: a <code>CS</code> term is identified only up to a constant, because
+that constant can move into the intercept. Compare a fitted curve to the truth
+after mean-centring both, not point by point.</p>
+<h2 id="the-price-of-a-complex-intercept">The price of a complex intercept<a class="headerlink" href="#the-price-of-a-complex-intercept" title="Permanent link">&para;</a></h2>
+<p><code>I(...)</code> with parents is the flexible end of the family. The parents control
+the transform parameters, so the node can bend in ways no additive shift can
+express. The cost is that there is no single coefficient to read.</p>
+<p>That is a real trade-off, and it is measurable. <code>experiments/paper/</code> fits the
+same process twice, once with an <code>LS</code> edge and once with a <code>CS</code> edge. It
+compares both against the known truth, and
+<a href="../paper-replication/">paper-replication.md</a> reports the result. The short
+version has two halves. Where the true edge is linear, the interpretable model
+gives up very little likelihood. Where the edge is curved, the flexible model
+wins, and the interpretable one absorbs the curvature into a biased single
+number.</p>
+<p>A middle option exists. <code>I("a", "b", allow_interaction=False)</code> builds one
+network per parent and sums their parameter vectors, so the parents act
+additively on the transform. <code>flow.intercept_contributions(df, node)</code> then
+decomposes that sum into mean-centred per-term parts, using the usual additive
+model convention, so the parts become comparable. This is a post-hoc read-out
+and changes nothing about the fitted model.</p>
+<p>Worked through in the <a href="../notebooks/additive_vs_joint_ci/">intercept notebook</a>.</p>
+<h2 id="an-effect-that-varies-with-a-covariate">An effect that varies with a covariate<a class="headerlink" href="#an-effect-that-varies-with-a-covariate" title="Permanent link">&para;</a></h2>
+<p><code>VC(*modifiers, t=...)</code> fits <span class="arithmatex">\(\beta(\text{modifiers}) \cdot x_t\)</span>, and
+<code>flow.varying_coef(df, node)</code> reads the fitted <span class="arithmatex">\(\beta\)</span> back. It is
+deterministic, needs no abduction, and for a binary treatment it equals the
+abduction difference.</p>
+<p><code>flow.scores(df, node)</code> and <code>flow.effect_modifier_scan(df, node, t=...)</code> come
+before that decision rather than after it. They rank candidate modifiers by
+how much the treatment coefficient's per-observation scores drift when the
+rows are ordered by each candidate. A cheap all-<code>LS</code> fit is enough, so the
+shortlist is measured rather than guessed.</p>
+<p>See <a href="../varying-coefficients/">varying-coefficients.md</a> and
+<a href="../scores/">scores.md</a>, and
+<a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>.</p>
 
 
 
@@ -1501,12 +1634,12 @@ the run branch and are not in this tree.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../../javascripts/mathjax.js"></script>
+        <script src="../javascripts/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
       

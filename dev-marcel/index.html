@@ -14,7 +14,7 @@
       
       
       
-        <link rel="next" href="notation/">
+        <link rel="next" href="model/">
       
       
         
@@ -478,6 +478,34 @@
   
   
     <li class="md-nav__item">
+      <a href="model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="notation/" class="md-nav__link">
         
   
@@ -486,6 +514,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -824,7 +880,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -845,14 +901,14 @@
   
   
     <li class="md-nav__item">
-      <a href="notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1467,35 +1523,49 @@
 <blockquote>
 <p>⚠️ <strong>Status: 1.0 release candidate.</strong> This README documents the
 <strong>unreleased 1.0</strong> API (term classes, <code>callbacks=</code>, <code>flow.shift_curve</code>,
-<code>VC(center="col")</code>); <code>0.3.0</code> on PyPI predates all of it. Until 1.0 ships,
-install from git to follow the docs below.</p>
+<code>VC(center="col")</code>). <code>0.3.0</code> on PyPI predates all of it. Until 1.0 ships,
+only a git install matches the docs below.</p>
 </blockquote>
 <p><strong>TRAM-DAGs</strong> model each variable of a structural causal model with a
-(transformation-model) flow: one triangular normalizing flow from iid
-standard-logistic latents to the observed variables. The triangular adjacency
-structure is exactly your causal DAG. Fit it <strong>once</strong> on observational data and answer all
-three rungs of Pearl's causal hierarchy — observational (L1), interventional
-(L2, the do-operator), and counterfactual (L3, Pearl abduction) — while keeping
-<strong>interpretable effects</strong>: every linear-shift coefficient is a log-odds ratio,
-exactly as in classical proportional-odds models.</p>
+(transformation-model) flow. The flow is one triangular normalizing flow from
+iid standard-logistic latents to the observed variables. The triangular
+adjacency structure is exactly your causal DAG. One fit on observational data
+answers all three rungs of Pearl's causal hierarchy:</p>
+<ul>
+<li>observational (L1),</li>
+<li>interventional (L2, the do-operator),</li>
+<li>counterfactual (L3, Pearl abduction).</li>
+</ul>
+<p>The model keeps <strong>interpretable effects</strong>. Every linear-shift coefficient is a
+log-odds ratio, exactly as in classical proportional-odds models.</p>
 <blockquote>
 <p>Beate Sick &amp; Oliver Dürr, <em>Interpretable Neural Causal Models with TRAM-DAGs</em>,
 CLeaR 2025 (<a href="https://arxiv.org/abs/2503.16206">arXiv:2503.16206</a>).
 This repo is the reference implementation (PyTorch, built on
-<a href="https://zuko.readthedocs.io/stable/">zuko</a>); all of the paper's experiments are
-replicated here with pinned tests.</p>
+<a href="https://zuko.readthedocs.io/stable/">zuko</a>). Pinned tests replicate all of
+the paper's experiments here.</p>
 </blockquote>
-<p><strong>5-minute showcase</strong>: the <a href="https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb">Colab badge above</a> fits the paper's bimodal benchmark
-live and walks L1 → L2 → L3, every answer checked against analytic
-ground truth. Further notebooks are available at <a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/notebooks"><code>notebooks/</code></a> like the didactic walkthrough of the model:
-<a href="notebooks/intro_tram_dag/"><code>notebooks/intro_tram_dag.py</code></a>.</p>
+<p><strong>Start here</strong>: the <a href="https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb">Colab badge above</a> opens a notebook.
+The notebook does three things:</p>
+<ul>
+<li>it fits the paper's bimodal benchmark,</li>
+<li>it walks L1 to L3,</li>
+<li>it writes the same DAG with interpretable terms.</li>
+</ul>
+<p>Every answer is a computed check against analytic ground truth. A failed claim
+therefore stops the notebook. The notebook runs on CPU in a few minutes.</p>
+<p><a href="model/"><code>docs/model.md</code></a> describes the model itself.
+<a href="interpretation/"><code>docs/interpretation.md</code></a> describes how to read a
+fitted model. <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/notebooks/README.md"><code>notebooks/README.md</code></a> lists the other
+notebooks.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>tramdag<span class="w">                 </span><span class="c1"># latest release (PyPI); pip install tramdag works too</span>
 uv<span class="w"> </span>add<span class="w"> </span><span class="s2">"tramdag[plots]"</span><span class="w">        </span><span class="c1"># with matplotlib, for plot_dag / plot_marginals / plot_training</span>
 uv<span class="w"> </span>add<span class="w"> </span><span class="s2">"tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main"</span><span class="w">   </span><span class="c1"># dev version (track main)</span>
 uv<span class="w"> </span>sync<span class="w">                        </span><span class="c1"># or: dev setup from a clone (tests, experiments)</span>
 </code></pre></div>
-<p>Pin the dev install to a commit for reproducibility, e.g. <code>...tramdag.git@&lt;sha&gt;</code>.</p>
+<p>Pin the dev install to a commit for reproducibility. Use the form
+<code>...tramdag.git@&lt;sha&gt;</code>.</p>
 <h2 id="30-seconds-of-api">30 seconds of API<a class="headerlink" href="#30-seconds-of-api" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">CausalFlowDAG</span><span class="p">,</span> <span class="n">ContinuousNode</span><span class="p">,</span> <span class="n">OrdinalNode</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">LS</span><span class="p">,</span> <span class="n">CS</span>
 
@@ -1557,9 +1627,15 @@ uv<span class="w"> </span>sync<span class="w">                        </span><sp
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_dag</span>
 <span class="n">plot_dag</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>   <span class="c1"># or plot_dag(flow) — layers left to right, one edge style per term</span>
 </code></pre></div>
-<p>Continuous nodes are ellipses, ordinal nodes rounded boxes with their level
-count; <code>LS</code> is thin gray, <code>CS</code> thick blue, a complex intercept dashed orange,
-a <code>VC</code> treatment edge red with its modifiers dotted. Needs the <code>plots</code> extra.</p>
+<p>Continuous nodes are ellipses. Ordinal nodes are rounded boxes with their
+level count. The edge styles are:</p>
+<ul>
+<li><code>LS</code> is thin gray,</li>
+<li><code>CS</code> is thick blue,</li>
+<li>a complex intercept is dashed orange,</li>
+<li>a <code>VC</code> treatment edge is red with its modifiers dotted.</li>
+</ul>
+<p><code>plot_dag</code> needs the <code>plots</code> extra.</p>
 <h2 id="the-model-in-detail-spec-math-networks">The model in detail: spec → math → networks<a class="headerlink" href="#the-model-in-detail-spec-math-networks" title="Permanent link">&para;</a></h2>
 <p>Per node, the transformation is additive on the latent (log-odds) scale — one
 intercept term <code>I</code> plus any number of shifts (notation:
@@ -1631,48 +1707,65 @@ intercept term <code>I</code> plus any number of shifts (notation:
 </tr>
 </tbody>
 </table>
-<p>A node takes <strong>at most one <code>I</code> term with parents</strong> — a term list is therefore
-always purely additive on the latent scale, and interactions exist only
-<em>inside</em> a term. Lists and <code>+</code> sums are interchangeable:
+<p>A node takes <strong>at most one <code>I</code> term with parents</strong>. A term list is therefore
+always purely additive on the latent scale. Interactions exist only <em>inside</em> a
+term. Lists and <code>+</code> sums are interchangeable:
 <code>[LS("A"), CS("B")]</code> ≡ <code>LS("A") + CS("B")</code>.</p>
 <p>Three knobs on the terms:</p>
 <ul>
-<li><strong><code>transform=</code> on <code>I</code></strong> picks the class of <code>h_ϑ</code> for a continuous node —
-  <code>"bernstein"</code> (default, 20 coefficients, tails extrapolate with the boundary
-  slope), <code>"spline"</code> (monotone RQ spline, 23 params at <code>bins=8</code>, fixed tail
-  slope) or <code>"affine"</code> (2 params: the latent is exactly logistic). Ordinal
-  nodes have no transform to pick: their intercept is the cutpoint vector,
-  <code>P(x ≤ k) = σ(ϑ_k − shift)</code>.</li>
-<li><strong><code>input_transform=</code> on <code>CI</code>/<code>CS</code>/<code>VC</code></strong> — <code>"minmax"</code>, <code>"standardize"</code>, or
-  a callable <code>fn(x, train)</code> — transforms that term's continuous network
-  inputs with statistics frozen at the first fit; <code>LS</code> and the <code>VC</code>
-  treatment stay raw, so their coefficients keep their units.</li>
-<li><strong><code>units=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></strong> sizes the term's network, e.g. <code>units=[16]</code>
-  for one hidden layer of 16 neurons. The defaults match the PyTorch
-  reference this package grew out of (<a href="https://github.com/buehlpa/TramDag">buehlpa/TramDag</a>,
-  <code>tram_models.py</code>), <strong>not</strong> the TRAM-DAG paper's own R nets — so a
-  replication sets <code>units=</code> and <code>activation=</code> explicitly, as the configs in
-  <code>experiments/paper/</code> do.</li>
+<li>
+<p><strong><code>transform=</code> on <code>I</code></strong> picks the class of <code>h_ϑ</code> for a continuous node.
+  There are three classes:</p>
+</li>
+<li>
+<p><code>"bernstein"</code> is the default. It has 20 coefficients. Its tails
+    extrapolate with the boundary slope.</p>
+</li>
+<li><code>"spline"</code> is a monotone RQ spline. It has 23 params at <code>bins=8</code>. Its
+    tail slope is fixed.</li>
+<li><code>"affine"</code> has 2 params. The latent is then exactly logistic.</li>
 </ul>
-<p>Feature widths: a continuous parent enters raw (1 column), an ordinal parent
-one-hot (<code>levels</code> columns). Abduction is exact for continuous nodes and
-truncated-logistic for ordinal ones, so <code>flow.sample(u=flow.abduct(df))</code>
-reproduces <code>df</code> exactly / level-exactly.</p>
-<p>There are two ways to fit the model: a stochastic optimizer (<code>fit</code>) and the classical route (<code>fit_classical</code>). For all-<code>ls</code> models — where each node-conditional is a classical transformation model — the classical fit is deterministic and takes seconds (measured ~10 s vs ~200 s for Adam on the CI runner — before the 2026-09 epoch cut made the Adam route ~3.5x faster; CI re-measures on the next push); see <a href="fitting/"><code>docs/fitting.md</code></a>.</p>
+<p>Ordinal nodes have no transform to pick. Their intercept is the cutpoint
+  vector, <code>P(x ≤ k) = σ(ϑ_k − shift)</code>.
+- <strong><code>input_transform=</code> on <code>CI</code>/<code>CS</code>/<code>VC</code></strong> transforms that term's continuous
+  network inputs. The statistics freeze at the first fit. The value is
+  <code>"minmax"</code>, <code>"standardize"</code>, or a callable <code>fn(x, train)</code>. <code>LS</code> and the <code>VC</code>
+  treatment stay raw, so their coefficients keep their units.
+- <strong><code>units=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></strong> sizes the term's network. For example,
+  <code>units=[16]</code> gives one hidden layer of 16 neurons. The defaults match the
+  PyTorch reference of this package
+  (<a href="https://github.com/buehlpa/TramDag">buehlpa/TramDag</a>, <code>tram_models.py</code>).
+  The defaults do <strong>not</strong> match the TRAM-DAG paper's own R nets. A replication
+  therefore sets <code>units=</code> and <code>activation=</code> explicitly, as the configs in
+  <code>experiments/paper/</code> do.</p>
+<p>Feature widths: a continuous parent enters raw (1 column). An ordinal parent
+enters one-hot (<code>levels</code> columns). Abduction is exact for continuous nodes and
+truncated-logistic for ordinal ones. <code>flow.sample(u=flow.abduct(df))</code>
+therefore reproduces <code>df</code> exactly / level-exactly.</p>
+<p>There are two ways to fit the model: a stochastic optimizer (<code>fit</code>) and the
+classical fit (<code>fit_classical</code>). In an all-<code>ls</code> model, each node-conditional
+is a classical transformation model. For these models the classical fit is
+deterministic and takes seconds. The measurement on the CI runner is ~10 s
+against ~200 s for Adam. That measurement predates the 2026-09 epoch cut,
+which made the Adam route ~3.5x faster. CI re-measures the numbers on the next
+push.</p>
+<p><a href="fitting/"><code>docs/fitting.md</code></a> gives more information.</p>
 <h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
 <p>Two layers, deliberately separate.</p>
 <p><strong>The framework's own test suite</strong> (<a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/tests"><code>tests/</code></a>) measures the library
-against three inline data-generating processes it carries itself, so it needs no
-research code to run. Its strongest claim is an equality, not a similarity: an
-all-<code>ls</code> outcome node <em>is</em> an ordered-logit model, so the flow's MLE must match
-<code>statsmodels</code> <code>OrderedModel</code> on the same design matrix — it does, and the
-varying-coefficient acceptance bars (effect recovery, propensity centering) are
-pinned the same way. What the tests guarantee, and how each ground truth is
-obtained, is documented in <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a>.</p>
-<p><strong>The paper replications</strong> (<a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/experiments"><code>experiments/</code></a>) are separate: one
-self-contained script per dataset, with its hyperparameters in a sibling YAML
-file and its expected results committed under each area's <code>ground_truth/</code>. A
-dedicated workflow runs them and compares.</p>
+against three inline data-generating processes. The test suite carries these
+processes itself, so it needs no research code to run. Its strongest claim is
+an equality, not a similarity. An all-<code>ls</code> outcome node <em>is</em> an ordered-logit
+model. The flow's MLE must therefore match <code>statsmodels</code> <code>OrderedModel</code> on the
+same design matrix, and it does. The varying-coefficient acceptance bars
+(effect recovery, propensity centering) are pinned the same way.</p>
+<p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a> documents what the tests guarantee and
+how each ground truth is obtained.</p>
+<p><strong>The paper replications</strong> (<a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/experiments"><code>experiments/</code></a>) are separate.
+There is one self-contained script per dataset. Each script keeps its
+hyperparameters in a sibling YAML file. Each area commits its expected results
+under <code>ground_truth/</code>. A dedicated workflow runs the scripts and compares the
+results.</p>
 <table>
 <thead>
 <tr>
@@ -1709,23 +1802,33 @@ dedicated workflow runs them and compares.</p>
 </tr>
 </tbody>
 </table>
-<p>Sign note: ordinal shifts are <em>subtracted</em> here but <em>added</em> in the paper, so
-fitted ordinal weights are the paper's with flipped sign (each <code>truth.json</code>
-records both conventions). A figure-by-figure account of what is reproduced,
-and what is not (the competing CNF/NSF baselines), is in
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/paper/PAPER_COVERAGE.md"><code>experiments/paper/PAPER_COVERAGE.md</code></a>.</p>
-<p><strong>Training speed</strong> — schedules, per-node freezing, L-BFGS and device benchmarks:
-<a href="training-speed/"><code>docs/training-speed.md</code></a>.</p>
-<p><strong>Paper replication</strong> — every hyperparameter of the eight <code>experiments/paper</code>
-variants with its source in the paper's R code, the deviations, and the
-numbers (paper / previous protocol / now):
-<a href="paper-replication/"><code>docs/paper-replication.md</code></a>.</p>
+<p>Sign note: ordinal shifts are <em>subtracted</em> here but <em>added</em> in the paper.
+Fitted ordinal weights therefore carry the flipped sign of the paper values.
+Each <code>truth.json</code> records both conventions.
+<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/paper/PAPER_COVERAGE.md"><code>experiments/paper/PAPER_COVERAGE.md</code></a>
+gives a figure-by-figure account of what the replications reproduce and what
+they do not reproduce (the competing CNF/NSF baselines).</p>
+<p><strong>Training speed</strong> — <a href="training-speed/"><code>docs/training-speed.md</code></a>
+covers:</p>
+<ul>
+<li>the schedules,</li>
+<li>the per-node freezing,</li>
+<li>L-BFGS,</li>
+<li>the device benchmarks.</li>
+</ul>
+<p><strong>Paper replication</strong> — <a href="paper-replication/"><code>docs/paper-replication.md</code></a>
+covers the eight <code>experiments/paper</code> variants:</p>
+<ul>
+<li>every hyperparameter with its source in the paper's R code,</li>
+<li>the deviations,</li>
+<li>the numbers (paper / previous protocol / now).</li>
+</ul>
 <h2 id="testing-policy">Testing policy<a class="headerlink" href="#testing-policy" title="Permanent link">&para;</a></h2>
 <p>See the <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a> file for more details.</p>
 <h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>src/tramdag/            spec.py terms.py transforms.py conditioners.py
                         nodes.py flow.py fitting.py readouts.py scores.py
-                        callbacks.py              &lt;- the framework, and nothing else
+                        callbacks.py plots.py     &lt;- the framework, and nothing else
 tests/                  unit tests, identities, acceptance bars, three inline DGPs
 experiments/            research code, one directory per area, each self-contained:
                           paper/       the replications + generators + frozen data
@@ -1734,16 +1837,24 @@ experiments/            research code, one directory per area, each self-contain
                         paper/misc: &lt;name&gt;.py + &lt;name&gt;.yaml, data/,
                         ground_truth/, tests/, results/ (benchmarks reads the
                         other areas' data and pins no ground truth)
-notebooks/              four executed examples: didactic intro, Colab demo,
-                        additive-vs-joint intercepts, varying coefficients
-docs/                   architecture.md + adr/ (the 1.0 design and its
-                        refusals), code-map.md, fitting.md, notation.md,
-                        training-speed.md, paper-replication.md,
-                        varying-coefficients.md, scores.md
+notebooks/              five executed examples: the combined Colab
+                        introduction and demo, training strategies,
+                        additive-vs-joint intercepts, varying coefficients,
+                        classical fitting
+docs/                   model.md and notation.md (what the model is),
+                        interpretation.md (reading a fitted one), fitting.md,
+                        training-speed.md, paper-replication.md, scores.md,
+                        varying-coefficients.md, code-map.md, zuko-upstream.md,
+                        architecture.md + adr/ (the 1.0 design and its refusals)
 </code></pre></div>
-<p>Implementation conventions (latent-scale signs, raw/one-hot parent encoding,
-log-space ordinal likelihood, seeding) are documented in
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/CLAUDE.md"><code>CLAUDE.md</code></a> and pinned by tests.</p>
+<p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/CLAUDE.md"><code>CLAUDE.md</code></a> documents these implementation conventions, and tests
+pin them:</p>
+<ul>
+<li>the latent-scale signs,</li>
+<li>the raw parent encoding and the one-hot parent encoding,</li>
+<li>the log-space ordinal likelihood,</li>
+<li>the seeding.</li>
+</ul>
 <h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
 <p>If you use <code>tramdag</code>, please cite the method paper:</p>
 <div class="highlight"><pre><span></span><code><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">sick2025tramdag</span><span class="p">,</span>

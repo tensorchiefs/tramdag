@@ -345,6 +345,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notation/" class="md-nav__link">
         
   
@@ -353,6 +381,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -691,7 +747,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -712,14 +768,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -2974,32 +3030,35 @@ interaction) unless <code>allow_interaction=False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Class of a continuous node's monotone transform: <code>"bernstein"</code>
-(default), <code>"spline"</code>, <code>"affine"</code>, or a <code>_ScaledUT</code> subclass.
-Bernstein is the default because zuko's spline extrapolates outside
+                <p>Class of a continuous node's monotone transform: <code>"bernstein"</code>,
+<code>"spline"</code>, <code>"affine"</code>, or a <code>_ScaledUT</code> subclass. <code>None</code>,
+the default, means the node picks <code>"bernstein"</code>. The name stays
+<code>None</code> here rather than becoming the literal, because <code>None</code> is
+also how an ordinal node tells that no transform was asked for, and
+an ordinal intercept is the cutpoint vector, which has none to pick.
+Bernstein is the choice because zuko's spline extrapolates outside
 <code>[-B, B]</code> with a <em>fixed</em> slope, independent of the fitted
 parameters, so the ~10% of data beyond the 5%/95% pre-scaling range
 is misweighted whenever the true tail slope differs; Bernstein
-extrapolates linearly along its own boundary derivative. An ordinal
-node accepts none, because its intercept is the cutpoint vector.</p>
+extrapolates linearly along its own boundary derivative.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**transform_kwargs</code>
+                <code>transform_kwargs</code>
             </td>
             <td>
+                  <code><span title="Mapping">Mapping</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Any other keyword goes straight to the transform class, for
-example <code>I(transform="spline", bins=16)</code> or <code>I(n_coeffs=40)</code>. A
-serialized term passes them as one <code>transform_kwargs</code> mapping; a
-keyword written out wins over the same key inside that mapping.</p>
+                <p>The transform's keyword arguments as one mapping. This is the
+serialized form, which is how a spec YAML and a checkpoint carry
+them; write them out instead when calling by hand.</p>
               </div>
             </td>
             <td>
@@ -3024,7 +3083,7 @@ do.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>True</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -3037,13 +3096,15 @@ do.</p>
             <td>
               <div class="doc-md-description">
                 <p>Hidden layers of the term's network, for example <code>units=[16]</code>.
-Default <code>[8, 8]</code>, from the PyTorch reference — see
-:mod:<code>tramdag.conditioners</code>, which also explains why a paper
+<code>None</code>, the default, takes the conditioner's own <code>(8, 8)</code> — the
+PyTorch reference's widths, which live in
+:mod:<code>tramdag.conditioners</code> next to their provenance, so this class
+does not restate them. That module also explains why a paper
 replication sets this explicitly.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -3055,12 +3116,12 @@ replication sets this explicitly.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Activation of the network's hidden layers, by default the
-conditioners' <code>relu</code>.</p>
+                <p>Activation of the network's hidden layers. <code>None</code>, the default,
+takes the conditioners' <code>relu</code>, for the same reason.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -3076,7 +3137,7 @@ conditioners' <code>relu</code>.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>False</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -3090,11 +3151,30 @@ conditioners' <code>relu</code>.</p>
               <div class="doc-md-description">
                 <p><code>"minmax"</code>, <code>"standardize"</code> or a callable <code>fn(x, train)</code>
 applied per continuous parent column (<code>train</code> is that column's
-raw training data, frozen at <code>calibrate</code>). Parents only.</p>
+raw training data, frozen at <code>calibrate</code>). Parents only.
+<code>None</code>, the default, applies no transform.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Any keyword that is not an option above goes straight to the
+transform class, for example <code>I(transform="spline", bins=16)</code> or
+<code>I(n_coeffs=40)</code>. A keyword written out here wins over the same
+key inside <code>transform_kwargs</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
             </td>
           </tr>
       </tbody>
@@ -3431,45 +3511,48 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
                   <code>()</code>
             </td>
           </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Other Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
           <tr class="doc-section-item">
-            <td>
-                <code>units</code>
-            </td>
+            <td><code>units</code></td>
             <td>
                   <code><span title="list">list</span>[<span title="int">int</span>] | <span title="tuple">tuple</span>[<span title="int">int</span>, ...] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Hidden layers, for example <code>units=[16]</code>. Default
-<code>[64, 128, 64]</code>, from the PyTorch reference — see
-:mod:<code>tramdag.conditioners</code>.</p>
+                <p>Hidden layers, for example <code>units=[16]</code>. <code>None</code>, the default,
+takes the conditioner's own <code>(64, 128, 64)</code> — the PyTorch
+reference's widths, which live in :mod:<code>tramdag.conditioners</code> next to
+their provenance, so this class does not restate them.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>activation</code>
-            </td>
+            <td><code>activation</code></td>
             <td>
                   <code><span title="str">str</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Activation of the hidden layers, by default the conditioners'
-<code>relu</code>.</p>
+                <p>Activation of the hidden layers. <code>None</code>, the default, takes the
+conditioners' <code>relu</code>, for the same reason.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>batch_norm</code>
-            </td>
+            <td><code>batch_norm</code></td>
             <td>
                   <code><span title="bool">bool</span></code>
             </td>
@@ -3478,24 +3561,16 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
                 <p>Batch-normalize the hidden layers, by default False.</p>
               </div>
             </td>
-            <td>
-                <em>required</em>
-            </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>input_transform</code>
-            </td>
+            <td><code>input_transform</code></td>
             <td>
                   <code><span title="str">str</span> | <span title="callable">callable</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>I</code>.</p>
+                <p>As for :class:<code>I</code>. <code>None</code>, the default, applies no transform.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -3658,10 +3733,22 @@ binary (2-level) ordinal node. The term is linear in <code>x_t</code>.</p>
                 <em>required</em>
             </td>
           </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Other Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
           <tr class="doc-section-item">
-            <td>
-                <code>penalty</code>
-            </td>
+            <td><code>penalty</code></td>
             <td>
                   <code><span title="float">float</span></code>
             </td>
@@ -3676,14 +3763,9 @@ with <code>n</code>: raise it for small <code>n</code> or many modifiers.</p>
 </blockquote>
               </div>
             </td>
-            <td>
-                <em>required</em>
-            </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>center</code>
-            </td>
+            <td><code>center</code></td>
             <td>
                   <code><span title="str">str</span> | False</code>
             </td>
@@ -3702,48 +3784,34 @@ Requires a binary ordinal <code>t</code>. <code>docs/varying-coefficients.md</co
 measures a 5-10x bias reduction from turning it on.</p>
               </div>
             </td>
-            <td>
-                <em>required</em>
-            </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>units</code>
-            </td>
+            <td><code>units</code></td>
             <td>
                   <code><span title="list">list</span>[<span title="int">int</span>] | <span title="tuple">tuple</span>[<span title="int">int</span>, ...] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Hidden layers of <code>b_theta</code>, by default <code>[16]</code> — see
-:class:<code>tramdag.conditioners.VaryingCoef</code> for why that size.</p>
+                <p>Hidden layers of <code>b_theta</code>. <code>None</code>, the default, takes the
+conditioner's own <code>(16,)</code>, whose size is justified where it is
+defined — see :class:<code>tramdag.conditioners.VaryingCoef</code>.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>activation</code>
-            </td>
+            <td><code>activation</code></td>
             <td>
                   <code><span title="str">str</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Activation of <code>b_theta</code>'s hidden layers, by default the
-conditioners' <code>relu</code>.</p>
+                <p>Activation of <code>b_theta</code>'s hidden layers. <code>None</code>, the default,
+takes the conditioners' <code>relu</code>.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>batch_norm</code>
-            </td>
+            <td><code>batch_norm</code></td>
             <td>
                   <code><span title="bool">bool</span></code>
             </td>
@@ -3752,24 +3820,17 @@ conditioners' <code>relu</code>.</p>
                 <p>Batch-normalize <code>b_theta</code>'s hidden layers, by default False.</p>
               </div>
             </td>
-            <td>
-                <em>required</em>
-            </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>input_transform</code>
-            </td>
+            <td><code>input_transform</code></td>
             <td>
                   <code><span title="str">str</span> | <span title="callable">callable</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>I</code>, over the modifiers.</p>
+                <p>As for :class:<code>I</code>, over the modifiers. <code>None</code>, the default,
+applies no transform.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -4036,36 +4097,44 @@ term (own options, penalty, side inputs) subclass :class:<code>Term</code> and
                   <code>()</code>
             </td>
           </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Other Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
           <tr class="doc-section-item">
-            <td>
-                <code>fn</code>
-            </td>
+            <td><code>fn</code></td>
             <td>
                   <code><span title="callable">callable</span> | <span title="torch.nn.Module">Module</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The shift function (required).</p>
+                <p>The shift function. Required in practice: the declared default of
+<code>None</code> is never a usable value, and <code>__post_init__</code> refuses it.
+The default exists because <code>fn</code> has to be a dataclass field, which
+is what carries the callable into :func:<code>spec_to_dict</code> and back out
+of a checkpoint.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>input_transform</code>
-            </td>
+            <td><code>input_transform</code></td>
             <td>
                   <code><span title="str">str</span> | <span title="callable">callable</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>CS</code>, by default None.</p>
+                <p>As for :class:<code>CS</code>. <code>None</code>, the default, applies no transform.</p>
               </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -4087,7 +4156,8 @@ term (own options, penalty, side inputs) subclass :class:<code>Term</code> and
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If no parent is given or <code>fn</code> is not callable.</p>
+                <p>If no parent is given or <code>fn</code> is not callable, which includes
+omitting it.</p>
               </div>
             </td>
           </tr>

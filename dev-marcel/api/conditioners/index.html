@@ -345,6 +345,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notation/" class="md-nav__link">
         
   
@@ -353,6 +381,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -691,7 +747,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -712,14 +768,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1760,6 +1816,12 @@ and none of them relies on the defaults here.</p>
 <p>Parent features use the encoding of the original implementation. A continuous
 parent enters raw, in one column. An ordinal parent is one-hot encoded, in
 <code>levels</code> columns.</p>
+<p>:data:<code>ACTIVATIONS</code> holds the three activations the reference implementations
+use: <code>relu</code> in the PyTorch reference's default classes, <code>sigmoid</code> in the
+paper's <code>create_param_net</code>, and <code>tanh</code> in the paper's <code>make_model</code> for
+the CAREFL and VACA comparisons. :data:<code>DEFAULT_ACTIVATION</code> is <code>relu</code>,
+because the architectures these conditioners copy use it, so the default
+network and the default activation come from one source.</p>
 
 
 

@@ -345,6 +345,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notation/" class="md-nav__link">
         
   
@@ -353,6 +381,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -691,7 +747,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -712,14 +768,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -3722,7 +3778,10 @@ missing from <code>df</code>.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The contributions live in the transform's <strong>unconstrained</strong>
+  <p>An additive intercept holds one network per parent group in its
+<code>nets</code>; a single intercept term, joint or not, is itself the one
+network. This method reads whichever shape is there.</p>
+<p>The contributions live in the transform's <strong>unconstrained</strong>
 parameter space, where the model sums the additive terms before the
 monotonicity constraint. They are exact partial effects on those
 parameters, but not, in general, an additive shift of the curve

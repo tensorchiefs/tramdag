@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -845,7 +901,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -866,14 +922,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1497,20 +1553,22 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>Ten modules, one rule: <strong>term-specific behavior lives on the term's two
-classes — its <code>Term</code> subclass (spec) and its module (<code>terms.py</code>); node-kind
-behavior lives in four adjacent functions; everything else is framework.</strong> The decisions and their refused alternatives are recorded in
-<a href="../adr/001-term-owned-architecture/">ADR 001</a>.</p>
+<p>The package has eleven modules and one rule. Term-specific behavior lives on the
+term's two classes. These are its <code>Term</code> subclass (the spec) and its module in
+<code>terms.py</code>. Node-kind behavior lives in four adjacent functions. Everything
+else is framework code.</p>
+<p><a href="../adr/001-term-owned-architecture/">ADR 001</a> records these decisions and the
+alternatives that the project refused.</p>
 <h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TD
     subgraph data["pure data"]
         spec["spec.py&lt;br/&gt;DSL: Term + one subclass per term&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient FnShift = I LS CS VC Fn),&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        terms["terms.py&lt;br/&gt;one module per term, data = its Term class;&lt;br/&gt;ShiftTerm/InterceptTerm hooks; module_for;&lt;br/&gt;LinearShiftTerm ComplexShiftTerm&lt;br/&gt;VaryingCoefficientTerm FnShiftTerm,&lt;br/&gt;SimpleInterceptTerm ComplexInterceptTerm&lt;br/&gt;AdditiveInterceptTerm"]
+        terms["terms.py&lt;br/&gt;one module per term, data = its Term class;&lt;br/&gt;ShiftTerm/InterceptTerm hooks; module_for;&lt;br/&gt;_InputTransform;&lt;br/&gt;LinearShiftTerm ComplexShiftTerm&lt;br/&gt;VaryingCoefficientTerm FnShiftTerm,&lt;br/&gt;SimpleInterceptTerm ComplexInterceptTerm&lt;br/&gt;AdditiveInterceptTerm"]
         conditioners["conditioners.py&lt;br/&gt;raw nn heads (frozen:&lt;br/&gt;anchors checkpoints + RNG)"]
         transforms["transforms.py&lt;br/&gt;Bernstein/Spline/Affine,&lt;br/&gt;ordinal_* likelihood,&lt;br/&gt;StandardLogistic"]
-        nodes["nodes.py&lt;br/&gt;_Node (intercept + shifts),&lt;br/&gt;_InputTransform,&lt;br/&gt;kind_log_prob/sample/abduct/&lt;br/&gt;marginal_theta"]
+        nodes["nodes.py&lt;br/&gt;_Node (intercept + shifts),&lt;br/&gt;kind_log_prob/sample/abduct/&lt;br/&gt;marginal_theta"]
         flow["flow.py&lt;br/&gt;CausalFlowDAG: build, calibrate,&lt;br/&gt;log_prob, sample/abduct/pmf/density,&lt;br/&gt;save/load; composes the mixins"]
     end
     subgraph functions["flow behavior by concern"]
@@ -1532,10 +1590,10 @@ behavior lives in four adjacent functions; everything else is framework.</strong
     flow --&gt; readouts
     flow --&gt; scores
     fitting --&gt; callbacks</code></pre>
-<p>(<code>spec.py</code> imports nothing from <code>terms.py</code>, so the data layer stays importable
-without torch executing any model code; <code>fitting.py</code>/<code>readouts.py</code> are
-mixins <code>CausalFlowDAG</code> composes and import <code>flow</code> under <code>TYPE_CHECKING</code>
-only — the graph is acyclic.)</p>
+<p><code>spec.py</code> imports nothing from <code>terms.py</code>. Therefore the data layer stays
+importable and torch runs no model code. <code>fitting.py</code> and <code>readouts.py</code> are
+mixins that <code>CausalFlowDAG</code> composes. They import <code>flow</code> under
+<code>TYPE_CHECKING</code> only. The graph is acyclic.</p>
 <h2 id="the-term-contract">The term contract<a class="headerlink" href="#the-term-contract" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>classDiagram
     class Term {
@@ -1589,32 +1647,42 @@ only — the graph is acyclic.)</p>
     VaryingCoefficientTerm --|&gt; VaryingCoef : nn
     SimpleInterceptTerm --|&gt; SimpleIntercept : nn
     ComplexInterceptTerm --|&gt; ComplexIntercept : nn</code></pre>
-<p>Built-in terms subclass their conditioners, so state-dict paths
-(<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream are those of 0.4.
-A custom term is two classes: a <code>tramdag.Term</code> subclass (its annotated
-attributes are the options; <code>__post_init__</code>, <code>edge_parents</code>, <code>cells</code> its
-rules) and a <code>ShiftTerm</code> subclass declaring <code>data =</code> that class and
-implementing <code>build</code> (which must set <code>key</code>) +
-<code>shift_value</code>. Subclassing is the registration; the cheap path for a
-one-off is <code>Fn</code>.</p>
+<p>Built-in terms subclass their conditioners. Therefore the state-dict paths
+(<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream are those of 0.4.</p>
+<p>A custom term is two classes:</p>
+<ul>
+<li>a <code>tramdag.Term</code> subclass. Its annotated attributes are the options. Its
+  rules are <code>__post_init__</code>, <code>edge_parents</code> and <code>cells</code>.</li>
+<li>a <code>ShiftTerm</code> subclass. It declares <code>data =</code> that class. It implements
+  <code>build</code> and <code>shift_value</code>. The <code>build</code> method must set <code>key</code>.</li>
+</ul>
+<p>Subclassing is the registration. For a one-off term, the cheap path is <code>Fn</code>.</p>
 <h2 id="node-kinds">Node kinds<a class="headerlink" href="#node-kinds" title="Permanent link">&para;</a></h2>
-<p>Two kinds (continuous, ordinal) stay an if/else — in ONE place:
-<code>kind_log_prob</code> / <code>kind_sample</code> / <code>kind_abduct</code> / <code>kind_marginal_theta</code>,
-adjacent in nodes.py. A third kind is the trigger for a protocol, not before.</p>
+<p>The two node kinds are continuous and ordinal. They stay an if/else in ONE
+place. These four functions hold that if/else, adjacent in nodes.py:</p>
+<ul>
+<li><code>kind_log_prob</code></li>
+<li><code>kind_sample</code></li>
+<li><code>kind_abduct</code></li>
+<li><code>kind_marginal_theta</code></li>
+</ul>
+<p>A third node kind is the trigger for a protocol. Until a third kind arrives,
+the if/else stays.</p>
 <h2 id="guards-that-pin-all-of-this">Guards that pin all of this<a class="headerlink" href="#guards-that-pin-all-of-this" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>tests/tools/statedict_smoke.py</code> — seeded per-DGP state dicts, bit-compared.</li>
 <li>The inline DGP truths (<code>tests/conftest.py</code>) and 45+ regex-pinned refusals.</li>
 <li><code>experiments/*/ground_truth/*.json</code> — ten CI-checked replications with
-  wall-time tripwires; centers move only with a documented reason.</li>
+  wall-time tripwires. Centers move only with a documented reason.</li>
 </ul>
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
 <h2 id="generated-views">Generated views<a class="headerlink" href="#generated-views" title="Permanent link">&para;</a></h2>
-<p>Regenerate with <code>uv run python tools/gen_diagrams.py</code> — the package and
-class UML come from pyreverse (classes: names and inheritance only), the
-call graphs from a profile trace of one flow construction and one
-three-epoch <code>fit</code> on a 3-node SI/LS/CS/VC spec (tramdag-internal edges
-only; <code>3x</code> = once per node).</p>
+<p>To regenerate this section, run <code>uv run python tools/gen_diagrams.py</code>.</p>
+<p>The package UML and the class UML come from pyreverse. The class diagram
+carries names and inheritance only. The call graphs come from a profile trace
+of one flow construction and one three-epoch <code>fit</code> on a 3-node SI/LS/CS/VC
+spec. The graphs keep tramdag-internal edges only, and <code>3x</code> means once per
+node.</p>
 <h3 id="package-uml-pyreverse">Package UML (pyreverse)<a class="headerlink" href="#package-uml-pyreverse" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>classDiagram
   class tramdag {
@@ -1657,7 +1725,9 @@ only; <code>3x</code> = once per node).</p>
   nodes --&gt; transforms
   plots --&gt; spec
   readouts --&gt; conditioners
+  readouts --&gt; spec
   readouts --&gt; terms
+  scores --&gt; spec
   scores --&gt; transforms
   terms --&gt; conditioners
   terms --&gt; spec
@@ -1778,8 +1848,8 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
 <pre class="mermaid"><code>flowchart LR
   subgraph conditioners
     n0["ComplexShift.__init__"]
-    n24["LinearShift.__init__"]
-    n23["SimpleIntercept.__init__"]
+    n25["LinearShift.__init__"]
+    n24["SimpleIntercept.__init__"]
     n2["VaryingCoef.__init__"]
     n1["_nn"]
   end
@@ -1794,10 +1864,11 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
   end
   subgraph spec
     n18["Term.edge_parents"]
+    n21["Term.net_options"]
     n19["VaryingCoefficient.edge_parents"]
     n17["_check_node"]
     n20["_kahn_sort"]
-    n21["feat_width"]
+    n22["feat_width"]
     n9["node_parents"]
     n6["validate_and_sort"]
   end
@@ -1806,13 +1877,13 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
     n12["InterceptTerm.build"]
     n15["LinearShiftTerm.build"]
     n16["VaryingCoefficientTerm.build"]
-    n22["_attach_input_transform"]
+    n23["_attach_input_transform"]
     n13["module_for"]
   end
   subgraph transforms
-    n25["BernsteinUT.__init__"]
+    n26["BernsteinUT.__init__"]
     n10["BernsteinUT.n_params"]
-    n26["_ScaledUT.__init__"]
+    n27["_ScaledUT.__init__"]
     n11["make_univariate_transform"]
   end
     n0 --&gt; n1
@@ -1839,14 +1910,16 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
     n14 --&gt; n0
     n14 --&gt; n21
     n14 --&gt; n22
-    n12 -- "3x" --&gt; n23
-    n15 --&gt; n24
-    n15 --&gt; n21
+    n14 --&gt; n23
+    n12 -- "3x" --&gt; n24
+    n15 --&gt; n25
+    n15 --&gt; n22
     n16 --&gt; n2
     n16 --&gt; n21
     n16 --&gt; n22
-    n25 -- "2x" --&gt; n26
-    n11 -- "2x" --&gt; n25</code></pre>
+    n16 --&gt; n23
+    n26 -- "2x" --&gt; n27
+    n11 -- "2x" --&gt; n26</code></pre>
 <h3 id="call-graph-one-fit-traced">Call graph — one fit (traced)<a class="headerlink" href="#call-graph-one-fit-traced" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
   subgraph callbacks
@@ -1879,7 +1952,7 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
   end
   subgraph flow
     n33["CausalFlowDAG._check_columns"]
-    n34["CausalFlowDAG._check_levels"]
+    n34["CausalFlowDAG._check_level_values"]
     n15["CausalFlowDAG._check_side_columns"]
     n29["CausalFlowDAG._dtype"]
     n27["CausalFlowDAG._encode_parent"]
@@ -1958,6 +2031,7 @@ from <code>ShiftTerm</code>/<code>InterceptTerm</code>.</p>
     n32 -- "18x" --&gt; n24
     n32 -- "9x" --&gt; n25
     n17 -- "2x" --&gt; n33
+    n17 -- "2x" --&gt; n34
     n17 -- "2x" --&gt; n28
     n18 --&gt; n33
     n18 --&gt; n34

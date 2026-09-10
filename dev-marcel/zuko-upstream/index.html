@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -806,7 +862,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -827,14 +883,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1419,63 +1475,80 @@
 
 
 <h1 id="upstream-candidates-for-zuko">Upstream candidates for zuko<a class="headerlink" href="#upstream-candidates-for-zuko" title="Permanent link">&para;</a></h1>
-<p>What tramdag works around in <a href="https://zuko.readthedocs.io/stable/">zuko</a>
-(1.6.0), ranked by value/effort as candidate upstream PRs/issues. tramdag uses
-zuko surgically — only <code>zuko.transforms</code> (<code>BernsteinTransform</code>,
-<code>MonotonicRQSTransform</code>, <code>MonotonicAffineTransform</code>) behind the three wrappers
-in <code>src/tramdag/transforms.py</code>; the flow machinery, base distribution and DAG
-structure are tramdag's own. Suggested order of attack: 4 → 1 → 3 → 2 → 5.</p>
+<p>This document lists what tramdag works around in
+<a href="https://zuko.readthedocs.io/stable/">zuko</a> (1.6.0). The list is ranked by
+value against effort, as candidate upstream PRs or issues. tramdag uses zuko
+in one place only. It uses these three transforms from <code>zuko.transforms</code>:</p>
+<ul>
+<li><code>BernsteinTransform</code></li>
+<li><code>MonotonicRQSTransform</code></li>
+<li><code>MonotonicAffineTransform</code></li>
+</ul>
+<p>The three wrappers in <code>src/tramdag/transforms.py</code> hold them. The flow
+machinery, the base distribution and the DAG structure are tramdag's own. The
+suggested order of attack is 4 → 1 → 3 → 2 → 5.</p>
 <h2 id="1-analytic-call_and_ladj-for-bernsteintransform">1. Analytic <code>call_and_ladj</code> for <code>BernsteinTransform</code><a class="headerlink" href="#1-analytic-call_and_ladj-for-bernsteintransform" title="Permanent link">&para;</a></h2>
-<p><code>BernsteinTransform</code> inherits <code>MonotonicTransform.call_and_ladj</code>, which gets
-the Jacobian by <code>torch.autograd.grad</code> in the forward pass. That roughly
-doubles the training graph and makes the per-node loss un-<code>torch.compile</code>-able
-(double backward; see docs/research/REPORT.md). The derivative is closed form
-(<code>f'(x) = order·Δθ</code> against the order−1 basis — zuko already computes it in
-<code>_offset_and_slope</code> for the tail slopes), so an override is ~25 lines with no
-API change, consistent with <code>MonotonicRQSTransform</code> which already has one.
-tramdag gets a free speedup and the <code>torch.compile</code> axis back.</p>
+<p><code>BernsteinTransform</code> inherits <code>MonotonicTransform.call_and_ladj</code>. That method
+gets the Jacobian by <code>torch.autograd.grad</code> in the forward pass. It therefore
+roughly doubles the training graph.</p>
+<p>It also makes the per-node loss un-<code>torch.compile</code>-able. Autograd in the
+forward pass gives a double backward, and <code>aot_autograd</code> does not support one.
+Therefore the op-count axis stays closed in eager mode.</p>
+<p>The derivative is closed form: <code>f'(x) = order·Δθ</code> against the order−1 basis.
+zuko already computes it in <code>_offset_and_slope</code> for the tail slopes. An
+override is therefore ~25 lines and needs no API change.
+<code>MonotonicRQSTransform</code> already has such an override. tramdag gets a free
+speedup and the <code>torch.compile</code> axis back.</p>
 <h2 id="2-learnablelinear-tails-for-monotonicrqstransform">2. Learnable/linear tails for <code>MonotonicRQSTransform</code><a class="headerlink" href="#2-learnablelinear-tails-for-monotonicrqstransform" title="Permanent link">&para;</a></h2>
-<p>zuko pads the knot derivatives with <code>exp(0)=1</code> and extrapolates as the
-identity outside <code>[-B, B]</code>, so the tail slope is fixed at 1 regardless of θ —
-the structural reason <code>spline</code> consistently trails <code>bernstein</code> here (~10% of
-data sits beyond the 5%/95% pre-scaling range; CLAUDE.md, <code>spec.py</code>, demo
-notebook section 6). Upstream: accept boundary derivatives (shape <code>(*, K+1)</code>)
-or an opt-in <code>tails="linear"</code>; identity tails are deliberate in the NSF
-design, so the framing must be back-compatible. Would delete the caveats and
-make <code>spline</code> a first-class transform choice.</p>
+<p>zuko pads the knot derivatives with <code>exp(0)=1</code>. It extrapolates as the
+identity outside <code>[-B, B]</code>. Therefore the tail slope stays fixed at 1 for
+every θ. This is the structural reason why <code>spline</code> consistently trails
+<code>bernstein</code> here, because ~10% of the data sits beyond the 5%/95% pre-scaling
+range. CLAUDE.md and <code>spec.py</code> also describe this.</p>
+<p>Upstream, zuko can accept boundary derivatives of shape <code>(*, K+1)</code>, or it can
+take an opt-in <code>tails="linear"</code>. Identity tails are deliberate in the NSF
+design. The framing must therefore stay back-compatible. This change will
+delete the caveats and make <code>spline</code> a first-class transform choice.</p>
 <h2 id="3-public-inverse-of-_constrain_theta">3. Public inverse of <code>_constrain_theta</code><a class="headerlink" href="#3-public-inverse-of-_constrain_theta" title="Permanent link">&para;</a></h2>
-<p><code>BernsteinUT.marginal_init_theta</code> closed-form-inverts zuko's <em>private</em>
-<code>_constrain_theta</code> (cumsum-of-softplus), hard-coding both its internal
-<code>log(2)·n/2</code> centering and its tying of the first two and the last two
-diffs — any upstream reparametrization silently breaks the calibrated
-start. A public <code>unconstrain_theta(theta)</code> taking the target control points
-is ~15 lines upstream and removes the private-detail coupling. Framing: "identity/linear initialization
-support", a standard flow trick.</p>
+<p><code>BernsteinUT.marginal_init_theta</code> inverts zuko's <em>private</em> <code>_constrain_theta</code>
+(cumsum-of-softplus) in closed form. It hard-codes two internal details of
+that function:</p>
+<ul>
+<li>the <code>log(2)·n/2</code> centering</li>
+<li>the tying of the first two and the last two diffs</li>
+</ul>
+<p>Any upstream reparametrization therefore breaks the calibrated start silently.
+A public <code>unconstrain_theta(theta)</code> that takes the target control points is
+~15 lines upstream. It removes the coupling to these private details. The
+framing is "identity/linear initialization support", a standard flow trick.</p>
 <h2 id="4-docstring-fix-the-bernstein-shape-off-by-one">4. Docstring fix: the Bernstein θ-shape off-by-one<a class="headerlink" href="#4-docstring-fix-the-bernstein-shape-off-by-one" title="Permanent link">&para;</a></h2>
-<p>zuko's docstring says θ has shape <code>(*, M-2)</code> for a degree-M polynomial; <code>n</code>
-unconstrained coefficients become <code>n+2</code> control points = degree <code>n+1</code>, so the
-correct claim is <code>(*, M-1)</code>. This off-by-one is a real replication trap
-(order 21 vs the paper's <code>len_theta=20</code> = order 19) that costs tramdag prose
-in three docs. Trivial PR, near-certain accept.</p>
+<p>zuko's docstring says that θ has shape <code>(*, M-2)</code> for a degree-M polynomial.
+<code>n</code> unconstrained coefficients become <code>n+2</code> control points, which is degree
+<code>n+1</code>. The correct claim is therefore <code>(*, M-1)</code>. This off-by-one is a real
+replication trap: order 21 against the paper's <code>len_theta=20</code>, which is order
+19. It costs tramdag prose in three documents. The PR is trivial and an accept
+is near-certain.</p>
 <h2 id="5-logistic-in-zukodistributions">5. <code>Logistic</code> in <code>zuko.distributions</code><a class="headerlink" href="#5-logistic-in-zukodistributions" title="Permanent link">&para;</a></h2>
-<p>Neither zuko nor torch ships a Logistic distribution; tramdag hand-rolls
-<code>StandardLogistic</code> (~50 lines: <code>log_prob</code>, <code>sample</code>, <code>icdf</code>). Logistic latents
-are standard in transformation models and discrete flows, and zuko has
-precedent (<code>GeneralizedNormal</code>) — but zuko may point at
-<code>TransformedUniform(SigmoidTransform().inv)</code>, and tramdag would keep its
-<code>_U_EPS</code> clamp locally either way. Lowest value of the five.</p>
+<p>Neither zuko nor torch ships a Logistic distribution. tramdag therefore
+hand-rolls <code>StandardLogistic</code> in ~50 lines, with <code>log_prob</code>, <code>sample</code> and
+<code>icdf</code>. Logistic latents are standard in transformation models and in discrete
+flows, and zuko has a precedent in <code>GeneralizedNormal</code>. But zuko can point at
+<code>TransformedUniform(SigmoidTransform().inv)</code> instead. tramdag keeps its
+<code>_U_EPS</code> clamp locally in both cases. This candidate has the lowest value of
+the five.</p>
 <h2 id="anti-candidates-look-upstreamable-are-not">Anti-candidates (look upstreamable, are not)<a class="headerlink" href="#anti-candidates-look-upstreamable-are-not" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Quantile pre-scaling / <code>_ScaledUT</code></strong>: a modeling choice; zuko's
+<li><strong>Quantile pre-scaling and <code>_ScaledUT</code></strong> — this is a modeling choice. zuko's
   <code>ComposedTransform</code> with <code>MonotonicAffineTransform</code> already composes it.</li>
-<li><strong>The ordinal ordered-logit transform and log-space <code>ordinal_log_prob</code></strong>:
-  not a bijection, outside zuko's flow scope (torch.distributions material,
-  if anywhere).</li>
-<li><strong>LS/CS/CI/VC terms, marginal-init policy, propensity centering, scores</strong>:
-  TRAM-DAG semantics. zuko's <code>MaskedMLP</code> already supports arbitrary
-  adjacency; tramdag doesn't use it because it needs per-term
-  interpretability.</li>
-<li><strong>Spline <code>slope</code> / Bernstein <code>eps</code> knobs</strong>: already exposed upstream.</li>
+<li><strong>The ordinal ordered-logit transform and log-space <code>ordinal_log_prob</code></strong> —
+  this transform is not a bijection. It stays outside zuko's flow scope. It is
+  torch.distributions material, if anywhere.</li>
+<li><strong>LS, CS, CI and VC terms, the marginal-init policy, propensity centering
+  and scores</strong> — these are TRAM-DAG semantics. zuko's <code>MaskedMLP</code> already
+  supports arbitrary adjacency. tramdag does not use it, because it needs
+  per-term interpretability.</li>
+<li><strong>The spline <code>slope</code> knob and the Bernstein <code>eps</code> knob</strong> — zuko already
+  exposes both upstream.</li>
 </ul>
 
 

@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -883,7 +939,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -904,14 +960,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1573,12 +1629,13 @@
 
 
 <h1 id="code-map-every-module-of-srctramdag-the-public-names-and-the-private-plumbing">Code map — every module of <code>src/tramdag/</code> — the public names and the private plumbing<a class="headerlink" href="#code-map-every-module-of-srctramdag-the-public-names-and-the-private-plumbing" title="Permanent link">&para;</a></h1>
-<p>One entry per name, with its role and its place in the pipeline. Names in
-parentheses are private machinery: useful to know, not part of the API.
-The last section lists every training hyperparameter and where it lives.</p>
+<p>This document has one entry per name, with its role and its place in the
+pipeline. Names in parentheses are private machinery. They are useful to know,
+and they are not part of the API. The last section lists every training
+hyperparameter and where it lives.</p>
 <h2 id="specpy-declare-the-model"><code>spec.py</code> — declare the model<a class="headerlink" href="#specpy-declare-the-model" title="Permanent link">&para;</a></h2>
-<p>Every term is a <code>Term</code> subclass under its pythonic name; the paper's symbol
-is the same object, so <code>LS is LinearShift</code>.</p>
+<p>Every term is a <code>Term</code> subclass under its pythonic name. The paper's symbol is
+the same object, so <code>LS is LinearShift</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1706,18 +1763,23 @@ is the same object, so <code>LS is LinearShift</code>.</p>
 <td>Cutpoint start that matches the empirical class frequencies (<code>init_marginals</code>).</td>
 </tr>
 <tr>
-<td>(<code>_ScaledUT</code>, <code>_bounds</code>, <code>_log1mexp</code>)</td>
-<td>Quantile pre-scaling base class (the inverse is zuko's, with its closed-form tail); per-level cutpoint intervals; stable <code>log(1-exp(x))</code>.</td>
+<td><a class="autorefs autorefs-internal" title="ordinal_bounds" href="../api/transforms/#tramdag.transforms.ordinal_bounds"><code>ordinal_bounds()</code></a></td>
+<td>The shifted cutpoint interval of each observed level. <code>scores.py</code> reads it for the latent-scale derivative.</td>
+</tr>
+<tr>
+<td>(<code>_ScaledUT</code>, <code>_log1mexp</code>)</td>
+<td>Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable <code>log(1-exp(x))</code>.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="conditionerspy-the-networks-behind-the-terms"><code>conditioners.py</code> — the networks behind the terms<a class="headerlink" href="#conditionerspy-the-networks-behind-the-terms" title="Permanent link">&para;</a></h2>
-<p>Default architectures replicate the PyTorch reference this package grew out of
-(<a href="https://github.com/buehlpa/TramDag">buehlpa/TramDag</a>, <code>tram_models.py</code>), so a
-fitted model stays comparable to it. They are <strong>not</strong> the TRAM-DAG paper's nets:
-the paper's R code uses <code>c(2, 25, 25, 2)</code> with sigmoid for the triangle
-experiments and a 10-100 tanh net for its CAREFL/VACA comparisons, so each
-config in <code>experiments/paper/</code> states <code>units=</code> and <code>activation=</code> itself.</p>
+<p>The default architectures replicate the PyTorch reference that this package
+grew out of, which is <a href="https://github.com/buehlpa/TramDag">buehlpa/TramDag</a>,
+file <code>tram_models.py</code>. Therefore a fitted model stays comparable to it.</p>
+<p>The defaults are <strong>not</strong> the TRAM-DAG paper's nets. The paper's R code uses
+<code>c(2, 25, 25, 2)</code> with sigmoid for the triangle experiments. It uses a 10-100
+tanh net for its CAREFL and VACA comparisons. Therefore each config in
+<code>experiments/paper/</code> states <code>units=</code> and <code>activation=</code> itself.</p>
 <table>
 <thead>
 <tr>
@@ -1860,9 +1922,9 @@ config in <code>experiments/paper/</code> states <code>units=</code> and <code>a
 </tbody>
 </table>
 <h2 id="termspy-the-term-modules-the-10-architectures-core"><code>terms.py</code> — the term modules (the 1.0 architecture's core)<a class="headerlink" href="#termspy-the-term-modules-the-10-architectures-core" title="Permanent link">&para;</a></h2>
-<p>One module class per term, declaring the <code>Term</code> subclass it builds
-(<code>data = CS</code>); see <a href="../architecture/">architecture.md</a> for the contract
-diagram.</p>
+<p>There is one module class per term. Each module class declares the <code>Term</code>
+subclass it builds (<code>data = CS</code>). For the contract diagram, see
+<a href="../architecture/">architecture.md</a>.</p>
 <table>
 <thead>
 <tr>
@@ -1885,7 +1947,11 @@ diagram.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SimpleInterceptTerm" href="../api/terms/#tramdag.terms.SimpleInterceptTerm"><code>SimpleInterceptTerm</code></a> / <a class="autorefs autorefs-internal" title="ComplexInterceptTerm" href="../api/terms/#tramdag.terms.ComplexInterceptTerm"><code>ComplexInterceptTerm</code></a> / <a class="autorefs autorefs-internal" title="AdditiveInterceptTerm" href="../api/terms/#tramdag.terms.AdditiveInterceptTerm"><code>AdditiveInterceptTerm</code></a></td>
-<td>The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space.</td>
+<td>The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. <code>net_groups</code> gives the per-group networks a read-out needs.</td>
+</tr>
+<tr>
+<td>(<code>_InputTransform</code>)</td>
+<td>One term's frozen network-input transform (minmax / standardize / callable over frozen train columns).</td>
 </tr>
 </tbody>
 </table>
@@ -1901,10 +1967,6 @@ diagram.</p>
 <tr>
 <td>(<code>_Node</code>)</td>
 <td>One sub-model per variable: builds its intercept and shift terms through <code>module_for</code>; <code>theta_shift()</code> sums the terms' <code>shift_value</code>s (plain shifts first, then VC); <code>net_input()</code> feeds every term network, <code>input_transform</code> applied.</td>
-</tr>
-<tr>
-<td>(<code>_InputTransform</code>)</td>
-<td>One term's frozen network-input transform (minmax / standardize / callable over frozen train columns).</td>
 </tr>
 <tr>
 <td>(<code>kind_log_prob</code>, <code>kind_sample</code>, <code>kind_abduct</code>, <code>kind_marginal_theta</code>)</td>
@@ -1976,8 +2038,8 @@ diagram.</p>
 <td><code>P(sup |Brownian bridge| &gt; stat)</code>, the Kolmogorov series.</td>
 </tr>
 <tr>
-<td>(<code>_dl_ds</code>, <code>CRIT_5PCT</code>)</td>
-<td>Closed-form latent-scale derivative; the 5% critical value 1.3581. The per-term columns come from each term's <code>score_columns</code> hook.</td>
+<td>(<code>_dl_ds</code>, <code>_is_binary_ordinal</code>, <code>CRIT_5PCT</code>)</td>
+<td>Closed-form latent-scale derivative. Whether a treatment is a two-level ordinal, asked of the spec. The 5% critical value 1.3581. The per-term columns come from each term's <code>score_columns</code> hook.</td>
 </tr>
 </tbody>
 </table>
@@ -1996,7 +2058,7 @@ diagram.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="PerNodePlateau" href="../api/callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a></td>
-<td>Per-node lr decay and freezing on each node's own validation NLL (from <code>history["val"]</code>); stops the fit once every node froze, and records <code>frozen = {node: epoch}</code>. The pre-0.4 <code>fit(schedule="plateau")</code> recipe, opt-in. <code>step(nll, opt)</code> for a hand-computed NLL.</td>
+<td>Per-node lr decay and freezing on each node's own validation NLL (from <code>history["val"]</code>); stops the fit once every node froze, and records <code>frozen = {node: epoch}</code>. Opt-in. <code>step(nll, opt)</code> for a hand-computed NLL.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="per_node_adam" href="../api/callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam()</code></a></td>
@@ -2032,12 +2094,16 @@ diagram.</p>
 </tbody>
 </table>
 <h2 id="what-is-not-in-the-package">What is <em>not</em> in the package<a class="headerlink" href="#what-is-not-in-the-package" title="Permanent link">&para;</a></h2>
-<p>The SCM generators, the frozen datasets and the replication scripts are
-research code and live in <a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/experiments"><code>experiments/</code></a>, outside the
-installed package — see
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md"><code>experiments/README.md</code></a>. The framework's own
-tests do not depend on them: they measure against three inline DGPs in
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/conftest.py"><code>tests/conftest.py</code></a>.</p>
+<p>Three groups of files are research code:</p>
+<ul>
+<li>the SCM generators</li>
+<li>the frozen datasets</li>
+<li>the replication scripts</li>
+</ul>
+<p>They live in <a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/experiments"><code>experiments/</code></a>, outside the installed package.
+For details, see <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md"><code>experiments/README.md</code></a>. The
+framework's own tests do not depend on them. The tests measure against three
+inline DGPs in <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/conftest.py"><code>tests/conftest.py</code></a>.</p>
 <h2 id="where-every-training-hyperparameter-lives">Where every training hyperparameter lives<a class="headerlink" href="#where-every-training-hyperparameter-lives" title="Permanent link">&para;</a></h2>
 <p>Everything that shapes a fit is either a keyword you pass or a documented
 default you can read at the call site. Nothing numeric is buried.</p>

@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/fitting/">
       
       
-        <link rel="prev" href="../notation/">
+        <link rel="prev" href="../interpretation/">
       
       
         <link rel="next" href="../training-speed/">
@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -840,7 +896,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -861,14 +917,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1487,17 +1543,27 @@
 
 
 <h1 id="fitting-a-tram-dag-how-training-works">Fitting a TRAM-DAG: how training works<a class="headerlink" href="#fitting-a-tram-dag-how-training-works" title="Permanent link">&para;</a></h1>
-<p>The technical reference for training a <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a>:
-the likelihood, the two fitting paths (<code>fit</code>, <code>fit_classical</code>) and their hooks.</p>
+<p>This document is the technical reference for training a
+<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a>. It covers three subjects:</p>
+<ul>
+<li>the likelihood</li>
+<li>the two fitting paths, <code>fit</code> and <code>fit_classical</code></li>
+<li>the hooks of these two paths</li>
+</ul>
 <h2 id="how-the-flow-is-built-one-module-one-sub-model-per-node">How the flow is built: one module, one sub-model per node<a class="headerlink" href="#how-the-flow-is-built-one-module-one-sub-model-per-node" title="Permanent link">&para;</a></h2>
-<p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code> holding <strong>one independent
-sub-model per variable</strong> — an intercept producing the transform parameters <code>θ</code>,
-the monotone 1-D transform <code>h</code> (no learnable weights of its own, only range
-buffers), and one shift module per shift term. The nodes share <strong>no
-parameters</strong>: one module bundles them and one optimizer trains them, but the
-DAG structure lives entirely in <em>which parents each node reads</em> — there is no
-edge weight matrix or shared trunk. Which class implements which term is the
-<a href="../code-map/">code map</a>; parent features enter continuous-raw / ordinal-one-hot.</p>
+<p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code>. It holds <strong>one independent
+sub-model per variable</strong>. Each sub-model has these parts:</p>
+<ul>
+<li>an intercept, which produces the transform parameters <code>θ</code></li>
+<li>the monotone 1-D transform <code>h</code>, which has no learnable weights of its own and
+  only range buffers</li>
+<li>one shift module per shift term</li>
+</ul>
+<p>The nodes share <strong>no parameters</strong>. One module bundles them, and one optimizer
+trains them. The DAG structure lives entirely in <em>which parents each node
+reads</em>. There is no edge weight matrix and no shared trunk.</p>
+<p>The <a href="../code-map/">code map</a> says which class implements which term. Continuous
+parent features enter raw. Ordinal parent features enter as one-hot columns.</p>
 <h2 id="how-the-likelihood-is-computed">How the likelihood is computed<a class="headerlink" href="#how-the-likelihood-is-computed" title="Permanent link">&para;</a></h2>
 <p>A TRAM-DAG maps iid standard-logistic latents <code>U</code> to the observed <code>X</code> in causal
 order. Node <code>i</code> reads only its parents (earlier variables, as <em>data</em>). Therefore
@@ -1528,62 +1594,75 @@ log p(x | pa) = log f_logistic(z) + log |dz/dx|
 joint, which scores whole observations.</p>
 <p><strong>Consequence used by both optimizers:</strong> because parents enter as data, the
 per-node gradients are independent. Therefore a joint fit of the summed loss is
-identical to a separate fit of each node. This independence licenses per-node
-learning rates and freezing (a callback, below) and the all-<code>ls</code> classical fit.</p>
+identical to a separate fit of each node. This independence licenses three
+things:</p>
+<ul>
+<li>per-node learning rates</li>
+<li>freezing, which a callback does (see below)</li>
+<li>the all-<code>ls</code> classical fit</li>
+</ul>
 <h2 id="path-a-stochastic-optimization-fit">Path A — stochastic optimization (<code>fit</code>)<a class="headerlink" href="#path-a-stochastic-optimization-fit" title="Permanent link">&para;</a></h2>
 <p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG.fit</code></a> is the general-purpose trainer. Any
 <code>cs</code>/<code>ci</code> edge requires it. Mechanics:</p>
 <ul>
-<li><strong>One optimizer over all parameters</strong> — <code>Adam(lr=learning_rate)</code> by
-  default, or any <code>torch.optim.Optimizer</code> you pass as <code>optimizer=</code> (exactly
-  per-node training, see the consequence above; <code>per_node_adam</code> builds the
-  per-node parameter groups when you want per-node rates).</li>
+<li><strong>One optimizer over all parameters</strong>. The default is
+  <code>Adam(lr=learning_rate)</code>. You can pass any <code>torch.optim.Optimizer</code> as
+  <code>optimizer=</code> instead. This is exactly per-node training, as the consequence
+  above explains. For per-node rates, <code>per_node_adam</code> builds the per-node
+  parameter groups.</li>
 <li><strong>Minibatches</strong>: a fresh <code>torch.randperm</code> shuffle each epoch (<code>seed=</code> seeds
   it). The loss is the summed per-node mean NLL on the batch, plus the <code>VC</code>
   penalty.</li>
-<li><strong><code>calibrate(train_df)</code></strong>, called by the first <code>fit</code>: every term freezes
-  its own data-dependent state — the intercept maps the train
-  <code>range_q</code>/<code>1-range_q</code> quantiles onto its transform's domain, and every
+<li><strong><code>calibrate(train_df)</code></strong> — the first <code>fit</code> calls it. Every term then
+  freezes its own data-dependent state. The intercept maps the train
+  <code>range_q</code>/<code>1-range_q</code> quantiles onto its transform's domain. Every
   term-level <code>input_transform=</code> freezes its statistics. Calibration never
-  touches the weights. A checkpoint carries the flag, so a loaded model is
-  never recalibrated. The calibrated start is a separate, always-explicit
-  step: <code>flow.init_marginals(train_df)</code> resets every Bernstein/ordinal
-  simple intercept to its column's empirical marginal — <code>logit(F_hat)</code> in
-  both cases, as control points or as cutpoints; a pure init that leaves
-  the MLE unchanged (spline, affine and <code>range_q=0</code> transforms have none) —
-  any time, including on a trained or loaded flow.</li>
-<li><strong>Validation, Keras-shaped</strong> — <code>validation_data=</code> (a DataFrame) or
-  <code>validation_split=</code> (a float: the LAST fraction of <code>train_df</code>, no shuffle,
-  and only the head calibrates — no leakage) makes <code>fit</code> compute the
-  per-node validation NLL after every epoch, once, into
-  <code>flow.history["val"]</code> (<code>validation_batch_size=</code> chunks the pass). The
-  shipped callbacks read it there. <code>flow.history["lr"]</code> records the
-  optimizer's rate after every epoch (<code>{node: lr}</code> with <code>per_node_adam</code>), so
-  a schedule's decisions are on record without a callback of your own.
-  <code>verbose=N</code> prints every Nth epoch plus the final one (0, the default, is
-  silent).</li>
-<li><strong><code>callbacks=</code></strong> — one entry or a list. A
+  touches the weights. A checkpoint carries the flag, so no <code>fit</code> ever
+  recalibrates a loaded model.</li>
+<li><strong><code>flow.init_marginals(train_df)</code></strong> — the calibrated start is a separate
+  step, and it is always explicit. It resets every Bernstein or ordinal
+  simple intercept to the empirical marginal of its column. That value is
+  <code>logit(F_hat)</code> in both cases, as control points or as cutpoints. The
+  spline, the affine and the <code>range_q=0</code> transforms have no such start. The
+  call is a pure init that leaves the MLE unchanged. You can call it at any
+  time, including on a trained or a loaded flow.</li>
+<li><strong>Validation, Keras-shaped</strong> — two arguments turn validation on.
+  <code>validation_data=</code> takes a DataFrame. <code>validation_split=</code> takes a float, and
+  it uses the LAST fraction of <code>train_df</code> with no shuffle. Only the head of
+  the frame calibrates, so there is no leakage. With either argument, <code>fit</code>
+  computes the per-node validation NLL once after every epoch, into
+  <code>flow.history["val"]</code>. <code>validation_batch_size=</code> chunks that pass.</li>
+<li><strong>Logging</strong> — the shipped callbacks read <code>flow.history["val"]</code> there.
+  <code>flow.history["lr"]</code> records the optimizer's rate after every epoch. With
+  <code>per_node_adam</code> that record is a <code>{node: lr}</code> dict. A schedule's decisions
+  are therefore on record, and you need no callback of your own. <code>verbose=N</code>
+  prints every Nth epoch plus the final one. The default is 0, which is
+  silent.</li>
+<li><strong><code>callbacks=</code></strong> — it takes one entry or a list. A
   <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/callbacks.py"><code>tramdag.callbacks.Callback</code></a> hooks
-  <code>on_fit_begin</code> / <code>on_epoch_end</code> / <code>on_fit_end</code> (its docstring is the
-  contract — timing, the stop rule, the VC re-centering order); a bare
-  callable in the list is an <code>on_epoch_end</code> hook, <code>cb(flow, epoch,
-  optimizer)</code>, and any <code>True</code> stops the fit — this is where schedules,
-  snapshots and coefficient trajectories live. The common recipes ship in
-  <code>tramdag.callbacks</code>: <code>EarlyStopping</code> (best-validation weights restored
-  automatically; optional patience) and <code>PerNodePlateau</code> + <code>per_node_adam</code>
-  (per-node decay and freezing), all reading <code>history["val"]</code>.</li>
-<li><strong>Centered <code>VC</code> propensities are a column</strong>: <code>VC(center="ps")</code> names the
-  training-frame column holding the out-of-fold <code>P(t=1|pa_t)</code> per row — it
-  splits and minibatches with the frame (see
-  <a href="../varying-coefficients/">varying-coefficients.md</a>).</li>
+  <code>on_fit_begin</code>, <code>on_epoch_end</code> and <code>on_fit_end</code>. Its docstring is the
+  contract for the timing, the stop rule and the VC re-centering order. A
+  bare callable in the list is an <code>on_epoch_end</code> hook with the signature
+  <code>cb(flow, epoch, optimizer)</code>. Any <code>True</code> return stops the fit. Schedules,
+  snapshots and coefficient trajectories live here.</li>
+<li><strong>The common recipes ship in <code>tramdag.callbacks</code>.</strong> <code>EarlyStopping</code>
+  restores the best-validation weights automatically, and it takes an
+  optional patience. <code>PerNodePlateau</code> plus <code>per_node_adam</code> give per-node
+  decay and freezing. All of them read <code>history["val"]</code>.</li>
+<li><strong>Centered <code>VC</code> propensities are a column.</strong> <code>VC(center="ps")</code> names the
+  column of the training frame that holds the out-of-fold <code>P(t=1|pa_t)</code> per
+  row. That column splits and minibatches with the frame. See
+  <a href="../varying-coefficients/">varying-coefficients.md</a>.</li>
 </ul>
 <h3 id="training-strategies">Training strategies<a class="headerlink" href="#training-strategies" title="Permanent link">&para;</a></h3>
-<p>Every strategy below is <code>fit</code> plus a callback or a few lines of your own —
-pick by model class, each with a copy-paste example (they assume a built
-<code>flow = CausalFlowDAG(spec)</code> and pandas <code>train_df</code>/<code>val_df</code>). The empirical
-rule of thumb: <strong>all-<code>ls</code> models train to the MLE and keep the final
-weights; flexible (CI/CS/VC) models validate and keep the best weights</strong>
-(they overfit observational confounding at the MLE, see the finding below).</p>
+<p>Every strategy below is <code>fit</code> plus a callback, or <code>fit</code> plus a few lines of
+your own. Pick a strategy by model class. Each strategy has a copy-paste
+example. The examples assume a built <code>flow = CausalFlowDAG(spec)</code> and the
+pandas frames <code>train_df</code>/<code>val_df</code>.</p>
+<p>The empirical rule of thumb has two halves. <strong>All-<code>ls</code> models train to the MLE
+and keep the final weights. Flexible models (CI, CS or VC) validate and keep
+the best weights.</strong> Flexible models overfit observational confounding at the
+MLE, as the finding below shows.</p>
 <table>
 <thead>
 <tr>
@@ -1622,134 +1701,119 @@ weights; flexible (CI/CS/VC) models validate and keep the best weights</strong>
 </tr>
 </tbody>
 </table>
-<p><strong>Plain Adam</strong> — one loop, constant rate, final weights:</p>
-<div class="highlight"><pre><span></span><code><span class="n">flow</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<p>The code below gives one line for each Adam recipe, as a quick reference. The
+exact-MLE path is Path B below, and the global plateau rule needs a <code>Callback</code>
+of your own. Every Adam strategy runs end to end, with its output and its
+checks, in
+<a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>.
+Every documentation build executes that notebook, so the notebook is the
+source of truth. If a snippet here disagrees with the notebook, the notebook
+is right.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># plain Adam: one rate, one loop, the final weights</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Multi-phase Adam</strong> — re-calling <code>fit</code> continues training, so decreasing
-rates are a loop. This is the <code>validate_ls</code> protocol, whose three phases land
-within ~1e-5 of statsmodels — a single converged constant-rate run gets
-~1e-3:</p>
-<div class="highlight"><pre><span></span><code><span class="k">for</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">800</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">),</span> <span class="p">(</span><span class="mi">700</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span> <span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)]:</span>
+
+<span class="c1"># two phases: a second call continues training, so this is a schedule</span>
+<span class="k">for</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">800</span><span class="p">,</span> <span class="mf">1e-2</span><span class="p">),</span> <span class="p">(</span><span class="mi">700</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span> <span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)]:</span>
     <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Best-validation weights</strong> — the flexible-model default, one import, one
-registration (the restore happens automatically at fit end; without
-<code>patience</code> the fit runs its full budget):</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">EarlyStopping</span>
 
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">train_df</span><span class="p">,</span>
-    <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
-    <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>   <span class="c1"># or validation_split=0.1</span>
-    <span class="n">verbose</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(),</span>
-<span class="p">)</span>
-</code></pre></div>
-<p><code>validation_split</code> takes the LAST rows unshuffled — shuffle the DataFrame
-first if its row order means anything.</p>
-<p><strong>… plus patience</strong> — the same callback also stops the fit once the best
-epoch is <code>patience</code> old:</p>
-<div class="highlight"><pre><span></span><code><span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<span class="c1"># best-validation weights: the flexible-model recipe, restored at fit end</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
+         <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">())</span>
+
+<span class="c1"># ... and stop once the best epoch is that old</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
          <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
-</code></pre></div>
-<p><strong>Per-node plateau</strong> — one rate per node (<code>per_node_adam</code> tags one parameter
-group per node; valid because the per-node gradients are independent), each
-decaying and finally freezing on its own validation NLL; the fit stops when
-every node froze. The demo notebook runs it end to end; before 0.4 it was
-<code>fit(schedule="plateau", freeze_patience=)</code>, measured in
-<code>experiments/benchmarks/bench_training.py</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerNodePlateau</span><span class="p">,</span> <span class="n">per_node_adam</span>
 
+<span class="c1"># one rate per node, each freezing on its own score; stops when all froze</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
          <span class="n">optimizer</span><span class="o">=</span><span class="n">per_node_adam</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">),</span>
          <span class="n">callbacks</span><span class="o">=</span><span class="n">PerNodePlateau</span><span class="p">())</span>   <span class="c1"># patience=15, freeze=50</span>
 </code></pre></div>
-<p>Freezing helps and parallelizing the node loop does not: freezing deletes
-whole epochs, while node-level overlap only time-slices the cores that each
-node's batched BLAS ops already saturate — measured as contention, not speedup.
-Only when per-node kernels under-utilize the hardware (tiny nodes on a big GPU)
-could overlap pay, and there the tool is fusing same-shaped nodes, not threads.</p>
-<p><strong>Global plateau schedule</strong> — anything else is a few lines of your own: a
-learning-rate schedule is torch's, stepped from the hook on the validation
-NLL <code>fit</code> already computed (so this too needs <code>validation_data=</code> or
-<code>validation_split=</code>); the snapshot half is what <code>EarlyStopping</code> does inside,
-written out:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-
-<span class="n">opt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
-<span class="n">plateau</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-<span class="n">best</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"nll"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="s2">"state"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">on_epoch</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">opt</span><span class="p">):</span>
-    <span class="n">nll</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"val"</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>   <span class="c1"># fit computed it</span>
-    <span class="n">plateau</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">nll</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="n">best</span><span class="p">[</span><span class="s2">"nll"</span><span class="p">]:</span>
-        <span class="n">best</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">nll</span><span class="o">=</span><span class="n">nll</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()))</span>
-    <span class="k">return</span> <span class="n">opt</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-5</span>      <span class="c1"># stop once the rate bottomed out</span>
-
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
-         <span class="n">optimizer</span><span class="o">=</span><span class="n">opt</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">on_epoch</span><span class="p">)</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="s2">"state"</span><span class="p">])</span>
-</code></pre></div>
-<p>(One difference to <code>EarlyStopping</code>: a post-fit <code>load_state_dict</code> skips the VC
-re-centering, so on a spec with a <code>VC</code> term put the restore in a <code>Callback</code>
-subclass's <code>on_fit_end</code> instead.)</p>
-<p>The exact-MLE and warm-start strategies are Path B, below.</p>
-<p>Benchmarks and schedule trade-offs are in
-<a href="../training-speed/">training-speed.md</a>. The worked walkthrough is
-<a href="../notebooks/intro_tram_dag/"><code>notebooks/intro_tram_dag.py</code></a>.</p>
-<h2 id="path-b-classical-optimization-fit_classical">Path B — classical optimization (<code>fit_classical</code>)<a class="headerlink" href="#path-b-classical-optimization-fit_classical" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG.fit_classical</code></a> is the dedicated optimizer
-for <strong>all-<code>ls</code></strong> models, where every node-conditional is a classical
-transformation model (ordered-logit / Colr). It raises on any <code>cs</code>/<code>ci</code>/<code>vc</code> term.</p>
+<p>Import <code>EarlyStopping</code>, <code>PerNodePlateau</code> and <code>per_node_adam</code> from
+<code>tramdag.callbacks</code>. For one shared rate instead of per-node rates, carry
+torch's <code>ReduceLROnPlateau</code> in a <code>Callback</code> of your own. The notebook's
+<code>GlobalPlateau</code> is that class, ready to copy.</p>
+<p>Two measured facts decide between the first two. The multi-phase recipe lands
+within ~1e-5 of statsmodels on an all-<code>ls</code> model. A single converged
+constant-rate run gets ~1e-3. If you need the tighter agreement and the spec
+is all-<code>ls</code>, use <code>fit_classical</code> instead, which is exact and faster.</p>
+<p><code>experiments/benchmarks/bench_training.py</code> measures the per-node recipe.</p>
+<p>Three details are easy to get wrong:</p>
 <ul>
-<li><strong>Full-batch, float64, L-BFGS</strong> (strong-Wolfe line search). There are no
-  minibatches, no schedule, and no early stopping. Therefore the fit is
-  <strong>deterministic</strong> (same init → bit-identical) and lands on the <strong>exact MLE</strong>
-  — <code>fit_classical</code> matches <code>statsmodels</code>/R to ~4 decimals; a converged Adam
-  <code>fit</code> gets within ~1e-3.</li>
-<li><strong>Solver budget</strong> (<code>max_iter=400</code>, <code>tol=1e-9</code>, <code>history_size=50</code>): one
-  L-BFGS run with torch's own stopping rule — it ends when the NLL or the
-  parameters move by less than <code>tol</code>, or at <code>max_iter</code>. The report's
-  <code>n_iter</code> is torch's count and <code>converged</code> says whether a tolerance, not
-  the cap, ended the run. <code>history_size</code> is the L-BFGS memory.</li>
-<li><strong>float64 is a transient compute mode</strong>: the fit runs in double and
-  restores float32 afterwards; checkpoints stay float32.</li>
-<li><strong>Convergence</strong>: the flag is true when torch's <code>tolerance_change</code> ended the
-  run before <code>max_iter</code> did, and it is <em>advisory</em>. A
-  Bernstein intercept and weakly-identified directions (rare one-hot levels, a
-  flat treatment-effect ridge) continue to drift along zero-curvature valleys
-  after the likelihood is at the optimum. Correctness comes from a comparison
-  with classical software (<code>python -m misc.validate_ls classical</code>), not from
-  the flag.</li>
+<li><code>validation_split</code> takes the <strong>last</strong> rows, unshuffled. If the row order of
+  the frame means anything, shuffle the frame first.</li>
+<li>A second <code>fit</code> call <strong>continues</strong> training, and <code>history</code> accumulates across
+  the calls. The call does not start over.</li>
+<li>A post-fit <code>load_state_dict</code> skips the varying-coefficient re-centering. On
+  a spec with a <code>VC</code> term, restore the weights from the <code>on_fit_end</code> hook of
+  a <code>Callback</code> subclass instead. That hook runs before the re-centering step.
+  <code>EarlyStopping</code> already does this.</li>
+</ul>
+<p>The exact-MLE and warm-start strategies are Path B, below.
+<a href="../training-speed/">training-speed.md</a> gives the measured time-to-target for
+each recipe.</p>
+<h2 id="path-b-classical-optimization-fit_classical">Path B — classical optimization (<code>fit_classical</code>)<a class="headerlink" href="#path-b-classical-optimization-fit_classical" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG.fit_classical</code></a> is the dedicated
+optimizer for <strong>all-<code>ls</code></strong> models. In such a model, every node-conditional is a
+classical transformation model, that is an ordered-logit or a Colr model. It
+raises on any <code>cs</code>, <code>ci</code> or <code>vc</code> term.</p>
+<ul>
+<li><strong>Full-batch, float64, L-BFGS</strong> with a strong-Wolfe line search. There are
+  no minibatches, no schedule and no early stopping. Therefore the fit is
+  <strong>deterministic</strong>: the same init gives bit-identical results. The fit also
+  lands on the <strong>exact MLE</strong>. <code>fit_classical</code> matches <code>statsmodels</code> and R to
+  ~4 decimals. A converged Adam <code>fit</code> gets within ~1e-3.</li>
+<li><strong>Solver budget</strong> — <code>max_iter=400</code>, <code>tol=1e-9</code> and <code>history_size=50</code>. The
+  fit is one L-BFGS run with torch's own stopping rule. The run ends when the
+  NLL or the parameters move by less than <code>tol</code>, or at <code>max_iter</code>. The
+  report's <code>n_iter</code> is torch's count. The report's <code>converged</code> says whether a
+  tolerance ended the run, and not the cap. <code>history_size</code> is the L-BFGS
+  memory.</li>
+<li><strong>float64 is a transient compute mode.</strong> The fit runs in double and
+  restores float32 afterwards. Checkpoints stay float32.</li>
+<li><strong>Convergence</strong> — the flag is true when torch's <code>tolerance_change</code> ended
+  the run before <code>max_iter</code> did. The flag is <em>advisory</em>. A Bernstein intercept
+  and weakly-identified directions continue to drift along zero-curvature
+  valleys after the likelihood is at the optimum. Rare one-hot levels and a
+  flat treatment-effect ridge are two such directions. Correctness comes from
+  a comparison with classical software, and not from the flag. That comparison
+  is <code>python -m misc.validate_ls classical</code>.</li>
 <li>Read the fitted coefficients with <code>ls_coefficients()</code>.</li>
 </ul>
 <h3 id="warm-start-handoff-classical-fit-then-keep-training">Warm-start handoff: classical fit, then keep training<a class="headerlink" href="#warm-start-handoff-classical-fit-then-keep-training" title="Permanent link">&para;</a></h3>
 <p><code>fit_classical</code> leaves the model at the MLE in float32, ready for any normal
-operation — and continuing with <code>fit()</code> from there <strong>stays put</strong>, which is both
-a check that the classical solution really is the optimum and a way to use it as
-a fast, principled initialization:</p>
+operation. A <code>fit()</code> call from there <strong>stays put</strong>. This behaviour is a check
+that the classical solution really is the optimum. It is also a way to use the
+classical fit as a fast, principled initialization:</p>
 <div class="highlight"><pre><span></span><code><span class="n">flow</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>                       <span class="c1"># exact MLE, seconds</span>
 <span class="n">before</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>  <span class="c1"># a gentle Adam phase ...</span>
 <span class="n">after</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>                 <span class="c1"># ... barely moves</span>
 </code></pre></div>
-<p>A small drift means the classical fit was already at the optimum. The same
-handoff warm-starts a <code>VC</code> term's <code>beta0</code> — the measured recipe is in
-<a href="../varying-coefficients/">varying-coefficients.md</a>.</p>
+<p>A small drift means that the classical fit was already at the optimum. The
+same handoff warm-starts the <code>beta0</code> of a <code>VC</code> term.
+<a href="../varying-coefficients/">varying-coefficients.md</a> holds the measured recipe.</p>
 <h2 id="memory-and-disk-during-fitting">Memory and disk during fitting<a class="headerlink" href="#memory-and-disk-during-fitting" title="Permanent link">&para;</a></h2>
-<p>Neither fitting path writes to disk: parameters, optimizer state and the
-<code>history</code> dict live in RAM, and whatever a callback records is yours. The only
-disk I/O in the module is the explicit <code>save()</code>/<code>load()</code>; the <code>results/</code>
-artifacts in this repo come from the experiment scripts, not the library.</p>
+<p>Neither fitting path writes to disk. Three things live in RAM:</p>
+<ul>
+<li>the parameters</li>
+<li>the optimizer state</li>
+<li>the <code>history</code> dict</li>
+</ul>
+<p>Whatever a callback records is yours. The only disk I/O in the module is the
+explicit <code>save()</code>/<code>load()</code>. The <code>results/</code> artifacts in this repository come
+from the experiment scripts, and not from the library.</p>
 <h2 id="optimizer-choice">Optimizer choice<a class="headerlink" href="#optimizer-choice" title="Permanent link">&para;</a></h2>
-<p>Today: <strong>Adam</strong> for flexible models, <strong>L-BFGS</strong> (float64) for all-<code>ls</code>. The
-per-node decomposition makes optimizer swaps cheap through <code>optimizer=</code>;
-candidates (IRLS for the <code>ls</code> path, per-node mixing, modern Adam variants) are
-benchmarked with <code>experiments/benchmarks/bench_training.py</code> before adoption.</p>
+<p>Today the package uses <strong>Adam</strong> for flexible models. It uses <strong>L-BFGS</strong> in
+float64 for all-<code>ls</code> models. The per-node decomposition makes optimizer swaps
+cheap through <code>optimizer=</code>. Three candidates wait for a measurement:</p>
+<ul>
+<li>IRLS for the <code>ls</code> path</li>
+<li>per-node mixing</li>
+<li>modern Adam variants</li>
+</ul>
+<p><code>experiments/benchmarks/bench_training.py</code> benchmarks every candidate before
+the package adopts it.</p>
 
 
 

@@ -19,6 +19,16 @@ def sigmoid(x: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-x))
 
 
+def clamp(value, n: int) -> np.ndarray:
+    """Broadcast a ``do`` value to shape ``(n,)``.
+
+    The value is a scalar or one value per row. A per-row array covers the
+    soft intervention ``x1 -> x1 + 1`` of paper appendix C.4. Every generator
+    clamps through here, so an intervention behaves the same in all of them.
+    """
+    return np.broadcast_to(np.asarray(value, dtype=float), (n,)).copy()
+
+
 def resolve_latents(gen, n, rng, latents) -> tuple[dict[str, np.ndarray], int]:
     """Give the latents to simulate from, and their row count.
 

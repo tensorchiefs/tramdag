@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+from .spec import OrdinalNode
 from .transforms import ordinal_bounds
 
 # %% global variables ------------------------------------------------------------------
@@ -57,6 +58,12 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
     lower, upper = ordinal_bounds(theta, shift, x)  # already include -s
     sl, su = torch.sigmoid(lower), torch.sigmoid(upper)
     return (sl * (1 - sl) - su * (1 - su)) / (su - sl)
+
+
+def _is_binary_ordinal(flow, name: str) -> bool:
+    """Say whether a node is a two-level ordinal, so its LS has one contrast."""
+    node = flow.spec.get(name)
+    return isinstance(node, OrdinalNode) and node.levels == 2
 
 
 # %% public functions ------------------------------------------------------------------
@@ -209,8 +216,8 @@ def effect_modifier_scan(
         col = column
     elif t in psi_df.columns:
         col = t
-    elif f"{t}[1]" in psi_df.columns and f"{t}[2]" not in psi_df.columns:
-        col = f"{t}[1]"  # binary ordinal LS: the contrast
+    elif _is_binary_ordinal(flow, t) and f"{t}[1]" in psi_df.columns:
+        col = f"{t}[1]"  # the identified contrast of a binary ordinal LS parent
     else:
         raise KeyError(
             f"no score column for treatment {t!r} on node {node!r} "

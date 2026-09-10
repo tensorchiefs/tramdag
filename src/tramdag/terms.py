@@ -263,6 +263,15 @@ class InterceptTerm(TermDef):
     groups: list[tuple[str, ...]]
     ci_parents: list[str]
 
+    @property
+    def net_groups(self) -> list:
+        """Give this intercept's networks, one per entry of ``groups``.
+
+        An additive intercept holds several in ``nets`` and overrides this.
+        Every other intercept term is itself the one network.
+        """
+        return [self]
+
     @classmethod
     def build(cls, term: Term, spec: dict[str, NodeSpec], n_params: int):
         """Construct the node's intercept module from its intercept Term."""
@@ -345,10 +354,17 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
 
     def __init__(self, groups, n_params: int, spec, net_options: dict):
         nn.Module.__init__(self)
+        # the submodule must stay named `nets`: it is part of the state-dict
+        # path that tests/test_statedict_stability.py pins
         self.nets = nn.ModuleList(
             ComplexIntercept(feat_width(spec, grp), n_params, **net_options)
             for grp in groups
         )
+
+    @property
+    def net_groups(self) -> list:
+        """Give the per-parent networks this intercept sums."""
+        return list(self.nets)
 
     def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
         """Sum the per-parent nets in coefficient space."""

@@ -10,10 +10,9 @@ two's data, so it reads theirs and pins no ground truth of its own.
 What is left here is the output layout the experiments workflow reads:
 ``results/<name>/`` with ``metrics.json``, ``report.md`` and ``plots/``.
 
-Reading a script's YAML file is here; checking the section it yields is not.
-:func:`load_variant` parses the file and picks the variant's section with
-:func:`_config_section` below; that every key in it is read by the
-script is what ``paper/tests/test_configs.py`` checks.
+Reading a script's YAML file is here. Checking the section it yields is not.
+:func:`load_variant` parses the file and gives the variant's section.
+``paper/tests/test_configs.py`` checks that the script reads every key in it.
 
 Every function takes the calling script's ``__file__``, so paths resolve
 inside that script's own area with no directory names written in the code.
@@ -35,73 +34,16 @@ import yaml
 
 
 # %% private functions------------------------------------------------------------------
-def _config_section(document: dict, *keys: str) -> dict:
-    """Pick a mapping out of a parsed configuration.
+def _variants(script: str) -> dict:
+    """Parse the script's sibling YAML file and give its ``variants`` mapping.
 
-    Parsing is the caller's job — pass whatever ``yaml.safe_load``,
-    ``json.load`` or ``tomllib.load`` returned. This descends through
-    ``keys`` and gives the mapping found there as a shallow copy.
-
-    Parameters
-    ----------
-    document : dict
-        The parsed configuration.
-    *keys : str
-        Keys to descend through before the mapping is returned, for example
-        ``"variants", "atan-cs"`` for a document that groups several
-        variants. Without any key the document itself is used.
-
-    Returns
-    -------
-    dict
-        The selected mapping, as a shallow copy.
-
-    Raises
-    ------
-    KeyError
-        If one of ``keys`` is not present. The message lists what is
-        available at that level.
-    ValueError
-        If a selected value is not a mapping.
-
-    Examples
-    --------
-    >>> document = {"variants": {"fast": {"epochs": 5, "lr": 0.01}}}
-    >>> _config_section(document, "variants", "fast")
-    {'epochs': 5, 'lr': 0.01}
+    ``argparse`` takes its choices from the keys, so adding a variant to the
+    file is enough to make it runnable. A missing file raises here, naming the
+    path it looked for.
     """
-    node = document
-    for depth, key in enumerate(keys):
-        if not isinstance(node, dict):
-            # malformed config data, not a wrongly typed argument
-            raise ValueError(  # noqa: TRY004
-                f"{' -> '.join(keys[:depth]) or 'the document'} is "
-                f"{type(node).__name__}, not a mapping"
-            )
-        if key not in node:
-            raise KeyError(
-                f"no '{key}' in {' -> '.join(keys[:depth]) or 'the document'}. "
-                f"Available: {', '.join(sorted(map(str, node)))}"
-            )
-        node = node[key]
-
-    where = " -> ".join(keys) or "the document"
-    if not isinstance(node, dict):
-        # malformed config data, not a wrongly typed argument
-        raise ValueError(f"{where} is {type(node).__name__}, not a mapping")  # noqa: TRY004
-
-    return dict(node)
-
-
-def _variants_of(script: str) -> list[str]:
-    """Give the variant names the script's config file defines.
-
-    ``argparse`` takes its choices from this, so adding a variant to the
-    config file is enough to make it runnable.
-    """
-    path = Path(script).resolve().with_suffix(".yaml")
-    document = yaml.safe_load(path.read_text())
-    return sorted(document["variants"])
+    return yaml.safe_load(Path(script).resolve().with_suffix(".yaml").read_text())[
+        "variants"
+    ]
 
 
 # %% public functions ------------------------------------------------------------------
@@ -129,13 +71,9 @@ def load_variant(script: str, variant: str) -> dict:
     Raises
     ------
     FileNotFoundError
-        If the config file does not exist.
+        If the config file does not exist, naming the path.
     """
-    path = Path(script).resolve().with_suffix(".yaml")
-    if not path.exists():
-        raise FileNotFoundError(f"no config next to {Path(script).name}: {path}")
-    document = yaml.safe_load(path.read_text())
-    return _config_section(document, "variants", variant)
+    return dict(_variants(script)[variant])
 
 
 def cli(script: str, doc: str) -> str:
@@ -148,7 +86,7 @@ def cli(script: str, doc: str) -> str:
     parser = argparse.ArgumentParser(description=doc.splitlines()[0])
     parser.add_argument(
         "variant",
-        choices=_variants_of(script),
+        choices=sorted(_variants(script)),
         help="which variant to run; hyperparameters live in the sibling YAML file",
     )
     return parser.parse_args().variant
@@ -168,7 +106,10 @@ def save_metrics(out: Path, metrics: dict) -> None:
 
 def _report_row(name: str, value, truths: dict) -> str:
     """One metric row; with truths, a fitted-vs-true row where one exists."""
-    fmt = lambda v: f"{v:+.4f}" if isinstance(v, float) else f"{v}"  # noqa: E731
+
+    def fmt(v):
+        return f"{v:+.4f}" if isinstance(v, float) else f"{v}"
+
     if not truths:
         return f"| `{name}` | {fmt(value)} |"
     if name not in truths:

@@ -38,7 +38,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ._common import DatasetDraws, resolve_latents
+from ._common import DatasetDraws, clamp, resolve_latents
 
 # %% global variables ------------------------------------------------------------------
 # the paper's observation in raw units: noise (2, 1.5, 1.4, -1) pushed through the
@@ -134,22 +134,22 @@ class Carefl4(DatasetDraws):
         # one if/else per variable, in topological order: an intervened
         # variable is clamped and its structural equation skipped
         if "x1" in do:
-            x1 = np.full(n, float(do["x1"]))
+            x1 = clamp(do["x1"], n)
         else:
             x1 = latents["x1"]
 
         if "x2" in do:
-            x2 = np.full(n, float(do["x2"]))
+            x2 = clamp(do["x2"], n)
         else:
             x2 = latents["x2"]
 
         if "x3" in do:
-            x3 = np.full(n, float(do["x3"]))
+            x3 = clamp(do["x3"], n)
         else:
             x3 = x1 + 0.5 * x2**3 + latents["x3"]
 
         if "x4" in do:
-            x4 = np.full(n, float(do["x4"]))
+            x4 = clamp(do["x4"], n)
         else:
             x4 = -x2 + 0.5 * x1**2 + latents["x4"]
 

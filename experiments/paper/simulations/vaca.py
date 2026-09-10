@@ -32,7 +32,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ._common import DatasetDraws, resolve_latents
+from ._common import DatasetDraws, clamp, resolve_latents
 
 # %% global variables ------------------------------------------------------------------
 # the paper's Fig. 5 panels and its R code (vaca_triangle.r) intervene at -3, -1, 0;
@@ -128,19 +128,19 @@ class VacaTriangle(DatasetDraws):
         # one if/else per variable, in topological order: an intervened
         # variable is clamped and its structural equation skipped
         if "x1" in do:
-            x1 = np.full(n, float(do["x1"]))
+            x1 = clamp(do["x1"], n)
         else:
             first_component = -2.0 + np.sqrt(1.5) * latents["x1_a"]
             second_component = 1.5 + 1.0 * latents["x1_b"]
             x1 = np.where(latents["x1_mix"] < 0.5, first_component, second_component)
 
         if "x2" in do:
-            x2 = np.full(n, float(do["x2"]))
+            x2 = clamp(do["x2"], n)
         else:
             x2 = -x1 + latents["x2"]
 
         if "x3" in do:
-            x3 = np.full(n, float(do["x3"]))
+            x3 = clamp(do["x3"], n)
         else:
             x3 = x1 + 0.25 * x2 + latents["x3"]
 

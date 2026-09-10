@@ -115,9 +115,9 @@ All five scripts have the same shape:
 
 Each script reads its sibling `<script>.yaml` and **nothing else**. There are
 no defaults in the code. There are no CLI flags that change a number.
-`common.py::load_variant` parses the file. It picks the variant's section with
-`common.py::_config_section`. Both functions live here, so the package depends
-on no config parser and ships no config helper.
+`common.py::load_variant` parses the file and gives the variant's section.
+That function lives here, so the package depends on no config parser and
+ships no config helper.
 
 A value that several variants share appears once under a YAML anchor. The
 variants merge it with `<<`, which keeps the merge visible in the file.

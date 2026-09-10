@@ -362,9 +362,7 @@ def run_lbfgs(seed: int, warm_epochs: int = 0) -> dict:
 
     t_tight = t_pract = None
     loss = float("inf")
-    iters = 0
     for _ in range(lb["chunks"]):  # up to chunks x max_iter inner iterations
-        iters += 1
         loss = float(opt.step(closure))
         t = time.perf_counter() - t0
         if t_pract is None and loss <= ref + TOL_PRACT["stroke-ls"]:
@@ -382,7 +380,10 @@ def run_lbfgs(seed: int, warm_epochs: int = 0) -> dict:
         "time_to_target_s": t_tight,
         "time_to_practical_s": t_pract,
         "total_time_s": time.perf_counter() - t0,
-        "epochs_run": warm_epochs + iters * lb["max_iter"],
+        # torch's own count of inner iterations, summed over the chunks.
+        # `max_iter` is only the ceiling per `opt.step`, and a strong-Wolfe
+        # line search usually stops well before it.
+        "epochs_run": warm_epochs + next(iter(opt.state.values()))["n_iter"],
         "final_nll": loss,
         "epochs_to_target": None,
     }

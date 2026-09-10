@@ -42,7 +42,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ._common import DatasetDraws, resolve_latents, sigmoid
+from ._common import DatasetDraws, clamp, resolve_latents, sigmoid
 
 # %% global variables ------------------------------------------------------------------
 F_VARIANTS = {
@@ -56,16 +56,6 @@ THETA_MIXED = np.array([-2.0, 0.42, 1.02])  # ordinal cutpoints (4 levels)
 
 # the variants actually used in the paper (frozen by the CLI)
 PAPER_VARIANTS = {"continuous": ("linear", "atan", "sin"), "mixed": ("linear", "exp")}
-
-
-# %% private functions -----------------------------------------------------------------
-def _clamp(value, n: int) -> np.ndarray:
-    """Broadcast a ``do`` value to shape ``(n,)``.
-
-    The value is a scalar or one value per row. A per-row array covers the soft
-    intervention ``x1 -> x1 + 1`` of paper appendix C.4.
-    """
-    return np.broadcast_to(np.asarray(value, dtype=float), (n,)).copy()
 
 
 def _write_variant(cls, out_dir: Path, f: str, seed: int, n_obs: int) -> None:
@@ -167,7 +157,7 @@ class _TriangleBase(DatasetDraws):
     def _x1_x2(self, do: dict, latents: dict) -> tuple[np.ndarray, np.ndarray]:
         n = len(latents["x2"])
         if "x1" in do:
-            x1 = _clamp(do["x1"], n)
+            x1 = clamp(do["x1"], n)
         else:
             x1 = np.where(
                 latents["x1_mix"] < 0.5,
@@ -175,7 +165,7 @@ class _TriangleBase(DatasetDraws):
                 0.73 + 0.05 * latents["x1_b"],
             )
         if "x2" in do:
-            x2 = _clamp(do["x2"], n)
+            x2 = clamp(do["x2"], n)
         else:
             x2 = (latents["x2"] - 2.0 * x1) / 5.0  # h(x2|x1) = 5 x2 + 2 x1 = u2
         return x1, x2
@@ -266,7 +256,7 @@ class TriangleContinuous(_TriangleBase):
 
     def _x3(self, x1, x2, do, latents):
         if "x3" in do:
-            return _clamp(do["x3"], len(x1))
+            return clamp(do["x3"], len(x1))
         return (latents["x3"] + 0.2 * x1 + self.f_callable(x2)) / 0.63
 
     def paper_truth(self) -> dict:
@@ -302,7 +292,7 @@ class TriangleMixed(_TriangleBase):
 
     def _x3(self, x1, x2, do, latents):
         if "x3" in do:
-            return _clamp(do["x3"], len(x1))
+            return clamp(do["x3"], len(x1))
         cuts = self.theta[None, :] + (0.2 * x1 + self.f_callable(x2))[:, None]
         return (latents["x3"][:, None] > cuts).sum(axis=1).astype(float)
 
@@ -321,7 +311,7 @@ class TriangleMixed(_TriangleBase):
         """
         shift = 0.2 * np.asarray(x1, float) + self.f_callable(np.asarray(x2, float))
         cuts = self.theta[None, :] + shift[:, None]
-        cdf = 1.0 / (1.0 + np.exp(-cuts))
+        cdf = sigmoid(cuts)
         cdf = np.concatenate(
             [np.zeros((len(cdf), 1)), cdf, np.ones((len(cdf), 1))], axis=1
         )

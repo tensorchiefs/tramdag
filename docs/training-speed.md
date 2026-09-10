@@ -12,7 +12,7 @@ The benchmark ran in June 2026 on an Apple-silicon Mac mini with torch 2.12. It
 ran on the CPU, unless a row notes another device.
 
 To reproduce the benchmark, run
-[`experiments/benchmarks/bench_training.py`](../experiments/benchmarks/bench_training.py).
+[the training benchmark](../experiments/benchmarks/bench_training.py).
 The command is `cd experiments && uv run python -m benchmarks.bench_training`.
 For one seed on cpu, add `--quick`. The full grid takes ≈ 35 min.
 
@@ -42,13 +42,10 @@ and the stroke run in this benchmark uses 1e-5.
 This behaviour is valid, because the per-node losses have independent
 gradients. It lets the fit delete whole epochs, and not only shorten them.
 
-One more recipe is a global plateau rule, which is one
-shared rate rather than one rate per node. That is torch's
-`ReduceLROnPlateau` on the summed validation NLL, and it is the rule the paper
-reference uses. `experiments/paper/helpers.py::fit_paper` drives it.
-
-`"onecycle"` and `"cosine"` lost to `"plateau"` on every workload. Version 0.4
-removed them. Their measured rows below stay as the record.
+One more recipe is a global plateau rule, which is one shared rate rather than
+one rate per node. That is torch's `ReduceLROnPlateau` on the summed validation
+NLL, and it is the rule the paper reference uses.
+`experiments/paper/helpers.py::fit_paper` drives it.
 
 **The exact-MLE path**: an exact comparison with the classical methods needs no
 recipe. The classical methods are `statsmodels` and R `polr`/`tram`. Two plain
@@ -100,29 +97,25 @@ means that the fit never reached the target within the budget.
 
 | config | stroke-ls practical | stroke-ls tight | vaca-ci practical | vaca-ci tight | self-stops |
 |---|---|---|---|---|---|
-| baseline two-phase (old default) | 9.0 | **21.4** | 2.1 | 2.8¹ | no (runs 40 s / 15 s) |
-| constant 1e-2 | 9.1 | 21.5³ | 2.2 | 2.8¹ | no |
-| onecycle (1500 / 300 ep)² | — | — | 3.5 | 4.5 | no |
-| onecycle (3000 ep)² | 16.8 | — (gap 1–2e-3) | | | no |
-| cosine² | — | — | 2.2 | 3.5¹ | no |
+| baseline two-phase | 9.0 | **21.4** | 2.1 | 2.8¹ | no (runs 40 s / 15 s) |
+| constant 1e-2 | 9.1 | 21.5² | 2.2 | 2.8¹ | no |
 | **plateau + freeze** | **8.9** | — (gap 2e-3) | **2.0** | 2.9 | **yes — 13 s / 4 s total** |
 | LBFGS (full-batch) | **1.6** (2/3 seeds) | — (gap 4–8e-3) | n/a | n/a | yes |
 
-¹ transient: the val-NLL curve dips through the target and then drifts away. Stroke needs
-the 1e-3 phase to *stay*. Vaca shows mild overfitting. Final gap for the vaca baseline is
-0.037. The old 520-epoch budget **underfits** vaca by ~0.03 nats. Plateau+freeze *stays*
-at its target.
-² Version 0.4 removed `onecycle` and `cosine` from `fit()`, because they lost
-to plateau on every workload here. Nobody can re-measure these three rows.
-³ constant lr at batch 512 stalls at gap 3–7e-3. Only the lr-decay phase closes the last
-decade. This is why the two-phase recipe existed.
+¹ transient: the val-NLL curve dips through the target and then drifts away.
+Stroke needs the 1e-3 phase to *stay*. Vaca shows mild overfitting. Final gap
+for the vaca baseline is 0.037. A 520-epoch budget **underfits** vaca by ~0.03
+nats. Plateau+freeze *stays* at its target.
+² constant lr at batch 512 stalls at gap 3–7e-3. Only the lr-decay phase
+closes the last decade. This is why the two-phase recipe pairs a constant
+phase with a decay phase.
 
 ## Findings
 
 1. **Per-node plateau decay + freezing is the best default-style trainer.** It
    reaches the same time-to-accuracy as the hand-tuned two-phase schedule. It
-   needs **no budget tuning** to do so. It decays the lr of each node off that node's own
-   validation curve. It freezes converged nodes, which is a real FLOP saving,
+   needs **no budget tuning** to do so. It decays the lr of each node off that
+   node's own validation curve. It freezes converged nodes, a real FLOP saving,
    because the per-node NLLs have independent gradients. And it **stops
    itself**. On stroke-ls it takes 13 s total against 40 s for the baseline. On
    vaca-ci it takes 4 s against 15 s, at an equal or better final NLL.
@@ -144,7 +137,7 @@ decade. This is why the two-phase recipe existed.
    sizes. The reconstruction is identical, so the MPS result is correct.
    Kernel-launch overhead dominates sub-millisecond ops. Stay on CPU locally.
    CUDA on Colab-class GPUs is a different regime.
-6. **The old defaults waste or under-spend.** Stroke budgeted 4000 epochs, and
+6. **A fixed budget wastes or under-spends.** Stroke budgeted 4000 epochs, and
    the converged work is done after ~1500. Freezing recovers that difference
    automatically. Vaca budgeted 520 epochs, which is ~0.03 nats short of
    converged. Fixed budgets are wrong in both directions. Adaptive stopping

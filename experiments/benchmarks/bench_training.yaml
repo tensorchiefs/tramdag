@@ -4,12 +4,8 @@
 # the specs deliberately carry NO options, so the benchmark measures the
 # framework's defaults.
 #
-# 'onecycle' and 'cosine' were measured in the June 2026 grid and are still
-# in the table of docs/training-speed.md, but were dropped in 0.4 (they lost
-# to plateau on every workload), so they cannot be run again here. The
-# plateau+freeze recipe itself left fit() in 0.4 as well — it is
-# tramdag.callbacks.PerNodePlateau, a callback, which is what the benchmark
-# measures.
+# The plateau+freeze recipe is tramdag.callbacks.PerNodePlateau, a callback,
+# which is what the benchmark measures.
 
 workloads:
   # W1: all-`ls` 5-node DAG on the frozen synthetic cohort (n=1275,

@@ -1,14 +1,15 @@
-"""Seeded state_dict-diff smoke: the RNG-stream tripwire for the 1.0-RC migration.
+"""Seeded state_dict-diff smoke: the RNG-stream and key-layout tripwire.
 
 Builds one flow per inline DGP spec at a fixed seed and compares every parameter
-bit-for-bit against a recorded baseline. Any migration step that reorders
-parameter construction (the silent killer: tests pass, pinned experiment centers
-move) fails here at the commit that caused it.
+bit-for-bit against a recorded baseline. Any change that reorders parameter
+construction fails here at the commit that caused it. That is the silent
+killer: the tests pass and the pinned experiment centers move.
 
 Usage:  uv run python tests/tools/statedict_smoke.py record   # write baseline
         uv run python tests/tools/statedict_smoke.py check    # compare
 """
 
+# %% imports ---------------------------------------------------------------------------
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ import torch
 
 from tramdag import CI, CS, LS, SI, VC, CausalFlowDAG, ContinuousNode, OrdinalNode
 
+# %% global variables ------------------------------------------------------------------
 BASELINE = Path(__file__).with_name("statedict_baseline.pt")
 
 SPECS = {
@@ -43,14 +45,7 @@ SPECS = {
 }
 
 
-def build() -> dict:
-    out = {}
-    for name, spec in SPECS.items():
-        flow = CausalFlowDAG(spec(), seed=0)
-        out[name] = {k: v.clone() for k, v in flow.state_dict().items()}
-    return out
-
-
+# %% private functions -----------------------------------------------------------------
 def _diff(name: str, params: dict, cur: dict | None) -> list[str]:
     if cur is None:
         return [f"{name}: spec no longer builds"]
@@ -61,6 +56,15 @@ def _diff(name: str, params: dict, cur: dict | None) -> list[str]:
     return [
         f"{name}: {k} differs" for k, v in params.items() if not torch.equal(v, cur[k])
     ]
+
+
+# %% public functions ------------------------------------------------------------------
+def build() -> dict:
+    out = {}
+    for name, spec in SPECS.items():
+        flow = CausalFlowDAG(spec(), seed=0)
+        out[name] = {k: v.clone() for k, v in flow.state_dict().items()}
+    return out
 
 
 def main() -> int:
@@ -84,5 +88,6 @@ def main() -> int:
     return 0
 
 
+# %% main ------------------------------------------------------------------------------
 if __name__ == "__main__":
     sys.exit(main())

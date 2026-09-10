@@ -57,7 +57,7 @@ jobs:
       # torch opens as many intra-op threads as the box reports, and -n auto
       # already runs one worker per vCPU: uncapped, a single worker was
       # measured at 41 min CPU after 9 min wall without finishing, while the
-      # capped run does the whole not-slow suite in under a minute
+      # capped run does the whole not-slow suite in under a minute with -n auto
       env:
         OMP_NUM_THREADS: '1'
         # uv run would otherwise re-sync the default dev group the sync

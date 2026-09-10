@@ -110,8 +110,8 @@ f has three forms:
 True weights in the flow's convention: β12 = +2, β13 = −0.2, β23 = +0.3
 (linear only).
 
-**Model**: `x1: SI`, `x2: SI + LS(x1)`, `x3: SI + LS(x1) + {LS(x2) | CS(x2)}`, Bernstein.
-The CS net is the reference `hidden_features_CS = c(2, 25, 25, 2)` with
+**Model**: `x1: SI`, `x2: SI + LS(x1)`, `x3: SI + LS(x1) + {LS(x2) | CS(x2)}`,
+Bernstein. The CS net is the reference `hidden_features_CS = c(2, 25, 25, 2)` with
 sigmoid. The ReLU line in `create_param_net` is commented out.
 
 **Corrected 2026-09-02**: the vector reads as in/out dims around the hidden
@@ -162,8 +162,9 @@ R code. The paper does not state them. The level is #{k : u3 > θ_k + 0.2 x1
 The paper adds the ordinal shift. The flow subtracts it. The fitted weights
 are therefore β13 = −0.2, β23 = +0.3.
 
-**Model**: `x1: SI`, `x2: SI + LS(x1)`, `x3: OrdinalNode(4, LS(x1) + {LS(x2) | CS(x2)})`.
-The CS net is the reference `c(2, 2, 2, 2)` with sigmoid.
+**Model**: `x1: SI`, `x2: SI + LS(x1)`,
+`x3: OrdinalNode(4, LS(x1) + {LS(x2) | CS(x2)})`. The CS net is the reference
+`c(2, 2, 2, 2)` with sigmoid.
 
 | hyperparameter | paper / R code | previous | now |
 |---|---|---|---|
@@ -217,7 +218,8 @@ the code. The frozen `data/vaca/truth.json` holds the same three values.
 | Bernstein domain | train min/max (`scale_df`) | 5%/95% quantiles | quantiles kept (`range_q: 0.05`) — **D1, now measured under the final protocol** (2026-09-03, seed 7): the reference's min/max domain scores 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022 — worse at the off-manifold do(x2 = −3) and at do(x2 = 0). CAREFL, same nets, measures the opposite way and matches the reference (`range_q: 0`) |
 | n_compare | — | 50000 | 50000 |
 
-**Results** — the check is the flow's error against the analytic mean, not a pinned flow value.
+**Results** — the check is the flow's error against the analytic mean. It is
+not a pinned flow value.
 
 | metric | paper | previous | R 1:1, torch init, per-node plateau (08-25) | R 1:1, glorot, global plateau (08-26) | now: the reference 10000 @ 0.001 + plateau — the pinned ground truth |
 |---|---|---|---|---|---|

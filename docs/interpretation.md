@@ -20,7 +20,7 @@ This is the meta-adjacency view of the paper. It is also the fastest way to
 confirm that the model you wrote is the model you meant.
 `plot_dag(spec)` draws the same thing, with one edge style per term.
 
-Exercised in [`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py).
+Exercised in the [varying-coefficients notebook](../notebooks/varying_coefficients.py).
 
 ## A linear shift is a log-odds ratio
 
@@ -75,7 +75,7 @@ form. It needs no sampling, and `do=` makes it interventional by overriding
 columns before the parents are read. That combination is what lets a
 treatment-effect question be answered exactly rather than by Monte Carlo.
 
-Exercised in [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
+Exercised in the [classical-fitting notebook](../notebooks/classical_fit_tram_dag.py),
 and under `do=` in `experiments/misc/validate_ls.py`, which is checked against
 committed ground truth on every run.
 
@@ -117,7 +117,7 @@ decomposes that sum into mean-centred per-term parts, using the usual additive
 model convention, so the parts become comparable. This is a post-hoc read-out
 and changes nothing about the fitted model.
 
-Worked through in [`notebooks/additive_vs_joint_ci.py`](../notebooks/additive_vs_joint_ci.py).
+Worked through in the [intercept notebook](../notebooks/additive_vs_joint_ci.py).
 
 ## An effect that varies with a covariate
 

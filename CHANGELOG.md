@@ -43,6 +43,17 @@
   after that method became `_check_level_values`.
 - `tools/` joins the max-15 complexity tier. It matched neither tier before,
   and `gen_diagrams.py` had drifted to 22.
+- No documentation refers to a previous version any more. `PerNodePlateau`
+  described itself as the `fit(schedule="plateau", freeze_patience=)` recipe
+  of an earlier release, in its own docstring and in three more places.
+  `docs/training-speed.md` carried three measured rows for the `onecycle` and
+  `cosine` schedules that `fit` no longer offers, with a footnote saying they
+  cannot be re-measured. Those rows and that framing are gone, and the table
+  now lists only recipes a reader can run.
+- `notebooks/classical_fit_tram_dag.py` drops a blanket
+  `warnings.filterwarnings("ignore")`. Measured with `simplefilter("always")`:
+  the notebook emits no warning, so the filter hid nothing and would have
+  hidden a real one later.
 
 ### Changed — one introduction, and a notebook for the fitting API
 

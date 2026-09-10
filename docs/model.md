@@ -111,7 +111,7 @@ gets a negative weight, which
 
 - The latent distribution is fixed to standard logistic. It is not learned.
 - Every parent must enter through exactly one edge-owning term. The one
-  exception is a varying-coefficient modifier, which may also act
+  exception is a varying-coefficient modifier, which can also act
   prognostically through another term.
 - The DAG is an input. `tramdag` fits the mechanisms of a graph you supply, and
   does not discover the graph.

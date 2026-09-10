@@ -42,16 +42,16 @@ in the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
 1. **Competing methods are not reimplemented.** Figure 4's CNF panel and
    Figure 12's Neural Spline Flow are baselines from other libraries
    (Causal Normalizing Flows, `zuko`'s NSF). This repository is the TRAM-DAG
-   implementation; it reproduces the TRAM-DAG side of each comparison and the
+   implementation. It reproduces the TRAM-DAG side of each comparison, and the
    ground truth both sides are measured against. Reproducing the baselines
-   would mean vendoring two more model families.
+   means vendoring two more model families.
 2. **Figure 10's point is now measured, not just argued.** It illustrates why
    an individual counterfactual is not identified for a discretized variable.
-   `triangle_mixed.py` turns that into a number: an observed ordinal level pins
-   the latent to an interval, so the generator can state the exact
-   counterfactual *distribution* (`TriangleMixed.true_counterfactual_pmf`, itself
-   checked against realised counterfactuals in `paper/tests/`), and the flow's
-   averaged abduction draws are scored against that distribution rather than against
-   a level no model could predict.
+   `triangle_mixed.py` turns that into a number. An observed ordinal level pins
+   the latent to an interval. The generator can therefore state the exact
+   counterfactual *distribution*, `TriangleMixed.true_counterfactual_pmf`,
+   which `paper/tests/` checks against realised counterfactuals. The flow's
+   averaged abduction draws are then scored against that distribution, and not
+   against a level no model can predict.
 3. **Section 7's application** (the clinical case study) is not here: that data
    is private and its storyline lives in its own repository.

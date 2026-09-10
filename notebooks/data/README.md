@@ -5,10 +5,10 @@ rather than a notebook, belongs in `experiments/<area>/data/` instead.
 
 ## `birthwt.csv`
 
-Five columns of `MASS::birthwt` — the low-birth-weight study of Hosmer &
-Lemeshow (1989), 189 births at Baystate Medical Center — used by
-`classical_fit_tram_dag.py` as a logistic-regression example that a reader can
-re-fit in R.
+Five columns of `MASS::birthwt`, the low-birth-weight study of Hosmer and
+Lemeshow (1989). It holds 189 births at Baystate Medical Center.
+`classical_fit_tram_dag.py` uses it as a logistic-regression example that a
+reader can re-fit in R.
 
 | column | meaning |
 |---|---|
@@ -27,14 +27,15 @@ write.csv(birthwt[, c("low", "age", "lwt", "smoke", "bwt")],
 ```
 
 The copy exists only so the notebook runs without R. **The R side of the
-comparison needs no file at all** — `birthwt` ships with MASS, so the notebook's
-pasteable snippet reads `data = birthwt` directly, which is what makes the
-three-way agreement checkable by anyone with an R install. `MASS` is GPL-2/GPL-3
-and its datasets are redistributable on those terms.
+comparison needs no file at all.** `birthwt` ships with MASS, so the notebook's
+pasteable snippet reads `data = birthwt` directly. Anyone with an R install can
+therefore check the three-way agreement. `MASS` is GPL-2/GPL-3, and its
+datasets are redistributable on those terms.
 
-Regenerating this file is a **contract change**: `classical_fit_tram_dag.py`
-compares against R coefficients hard-coded from the fit above, so a regenerated
-CSV means re-running the R snippet and updating `R_GLM` / `R_LOGLIK` there.
+Regenerating this file is a **contract change**. `classical_fit_tram_dag.py`
+compares against R coefficients hard-coded from the fit above. A regenerated
+CSV therefore means you re-run the R snippet and update `R_GLM` and
+`R_LOGLIK` there.
 
 ## `vaca.csv`
 

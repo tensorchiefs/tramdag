@@ -1,22 +1,24 @@
 # Architecture
 
-Ten modules, one rule: **term-specific behavior lives on the term's two
-classes — its `Term` subclass (spec) and its module (`terms.py`); node-kind
-behavior lives in four adjacent functions; everything else is framework.** The decisions and their refused alternatives are recorded in
-[ADR 001](adr/001-term-owned-architecture.md).
+The package has ten modules and one rule. Term-specific behavior lives on the
+term's two classes. These are its `Term` subclass (the spec) and its module in
+`terms.py`. Node-kind behavior lives in four adjacent functions. Everything
+else is framework code.
+
+[ADR 001](adr/001-term-owned-architecture.md) records these decisions and the
+alternatives that the project refused.
 
 ## Module map
-
 ```mermaid
 graph TD
     subgraph data["pure data"]
         spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        terms["terms.py<br/>one module per term, data = its Term class;<br/>ShiftTerm/InterceptTerm hooks; module_for;<br/>LinearShiftTerm ComplexShiftTerm<br/>VaryingCoefficientTerm FnShiftTerm,<br/>SimpleInterceptTerm ComplexInterceptTerm<br/>AdditiveInterceptTerm"]
+        terms["terms.py<br/>one module per term, data = its Term class;<br/>ShiftTerm/InterceptTerm hooks; module_for;<br/>_InputTransform;<br/>LinearShiftTerm ComplexShiftTerm<br/>VaryingCoefficientTerm FnShiftTerm,<br/>SimpleInterceptTerm ComplexInterceptTerm<br/>AdditiveInterceptTerm"]
         conditioners["conditioners.py<br/>raw nn heads (frozen:<br/>anchors checkpoints + RNG)"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
-        nodes["nodes.py<br/>_Node (intercept + shifts),<br/>_InputTransform,<br/>kind_log_prob/sample/abduct/<br/>marginal_theta"]
+        nodes["nodes.py<br/>_Node (intercept + shifts),<br/>kind_log_prob/sample/abduct/<br/>marginal_theta"]
         flow["flow.py<br/>CausalFlowDAG: build, calibrate,<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
     end
     subgraph functions["flow behavior by concern"]
@@ -40,13 +42,12 @@ graph TD
     fitting --> callbacks
 ```
 
-(`spec.py` imports nothing from `terms.py`, so the data layer stays importable
-without torch executing any model code; `fitting.py`/`readouts.py` are
-mixins `CausalFlowDAG` composes and import `flow` under `TYPE_CHECKING`
-only — the graph is acyclic.)
+`spec.py` imports nothing from `terms.py`. Therefore the data layer stays
+importable and torch runs no model code. `fitting.py` and `readouts.py` are
+mixins that `CausalFlowDAG` composes. They import `flow` under
+`TYPE_CHECKING` only. The graph is acyclic.
 
 ## The term contract
-
 ```mermaid
 classDiagram
     class Term {
@@ -102,36 +103,48 @@ classDiagram
     ComplexInterceptTerm --|> ComplexIntercept : nn
 ```
 
-Built-in terms subclass their conditioners, so state-dict paths
+Built-in terms subclass their conditioners. Therefore the state-dict paths
 (`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream are those of 0.4.
-A custom term is two classes: a `tramdag.Term` subclass (its annotated
-attributes are the options; `__post_init__`, `edge_parents`, `cells` its
-rules) and a `ShiftTerm` subclass declaring `data =` that class and
-implementing `build` (which must set `key`) +
-`shift_value`. Subclassing is the registration; the cheap path for a
-one-off is `Fn`.
+
+A custom term is two classes:
+
+- a `tramdag.Term` subclass. Its annotated attributes are the options. Its
+  rules are `__post_init__`, `edge_parents` and `cells`.
+- a `ShiftTerm` subclass. It declares `data =` that class. It implements
+  `build` and `shift_value`. The `build` method must set `key`.
+
+Subclassing is the registration. For a one-off term, the cheap path is `Fn`.
 
 ## Node kinds
 
-Two kinds (continuous, ordinal) stay an if/else — in ONE place:
-`kind_log_prob` / `kind_sample` / `kind_abduct` / `kind_marginal_theta`,
-adjacent in nodes.py. A third kind is the trigger for a protocol, not before.
+The two node kinds are continuous and ordinal. They stay an if/else in ONE
+place. These four functions hold that if/else, adjacent in nodes.py:
+
+- `kind_log_prob`
+- `kind_sample`
+- `kind_abduct`
+- `kind_marginal_theta`
+
+A third node kind is the trigger for a protocol. Until a third kind arrives,
+the if/else stays.
 
 ## Guards that pin all of this
 
 - `tests/tools/statedict_smoke.py` — seeded per-DGP state dicts, bit-compared.
 - The inline DGP truths (`tests/conftest.py`) and 45+ regex-pinned refusals.
 - `experiments/*/ground_truth/*.json` — ten CI-checked replications with
-  wall-time tripwires; centers move only with a documented reason.
+  wall-time tripwires. Centers move only with a documented reason.
 
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
 ## Generated views
 
-Regenerate with ``uv run python tools/gen_diagrams.py`` — the package and
-class UML come from pyreverse (classes: names and inheritance only), the
-call graphs from a profile trace of one flow construction and one
-three-epoch ``fit`` on a 3-node SI/LS/CS/VC spec (tramdag-internal edges
-only; ``3x`` = once per node).
+To regenerate this section, run ``uv run python tools/gen_diagrams.py``.
+
+The package UML and the class UML come from pyreverse. The class diagram
+carries names and inheritance only. The call graphs come from a profile trace
+of one flow construction and one three-epoch ``fit`` on a 3-node SI/LS/CS/VC
+spec. The graphs keep tramdag-internal edges only, and ``3x`` means once per
+node.
 
 ### Package UML (pyreverse)
 
@@ -307,8 +320,8 @@ classDiagram
 flowchart LR
   subgraph conditioners
     n0["ComplexShift.__init__"]
-    n24["LinearShift.__init__"]
-    n23["SimpleIntercept.__init__"]
+    n25["LinearShift.__init__"]
+    n24["SimpleIntercept.__init__"]
     n2["VaryingCoef.__init__"]
     n1["_nn"]
   end
@@ -323,10 +336,11 @@ flowchart LR
   end
   subgraph spec
     n18["Term.edge_parents"]
+    n21["Term.net_options"]
     n19["VaryingCoefficient.edge_parents"]
     n17["_check_node"]
     n20["_kahn_sort"]
-    n21["feat_width"]
+    n22["feat_width"]
     n9["node_parents"]
     n6["validate_and_sort"]
   end
@@ -335,13 +349,13 @@ flowchart LR
     n12["InterceptTerm.build"]
     n15["LinearShiftTerm.build"]
     n16["VaryingCoefficientTerm.build"]
-    n22["_attach_input_transform"]
+    n23["_attach_input_transform"]
     n13["module_for"]
   end
   subgraph transforms
-    n25["BernsteinUT.__init__"]
+    n26["BernsteinUT.__init__"]
     n10["BernsteinUT.n_params"]
-    n26["_ScaledUT.__init__"]
+    n27["_ScaledUT.__init__"]
     n11["make_univariate_transform"]
   end
     n0 --> n1
@@ -368,14 +382,16 @@ flowchart LR
     n14 --> n0
     n14 --> n21
     n14 --> n22
-    n12 -- "3x" --> n23
-    n15 --> n24
-    n15 --> n21
+    n14 --> n23
+    n12 -- "3x" --> n24
+    n15 --> n25
+    n15 --> n22
     n16 --> n2
     n16 --> n21
     n16 --> n22
-    n25 -- "2x" --> n26
-    n11 -- "2x" --> n25
+    n16 --> n23
+    n26 -- "2x" --> n27
+    n11 -- "2x" --> n26
 ```
 
 ### Call graph — one fit (traced)
@@ -412,7 +428,7 @@ flowchart LR
   end
   subgraph flow
     n33["CausalFlowDAG._check_columns"]
-    n34["CausalFlowDAG._check_levels"]
+    n34["CausalFlowDAG._check_level_values"]
     n15["CausalFlowDAG._check_side_columns"]
     n29["CausalFlowDAG._dtype"]
     n27["CausalFlowDAG._encode_parent"]
@@ -491,6 +507,7 @@ flowchart LR
     n32 -- "18x" --> n24
     n32 -- "9x" --> n25
     n17 -- "2x" --> n33
+    n17 -- "2x" --> n34
     n17 -- "2x" --> n28
     n18 --> n33
     n18 --> n34

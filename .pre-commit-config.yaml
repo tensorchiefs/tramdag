@@ -58,9 +58,12 @@ repos:
   # maths is; examples and tests must stay simple enough to read as prose
   - id: complexipy
     alias: complexipy-src
-    name: complexipy (src, max 15)
+    name: complexipy (src + tools, max 15)
     args: [--max-complexity-allowed, '15']
-    files: ^src/
+    # tools/ is developer code, so it belongs on the framework tier rather
+    # than the examples one; it matched neither before, and gen_diagrams.py
+    # had drifted to 22 unnoticed
+    files: ^(src|tools)/
   - id: complexipy
     alias: complexipy-examples
     name: complexipy (experiments/notebooks/tests, max 10)

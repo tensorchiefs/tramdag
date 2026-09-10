@@ -67,3 +67,32 @@ jobs:
       run: >-
         uv run pytest -q -n auto --cov
         ${{ (github.event_name != 'schedule' && github.event_name != 'workflow_dispatch') && '-m "not slow"' || '' }}
+
+  # The generated views in docs/architecture.md come from a hand-run command,
+  # so nothing caught them drifting: the committed copy still named
+  # _check_levels after that method became _check_level_values. Regenerate and
+  # fail on a diff. Core dependencies are enough — the script imports tramdag,
+  # numpy and pandas, and fetches pyreverse through uvx at run time.
+  diagrams:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+
+    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
+      with:
+        enable-cache: true
+
+    - run: uv sync --no-default-groups
+
+    - name: Diagrams are current
+      env:
+        UV_NO_DEFAULT_GROUPS: '1'
+      run: |
+        uv run --frozen python tools/gen_diagrams.py
+        if ! git diff --exit-code docs/architecture.md; then
+          echo "::error::docs/architecture.md is stale. Regenerate it with"
+          echo "::error::  uv run python tools/gen_diagrams.py"
+          exit 1
+        fi

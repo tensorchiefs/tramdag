@@ -1602,7 +1602,9 @@ uv<span class="w"> </span>sync<span class="w">                        </span><sp
 <span class="n">flow</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># L1: observational sampling</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">do</span><span class="o">=</span><span class="p">{</span><span class="s2">"T"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>  <span class="c1"># L2: interventional (graph mutilation)</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s2">"Y"</span><span class="p">,</span> <span class="n">do</span><span class="o">=</span><span class="p">{</span><span class="s2">"T"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>  <span class="c1"># L2: analytic interventional PMF</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s2">"X2"</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span> <span class="n">do</span><span class="o">=</span><span class="p">{</span><span class="s2">"X1"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">})</span>  <span class="c1"># ... and density, continuous nodes</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">density</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s2">"X2"</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span> <span class="n">do</span><span class="o">=</span><span class="p">{</span><span class="s2">"X1"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}</span>
+<span class="p">)</span>  <span class="c1"># ... and density, continuous nodes</span>
 
 <span class="n">u</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">abduct</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>  <span class="c1"># L3 step 1: latents from observations</span>
 <span class="n">cf</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">do</span><span class="o">=</span><span class="p">{</span><span class="s2">"T"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">)</span>  <span class="c1"># L3 steps 2+3: counterfactuals</span>
@@ -1625,7 +1627,8 @@ uv<span class="w"> </span>sync<span class="w">                        </span><sp
 </code></pre></div>
 <h2 id="see-the-dag">See the DAG<a class="headerlink" href="#see-the-dag" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_dag</span>
-<span class="n">plot_dag</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>   <span class="c1"># or plot_dag(flow) — layers left to right, one edge style per term</span>
+
+<span class="n">plot_dag</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>  <span class="c1"># or plot_dag(flow) — layers left to right, one edge style per term</span>
 </code></pre></div>
 <p>Continuous nodes are ellipses. Ordinal nodes are rounded boxes with their
 level count. The edge styles are:</p>

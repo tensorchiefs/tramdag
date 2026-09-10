@@ -1717,17 +1717,21 @@ is right.</p>
     <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
 
 <span class="c1"># best-validation weights: the flexible-model recipe, restored at fit end</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
-         <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">())</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">())</span>
 
 <span class="c1"># ... and stop once the best epoch is that old</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-         <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<span class="p">)</span>
 
 <span class="c1"># one rate per node, each freezing on its own score; stops when all froze</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-         <span class="n">optimizer</span><span class="o">=</span><span class="n">per_node_adam</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">),</span>
-         <span class="n">callbacks</span><span class="o">=</span><span class="n">PerNodePlateau</span><span class="p">())</span>   <span class="c1"># patience=15, freeze=50</span>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">train_df</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">per_node_adam</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">),</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="n">PerNodePlateau</span><span class="p">(),</span>
+<span class="p">)</span>  <span class="c1"># patience=15, freeze=50</span>
 </code></pre></div>
 <p>Import <code>EarlyStopping</code>, <code>PerNodePlateau</code> and <code>per_node_adam</code> from
 <code>tramdag.callbacks</code>. For one shared rate instead of per-node rates, carry
@@ -1785,10 +1789,10 @@ raises on any <code>cs</code>, <code>ci</code> or <code>vc</code> term.</p>
 operation. A <code>fit()</code> call from there <strong>stays put</strong>. This behaviour is a check
 that the classical solution really is the optimum. It is also a way to use the
 classical fit as a fast, principled initialization:</p>
-<div class="highlight"><pre><span></span><code><span class="n">flow</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>                       <span class="c1"># exact MLE, seconds</span>
+<div class="highlight"><pre><span></span><code><span class="n">flow</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>  <span class="c1"># exact MLE, seconds</span>
 <span class="n">before</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>
 <span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>  <span class="c1"># a gentle Adam phase ...</span>
-<span class="n">after</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>                 <span class="c1"># ... barely moves</span>
+<span class="n">after</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>  <span class="c1"># ... barely moves</span>
 </code></pre></div>
 <p>A small drift means that the classical fit was already at the optimum. The
 same handoff warm-starts the <code>beta0</code> of a <code>VC</code> term.

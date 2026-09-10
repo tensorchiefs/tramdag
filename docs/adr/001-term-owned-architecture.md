@@ -47,7 +47,7 @@ drafted against a seven-subsystem survey and judged from three lenses
 
 - No per-kind node protocol (n=2), no new node kinds at 1.0.
 - ~~No per-term `Term` subclasses in the data layer~~ — **revised
-  2026-09-07**: one string-dispatched `Term` meant the spec knowledge of an
+  2026-09-07**: one string-dispatched `Term` meant the spec knowledge of a
   term lived in three places (a constructor, `option_defaults` served
   through `__getattr__`, and static `check_arity`/`edge_parents`/`cells`
   hooks on the module class), glued by a registry. Each term is now a

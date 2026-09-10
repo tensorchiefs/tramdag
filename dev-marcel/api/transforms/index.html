@@ -3049,11 +3049,11 @@ MLE is unchanged.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The computation stays in log-space. Both of these identities hold::</p>
-<pre><code>log(sigmoid(u) - sigmoid(l))
+  <p>The computation stays in log-space. Both of these identities hold:</p>
+<div class="highlight"><pre><span></span><code>log(sigmoid(u) - sigmoid(l))
     = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
     = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
-</code></pre>
+</code></pre></div>
 <p>For each element the function takes the side whose logsigmoids are far from
 zero, because that side is better conditioned.</p>
 <p><strong>Do not replace this with the direct difference of two sigmoids.</strong> That

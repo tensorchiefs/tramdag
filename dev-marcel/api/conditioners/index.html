@@ -1816,10 +1816,10 @@ and none of them relies on the defaults here.</p>
 <p>Parent features use the encoding of the original implementation. A continuous
 parent enters raw, in one column. An ordinal parent is one-hot encoded, in
 <code>levels</code> columns.</p>
-<p>:data:<code>ACTIVATIONS</code> holds the three activations the reference implementations
+<p><code>ACTIVATIONS</code> holds the three activations the reference implementations
 use: <code>relu</code> in the PyTorch reference's default classes, <code>sigmoid</code> in the
 paper's <code>create_param_net</code>, and <code>tanh</code> in the paper's <code>make_model</code> for
-the CAREFL and VACA comparisons. :data:<code>DEFAULT_ACTIVATION</code> is <code>relu</code>,
+the CAREFL and VACA comparisons. <code>DEFAULT_ACTIVATION</code> is <code>relu</code>,
 because the architectures these conditioners copy use it, so the default
 network and the default activation come from one source.</p>
 
@@ -2087,7 +2087,7 @@ this explicitly.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Key of :data:<code>ACTIVATIONS</code>, by default :data:<code>DEFAULT_ACTIVATION</code>.</p>
+                <p>Key of <code>ACTIVATIONS</code>, by default <code>DEFAULT_ACTIVATION</code>.</p>
               </div>
             </td>
             <td>
@@ -2103,7 +2103,7 @@ this explicitly.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Normalize the hidden layers, by default <code>False</code> — see :func:<code>_nn</code>.</p>
+                <p>Normalize the hidden layers, by default <code>False</code> — see <code>_nn</code>.</p>
               </div>
             </td>
             <td>
@@ -2469,7 +2469,7 @@ set this explicitly.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Key of :data:<code>ACTIVATIONS</code>, by default :data:<code>DEFAULT_ACTIVATION</code>.</p>
+                <p>Key of <code>ACTIVATIONS</code>, by default <code>DEFAULT_ACTIVATION</code>.</p>
               </div>
             </td>
             <td>
@@ -2485,7 +2485,7 @@ set this explicitly.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Normalize the hidden layers, by default <code>False</code> — see :func:<code>_nn</code>.</p>
+                <p>Normalize the hidden layers, by default <code>False</code> — see <code>_nn</code>.</p>
               </div>
             </td>
             <td>
@@ -2618,7 +2618,7 @@ set this explicitly.</p>
         <p>Varying-coefficient effect head <code>beta(x) = beta0 + b_theta(x)</code>.</p>
 <p><code>b_theta</code> is deliberately small: one hidden layer by default. Its
 weights carry an L2 <code>penalty</code> in the fitting objective (see
-:meth:<code>l2</code>; <code>fit</code> adds <code>penalty * l2()</code> on the total-NLL scale).
+<code>l2</code>; <code>fit</code> adds <code>penalty * l2()</code> on the total-NLL scale).
 <code>beta0</code> is not penalized.</p>
 <p>The output layer starts at zero, so <code>beta(x)</code> equals <code>beta0</code>
 exactly at construction. The head therefore learns only the deviation
@@ -2701,7 +2701,7 @@ implementations, so the size comes from that measurement.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Key of :data:<code>ACTIVATIONS</code>, by default :data:<code>DEFAULT_ACTIVATION</code>.</p>
+                <p>Key of <code>ACTIVATIONS</code>, by default <code>DEFAULT_ACTIVATION</code>.</p>
               </div>
             </td>
             <td>
@@ -2717,7 +2717,7 @@ implementations, so the size comes from that measurement.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Normalize the hidden layers, by default <code>False</code> — see :func:<code>_nn</code>.</p>
+                <p>Normalize the hidden layers, by default <code>False</code> — see <code>_nn</code>.</p>
               </div>
             </td>
             <td>
@@ -2733,7 +2733,7 @@ implementations, so the size comes from that measurement.</p>
   <p>A constant can move freely between <code>beta0</code> and <code>b_theta</code>, so the split is
 not identified by the likelihood alone. The penalty resolves it during
 training, because it shrinks <code>b_theta</code> toward the zero function. After
-training, :meth:<code>recenter</code> re-splits the two exactly: <code>b_theta</code> then sums
+training, <code>recenter</code> re-splits the two exactly: <code>b_theta</code> then sums
 to zero over the training data, the GAM convention that
 <code>intercept_contributions</code> also uses. Recentering is a reparameterization
 through the <code>center</code> buffer and leaves the modelled function unchanged.</p>

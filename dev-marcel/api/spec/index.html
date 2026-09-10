@@ -2480,30 +2480,63 @@
         <p>User-facing DAG specification.</p>
 <p>A model is one dict <code>{node_name: NodeSpec}</code>. Each node declares its
 transformation <code>h</code> as an <strong>additive formula of terms</strong> — the first
-positional argument, written as a list or as a <code>+</code> sum::</p>
-<pre><code>"X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
-"X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
-</code></pre>
-<p>Each term is a :class:<code>Term</code> subclass, called with the parent(s) it
-depends on: :class:<code>Intercept</code>, :class:<code>LinearShift</code>, :class:<code>ComplexShift</code>,
-:class:<code>VaryingCoefficient</code> and :class:<code>FnShift</code>. The paper's symbols
+positional argument, written as a list or as a <code>+</code> sum:</p>
+<div class="highlight"><pre><span></span><code><span class="s2">"X3"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">([</span><span class="n">I</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">),</span> <span class="n">CS</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">)])</span>       <span class="c1"># h = h_theta(x1) + g(x2)</span>
+<span class="s2">"X3"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">I</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">)</span> <span class="o">+</span> <span class="n">CS</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">))</span>        <span class="c1"># the same, formula style</span>
+</code></pre></div>
+<p>Each term is a <a class="autorefs autorefs-internal" title="Term
+
+
+  
+      dataclass
+  " href="#tramdag.spec.Term"><code>Term</code></a> subclass, called with the parent(s) it
+depends on: <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>, <a class="autorefs autorefs-internal" title="LinearShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.LinearShift"><code>LinearShift</code></a>, <a class="autorefs autorefs-internal" title="ComplexShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a>,
+<a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> and <a class="autorefs autorefs-internal" title="FnShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.FnShift"><code>FnShift</code></a>. The paper's symbols
 <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>Fn</code> are the same objects (<code>SI</code>/<code>CI</code> build
 the two intercept arities) and the notation of the docs, so use whichever
 reads better:</p>
 <ul>
-<li>:func:<code>I</code>  — <em>intercept</em> term: the parent(s) reshape the monotone transform
-  (its Bernstein coefficients / ordinal cutpoints). <code>I</code> dispatches on its
-  arguments: without parents it is the paper's simple intercept :func:<code>SI</code>
-  (always present, optional to write — the bare names <code>I</code> and <code>SI</code> both
-  work in a term list), with parents the complex intercept :func:<code>CI</code>.
-  <code>transform="spline"</code> picks the class of the monotone transform for a
-  continuous node; extra keyword arguments go straight to the transform
-  class (<code>SI(transform="spline", bins=16)</code>).</li>
-<li>:func:<code>LS</code> — <em>linear shift</em>: <code>beta * x</code> (one interpretable weight), one parent.</li>
-<li>:func:<code>CS</code> — <em>complex shift</em>: an additive NN <code>g(x)</code> on the latent scale.</li>
-<li>:func:<code>VC</code> — <em>varying-coefficient shift</em>: <code>beta(modifiers) * x_on</code> with
-  <code>beta(x) = beta0 + b_theta(x)</code> and <code>b_theta</code> a small, <strong>penalized</strong> network
-  — a treatment-effect head with its own bias–variance budget (issue #28).</li>
+<li><code>I</code>, the <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a> term: the parent(s) reshape the monotone
+  transform, meaning its Bernstein coefficients or ordinal cutpoints. <code>I</code>
+  dispatches on its arguments. Without parents it is the paper's simple
+  intercept <a class="autorefs autorefs-internal" title="SI" href="#tramdag.spec.SI"><code>SI</code></a>, always present and optional to write, and the bare
+  names <code>I</code> and <code>SI</code> both work in a term list. With parents it is the
+  complex intercept <a class="autorefs autorefs-internal" title="CI" href="#tramdag.spec.CI"><code>CI</code></a>. <code>transform="spline"</code> picks the class of the
+  monotone transform for a continuous node, and extra keyword arguments go
+  straight to that class (<code>SI(transform="spline", bins=16)</code>).</li>
+<li><code>LS</code>, the <a class="autorefs autorefs-internal" title="LinearShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.LinearShift"><code>LinearShift</code></a> term: <code>beta * x</code>, one interpretable weight
+  and one parent.</li>
+<li><code>CS</code>, the <a class="autorefs autorefs-internal" title="ComplexShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a> term: an additive NN <code>g(x)</code> on the latent
+  scale.</li>
+<li><code>VC</code>, the <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> term: <code>beta(modifiers) * x_on</code> with
+  <code>beta(x) = beta0 + b_theta(x)</code>, where <code>b_theta</code> is a small
+  <strong>penalized</strong> network. It is a treatment-effect head with its own
+  bias-variance budget (issue #28).</li>
 </ul>
 <p>A formula holds <strong>exactly one intercept term, first</strong> — written, or added as
 <code>SI()</code> when the formula only lists shifts — so <code>node.terms[0]</code> is always
@@ -2613,16 +2646,16 @@ prognostically through the shift <em>and</em> modifies the treatment effect.</p>
         <p>One additive term of a node's transformation; each kind is a subclass.</p>
 <p>Terms add: <code>I("a") + CS("b")</code> is the same transformation as
 <code>[I("a"), CS("b")]</code>. A term is frozen data — hashable, comparable,
-serializable by :func:<code>spec_to_dict</code> — and knows its own spec-level
+serializable by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a> — and knows its own spec-level
 rules (<code>edge_parents</code>, <code>cells</code>, <code>classical</code>). The module
-that trains it lives in :mod:<code>tramdag.terms</code> and declares which term
+that trains it lives in <a class="autorefs autorefs-internal" title="tramdag.terms" href="../terms/#tramdag.terms"><code>terms</code></a> and declares which term
 class it builds (<code>data = CS</code>).</p>
 <p>Subclass to add a term: the class name becomes its <code>name</code> (what the
 <code>term</code> key serializes), every annotated attribute with a default is an
-option, and <code>__post_init__</code> holds the construction-time checks::</p>
-<pre><code>class Scaled(Term):
-    scale: float = 1.0
-</code></pre>
+option, and <code>__post_init__</code> holds the construction-time checks:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Scaled</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+</code></pre></div>
 
 
 <p><span class="doc-section-title">Attributes:</span></p>
@@ -2642,10 +2675,10 @@ option, and <code>__post_init__</code> holds the construction-time checks::</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Ordered parent names the term depends on. Empty only for the bare
-simple intercept <code>I()</code>. For a :class:<code>VC</code> term, <code>parents[0]</code> is
-the treatment <code>t</code> and the rest are the effect modifiers; every
-other built-in term's parents all own their edges.</p>
+                <p>Ordered parent names the term depends on. Empty only for the bare simple
+intercept <code>I()</code>. For a <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> term,
+<code>parents[0]</code> is the treatment <code>t</code> and the rest are the effect modifiers;
+every other built-in term's parents all own their edges.</p>
               </div>
             </td>
           </tr>
@@ -2989,7 +3022,7 @@ network never asks.</p>
 parameter vector, the same for every row (the bare names <code>I</code> and
 <code>SI</code> in a term list both mean <code>I()</code>). With parents it is the
 complex intercept <strong>CI</strong>: the transform parameters become a function
-of them. :func:<code>SI</code> and :func:<code>CI</code> are the two spellings with their
+of them. <a class="autorefs autorefs-internal" title="SI" href="#tramdag.spec.SI"><code>SI</code></a> and <a class="autorefs autorefs-internal" title="CI" href="#tramdag.spec.CI"><code>CI</code></a> are the two spellings with their
 arity checked.</p>
 
 
@@ -3098,7 +3131,7 @@ do.</p>
                 <p>Hidden layers of the term's network, for example <code>units=[16]</code>.
 <code>None</code>, the default, takes the conditioner's own <code>(8, 8)</code> — the
 PyTorch reference's widths, which live in
-:mod:<code>tramdag.conditioners</code> next to their provenance, so this class
+<a class="autorefs autorefs-internal" title="tramdag.conditioners" href="../conditioners/#tramdag.conditioners"><code>conditioners</code></a> next to their provenance, so this class
 does not restate them. That module also explains why a paper
 replication sets this explicitly.</p>
               </div>
@@ -3534,7 +3567,7 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
               <div class="doc-md-description">
                 <p>Hidden layers, for example <code>units=[16]</code>. <code>None</code>, the default,
 takes the conditioner's own <code>(64, 128, 64)</code> — the PyTorch
-reference's widths, which live in :mod:<code>tramdag.conditioners</code> next to
+reference's widths, which live in <a class="autorefs autorefs-internal" title="tramdag.conditioners" href="../conditioners/#tramdag.conditioners"><code>conditioners</code></a> next to
 their provenance, so this class does not restate them.</p>
               </div>
             </td>
@@ -3569,7 +3602,8 @@ conditioners' <code>relu</code>, for the same reason.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>I</code>. <code>None</code>, the default, applies no transform.</p>
+                <p>As for <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>. <code>None</code>, the default, applies no
+transform.</p>
               </div>
             </td>
           </tr>
@@ -3683,7 +3717,7 @@ interpretable main effect on the log-odds scale — the classical
 <code>Colr</code>/<code>LS</code> reading when <code>beta</code> is constant. <code>penalty -&gt; inf</code>,
 or exactly zero modifiers, reduces the term to <code>LS(t)</code>, so VC-vs-LS
 is a nested question. Read the fitted effect out with
-:meth:<code>CausalFlowDAG.varying_coef</code>.</p>
+<a class="autorefs autorefs-internal" title="varying_coef" href="../flow/#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef</code></a>.</p>
 <p>Unlike other terms, VC <em>modifiers</em> can also appear in the node's
 prognostic terms (<code>CS</code>/<code>LS</code>/<code>I</code>). Only <code>t</code> owns its edge.</p>
 
@@ -3794,7 +3828,7 @@ measures a 5-10x bias reduction from turning it on.</p>
               <div class="doc-md-description">
                 <p>Hidden layers of <code>b_theta</code>. <code>None</code>, the default, takes the
 conditioner's own <code>(16,)</code>, whose size is justified where it is
-defined — see :class:<code>tramdag.conditioners.VaryingCoef</code>.</p>
+defined — see <a class="autorefs autorefs-internal" title="VaryingCoef" href="../conditioners/#tramdag.conditioners.VaryingCoef"><code>VaryingCoef</code></a>.</p>
               </div>
             </td>
           </tr>
@@ -3828,7 +3862,7 @@ takes the conditioners' <code>relu</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>I</code>, over the modifiers. <code>None</code>, the default,
+                <p>As for <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>, over the modifiers. <code>None</code>, the default,
 applies no transform.</p>
               </div>
             </td>
@@ -4066,8 +4100,13 @@ shape <code>(n,)</code> or <code>(n, 1)</code>. A plain function is a fixed offs
 <code>nn.Module</code> registers as a submodule and trains with the flow.</p>
 <p>Checkpoints pickle <code>fn</code>, so it must be a module-level function or an
 importable <code>nn.Module</code> — <code>save()</code> refuses a lambda. For a whole new
-term (own options, penalty, side inputs) subclass :class:<code>Term</code> and
-:class:<code>tramdag.terms.ShiftTerm</code> instead.</p>
+term (own options, penalty, side inputs) subclass <a class="autorefs autorefs-internal" title="Term
+
+
+  
+      dataclass
+  " href="#tramdag.spec.Term"><code>Term</code></a> and
+<a class="autorefs autorefs-internal" title="ShiftTerm" href="../terms/#tramdag.terms.ShiftTerm"><code>ShiftTerm</code></a> instead.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4121,7 +4160,7 @@ term (own options, penalty, side inputs) subclass :class:<code>Term</code> and
                 <p>The shift function. Required in practice: the declared default of
 <code>None</code> is never a usable value, and <code>__post_init__</code> refuses it.
 The default exists because <code>fn</code> has to be a dataclass field, which
-is what carries the callable into :func:<code>spec_to_dict</code> and back out
+is what carries the callable into <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a> and back out
 of a checkpoint.</p>
               </div>
             </td>
@@ -4133,7 +4172,13 @@ of a checkpoint.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>CS</code>. <code>None</code>, the default, applies no transform.</p>
+                <p>As for <a class="autorefs autorefs-internal" title="ComplexShift
+
+
+  
+      dataclass
+  " href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a>. <code>None</code>, the default, applies no
+transform.</p>
               </div>
             </td>
           </tr>
@@ -4428,7 +4473,7 @@ class of the monotone transform is chosen on the intercept term,
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The additive formula, as for :class:<code>ContinuousNode</code>, by default
+                <p>The additive formula, as for <a class="autorefs autorefs-internal" title="ContinuousNode" href="#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a>, by default
 <code>None</code>.</p>
               </div>
             </td>
@@ -4584,7 +4629,7 @@ class of the monotone transform is chosen on the intercept term,
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>Intercept</code>: <code>transform</code> and its keyword arguments.</p>
+                <p>As for <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>: <code>transform</code> and its keyword arguments.</p>
               </div>
             </td>
             <td>
@@ -4673,7 +4718,7 @@ class of the monotone transform is chosen on the intercept term,
             </td>
             <td>
               <div class="doc-md-description">
-                <p>As for :class:<code>Intercept</code>.</p>
+                <p>As for <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>.</p>
               </div>
             </td>
             <td>
@@ -4931,7 +4976,7 @@ cycle.</p>
 differ from their defaults — nothing else, so the form is canonical.
 The result is JSON- and YAML-safe: plain tuples become lists and
 nested kwargs tuples (<code>transform_kwargs</code>) become mappings, which is
-also how a hand-written YAML spec reads best; :func:<code>spec_from_dict</code>
+also how a hand-written YAML spec reads best; <a class="autorefs autorefs-internal" title="spec_from_dict" href="#tramdag.spec.spec_from_dict"><code>spec_from_dict</code></a>
 accepts both forms and turns them back, so a spec round-trips through
 <code>json</code>/YAML as well as through <code>torch.save</code> — except when a term
 carries a <em>callable</em> (<code>input_transform</code>, <code>fn</code>), which serializes
@@ -4985,7 +5030,7 @@ function.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The serialized spec. :func:<code>spec_from_dict</code> inverts it.</p>
+                <p>The serialized spec. <a class="autorefs autorefs-internal" title="spec_from_dict" href="#tramdag.spec.spec_from_dict"><code>spec_from_dict</code></a> inverts it.</p>
               </div>
             </td>
           </tr>
@@ -5035,7 +5080,7 @@ option key and a wrong arity fail here, by name.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The serialized spec, as produced by :func:<code>spec_to_dict</code>.</p>
+                <p>The serialized spec, as produced by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a>.</p>
               </div>
             </td>
             <td>

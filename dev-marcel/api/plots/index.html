@@ -1458,12 +1458,11 @@
         <p>Figures of a TRAM-DAG: the labelled DAG, the marginals, the training curve.</p>
 <p>matplotlib is an optional dependency — <code>pip install "tramdag[plots]"</code>. It is
 imported on the first call, so importing tramdag never needs it.</p>
-<p>::</p>
-<pre><code>from tramdag import plot_dag
-plot_dag(spec)            # or plot_dag(flow): the spec is the DAG
-plot_marginals(flow, df)  # observed vs sampled, one panel per node
-plot_training(flow, frozen=plateau.frozen)   # NLL per epoch, freeze marks
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_dag</span>
+<span class="n">plot_dag</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>            <span class="c1"># or plot_dag(flow): the spec is the DAG</span>
+<span class="n">plot_marginals</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>  <span class="c1"># observed vs sampled, one panel per node</span>
+<span class="n">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">plateau</span><span class="o">.</span><span class="n">frozen</span><span class="p">)</span>   <span class="c1"># NLL per epoch, freeze marks</span>
+</code></pre></div>
 
 
 
@@ -1850,7 +1849,7 @@ The sample has as many rows as <code>df</code>.</p>
                 <p><code>{node: epoch}</code> of the freezes, each a dashed mark. By default read
 off <code>flow.history["lr"]</code> (the first epoch a node's rate is 0, when
 the optimizer had per-node groups); pass a dict, or the
-:class:<code>tramdag.callbacks.PerNodePlateau</code> whose <code>frozen</code> to use.</p>
+<a class="autorefs autorefs-internal" title="PerNodePlateau" href="../callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a> whose <code>frozen</code> to use.</p>
               </div>
             </td>
             <td>

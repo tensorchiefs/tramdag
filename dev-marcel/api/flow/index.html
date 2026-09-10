@@ -2197,7 +2197,7 @@ are independent. <code>None</code> (default) computes every node.</p>
                 <p>Sum only these nodes' contributions. A subset is exact, because
 the per-node losses are independent — <code>nodes=["Y"]</code> is the
 conditional log-likelihood of <code>Y</code> given its parents, per row,
-in log space (safer than the log of :meth:<code>pmf</code>, which
+in log space (safer than the log of <a class="autorefs autorefs-internal" title="pmf" href="#tramdag.flow.CausalFlowDAG.pmf"><code>pmf</code></a>, which
 underflows in the tail). <code>None</code> (default) is the joint.</p>
               </div>
             </td>
@@ -2335,7 +2335,7 @@ columns).</p>
 yet; a loaded model is already calibrated, and later fits on other rows
 reuse this state — data on a new scale needs a new flow. Calibration
 never touches the weights: a calibrated start is a separate, always
-explicit step, :meth:<code>init_marginals</code>.</p>
+explicit step, <a class="autorefs autorefs-internal" title="init_marginals" href="#tramdag.flow.CausalFlowDAG.init_marginals"><code>init_marginals</code></a>.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -2489,7 +2489,7 @@ clamped and its parent dependence removed (graph mutilation).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Latent variables, as returned by :meth:<code>abduct</code>. If given,
+                <p>Latent variables, as returned by <a class="autorefs autorefs-internal" title="abduct" href="#tramdag.flow.CausalFlowDAG.abduct"><code>abduct</code></a>. If given,
 they are pushed through the flow. Together with <code>do</code> this
 yields counterfactuals: Pearl's abduction, action, prediction.</p>
               </div>
@@ -2806,7 +2806,7 @@ level's interval.</p>
     <div class="doc doc-contents ">
 
         <p>Give the analytic conditional density of a continuous node on a grid.</p>
-<p>The continuous counterpart of :meth:<code>pmf</code>: for every row of <code>df</code>
+<p>The continuous counterpart of <a class="autorefs autorefs-internal" title="pmf" href="#tramdag.flow.CausalFlowDAG.pmf"><code>pmf</code></a>: for every row of <code>df</code>
 the density <code>p(node = g | parents)</code> at each grid value <code>g</code>, in
 closed form from the transform — no sampling.</p>
 
@@ -2928,7 +2928,7 @@ closed form from the transform — no sampling.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>node</code> is ordinal; use :meth:<code>pmf</code> for it.</p>
+                <p>If <code>node</code> is ordinal; use <a class="autorefs autorefs-internal" title="pmf" href="#tramdag.flow.CausalFlowDAG.pmf"><code>pmf</code></a> for it.</p>
               </div>
             </td>
           </tr>
@@ -2959,7 +2959,7 @@ and are analytic and exact, see <code>tramdag.scores</code> (issue #29).</p>
 <p>At a fitted MLE each column sums to about zero. Order the rows by a
 covariate that truly modifies the treatment effect, and the
 cumulative sum of the treatment column drifts.
-:meth:<code>effect_modifier_scan</code> measures that drift.</p>
+<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="#tramdag.flow.CausalFlowDAG.effect_modifier_scan"><code>effect_modifier_scan</code></a> measures that drift.</p>
 <p>This is a pure read-out. It touches no fitting or sampling code
 path.</p>
 
@@ -3028,7 +3028,7 @@ propensity inputs of centered VC terms.</p>
             <td>
               <div class="doc-md-description">
                 <p>One column per coefficient, one row per observation. See
-:func:<code>tramdag.scores.node_scores</code> for the column naming.</p>
+<a class="autorefs autorefs-internal" title="node_scores" href="../scores/#tramdag.scores.node_scores"><code>node_scores</code></a> for the column naming.</p>
               </div>
             </td>
           </tr>
@@ -3083,7 +3083,7 @@ all-<code>ls</code> fit is enough, so this gives a measured shortlist for
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Observations, as for :meth:<code>scores</code>.</p>
+                <p>Observations, as for <a class="autorefs autorefs-internal" title="scores" href="#tramdag.flow.CausalFlowDAG.scores"><code>scores</code></a>.</p>
               </div>
             </td>
             <td>
@@ -3177,7 +3177,7 @@ multi-level ordinal treatment's level contrast (<code>"t[2]"</code>).</p>
               <div class="doc-md-description">
                 <p>One row per candidate, sorted by <code>stat</code> descending, with
 columns <code>stat</code>, <code>p_value</code>, <code>crit_5pct</code> and <code>flag</code>. See
-:func:<code>tramdag.scores.effect_modifier_scan</code>.</p>
+<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../scores/#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan</code></a>.</p>
               </div>
             </td>
           </tr>
@@ -3284,7 +3284,7 @@ device.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Checkpoint file written by :meth:<code>save</code>.</p>
+                <p>Checkpoint file written by <a class="autorefs autorefs-internal" title="save" href="#tramdag.flow.CausalFlowDAG.save"><code>save</code></a>.</p>
               </div>
             </td>
             <td>
@@ -3540,10 +3540,10 @@ constant: the one-hot columns sum to 1 in every row, so adding c to
 all of them and subtracting c from the node's intercept leaves the
 likelihood unchanged. Read them as differences — <code>w[k] - w[0]</code> is
 the level-k-vs-0 log-odds ratio, and the column
-:meth:<code>design_matrix</code> drops with <code>drop_first=True</code>.</p>
+<a class="autorefs autorefs-internal" title="design_matrix" href="#tramdag.flow.CausalFlowDAG.design_matrix"><code>design_matrix</code></a> drops with <code>drop_first=True</code>.</p>
 <p>Only <code>LS</code> terms have a weight to give. A node's <code>CS</code> and <code>VC</code>
 shifts are networks, so they are skipped — reading them needs
-:meth:<code>varying_coef</code> or an evaluation of the network itself.</p>
+<a class="autorefs autorefs-internal" title="varying_coef" href="#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef</code></a> or an evaluation of the network itself.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -3659,7 +3659,7 @@ reproduces the model's transform parameters. This is <strong>post-hoc
 only</strong>: it reads the fitted weights and changes nothing about the
 model or any frozen number (issue #20, Option A). Shift terms
 (<code>LS</code>/<code>CS</code>) are a separate, already-interpretable slot — see
-:meth:<code>ls_coefficients</code>.</p>
+<a class="autorefs autorefs-internal" title="ls_coefficients" href="#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3942,17 +3942,17 @@ matches <code>statsmodels</code> and R <code>polr</code>. A second <code>fit</co
 continues the training. Everything else — validation monitoring,
 learning-rate schedules, early stopping, best-weight restoration,
 logging — is the caller's, through <code>optimizer</code> and <code>callbacks</code>;
-:mod:<code>tramdag.callbacks</code> ships the common recipes::</p>
-<pre><code>from tramdag.callbacks import EarlyStopping
+<a class="autorefs autorefs-internal" title="tramdag.callbacks" href="../callbacks/#tramdag.callbacks"><code>callbacks</code></a> ships the common recipes:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">EarlyStopping</span>
 
-flow.fit(
-    train_df,
-    epochs=4000,
-    validation_data=val_df,
-    verbose=50,
-    callbacks=EarlyStopping(patience=200),
-)
-</code></pre>
+<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">train_df</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
+    <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">200</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4043,14 +4043,14 @@ full-batch step per epoch.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Validation rows, one column per node. When given (or split off),
-the per-node validation NLL is computed after every epoch and
-appended to <code>flow.history["val"]</code> — once, centrally; the
-shipped callbacks read it there. <code>flow.history["lr"]</code> gets the
-optimizer's learning rate after every epoch (<code>{node: lr}</code> with
-:func:<code>per_node_adam</code>'s tagged groups, else a float, or a list
-for several untagged groups), so a schedule's decisions are on
-record without a callback of your own.</p>
+                <p>Validation rows, one column per node. When given (or split off), the
+per-node validation NLL is computed after every epoch and appended to
+<code>flow.history["val"]</code> — once, centrally; the shipped callbacks read it
+there. <code>flow.history["lr"]</code> gets the optimizer's learning rate after every
+epoch (<code>{node: lr}</code> with
+<a class="autorefs autorefs-internal" title="per_node_adam" href="../callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam</code></a>'s tagged groups, else a
+float, or a list for several untagged groups), so a schedule's decisions are
+on record without a callback of your own.</p>
               </div>
             </td>
             <td>
@@ -4158,12 +4158,12 @@ shuffling. Weight initialization is seeded at construction
             </td>
             <td>
               <div class="doc-md-description">
-                <p>One entry or a list. A :class:<code>~tramdag.callbacks.Callback</code>
+                <p>One entry or a list. A <a class="autorefs autorefs-internal" title="Callback" href="../callbacks/#tramdag.callbacks.Callback"><code>Callback</code></a>
 hooks all three points of the fit — its docstring is the
 contract (begin/epoch/end timing, the stop rule, the VC
 re-centering order). A bare callable is an <code>on_epoch_end</code>
 hook, <code>cb(flow, epoch, optimizer)</code> — use it for schedules and
-coefficient trajectories. :mod:<code>tramdag.callbacks</code> ships
+coefficient trajectories. <a class="autorefs autorefs-internal" title="tramdag.callbacks" href="../callbacks/#tramdag.callbacks"><code>callbacks</code></a> ships
 <code>EarlyStopping</code> and <code>PerNodePlateau</code>, all
 reading <code>history["val"]</code>.</p>
               </div>
@@ -4278,7 +4278,7 @@ software, that is <code>statsmodels</code> <code>OrderedModel</code> and R <code
 <code>Colr</code>. It is much faster than minibatch Adam.</p>
 <p>This method is valid only when every edge is <code>ls</code>, because each
 node-conditional is then a classical transformation model. Any other
-model raises. For a <code>cs</code> or <code>ci</code> model use :meth:<code>fit</code>, where
+model raises. For a <code>cs</code> or <code>ci</code> model use <a class="autorefs autorefs-internal" title="fit" href="#tramdag.flow.CausalFlowDAG.fit"><code>fit</code></a>, where
 the minibatch noise also regularizes the NNs.</p>
 
 
@@ -4382,7 +4382,7 @@ running to the iteration cap.</p>
               <div class="doc-md-description">
                 <p>A convergence report: <code>converged</code>, <code>n_iter</code>, <code>final_nll</code>,
 <code>grad_norm</code>, <code>seconds</code>, and the fitted <code>coefficients</code>
-from :meth:<code>ls_coefficients</code>.</p>
+from <a class="autorefs autorefs-internal" title="ls_coefficients" href="#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
               </div>
             </td>
           </tr>

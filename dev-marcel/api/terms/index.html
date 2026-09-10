@@ -2656,16 +2656,26 @@
     <div class="doc doc-contents first">
 
         <p>The term modules: one class per term, built from the term's spec class.</p>
-<p>A spec term (:class:<code>tramdag.spec.Term</code> subclass — <code>LS</code>, <code>CS</code>, <code>VC</code>,
+<p>A spec term (<a class="autorefs autorefs-internal" title="Term
+
+
+  
+      dataclass
+  " href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass — <code>LS</code>, <code>CS</code>, <code>VC</code>,
 <code>Fn</code>, <code>I</code>) is frozen data and carries the spec-level rules; the module
 here declares which term class it builds (<code>data = CS</code>) and owns the
 runtime behaviour: <code>build</code>, <code>shift_value</code>/<code>theta_value</code>,
 <code>post_init</code>, <code>regularizer</code>, <code>finalize</code>, <code>score_columns</code> and the
-side-input contract. :func:<code>module_for</code> finds the module of a term by that
+side-input contract. <a class="autorefs autorefs-internal" title="module_for" href="#tramdag.terms.module_for"><code>module_for</code></a> finds the module of a term by that
 declaration, so subclassing is the whole registration.</p>
-<p>A custom term is two classes: a :class:<code>tramdag.spec.Term</code> subclass for
-the options and checks, and a :class:<code>ShiftTerm</code> subclass with <code>data =</code>
-that term class, <code>build</code> and <code>shift_value</code>.</p>
+<p>A custom term is two classes: a <a class="autorefs autorefs-internal" title="Term
+
+
+  
+      dataclass
+  " href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass for the options and checks, and a
+<a class="autorefs autorefs-internal" title="ShiftTerm" href="#tramdag.terms.ShiftTerm"><code>ShiftTerm</code></a> subclass with <code>data =</code> that term class,
+<code>build</code> and <code>shift_value</code>.</p>
 
 
 
@@ -2702,8 +2712,13 @@ that term class, <code>build</code> and <code>shift_value</code>.</p>
 
 
         <p>What every term module shares: the input transform and its calibration.</p>
-<p><code>data</code> names the :class:<code>tramdag.spec.Term</code> subclass the module
-builds; :func:<code>module_for</code> dispatches on it.</p>
+<p><code>data</code> names the <a class="autorefs autorefs-internal" title="Term
+
+
+  
+      dataclass
+  " href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass the module
+builds; <a class="autorefs autorefs-internal" title="module_for" href="#tramdag.terms.module_for"><code>module_for</code></a> dispatches on it.</p>
 
 
 
@@ -3054,7 +3069,7 @@ validation split and the minibatch slicing come for free).</p>
 
     <div class="doc doc-contents ">
 
-        <p>List the extra columns queries must tensorize for :meth:<code>live_side</code>.</p>
+        <p>List the extra columns queries must tensorize for <code>live_side</code>.</p>
 
 
     </div>
@@ -3772,7 +3787,7 @@ coefficient space.</p>
 <p>The one-hot level-1 indicator for a binary ordinal treatment, the
 value itself for a continuous one; a centered term subtracts its
 propensity column (the Robinson regressor <code>t - e_hat(x)</code>). It is
-also the score of <code>beta0</code>, so :meth:<code>score_columns</code> reads it here.</p>
+also the score of <code>beta0</code>, so <code>score_columns</code> reads it here.</p>
 
 
     </div>
@@ -3874,7 +3889,7 @@ also the score of <code>beta0</code>, so :meth:<code>score_columns</code> reads 
     <div class="doc doc-contents ">
 
         <p>One column, keyed by the treatment: the <code>beta0</code> score.</p>
-<p><code>d s / d beta0</code> is the term's own :meth:<code>regressor</code>, so forward
+<p><code>d s / d beta0</code> is the term's own <code>regressor</code>, so forward
 and score share one definition by construction.</p>
 
 
@@ -3994,7 +4009,12 @@ prediction convention; training uses the frozen out-of-fold column).</p>
         <p><code>Fn</code> — a user-supplied shift function over the parent features.</p>
 <p>A plain function contributes a fixed (non-trained) offset; an
 <code>nn.Module</code> registers as a submodule and trains with the flow. Built
-by :class:<code>tramdag.spec.FnShift</code> (<code>Fn</code>).</p>
+by <a class="autorefs autorefs-internal" title="FnShift
+
+
+  
+      dataclass
+  " href="../spec/#tramdag.spec.FnShift"><code>FnShift</code></a> (<code>Fn</code>).</p>
 
 
 
@@ -4084,9 +4104,9 @@ by :class:<code>tramdag.spec.FnShift</code> (<code>Fn</code>).</p>
     <div class="doc doc-contents ">
 
         <p>Give the module class that builds <code>term</code>.</p>
-<p>A :class:<code>TermDef</code> subclass that declares <code>data = &lt;Term subclass&gt;</code>
+<p>A <a class="autorefs autorefs-internal" title="TermDef" href="#tramdag.terms.TermDef"><code>TermDef</code></a> subclass that declares <code>data = &lt;Term subclass&gt;</code>
 stamps itself onto that class as <code>module</code> when it is defined
-(:meth:<code>TermDef.__init_subclass__</code>), so subclassing is the registration.</p>
+(<code>__init_subclass__</code>), so subclassing is the registration.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>

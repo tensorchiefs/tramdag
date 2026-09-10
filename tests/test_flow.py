@@ -266,3 +266,25 @@ def test_shift_curve_matches_the_manual_composition(ls_chain):
     assert np.allclose(flow.shift_curve("x2", "x1", grid), manual)
     with pytest.raises(KeyError, match="available"):
         flow.shift_curve("x2", "nope", grid)
+
+
+def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain):
+    """An ordinal parent enters one-hot, so a 1-D grid is not its input.
+
+    It used to reach the layer and fail with torch's shape message, in a
+    package that names every other mistake by hand.
+    """
+    from tramdag import LS, ContinuousNode, OrdinalNode
+
+    df = ls_chain["draw"](200, 0)[["x1", "x2", "t"]]
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode([LS("x1")]),
+        "t": OrdinalNode(2, [LS("x1")]),
+        "y": ContinuousNode([LS("t")]),
+    }
+    df = df.assign(y=df["x2"] - 0.8 * df["t"])
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df, epochs=2, batch_size=100)
+    with pytest.raises(ValueError, match="ordinal parent"):
+        flow.shift_curve("y", "t", np.linspace(0, 1, 5))

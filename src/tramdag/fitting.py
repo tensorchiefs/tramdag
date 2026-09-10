@@ -135,6 +135,10 @@ def _epoch_pass(
         flow.history.setdefault("val", []).append(
             _val_nll(flow, val_vals, validation_batch_size)
         )
+        # which train epoch this entry belongs to. `history` accumulates across
+        # `fit` calls, so an unvalidated fit shifts every later validation entry
+        # away from its own epoch, and a curve drawn from 1 misleads.
+        flow.history.setdefault("val_epoch", []).append(len(flow.history["train"]))
 
 
 def _learning_rates(opt) -> dict[str, float] | float | list[float]:
@@ -185,9 +189,11 @@ def _fit_epoch(
     """One shuffled pass over the rows; give the epoch-mean train NLL per node."""
     n = len(next(iter(vals.values())))
     acc = dict.fromkeys(flow.order, 0.0)
+    trained = 0
     for idx in torch.randperm(n, device=flow.device).split(batch_size):
         if idx.numel() < 2:
             continue  # batch norm needs two rows, and one row is no gradient
+        trained += int(idx.numel())
         batch = {k: v[idx] for k, v in vals.items()}
         per_node = flow.node_log_prob(batch)
         nlls = {k: -v.mean() for k, v in per_node.items()}
@@ -197,10 +203,18 @@ def _fit_epoch(
         opt.zero_grad()
         loss.backward()
         opt.step()
-        w = len(idx) / n
         for k, v in nlls.items():
-            acc[k] += float(v.detach()) * w
-    return acc
+            acc[k] += float(v.detach()) * idx.numel()
+    if trained == 0:
+        raise ValueError(
+            f"fit() trained on no row: {n} row(s) split at batch_size="
+            f"{batch_size} leaves only single-row batches, and the loop skips "
+            "those, because a one-row batch carries no gradient and batch_norm "
+            "cannot normalize over it. Give at least two rows."
+        )
+    # over the rows actually stepped on, not over n: a skipped trailing row
+    # would otherwise scale every node's epoch NLL down by 1/n
+    return {k: v / trained for k, v in acc.items()}
 
 
 # %% private classes -------------------------------------------------------------------

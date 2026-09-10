@@ -97,3 +97,26 @@ def test_plots_name_the_optional_dependency(monkeypatch):
     monkeypatch.setitem(sys.modules, "matplotlib.pyplot", None)
     with pytest.raises(ImportError, match=r"tramdag\[plots\]"):
         plot_dag(_every_term_spec())
+
+
+def test_the_validation_curve_keeps_its_own_epochs(ls_chain):
+    """History accumulates across fits, so val must carry its epoch.
+
+    A fit without validation followed by one with it used to draw the
+    validation curve from epoch 1, silently misaligned with the training
+    curve it is read against.
+    """
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df, epochs=3, batch_size=100)
+    flow.fit(df, epochs=2, batch_size=100, validation_split=0.2)
+    assert flow.history["val_epoch"] == [4, 5]
+    ax = plot_training(flow)
+    drawn = {
+        line.get_label().split()[0]: [float(v) for v in line.get_xdata()]
+        for line in ax.get_lines()
+        if line.get_label().startswith(("train", "val"))
+    }
+    assert drawn["train"] == [1, 2, 3, 4, 5]
+    assert drawn["val"] == [4, 5]

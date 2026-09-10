@@ -8,7 +8,7 @@ runtime behaviour: ``build``, ``shift_value``/``theta_value``,
 side-input contract. [`module_for`][] finds the module of a term by that
 declaration, so subclassing is the whole registration.
 
-A custom term is two classes: a [`Term`][] subclass for the options and checks, and a
+A custom term is two classes: a ``Term`` subclass for the options and checks, and a
 [`ShiftTerm`][tramdag.terms.ShiftTerm] subclass with ``data =`` that term class,
 ``build`` and ``shift_value``.
 """

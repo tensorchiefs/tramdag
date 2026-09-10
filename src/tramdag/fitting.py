@@ -297,7 +297,7 @@ class _FitMixin:
             contract (begin/epoch/end timing, the stop rule, the VC
             re-centering order). A bare callable is an ``on_epoch_end``
             hook, ``cb(flow, epoch, optimizer)`` — use it for schedules and
-            coefficient trajectories. [`callbacks`][tramdag.callbacks] ships
+            coefficient trajectories. ``callbacks`` ships
             ``EarlyStopping`` and ``PerNodePlateau``, all
             reading ``history["val"]``.
 

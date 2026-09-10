@@ -16,7 +16,7 @@ depends on: [`Intercept`][], [`LinearShift`][], [`ComplexShift`][],
 the two intercept arities) and the notation of the docs, so use whichever
 reads better:
 
-- ``I``, the [`Intercept`][] term: the parent(s) reshape the monotone
+- ``I``, the ``Intercept`` term: the parent(s) reshape the monotone
   transform, meaning its Bernstein coefficients or ordinal cutpoints. ``I``
   dispatches on its arguments. Without parents it is the paper's simple
   intercept [`SI`][], always present and optional to write, and the bare
@@ -24,11 +24,11 @@ reads better:
   complex intercept [`CI`][]. ``transform="spline"`` picks the class of the
   monotone transform for a continuous node, and extra keyword arguments go
   straight to that class (``SI(transform="spline", bins=16)``).
-- ``LS``, the [`LinearShift`][] term: ``beta * x``, one interpretable weight
+- ``LS``, the ``LinearShift`` term: ``beta * x``, one interpretable weight
   and one parent.
-- ``CS``, the [`ComplexShift`][] term: an additive NN ``g(x)`` on the latent
+- ``CS``, the ``ComplexShift`` term: an additive NN ``g(x)`` on the latent
   scale.
-- ``VC``, the [`VaryingCoefficient`][] term: ``beta(modifiers) * x_on`` with
+- ``VC``, the ``VaryingCoefficient`` term: ``beta(modifiers) * x_on`` with
   ``beta(x) = beta0 + b_theta(x)``, where ``b_theta`` is a small
   **penalized** network. It is a treatment-effect head with its own
   bias-variance budget (issue #28).
@@ -406,7 +406,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     Returns
     -------
     dict
-        The serialized spec. [`spec_from_dict`][] inverts it.
+        The serialized spec. ``spec_from_dict`` inverts it.
     """
     out = {}
     for name, node in spec.items():

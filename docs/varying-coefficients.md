@@ -127,7 +127,7 @@ design:
   fold_id = np.random.default_rng(0).permutation(len(train)) % 5
   e_oof = np.empty(len(train))
   for j in range(5):
-      proxy = td.CausalFlowDAG(t_spec, seed=0)          # the treatment node's spec
+      proxy = td.CausalFlowDAG(t_spec, seed=0)  # the treatment node's spec
       proxy.fit_classical(train.iloc[fold_id != j][["X", "T"]])
       e_oof[fold_id == j] = proxy.pmf(train.iloc[fold_id == j], "T")[:, 1]
   ```

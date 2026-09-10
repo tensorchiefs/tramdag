@@ -94,7 +94,9 @@ flow.log_prob(df)  # L1: joint log-likelihood per row
 flow.sample(1000)  # L1: observational sampling
 flow.sample(1000, do={"T": 1})  # L2: interventional (graph mutilation)
 flow.pmf(df, node="Y", do={"T": 1})  # L2: analytic interventional PMF
-flow.density(df, node="X2", grid=grid, do={"X1": 0.5})  # ... and density, continuous nodes
+flow.density(
+    df, node="X2", grid=grid, do={"X1": 0.5}
+)  # ... and density, continuous nodes
 
 u = flow.abduct(df)  # L3 step 1: latents from observations
 cf = flow.sample(do={"T": 1}, u=u)  # L3 steps 2+3: counterfactuals
@@ -120,7 +122,8 @@ flow = CausalFlowDAG.load("flow.pt")
 
 ```python
 from tramdag import plot_dag
-plot_dag(spec)   # or plot_dag(flow) — layers left to right, one edge style per term
+
+plot_dag(spec)  # or plot_dag(flow) — layers left to right, one edge style per term
 ```
 
 Continuous nodes are ellipses. Ordinal nodes are rounded boxes with their

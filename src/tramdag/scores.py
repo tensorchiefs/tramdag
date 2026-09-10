@@ -142,7 +142,11 @@ def sup_bb_pvalue(stat: float) -> float:
     """
     if stat <= 0:
         return 1.0  # the series alternates to 0.0 here, which is the wrong tail
-    # 100 terms: the k-th is exp(-2k^2 stat^2), so past k ~ 10 it underflows
+    # 100 terms, and they are all needed. The k-th is exp(-2k^2 stat^2), which
+    # underflows past k ~ 10 only for a LARGE statistic. A small one converges
+    # slowly: at stat = 0.02 the truncation at k = 10 returns 0.084 where the
+    # series gives 0.9997, so a perfectly stable coefficient would be reported
+    # as significant. stat = 0.2 still needs 20 terms.
     s = sum(
         (-1) ** (k + 1) * math.exp(-2.0 * k * k * stat * stat) for k in range(1, 101)
     )

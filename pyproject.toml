@@ -11,6 +11,10 @@ dev = [
   {include-group = "test"},
   "pre-commit",
   "pylsp-rope",
+  # pinned to the ruff-pre-commit hook's rev. Without it `ruff` is only a
+  # transitive dependency of python-lsp-ruff, so `uv run ruff` and the hook
+  # can sit on different versions and disagree about what is formatted.
+  "ruff==0.16.6",
   # actionlint lints a workflow's shell scripts only when shellcheck is on
   # PATH. Without it, a local hook run silently checks less than CI does.
   "shellcheck-py",

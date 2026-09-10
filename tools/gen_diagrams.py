@@ -87,14 +87,12 @@ def trace(fn) -> Counter:
     return Counter({pair: n for pair, n in edges.items() if _is_edge(*pair)})
 
 
-def flowchart(edges: Counter, drop=()) -> str:
+def flowchart(edges: Counter) -> str:
     """Render traced edges as a mermaid flowchart, one subgraph per module."""
     ids: dict = {}
     by_mod = defaultdict(set)
     body = []
     for (a, b), n in sorted(edges.items()):
-        if any(a.startswith(p) or b.startswith(p) for p in drop):
-            continue
         for name in (a, b):
             ids.setdefault(name, f"n{len(ids)}")
             by_mod[name.split(".")[0]].add(name)
@@ -193,7 +191,7 @@ from ``ShiftTerm``/``InterceptTerm``.
 ### Call graph — flow construction (traced)
 
 ```mermaid
-{flowchart(construct, drop=("spec.Term.__getattr__", "spec._option_defaults"))}
+{flowchart(construct)}
 ```
 
 ### Call graph — one fit (traced)

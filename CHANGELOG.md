@@ -673,6 +673,27 @@ read-outs keep their exact signatures as flow methods.
 
 ### Changed (internal, no API surface)
 
+- **`ruff` is a declared dev dependency**, pinned to the `ruff-pre-commit`
+  hook's rev. It was only a transitive dependency of `python-lsp-ruff`, two
+  patch versions behind the hook, so `uv run ruff` and the commit hook could
+  disagree about what is formatted. That is how three documentation pages
+  reached the tree unformatted.
+- **One helper composes a node's transform parameters and shift.** Four
+  queries each built the features, merged the side columns and called
+  `theta_shift` themselves. `CausalFlowDAG._theta_shift` does it once, so a
+  fifth query cannot drop a centered term's propensity column by omission,
+  which is the failure the term had to catch at run time. The features stay
+  hoisted out of the caller's loop, so nothing is recomputed per node.
+- **`pmf` and `density` share their kind guard.** Both messages are unchanged.
+- **`tools/gen_diagrams.py` drops a filter that named two symbols which no
+  longer exist** (`spec.Term.__getattr__` and `spec._option_defaults`). The
+  diagrams regenerate byte-identical without it, which is the proof it was
+  dead: the CI job checks that the output is current but cannot see that the
+  generator is not.
+- **`experiments/paper/helpers.py` uses `scipy.stats.gaussian_kde`** for the
+  density panels instead of a hand-rolled Gaussian kernel. scipy is already a
+  declared dependency of the experiments group, and the two estimates agree to
+  0.012% of the peak.
 - **Dependencies move to torch 2.14.0 and statsmodels 0.15.0**, with the
   pre-commit hooks on ruff 0.16.6, uv 0.12.10 and commitizen 4.18.0, and the
   release workflow's actions on checkout 7.0.1, upload-artifact 7.0.1,

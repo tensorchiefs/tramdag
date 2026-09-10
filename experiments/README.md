@@ -1,7 +1,8 @@
 # Experiments — the TRAM-DAG paper replications
 
-Research code, kept out of the installed `tramdag` package. One directory per
-**area**, each owning everything it needs:
+This directory holds research code. The installed `tramdag` package does not
+contain it. There is one directory per **area**, and each area owns everything
+it needs:
 
 | area | what it holds |
 |---|---|
@@ -9,14 +10,21 @@ Research code, kept out of the installed `tramdag` package. One directory per
 | [`benchmarks/`](benchmarks/) | training-speed and cross-machine measurements |
 | [`misc/`](misc/) | everything else — currently the classical-MLE validation |
 
-A `paper`/`misc` area contains its own `data/`, `ground_truth/`, `results/`
-(gitignored), `tests/` and whatever helpers only it needs. `benchmarks/` is the
-exception by nature: it measures training speed *on* the other areas' data, so
-it reads `misc/data/` and `paper/data/` and commits no ground truth of its own —
-its output is a write-up in `docs/`, not a pinned number. Only two files are
-shared:
-[`common.py`](common.py) (the output layout the workflow reads) and
-[`check.py`](check.py) (the ground-truth comparison).
+The `paper` area and the `misc` area each contain their own:
+
+- `data/`,
+- `ground_truth/`,
+- `results/` (gitignored),
+- `tests/`,
+- the helpers that only that area needs.
+
+`benchmarks/` is the exception by nature. It measures training speed *on* the
+data of the other areas. It therefore reads `misc/data/` and `paper/data/`, and
+it commits no ground truth of its own. Its output is a write-up in `docs/`, not
+a pinned number.
+
+Two files are shared. [`common.py`](common.py) holds the output layout that the
+workflow reads. [`check.py`](check.py) holds the ground-truth comparison.
 
 ## Running one
 
@@ -30,10 +38,15 @@ uv run python -m paper.check_data              # frozen data regenerates
 uv run pytest .                                # the area checks (seconds)
 ```
 
-Every run writes to `<area>/results/<name>/`: `metrics.json` (the numbers CI
-checks), `report.md` (the table plus figures, posted as a commit comment by the
-experiments workflow), `flow.pt`, and `plots/*.png` for the runs that draw
-figures — `validate_ls` is a numbers-only comparison and draws none.
+Every run writes to `<area>/results/<name>/`. The run writes these files:
+
+- `metrics.json`, the numbers that CI checks,
+- `report.md`, the table plus the figures (the experiments workflow posts this
+  file as a commit comment),
+- `flow.pt`,
+- `plots/*.png`, for the runs that draw figures.
+
+`validate_ls` is a numbers-only comparison and draws no figures.
 
 ## The scripts
 
@@ -45,81 +58,109 @@ figures — `validate_ls` is a numbers-only comparison and draws none.
 | [`paper/carefl.py`](paper/carefl.py) | CAREFL Laplace SCM | Sec. 5.3, App. C.2 | `flexible` |
 | [`misc/validate_ls.py`](misc/validate_ls.py) | frozen synthetic cohort | — (framework anchor) | `adam`, `classical` |
 
-Two benchmarks live beside them, measured rather than checked against ground
-truth, so they are run by hand and reported in the docs:
+Two benchmarks live beside these scripts. They are measured, not checked
+against ground truth. A maintainer runs them by hand and reports the numbers in
+the docs:
 
 | script | measures | output |
 |---|---|---|
 | [`benchmarks/bench_training.py`](benchmarks/bench_training.py) | time-to-target for lr schedules, batch size, device, L-BFGS | [`docs/training-speed.md`](../docs/training-speed.md) |
 | [`benchmarks/perf_machine.py`](benchmarks/perf_machine.py) | fixed 200-epoch throughput per machine and device | [`docs/perf/`](../docs/perf/) |
 
-`perf_machine.py` deliberately depends on nothing but the installed package —
-it is meant to be downloaded and run on a machine without a checkout — so it
+`perf_machine.py` deliberately depends on nothing but the installed package.
+A user can download it and run it on a machine without a checkout. It therefore
 carries its own copy of the bimodal DGP. `benchmarks/tests/` pins that copy to
-the maintained generator, because a drifted copy would silently make the
-collected `final_val_nll` values incomparable.
+the maintained generator. A drifted copy can make the collected
+`final_val_nll` values incomparable.
 
 Runtime and the CI deviations: the triangle configs run batch 256 / lr 0.004
-for 300 epochs (`linear-cs` 500, mixed `exp-cs` 350, mixed `linear-ls` 200 @
-lr 0.002) instead of the paper's 500 at batch 32 / lr 0.001 (re-tuned
-2026-09-01) — every ground-truth metric kept. VACA and CAREFL run their
-references 1:1: 10000 / 7000 full-batch epochs @ lr 0.001 with the plateau
-rule, CAREFL on the reference's own committed rows (`paper/data/carefl-cf`).
-The selection grid, the epoch floors and the rejected alternatives with
-their numbers are in `docs/paper-replication.md`; locally, run variants one
-or two at a time (`OMP_NUM_THREADS=2`; the step is overhead-bound).
+for 300 epochs. Three variants differ:
+
+- `linear-cs` runs 500 epochs,
+- mixed `exp-cs` runs 350 epochs,
+- mixed `linear-ls` runs 200 epochs @ lr 0.002.
+
+The paper runs 500 epochs at batch 32 / lr 0.001. The tuning round of
+2026-09-01 set the values above, and every ground-truth metric kept its value.
+VACA and CAREFL run their references 1:1. VACA runs 10000 full-batch epochs @
+lr 0.001 with the plateau rule, and CAREFL runs 7000. CAREFL runs on the
+reference's own committed rows (`paper/data/carefl-cf`).
+`docs/paper-replication.md` holds the selection grid, the epoch floors and the
+rejected alternatives with their numbers.
+
+To run variants locally, run one or two at a time with `OMP_NUM_THREADS=2`.
+The step is overhead-bound.
 
 `vaca.py` and `carefl.py` keep `input_transform: minmax` and tanh on their CI
-terms because the reference trains in `scale_df` space and every raw-parent
-alternative was tried and measurably fails (tanh/sigmoid saturate, relu
-wanders or underfits — measured in `docs/paper-replication.md`). The triangle
-scripts' reference fits raw parents, so those specs leave it unset.
+terms. The reference trains in `scale_df` space. Every raw-parent alternative
+measurably fails: tanh and sigmoid saturate, and relu wanders or underfits.
+`docs/paper-replication.md` holds those measurements. The reference of the
+triangle scripts fits raw parents, so those specs leave `input_transform`
+unset.
 
-Which paper figure each variant reproduces — and what is deliberately not
-reproduced — is listed in [`paper/PAPER_COVERAGE.md`](paper/PAPER_COVERAGE.md);
-every hyperparameter with its source in the R code, the deviations and the
-measured numbers are in [`docs/paper-replication.md`](../docs/paper-replication.md).
+[`paper/PAPER_COVERAGE.md`](paper/PAPER_COVERAGE.md) lists which paper figure
+each variant reproduces. It also lists what the replications deliberately do
+not reproduce. [`docs/paper-replication.md`](../docs/paper-replication.md)
+holds every hyperparameter with its source in the R code, the deviations and
+the measured numbers.
 
-All five have the same shape: imports, function definitions, a `run(variant)`
-function holding the whole experiment, and a `__main__` block whose argparse
-call selects the variant.
+All five scripts have the same shape:
+
+- imports,
+- function definitions,
+- a `run(variant)` function that holds the whole experiment,
+- a `__main__` block whose argparse call selects the variant.
 
 ## The blueprint: spec and hyperparameters live in YAML, not in code
 
-Each script reads its sibling `<script>.yaml` and **nothing else**: no defaults
-in the code, no CLI flags that change a number. `common.py::load_variant` parses
-the file and picks the variant's section with `common.py::_config_section`.
-Both live here, so the package depends on no config parser and ships no config
-helper.
-Values shared by several variants are written once under a YAML anchor and
-merged with `<<`, which keeps the merge visible in the file.
+Each script reads its sibling `<script>.yaml` and **nothing else**. There are
+no defaults in the code. There are no CLI flags that change a number.
+`common.py::load_variant` parses the file. It picks the variant's section with
+`common.py::_config_section`. Both functions live here, so the package depends
+on no config parser and ships no config helper.
 
-Since 2026-09 every variant carries the **whole model and training recipe**
-(deliberately verbose — duplication over indirection, so one variant reads
-top to bottom):
+A value that several variants share appears once under a YAML anchor. The
+variants merge it with `<<`, which keeps the merge visible in the file.
 
-- `spec:` — the full DAG in `tramdag.spec_from_dict` form: per node `kind`
-  (+ `levels` for ordinal), and one `{term, parents, options}` entry per
-  term. Everything about the model — transform, `n_coeffs`, `range_q`, network
-  `units`/`activation`, `input_transform` — is a term option here, not a
-  separate config key.
-- `flow_kwargs:` — passed to `CausalFlowDAG(spec, **flow_kwargs)` verbatim
-  (`seed`, `init`).
-- `fit_kwargs:` — passed to `flow.fit(train, **fit_kwargs)` verbatim
-  (`epochs`, `batch_size`, `seed`). The optimizer's `learning_rate` and the
-  `schedule`/`plateau_*` keys stay top-level: they configure the optimizer
-  and scheduler the script builds, not `fit` itself.
-- everything else is data and scoring configuration (`n_train`, `dgp_seed`,
-  grids, ...).
+Since 2026-09 every variant carries the **whole model and training recipe**.
+This form is deliberately verbose. It prefers duplication over indirection, so
+one variant reads top to bottom. A variant holds these keys:
+
+- `spec:` — the full DAG in `tramdag.spec_from_dict` form. Per node it gives
+  `kind` (+ `levels` for ordinal) and one `{term, parents, options}` entry per
+  term. Every part of the model is a term option here, not a separate config
+  key:
+
+  - the transform,
+  - `n_coeffs`,
+  - `range_q`,
+  - the network `units` and the network `activation`,
+  - `input_transform`.
+- `flow_kwargs:` — the script passes these verbatim to
+  `CausalFlowDAG(spec, **flow_kwargs)`. The keys are `seed` and `init`.
+- `fit_kwargs:` — the script passes these verbatim to
+  `flow.fit(train, **fit_kwargs)`. The keys are `epochs`, `batch_size` and
+  `seed`. The `learning_rate` key and the `schedule` and `plateau_*` keys stay
+  top-level. They configure the optimizer and the scheduler that the script
+  builds, not `fit` itself.
+- everything else is data configuration and scoring configuration, for example
+  `n_train`, `dgp_seed` and the grids.
 
 `benchmarks/bench_training.yaml` is workloads-shaped rather than
-variants-shaped (its subject is a recipe grid), but follows the same rule:
-specs, data descriptors, targets and every recipe number live in the YAML,
-the script is harness only. The one exemption is `perf_machine.py`, which is
-deliberately a single curl-and-run file with no sibling anything.
+variants-shaped, because its subject is a recipe grid. It follows the same
+rule. These parts live in the YAML file:
 
-To change what a run does, edit the YAML. To add a variant, add a section —
-`argparse` picks it up automatically, because its choices come from the file.
+- the specs,
+- the data descriptors,
+- the targets,
+- every recipe number.
+
+The script is harness only. The one exemption is `perf_machine.py`. That file
+is deliberately a single curl-and-run file with no sibling file of any kind.
+
+To change what a run does, edit the YAML file. To add a variant, add a section.
+`argparse` then finds the new section automatically, because its choices come
+from the file.
 
 ## Ground truth
 
@@ -131,21 +172,26 @@ one of two forms:
  "cs_curve_max_abs_err": {"max": 0.23}}
 ```
 
-`{value, atol}` is two-sided, for a quantity that should stay where it is.
-`{max}` is an upper bound, for an **error measure** — there a smaller number is
-a better fit, not a drift, and must not fail the run. Tolerances are per metric
-because torch results differ slightly across operating systems and CPUs.
-`check.py` fails on a metric outside its tolerance or above its bound, and on a
-ground-truth entry the run no longer produces.
+`{value, atol}` is two-sided. It fits a quantity that must stay where it is.
+`{max}` is an upper bound for an **error measure**. For an error measure a
+smaller number is a better fit, not a drift. A smaller number must not fail the
+run. Tolerances are per metric, because torch results differ slightly across
+operating systems and CPUs.
 
-A `{max}` bound is only informative in a band: below **1.5x** its measurement it
-fails on another machine for no reason, above **4x** it cannot catch a
-regression. A `{value, atol}` center decays the other way — it keeps passing
-while describing an older run. `check.py` reports both as notes, not failures,
-because a tolerance is a judgement call: a bound outside the band, and a
-measurement more than half-way to its `atol`. A bound that is *meant* to be wide
-says so in a `"why"` string, which is printed instead (it excuses width only —
-the too-tight note always fires):
+`check.py` fails on a metric outside its tolerance. It also fails on a metric
+above its bound. It also fails on a ground-truth entry that the run no longer
+produces.
+
+A `{max}` bound is only informative in a band. Below **1.5x** its measurement
+the bound fails on another machine for no reason. Above **4x** the bound cannot
+catch a regression. A `{value, atol}` center decays the other way. Such a
+center still passes, but it describes an older run.
+
+`check.py` reports two conditions as notes, not as failures: a bound outside
+the band, and a measurement more than half-way to its `atol`. They are notes
+because a tolerance is a judgement call. A bound that is *meant* to be wide
+says so in a `"why"` string. `check.py` prints that string instead of the note.
+The string excuses width only. The too-tight note always fires:
 
 ```json
 "max_abs_diff_flow_vs_statsmodels": {
@@ -153,20 +199,22 @@ the too-tight note always fires):
   "why": "the maximum is over a coefficient with 7 of 1275 observations: 0.028 here, 0.113 on the CI runner"}
 ```
 
-Regenerating ground truth is a deliberate act: run the experiment, review the
-figures, then write the new values with a commit message that says what moved
-and why.
+Ground-truth regeneration is a deliberate act. Do these steps:
+
+1. Run the experiment.
+2. Review the figures.
+3. Write the new values with a commit message that says what moved and why.
 
 ## The frozen data is a contract
 
 `<area>/data/` is committed input, not a cache. `paper/check_data.py`
-regenerates every paper dataset from the seed in its `truth.json` and compares
-to 1e-9 (not bit equality: numpy's transcendental functions move their last bits
-between releases); `paper/tests/` runs the same comparison in the ordinary test
-run. A new seed or changed equations means a **new folder**, never an edit in
-place.
+regenerates every paper dataset from the seed in its `truth.json`. It compares
+to 1e-9, not to bit equality, because numpy's transcendental functions move
+their last bits between releases. `paper/tests/` runs the same comparison in
+the ordinary test run. A new seed or a changed equation means a **new folder**,
+never an edit in place.
 
-`misc/data/magic-mrclean/ls/` is the exception with no generator here: it came
-from the stroke simulator that left the repository with the clinical storyline.
-Its schema and size are pinned by `misc/tests/` instead, and the generator can
-be recovered from the `pre-experiments-cut` tag.
+`misc/data/magic-mrclean/ls/` is the exception with no generator here. It came
+from the stroke simulator. That simulator left the repository with the clinical
+storyline. `misc/tests/` pins the schema and the size of this dataset instead.
+You can recover the generator from the `pre-experiments-cut` tag.

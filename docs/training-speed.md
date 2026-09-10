@@ -1,79 +1,102 @@
 # How fast can a CausalFlowDAG train?
 
-This document benchmarks learning-rate schedules, per-node freezing, batch sizes, devices,
-and LBFGS. The benchmark ran in June 2026 on an Apple-silicon Mac mini with torch 2.12
-(CPU unless noted). To reproduce it, run
-[`experiments/benchmarks/bench_training.py`](../experiments/benchmarks/bench_training.py)
-(`cd experiments && uv run python -m benchmarks.bench_training`, or `--quick` for
-one seed on cpu); the full grid takes ≈ 35 min. For a quick **cross-machine**
-comparison, use the self-contained
+This document benchmarks five things:
+
+- learning-rate schedules
+- per-node freezing
+- batch sizes
+- devices
+- LBFGS
+
+The benchmark ran in June 2026 on an Apple-silicon Mac mini with torch 2.12. It
+ran on the CPU, unless a row notes another device.
+
+To reproduce the benchmark, run
+[`experiments/benchmarks/bench_training.py`](../experiments/benchmarks/bench_training.py).
+The command is `cd experiments && uv run python -m benchmarks.bench_training`.
+For one seed on cpu, add `--quick`. The full grid takes ≈ 35 min.
+
+For a quick **cross-machine** comparison, use the self-contained
 [`experiments/benchmarks/perf_machine.py`](../experiments/benchmarks/perf_machine.py).
-It runs fixed 200-epoch workloads on all available devices and writes a machine
-fingerprint to JSON, and it needs nothing but `pip install tramdag`. The raw CSV
-is a local run artifact and is not committed.
+It runs fixed 200-epoch workloads on all available devices. It writes a machine
+fingerprint to JSON. It needs nothing but `pip install tramdag`. The raw CSV is
+a local run artifact, and it stays out of the repository.
 
 ## The recipes, and where they live now
 
-The recipes this benchmark compares are **callbacks** since 0.4 — training
-strategies, not part of the model (see [fitting.md](fitting.md)):
+Since 0.4, the recipes that this benchmark compares are **callbacks**. They are
+training strategies, and they are not part of the model.
+[fitting.md](fitting.md#training-strategies) says what each recipe is and gives
+one line of code per recipe. The worked version of every recipe is in
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py). This
+page is only the measurement.
 
-| recipe | behavior | today |
-|------------------|-------------------------------------------------|---------------------------------------------|
-| constant | one lr for the whole run | `flow.fit(train, epochs=, learning_rate=)` |
-| plateau+freeze | **per-node**: a node whose own validation NLL hasn't improved by `min_delta` (1e-4 default; the stroke run uses 1e-5, see the benchmark) for `patience` epochs gets its lr × 0.3, floored at 1e-3 × the start; once decayed ≥ 100× and flat for `freeze` epochs it leaves training (rate 0). Valid because the per-node losses have independent gradients. | `tramdag.callbacks.PerNodePlateau`, a callback over one parameter group per node (`per_node_adam`), measured in `experiments/benchmarks/bench_training.py` |
-| global plateau | torch's `ReduceLROnPlateau` on the summed validation NLL — the paper reference's rule | `experiments/paper/helpers.py::fit_paper` |
+One behaviour matters here, because the numbers below turn on it.
+`PerNodePlateau` watches each node's own validation score. When that score does
+not improve by `min_delta` for `patience` epochs, the callback multiplies the
+node's rate by `factor`, which is 0.3 by default. The floor is 1e-3 of the
+start rate. After the rate has decayed 100x and then stays flat for `freeze`
+epochs, the node leaves training at rate 0. The `min_delta` default is 1e-4,
+and the stroke run in this benchmark uses 1e-5.
 
-`"onecycle"` and `"cosine"` lost to `"plateau"` on every workload and were
-removed in 0.4; their measured rows below stay as the record.
+This behaviour is valid, because the per-node losses have independent
+gradients. It lets the fit delete whole epochs, and not only shorten them.
 
-**The exact-MLE path**: for an exact comparison with classical methods
-(`statsmodels`, R `polr`/`tram`) no recipe is needed —
+The third recipe in the table below is a global plateau rule, which is one
+shared rate rather than one rate per node. That is torch's
+`ReduceLROnPlateau` on the summed validation NLL, and it is the rule the paper
+reference uses. `experiments/paper/helpers.py::fit_paper` drives it.
 
-```python
-flow.fit(train_df, epochs=4000, learning_rate=1e-2, batch_size=512)  # constant lr
-flow.fit(train_df, epochs=2000, learning_rate=1e-3, batch_size=512)  # 2nd phase
-```
+`"onecycle"` and `"cosine"` lost to `"plateau"` on every workload. Version 0.4
+removed them. Their measured rows below stay as the record.
 
-is still the exact-MLE path (`experiments/misc/validate_ls.py` runs a three-phase variant
-of it, 800/700/500 epochs at 1e-2/1e-3/1e-4, batch 256 — cut from
-4000/2000/1000 in 2026-09: the same MLE, named-coef gap to statsmodels 1.6e-5
-vs 1.8e-5, ~3.5x less wall clock). `fit` keeps the
-final weights. The guard test
-`tests/test_fit_hooks.py::test_torch_plateau_scheduler_preserves_exact_mle` shows
-that a schedule through the hooks still lands the all-`ls` fit on the classical
-MLE within the usual tolerances.
+**The exact-MLE path**: an exact comparison with the classical methods needs no
+recipe. The classical methods are `statsmodels` and R `polr`/`tram`. Two plain
+`fit` calls at decreasing rates reach the exact MLE.
+`experiments/misc/validate_ls.py` runs a three-phase variant with 800/700/500
+epochs at 1e-2/1e-3/1e-4 and batch 256. In 2026-09 this repository cut that
+budget from 4000/2000/1000. The cut gives the same MLE, a named-coefficient gap
+to statsmodels of 1.6e-5 against 1.8e-5, and about 3.5x less wall clock.
 
-**LBFGS** ships as its own method, [`fit_classical`](fitting.md), which
-supersedes the hand-rolled recipe this report benchmarked. The float32 variant
-measured here was fast (< 2 s) but seed-fragile (Finding #2); `fit_classical`'s
-float64 upcast fixed that.
+`fit` keeps the final weights. The guard test
+`tests/test_fit_hooks.py::test_torch_plateau_scheduler_preserves_exact_mle`
+shows that a schedule through the hooks still lands the all-`ls` fit on the
+classical MLE within the usual tolerances.
+
+**LBFGS** ships as its own method, [`fit_classical`](fitting.md). It supersedes
+the hand-rolled recipe that this report benchmarked. The float32 variant
+measured here was fast (< 2 s) but seed-fragile (Finding #2). The float64
+upcast in `fit_classical` fixed that.
 
 ## Method: time-to-target, not loss-go-down
 
-Each config runs once. The benchmark's callback records per-epoch validation NLL *and* wall-clock time.
-From these records, we measure the seconds until the fit is within a fixed gap of a cached
-long-run reference (3 torch seeds, medians):
+Each config runs once. The benchmark's callback records the per-epoch
+validation NLL *and* the wall-clock time. From these records, we measure the
+seconds until the fit is within a fixed gap of a cached long-run reference. The
+reference is the median over 3 torch seeds of a long run. The two workloads and
+their tolerances are:
 
 | workload | model / data | reference NLL | tight tol | practical tol |
 |---|---|---|---|---|
 | **stroke-ls** | all-`ls` 5-node DAG, frozen `experiments/misc/data/magic-mrclean/ls` (n=1275, full-data MLE) | 10.3042 (train) | +1e-3 | +5e-3 |
 | **vaca-ci** | all-`ci` flow, frozen `experiments/paper/data/vaca` (n=5000, 90/10 split) | 4.9632 (val) | +2e-3 | +1e-2 |
 
-*Tight* ≈ exact-MLE equivalence (statsmodels/R-polr match). *Practical* ≈
-coefficient-equivalent: a fit with gap ≈ 3e-3 already matches the R reference
-coefficients within the tolerances of
+*Tight* ≈ exact-MLE equivalence, which is a statsmodels/R-polr match.
+*Practical* ≈ coefficient-equivalent. A fit with gap ≈ 3e-3 already matches the
+R reference coefficients within the tolerances of
 [`experiments/misc/validate_ls.py`](../experiments/misc/validate_ls.py).
-The workloads are unchanged since the measurement (same frozen data, same
-specs); re-running reproduces the machine-independent stroke-ls reference NLL
-10.3042 exactly.
+
+The workloads are unchanged since the measurement, with the same frozen data
+and the same specs. A re-run therefore reproduces the machine-independent
+stroke-ls reference NLL 10.3042 exactly.
 
 ## Results
 
 ![stroke-ls convergence](img/nll_vs_time_stroke-ls.png)
 ![vaca-ci convergence](img/nll_vs_time_vaca-ci.png)
 
-The table shows median seconds to target (batch 512, cpu). A "—" entry means that the fit
-never reached the target within the budget.
+The table shows the median seconds to target, at batch 512 on cpu. A "—" entry
+means that the fit never reached the target within the budget.
 
 | config | stroke-ls practical | stroke-ls tight | vaca-ci practical | vaca-ci tight | self-stops |
 |---|---|---|---|---|---|
@@ -89,46 +112,56 @@ never reached the target within the budget.
 the 1e-3 phase to *stay*. Vaca shows mild overfitting. Final gap for the vaca baseline is
 0.037. The old 520-epoch budget **underfits** vaca by ~0.03 nats. Plateau+freeze *stays*
 at its target.
-² `onecycle` and `cosine` were removed from `fit()` in 0.4 — they lost to
-plateau on every workload here — so these three rows cannot be re-measured.
+² Version 0.4 removed `onecycle` and `cosine` from `fit()`, because they lost
+to plateau on every workload here. Nobody can re-measure these three rows.
 ³ constant lr at batch 512 stalls at gap 3–7e-3. Only the lr-decay phase closes the last
 decade. This is why the two-phase recipe existed.
 
 ## Findings
 
-1. **Per-node plateau decay + freezing is the best default-style trainer.** It has the
-   same time-to-accuracy as the hand-tuned two-phase schedule, but it needs **no budget
-   tuning**. It decays the lr of each node off its own validation curve. It freezes
-   converged nodes, which is a real FLOP saving because the per-node NLLs have
-   independent gradients. And it **stops itself**: 13 s total vs 40 s for the baseline on
-   stroke-ls, 4 s vs 15 s on vaca-ci, at equal or better final NLL.
-2. **LBFGS is spectacular but not robust.** Full-batch LBFGS reaches coefficient-level
-   accuracy on the classical all-`ls` model in **< 2 s** (vs 9 s for Adam) on 2/3 seeds.
-   The third seed stalls at gap 8e-3. An Adam warm start made it *worse* (different
-   basin) on every seed. Use it as a fast first shot with the plateau trainer as
-   fallback, not as the default.
-3. **OneCycle is a "spend exactly this budget" scheduler.** Accuracy arrives only at the
-   end of its anneal. At 1500 epochs it misses everything. At 3000 epochs it lands gap
-   1–2e-3. But you must know the right budget in advance, and this requirement is the
-   problem that we try to remove.
-4. **Full-batch loses on time-to-target** despite ~1.6× higher epoch throughput. It makes
-   too few optimizer steps per second of compute at these n. Batch 512 is a good default.
-   Very large batches (16k) only improved raw throughput at n=50k.
-5. **MPS (Apple GPU) is 3–4× slower than the M-series CPU** at these model sizes
-   (verified correct: identical reconstruction). Kernel-launch overhead dominates
-   sub-millisecond ops. Stay on CPU locally. CUDA on Colab-class GPUs is a different
-   regime.
-6. **The old defaults waste or under-spend.** Stroke: 4000 epochs budgeted, converged
-   work done after ~1500 (freezing recovers the difference automatically). Vaca: 520
-   epochs budgeted, ~0.03 nats short of converged. Fixed budgets are wrong in both
-   directions. Adaptive stopping fixes both.
+1. **Per-node plateau decay + freezing is the best default-style trainer.** It
+   reaches the same time-to-accuracy as the hand-tuned two-phase schedule. It
+   needs **no budget tuning** to do so. It decays the lr of each node off that node's own
+   validation curve. It freezes converged nodes, which is a real FLOP saving,
+   because the per-node NLLs have independent gradients. And it **stops
+   itself**. On stroke-ls it takes 13 s total against 40 s for the baseline. On
+   vaca-ci it takes 4 s against 15 s, at an equal or better final NLL.
+2. **LBFGS is fast but seed-fragile.** On 2/3 seeds, full-batch LBFGS reaches
+   coefficient-level accuracy on the classical all-`ls` model in **< 2 s**. Adam
+   needs 9 s for the same accuracy. The third seed stalls at gap 8e-3. An Adam
+   warm start made it *worse* on every seed, because the fit then landed in a
+   different basin. Use LBFGS as a fast first shot with the plateau trainer as
+   the fallback, and not as the default.
+3. **OneCycle is a "spend exactly this budget" scheduler.** Accuracy arrives
+   only at the end of its anneal. At 1500 epochs it misses everything. At 3000
+   epochs it lands gap 1–2e-3. But you must know the right budget in advance.
+   That requirement is the problem that we try to remove.
+4. **Full-batch loses on time-to-target**, despite ~1.6× higher epoch
+   throughput. It makes too few optimizer steps per second of compute at these
+   n. Batch 512 is a good default. Very large batches (16k) only improved raw
+   throughput at n=50k.
+5. **MPS (Apple GPU) is 3–4× slower than the M-series CPU** at these model
+   sizes. The reconstruction is identical, so the MPS result is correct.
+   Kernel-launch overhead dominates sub-millisecond ops. Stay on CPU locally.
+   CUDA on Colab-class GPUs is a different regime.
+6. **The old defaults waste or under-spend.** Stroke budgeted 4000 epochs, and
+   the converged work is done after ~1500. Freezing recovers that difference
+   automatically. Vaca budgeted 520 epochs, which is ~0.03 nats short of
+   converged. Fixed budgets are wrong in both directions. Adaptive stopping
+   fixes both.
+7. **Freezing helps, and a parallel node loop does not.** Freezing deletes
+   whole epochs. Node-level overlap only time-slices the cores that each node's
+   batched BLAS operations already saturate. It measured as contention, not as
+   speedup. Overlap can pay only where the per-node kernels do not fully use
+   the hardware, which means tiny nodes on a large GPU. For that case the tool is a
+   fusion of same-shaped nodes, not threads.
 
 ## Recommendation
 
 The everyday recipe is the global-plateau callback in
-[fitting.md](fitting.md#training-strategies) with a generous `epochs`
-ceiling; the per-node self-stopping variant is
-`tramdag.callbacks.PerNodePlateau`. One finding became a package default:
-`epochs` has no default, because Finding 6 is precisely that a fixed budget
-cannot be right for every workload — every in-repo caller states its recipe in
-its own YAML.
+[fitting.md](fitting.md#training-strategies), with a generous `epochs` ceiling.
+The per-node self-stopping variant is `tramdag.callbacks.PerNodePlateau`.
+
+One finding became a package default. `epochs` has no default, because Finding
+6 shows that a fixed budget cannot be right for every workload. Every in-repo
+caller states its recipe in its own YAML.

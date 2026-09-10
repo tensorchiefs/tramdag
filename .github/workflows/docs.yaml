@@ -53,11 +53,12 @@ jobs:
                  -e 's#\[([^]]+)\]\[[^]]+\]#\1#g' "$1" > "$2"
         }
         stage README.md build/pdf/README.md
-        for d in notation fitting training-speed scores varying-coefficients \
-                 paper-replication code-map zuko-upstream; do
+        for d in model notation interpretation fitting training-speed scores \
+                 varying-coefficients paper-replication code-map zuko-upstream; do
           stage "docs/$d.md" "build/pdf/$d.md"
         done
-        for n in demo_tram_dag_colab intro_tram_dag additive_vs_joint_ci varying_coefficients classical_fit_tram_dag; do
+        for n in demo_tram_dag_colab training_strategies additive_vs_joint_ci \
+                 varying_coefficients classical_fit_tram_dag; do
           uv run jupytext --to notebook --execute --output "build/pdf/nb/$n.ipynb" "notebooks/$n.py"
           uv run jupyter nbconvert --to markdown "build/pdf/nb/$n.ipynb" --output "$n" --output-dir build/pdf/nb
           stage "build/pdf/nb/$n.md" "build/pdf/nb/$n.staged" && mv "build/pdf/nb/$n.staged" "build/pdf/nb/$n.md"
@@ -68,8 +69,9 @@ jobs:
         pandoc -f markdown+tex_math_dollars --pdf-engine=xelatex \
           --resource-path=.:docs:build/pdf:build/pdf/nb -V mainfont="DejaVu Serif" -V monofont="DejaVu Sans Mono" \
           -V geometry:margin=2.2cm --toc --toc-depth=2 --metadata title="tramdag documentation" \
-          build/pdf/README.md build/pdf/notation.md build/pdf/fitting.md build/pdf/training-speed.md \
-          build/pdf/scores.md build/pdf/varying-coefficients.md build/pdf/paper-replication.md \
+          build/pdf/README.md build/pdf/model.md build/pdf/notation.md build/pdf/interpretation.md \
+          build/pdf/fitting.md build/pdf/training-speed.md build/pdf/scores.md \
+          build/pdf/varying-coefficients.md build/pdf/paper-replication.md \
           build/pdf/code-map.md build/pdf/zuko-upstream.md build/pdf/nb/*.md \
           -o docs/tramdag-docs.pdf
 

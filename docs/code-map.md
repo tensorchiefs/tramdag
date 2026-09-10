@@ -1,13 +1,14 @@
 # Code map — every module of `src/tramdag/` — the public names and the private plumbing
 
-One entry per name, with its role and its place in the pipeline. Names in
-parentheses are private machinery: useful to know, not part of the API.
-The last section lists every training hyperparameter and where it lives.
+This document has one entry per name, with its role and its place in the
+pipeline. Names in parentheses are private machinery. They are useful to know,
+and they are not part of the API. The last section lists every training
+hyperparameter and where it lives.
 
 ## `spec.py` — declare the model
 
-Every term is a `Term` subclass under its pythonic name; the paper's symbol
-is the same object, so `LS is LinearShift`.
+Every term is a `Term` subclass under its pythonic name. The paper's symbol is
+the same object, so `LS is LinearShift`.
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -43,12 +44,14 @@ is the same object, so `LS is LinearShift`.
 
 ## `conditioners.py` — the networks behind the terms
 
-Default architectures replicate the PyTorch reference this package grew out of
-([buehlpa/TramDag](https://github.com/buehlpa/TramDag), `tram_models.py`), so a
-fitted model stays comparable to it. They are **not** the TRAM-DAG paper's nets:
-the paper's R code uses `c(2, 25, 25, 2)` with sigmoid for the triangle
-experiments and a 10-100 tanh net for its CAREFL/VACA comparisons, so each
-config in `experiments/paper/` states `units=` and `activation=` itself.
+The default architectures replicate the PyTorch reference that this package
+grew out of, which is [buehlpa/TramDag](https://github.com/buehlpa/TramDag),
+file `tram_models.py`. Therefore a fitted model stays comparable to it.
+
+The defaults are **not** the TRAM-DAG paper's nets. The paper's R code uses
+`c(2, 25, 25, 2)` with sigmoid for the triangle experiments. It uses a 10-100
+tanh net for its CAREFL and VACA comparisons. Therefore each config in
+`experiments/paper/` states `units=` and `activation=` itself.
 
 | Name | Term | Role |
 |-------------------------|---------|------------------------------------------------------------------------------|
@@ -88,9 +91,9 @@ config in `experiments/paper/` states `units=` and `activation=` itself.
 
 ## `terms.py` — the term modules (the 1.0 architecture's core)
 
-One module class per term, declaring the `Term` subclass it builds
-(`data = CS`); see [architecture.md](architecture.md) for the contract
-diagram.
+There is one module class per term. Each module class declares the `Term`
+subclass it builds (`data = CS`). For the contract diagram, see
+[architecture.md](architecture.md).
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -150,12 +153,16 @@ diagram.
 
 ## What is *not* in the package
 
-The SCM generators, the frozen datasets and the replication scripts are
-research code and live in [`experiments/`](../experiments/), outside the
-installed package — see
-[`experiments/README.md`](../experiments/README.md). The framework's own
-tests do not depend on them: they measure against three inline DGPs in
-[`tests/conftest.py`](../tests/conftest.py).
+Three groups of files are research code:
+
+- the SCM generators
+- the frozen datasets
+- the replication scripts
+
+They live in [`experiments/`](../experiments/), outside the installed package.
+For details, see [`experiments/README.md`](../experiments/README.md). The
+framework's own tests do not depend on them. The tests measure against three
+inline DGPs in [`tests/conftest.py`](../tests/conftest.py).
 
 ## Where every training hyperparameter lives
 

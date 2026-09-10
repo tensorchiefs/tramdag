@@ -657,6 +657,18 @@ read-outs keep their exact signatures as flow methods.
   `warnings.filterwarnings("ignore")`.** Measured with
   `simplefilter("always")`, the notebook emits no warning, so the filter hid
   nothing and would have hidden a real one later.
+- **The docstrings carry one markup, not two.** 97 Sphinx roles
+  (``:func:`x```, ``:class:`x```, ``:meth:`x```, ``:mod:`x```, ``:data:`x```)
+  and five reST literal blocks were left over from the pdoc era. mkdocstrings
+  renders a docstring as Markdown, so a role reached the site as the literal
+  text ``:func:`` followed by a code span, and a ``::`` block printed its own
+  colons. Roles are now Markdown cross-references and literal blocks are
+  fenced. `mkdocs.yml` turns on `scoped_crossrefs` and `relative_crossrefs`,
+  so 53 of the references need no dotted path at all: a docstring writes
+  ``[`pmf`][]`` and the handler resolves it in scope, which cannot go stale on
+  a rename. The 20 that keep a path name something outside the referring
+  module's scope. Verified with griffe that all 497 documented objects parse
+  to the same numpydoc sections as before.
 
 ### Changed (internal, no API surface)
 

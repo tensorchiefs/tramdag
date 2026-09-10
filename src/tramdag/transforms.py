@@ -222,11 +222,13 @@ def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
 
     Notes
     -----
-    The computation stays in log-space. Both of these identities hold::
+    The computation stays in log-space. Both of these identities hold:
 
-        log(sigmoid(u) - sigmoid(l))
-            = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
-            = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
+    ```
+    log(sigmoid(u) - sigmoid(l))
+        = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
+        = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
+    ```
 
     For each element the function takes the side whose logsigmoids are far from
     zero, because that side is better conditioned.

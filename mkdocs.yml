@@ -70,6 +70,11 @@ plugins:
           members_order: source
           show_root_heading: true
           separate_signature: true
+          # a docstring names a sibling as `[`pmf`][]` and the handler resolves
+          # it in scope, so a cross-reference does not carry a dotted path that
+          # goes stale on a rename
+          scoped_crossrefs: true
+          relative_crossrefs: true
 - mkdocs-jupyter:
     include: ['*.py']
     ignore: [hooks.py]    # the link hook is not a notebook

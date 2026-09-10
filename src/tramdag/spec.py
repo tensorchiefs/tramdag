@@ -2,31 +2,36 @@
 
 A model is one dict ``{node_name: NodeSpec}``. Each node declares its
 transformation ``h`` as an **additive formula of terms** — the first
-positional argument, written as a list or as a ``+`` sum::
+positional argument, written as a list or as a ``+`` sum:
 
-    "X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
-    "X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
+```python
+"X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
+"X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
+```
 
-Each term is a :class:`Term` subclass, called with the parent(s) it
-depends on: :class:`Intercept`, :class:`LinearShift`, :class:`ComplexShift`,
-:class:`VaryingCoefficient` and :class:`FnShift`. The paper's symbols
+Each term is a [`Term`][] subclass, called with the parent(s) it
+depends on: [`Intercept`][], [`LinearShift`][], [`ComplexShift`][],
+[`VaryingCoefficient`][] and [`FnShift`][]. The paper's symbols
 ``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are the same objects (``SI``/``CI`` build
 the two intercept arities) and the notation of the docs, so use whichever
 reads better:
 
-- :func:`I`  — *intercept* term: the parent(s) reshape the monotone transform
-  (its Bernstein coefficients / ordinal cutpoints). ``I`` dispatches on its
-  arguments: without parents it is the paper's simple intercept :func:`SI`
-  (always present, optional to write — the bare names ``I`` and ``SI`` both
-  work in a term list), with parents the complex intercept :func:`CI`.
-  ``transform="spline"`` picks the class of the monotone transform for a
-  continuous node; extra keyword arguments go straight to the transform
-  class (``SI(transform="spline", bins=16)``).
-- :func:`LS` — *linear shift*: ``beta * x`` (one interpretable weight), one parent.
-- :func:`CS` — *complex shift*: an additive NN ``g(x)`` on the latent scale.
-- :func:`VC` — *varying-coefficient shift*: ``beta(modifiers) * x_on`` with
-  ``beta(x) = beta0 + b_theta(x)`` and ``b_theta`` a small, **penalized** network
-  — a treatment-effect head with its own bias–variance budget (issue #28).
+- ``I``, the [`Intercept`][] term: the parent(s) reshape the monotone
+  transform, meaning its Bernstein coefficients or ordinal cutpoints. ``I``
+  dispatches on its arguments. Without parents it is the paper's simple
+  intercept [`SI`][], always present and optional to write, and the bare
+  names ``I`` and ``SI`` both work in a term list. With parents it is the
+  complex intercept [`CI`][]. ``transform="spline"`` picks the class of the
+  monotone transform for a continuous node, and extra keyword arguments go
+  straight to that class (``SI(transform="spline", bins=16)``).
+- ``LS``, the [`LinearShift`][] term: ``beta * x``, one interpretable weight
+  and one parent.
+- ``CS``, the [`ComplexShift`][] term: an additive NN ``g(x)`` on the latent
+  scale.
+- ``VC``, the [`VaryingCoefficient`][] term: ``beta(modifiers) * x_on`` with
+  ``beta(x) = beta0 + b_theta(x)``, where ``b_theta`` is a small
+  **penalized** network. It is a treatment-effect head with its own
+  bias-variance budget (issue #28).
 
 A formula holds **exactly one intercept term, first** — written, or added as
 ``SI()`` when the formula only lists shifts — so ``node.terms[0]`` is always
@@ -86,7 +91,7 @@ def _subclasses(cls) -> list[type]:
 
 
 def _term_class(name: str) -> type[Term]:
-    """Give the :class:`Term` subclass carrying this ``name``.
+    """Give the [`Term`][] subclass carrying this ``name``.
 
     Raises
     ------
@@ -130,7 +135,7 @@ def _mapped(value):
 
 
 def _as_term(value) -> Term:
-    """Take one entry of a formula to a :class:`Term`.
+    """Take one entry of a formula to a [`Term`][].
 
     The bare names ``I`` and ``SI`` stand for ``I()``, the simple-intercept
     baseline.
@@ -205,7 +210,7 @@ def _default_drift(cls) -> list[str]:
     """Name the options whose ``__init__`` default disagrees with the field.
 
     A term that spells its options out in ``__init__`` states each default
-    twice. :meth:`Term.options` serializes exactly the fields that differ
+    twice. [`options`][] serializes exactly the fields that differ
     from ``f.default``, so a disagreement silently changes what a checkpoint
     carries — and a round-trip test cannot catch it, because both sides of
     the round trip carry the same drift.
@@ -290,7 +295,7 @@ def SI(**options) -> Intercept:
     Parameters
     ----------
     **options
-        As for :class:`Intercept`: ``transform`` and its keyword arguments.
+        As for [`Intercept`][]: ``transform`` and its keyword arguments.
 
     Returns
     -------
@@ -308,7 +313,7 @@ def CI(*parents: str, **options) -> Intercept:
     *parents : str
         Parent names, at least one.
     **options
-        As for :class:`Intercept`.
+        As for [`Intercept`][].
 
     Returns
     -------
@@ -386,7 +391,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     differ from their defaults — nothing else, so the form is canonical.
     The result is JSON- and YAML-safe: plain tuples become lists and
     nested kwargs tuples (``transform_kwargs``) become mappings, which is
-    also how a hand-written YAML spec reads best; :func:`spec_from_dict`
+    also how a hand-written YAML spec reads best; [`spec_from_dict`][]
     accepts both forms and turns them back, so a spec round-trips through
     ``json``/YAML as well as through ``torch.save`` — except when a term
     carries a *callable* (``input_transform``, ``fn``), which serializes
@@ -401,7 +406,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     Returns
     -------
     dict
-        The serialized spec. :func:`spec_from_dict` inverts it.
+        The serialized spec. [`spec_from_dict`][] inverts it.
     """
     out = {}
     for name, node in spec.items():
@@ -431,7 +436,7 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     Parameters
     ----------
     d : dict
-        The serialized spec, as produced by :func:`spec_to_dict`.
+        The serialized spec, as produced by [`spec_to_dict`][].
 
     Returns
     -------
@@ -468,25 +473,27 @@ class Term:
 
     Terms add: ``I("a") + CS("b")`` is the same transformation as
     ``[I("a"), CS("b")]``. A term is frozen data — hashable, comparable,
-    serializable by :func:`spec_to_dict` — and knows its own spec-level
+    serializable by [`spec_to_dict`][] — and knows its own spec-level
     rules (``edge_parents``, ``cells``, ``classical``). The module
-    that trains it lives in :mod:`tramdag.terms` and declares which term
+    that trains it lives in [`terms`][tramdag.terms] and declares which term
     class it builds (``data = CS``).
 
     Subclass to add a term: the class name becomes its ``name`` (what the
     ``term`` key serializes), every annotated attribute with a default is an
-    option, and ``__post_init__`` holds the construction-time checks::
+    option, and ``__post_init__`` holds the construction-time checks:
 
-        class Scaled(Term):
-            scale: float = 1.0
+    ```python
+    class Scaled(Term):
+        scale: float = 1.0
+    ```
 
     Attributes
     ----------
     parents : tuple[str, ...]
-        Ordered parent names the term depends on. Empty only for the bare
-        simple intercept ``I()``. For a :class:`VC` term, ``parents[0]`` is
-        the treatment ``t`` and the rest are the effect modifiers; every
-        other built-in term's parents all own their edges.
+        Ordered parent names the term depends on. Empty only for the bare simple
+        intercept ``I()``. For a [`VaryingCoefficient`][] term,
+        ``parents[0]`` is the treatment ``t`` and the rest are the effect modifiers;
+        every other built-in term's parents all own their edges.
     """
 
     parents: tuple[str, ...] = ()
@@ -631,7 +638,7 @@ class Intercept(Term):
     parameter vector, the same for every row (the bare names ``I`` and
     ``SI`` in a term list both mean ``I()``). With parents it is the
     complex intercept **CI**: the transform parameters become a function
-    of them. :func:`SI` and :func:`CI` are the two spellings with their
+    of them. [`SI`][] and [`CI`][] are the two spellings with their
     arity checked.
 
     Parameters
@@ -666,7 +673,7 @@ class Intercept(Term):
         Hidden layers of the term's network, for example ``units=[16]``.
         ``None``, the default, takes the conditioner's own ``(8, 8)`` — the
         PyTorch reference's widths, which live in
-        :mod:`tramdag.conditioners` next to their provenance, so this class
+        [`conditioners`][tramdag.conditioners] next to their provenance, so this class
         does not restate them. That module also explains why a paper
         replication sets this explicitly.
     activation : str | None, optional
@@ -805,7 +812,7 @@ class ComplexShift(Term):
     units : list[int] | tuple[int, ...] | None, optional
         Hidden layers, for example ``units=[16]``. ``None``, the default,
         takes the conditioner's own ``(64, 128, 64)`` — the PyTorch
-        reference's widths, which live in :mod:`tramdag.conditioners` next to
+        reference's widths, which live in [`conditioners`][tramdag.conditioners] next to
         their provenance, so this class does not restate them.
     activation : str | None, optional
         Activation of the hidden layers. ``None``, the default, takes the
@@ -813,7 +820,8 @@ class ComplexShift(Term):
     batch_norm : bool, optional
         Batch-normalize the hidden layers, by default False.
     input_transform : str | callable | None, optional
-        As for :class:`I`. ``None``, the default, applies no transform.
+        As for [`Intercept`][]. ``None``, the default, applies no
+        transform.
 
     Raises
     ------
@@ -851,7 +859,7 @@ class VaryingCoefficient(Term):
     ``Colr``/``LS`` reading when ``beta`` is constant. ``penalty -> inf``,
     or exactly zero modifiers, reduces the term to ``LS(t)``, so VC-vs-LS
     is a nested question. Read the fitted effect out with
-    :meth:`CausalFlowDAG.varying_coef`.
+    [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef].
 
     Unlike other terms, VC *modifiers* can also appear in the node's
     prognostic terms (``CS``/``LS``/``I``). Only ``t`` owns its edge.
@@ -888,14 +896,14 @@ class VaryingCoefficient(Term):
     units : list[int] | tuple[int, ...] | None, optional
         Hidden layers of ``b_theta``. ``None``, the default, takes the
         conditioner's own ``(16,)``, whose size is justified where it is
-        defined — see :class:`tramdag.conditioners.VaryingCoef`.
+        defined — see [`VaryingCoef`][tramdag.conditioners.VaryingCoef].
     activation : str | None, optional
         Activation of ``b_theta``'s hidden layers. ``None``, the default,
         takes the conditioners' ``relu``.
     batch_norm : bool, optional
         Batch-normalize ``b_theta``'s hidden layers, by default False.
     input_transform : str | callable | None, optional
-        As for :class:`I`, over the modifiers. ``None``, the default,
+        As for [`Intercept`][], over the modifiers. ``None``, the default,
         applies no transform.
 
     Raises
@@ -1015,8 +1023,8 @@ class FnShift(Term):
 
     Checkpoints pickle ``fn``, so it must be a module-level function or an
     importable ``nn.Module`` — ``save()`` refuses a lambda. For a whole new
-    term (own options, penalty, side inputs) subclass :class:`Term` and
-    :class:`tramdag.terms.ShiftTerm` instead.
+    term (own options, penalty, side inputs) subclass [`Term`][] and
+    [`ShiftTerm`][tramdag.terms.ShiftTerm] instead.
 
     Parameters
     ----------
@@ -1029,10 +1037,11 @@ class FnShift(Term):
         The shift function. Required in practice: the declared default of
         ``None`` is never a usable value, and ``__post_init__`` refuses it.
         The default exists because ``fn`` has to be a dataclass field, which
-        is what carries the callable into :func:`spec_to_dict` and back out
+        is what carries the callable into [`spec_to_dict`][] and back out
         of a checkpoint.
     input_transform : str | callable | None, optional
-        As for :class:`CS`. ``None``, the default, applies no transform.
+        As for [`ComplexShift`][]. ``None``, the default, applies no
+        transform.
 
     Raises
     ------
@@ -1105,7 +1114,7 @@ class OrdinalNode:
     levels : int
         Number of ordered classes.
     terms : Term | list[Term] | None, optional
-        The additive formula, as for :class:`ContinuousNode`, by default
+        The additive formula, as for [`ContinuousNode`][], by default
         ``None``.
     """
 

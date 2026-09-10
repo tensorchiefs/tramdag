@@ -311,7 +311,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             Sum only these nodes' contributions. A subset is exact, because
             the per-node losses are independent — ``nodes=["Y"]`` is the
             conditional log-likelihood of ``Y`` given its parents, per row,
-            in log space (safer than the log of :meth:`pmf`, which
+            in log space (safer than the log of [`pmf`][], which
             underflows in the tail). ``None`` (default) is the joint.
 
         Returns
@@ -359,7 +359,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         yet; a loaded model is already calibrated, and later fits on other rows
         reuse this state — data on a new scale needs a new flow. Calibration
         never touches the weights: a calibrated start is a separate, always
-        explicit step, :meth:`init_marginals`.
+        explicit step, [`init_marginals`][].
 
         Returns
         -------
@@ -497,7 +497,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             Interventions, as ``{node: value}``. An intervened node is
             clamped and its parent dependence removed (graph mutilation).
         u : pd.DataFrame | None, optional
-            Latent variables, as returned by :meth:`abduct`. If given,
+            Latent variables, as returned by [`abduct`][]. If given,
             they are pushed through the flow. Together with ``do`` this
             yields counterfactuals: Pearl's abduction, action, prediction.
         seed : int | None, optional
@@ -586,7 +586,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         """Evaluate one node's conditional at the rows of ``df``.
 
         ``do`` overrides columns before the parents are read, which is what
-        makes :meth:`pmf` and :meth:`density` interventional. Gives the node,
+        makes [`pmf`][] and [`density`][] interventional. Gives the node,
         its transform parameters, its shift and the row count.
         """
         nd = self._node(node)
@@ -642,7 +642,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
     ) -> np.ndarray:
         """Give the analytic conditional density of a continuous node on a grid.
 
-        The continuous counterpart of :meth:`pmf`: for every row of ``df``
+        The continuous counterpart of [`pmf`][]: for every row of ``df``
         the density ``p(node = g | parents)`` at each grid value ``g``, in
         closed form from the transform — no sampling.
 
@@ -665,7 +665,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is ordinal; use :meth:`pmf` for it.
+            If ``node`` is ordinal; use [`pmf`][] for it.
         """
         self._node(node)  # the friendly unknown-node error, before the kind check
         if not isinstance(self.spec[node], ContinuousNode):
@@ -691,7 +691,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         At a fitted MLE each column sums to about zero. Order the rows by a
         covariate that truly modifies the treatment effect, and the
         cumulative sum of the treatment column drifts.
-        :meth:`effect_modifier_scan` measures that drift.
+        [`effect_modifier_scan`][] measures that drift.
 
         This is a pure read-out. It touches no fitting or sampling code
         path.
@@ -708,7 +708,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         -------
         pd.DataFrame
             One column per coefficient, one row per observation. See
-            :func:`tramdag.scores.node_scores` for the column naming.
+            [`node_scores`][tramdag.scores.node_scores] for the column naming.
         """
         return _node_scores(self, df, node)
 
@@ -733,7 +733,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         Parameters
         ----------
         df : pd.DataFrame
-            Observations, as for :meth:`scores`.
+            Observations, as for [`scores`][].
         node : str
             Name of the outcome node.
         t : str
@@ -750,7 +750,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         pd.DataFrame
             One row per candidate, sorted by ``stat`` descending, with
             columns ``stat``, ``p_value``, ``crit_5pct`` and ``flag``. See
-            :func:`tramdag.scores.effect_modifier_scan`.
+            [`effect_modifier_scan`][tramdag.scores.effect_modifier_scan].
         """
         return _effect_modifier_scan(
             self, df, node, t, candidates=candidates, column=column
@@ -805,7 +805,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         Parameters
         ----------
         path : str | Path
-            Checkpoint file written by :meth:`save`.
+            Checkpoint file written by [`save`][].
         device : str, optional
             Torch device to load onto, by default ``"cpu"``.
 

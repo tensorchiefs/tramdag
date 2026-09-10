@@ -1,16 +1,16 @@
 """The term modules: one class per term, built from the term's spec class.
 
-A spec term (:class:`tramdag.spec.Term` subclass — ``LS``, ``CS``, ``VC``,
+A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``,
 ``Fn``, ``I``) is frozen data and carries the spec-level rules; the module
 here declares which term class it builds (``data = CS``) and owns the
 runtime behaviour: ``build``, ``shift_value``/``theta_value``,
 ``post_init``, ``regularizer``, ``finalize``, ``score_columns`` and the
-side-input contract. :func:`module_for` finds the module of a term by that
+side-input contract. [`module_for`][] finds the module of a term by that
 declaration, so subclassing is the whole registration.
 
-A custom term is two classes: a :class:`tramdag.spec.Term` subclass for
-the options and checks, and a :class:`ShiftTerm` subclass with ``data =``
-that term class, ``build`` and ``shift_value``.
+A custom term is two classes: a [`Term`][] subclass for the options and checks, and a
+[`ShiftTerm`][tramdag.terms.ShiftTerm] subclass with ``data =`` that term class,
+``build`` and ``shift_value``.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -66,9 +66,9 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
 def module_for(term: Term) -> type[TermDef]:
     """Give the module class that builds ``term``.
 
-    A :class:`TermDef` subclass that declares ``data = <Term subclass>``
+    A [`TermDef`][] subclass that declares ``data = <Term subclass>``
     stamps itself onto that class as ``module`` when it is defined
-    (:meth:`TermDef.__init_subclass__`), so subclassing is the registration.
+    (``__init_subclass__``), so subclassing is the registration.
 
     Raises
     ------
@@ -135,8 +135,8 @@ class _InputTransform(nn.Module):
 class TermDef:
     """What every term module shares: the input transform and its calibration.
 
-    ``data`` names the :class:`tramdag.spec.Term` subclass the module
-    builds; :func:`module_for` dispatches on it.
+    ``data`` names the [`Term`][] subclass the module
+    builds; [`module_for`][] dispatches on it.
     """
 
     data: ClassVar[type[Term]]
@@ -244,7 +244,7 @@ class ShiftTerm(TermDef):
         return {}
 
     def extra_columns(self, flow) -> list[str]:
-        """List the extra columns queries must tensorize for :meth:`live_side`."""
+        """List the extra columns queries must tensorize for ``live_side``."""
         return []
 
 
@@ -447,7 +447,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
         The one-hot level-1 indicator for a binary ordinal treatment, the
         value itself for a continuous one; a centered term subtracts its
         propensity column (the Robinson regressor ``t - e_hat(x)``). It is
-        also the score of ``beta0``, so :meth:`score_columns` reads it here.
+        also the score of ``beta0``, so ``score_columns`` reads it here.
         """
         if self.center_col and self.center_col not in feats:
             raise RuntimeError(
@@ -488,7 +488,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
     def score_columns(self, node: _Node, flow, feats: dict, dlds) -> dict:
         """One column, keyed by the treatment: the ``beta0`` score.
 
-        ``d s / d beta0`` is the term's own :meth:`regressor`, so forward
+        ``d s / d beta0`` is the term's own ``regressor``, so forward
         and score share one definition by construction.
         """
         t = self.regressor(feats)
@@ -529,7 +529,7 @@ class FnShiftTerm(ShiftTerm, nn.Module):
 
     A plain function contributes a fixed (non-trained) offset; an
     ``nn.Module`` registers as a submodule and trains with the flow. Built
-    by :class:`tramdag.spec.FnShift` (``Fn``).
+    by [`FnShift`][] (``Fn``).
     """
 
     data = Fn

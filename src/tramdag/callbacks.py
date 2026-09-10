@@ -1,10 +1,10 @@
 """Predefined ``fit`` callbacks: ``EarlyStopping`` and ``PerNodePlateau``.
 
-``fit`` owns validation and progress printing; the callbacks here read the
-per-node validation NLL that ``fit`` appends to ``flow.history["val"]`` after
-every epoch — computed once, shared by all of them. One ``callbacks=`` list
-is the whole registration (the ``fit`` docstring shows it); anything not
-covered here is a :class:`Callback` subclass of your own (docs/fitting.md).
+``fit`` owns validation and progress printing; the callbacks here read the per-node
+validation NLL that ``fit`` appends to ``flow.history["val"]`` after every epoch —
+computed once, shared by all of them. One ``callbacks=`` list is the whole registration
+(the ``fit`` docstring shows it); anything not covered here is a
+[`Callback`][tramdag.callbacks.Callback] subclass of your own (docs/fitting.md).
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ def per_node_adam(flow, lr: float = 1e-2, **adam_kwargs) -> torch.optim.Adam:
 
     The per-node NLLs have independent gradients, so a learning rate per
     group is exactly independent per-node training. This is the optimizer
-    :class:`PerNodePlateau` needs.
+    [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] needs.
     """
     return torch.optim.Adam(
         [
@@ -157,15 +157,14 @@ class EarlyStopping(Callback):
 class PerNodePlateau(Callback):
     """Per-node plateau decay and freezing on the validation NLL.
 
-    A node's learning rate decays by ``factor`` after every ``patience``
-    epochs without a ``min_delta`` improvement of its own validation NLL,
-    floored at ``1e-3`` of its start; once it has decayed to ``1e-2`` of the
-    start and stayed flat for ``freeze`` epochs the node leaves training
-    (rate 0). The callback stops the fit when every node has left. Valid
-    because the per-node NLLs have independent gradients — build the
-    optimizer with :func:`per_node_adam` (one ``node``-tagged group per
-    node), and give ``fit`` a validation set (the callback reads
-    ``flow.history["val"]``).
+    A node's learning rate decays by ``factor`` after every ``patience`` epochs without
+    a ``min_delta`` improvement of its own validation NLL, floored at ``1e-3`` of its
+    start; once it has decayed to ``1e-2`` of the start and stayed flat for ``freeze``
+    epochs the node leaves training (rate 0). The callback stops the fit when every node
+    has left. Valid because the per-node NLLs have independent gradients — build the
+    optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam] (one
+    ``node``-tagged group per node), and give ``fit`` a validation set (the callback
+    reads ``flow.history["val"]``).
 
     A frozen node's rate is 0 but its forward/backward still runs, so the
     saving is in epochs, not per-epoch wall clock. Do not attach a torch lr

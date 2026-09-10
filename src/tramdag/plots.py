@@ -3,12 +3,12 @@
 matplotlib is an optional dependency — ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
 
-::
-
-    from tramdag import plot_dag
-    plot_dag(spec)            # or plot_dag(flow): the spec is the DAG
-    plot_marginals(flow, df)  # observed vs sampled, one panel per node
-    plot_training(flow, frozen=plateau.frozen)   # NLL per epoch, freeze marks
+```python
+from tramdag import plot_dag
+plot_dag(spec)            # or plot_dag(flow): the spec is the DAG
+plot_marginals(flow, df)  # observed vs sampled, one panel per node
+plot_training(flow, frozen=plateau.frozen)   # NLL per epoch, freeze marks
+```
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -365,7 +365,7 @@ def plot_training(flow, *, frozen=None, ax=None, path=None):
         ``{node: epoch}`` of the freezes, each a dashed mark. By default read
         off ``flow.history["lr"]`` (the first epoch a node's rate is 0, when
         the optimizer had per-node groups); pass a dict, or the
-        :class:`tramdag.callbacks.PerNodePlateau` whose ``frozen`` to use.
+        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] whose ``frozen`` to use.
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure.
     path : str | Path | None, optional

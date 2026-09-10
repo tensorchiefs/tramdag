@@ -14,9 +14,11 @@ Because one observation is a noisy yardstick, the mean absolute
 counterfactual error over fresh held-out rows (scaled into the training
 units) is measured next to it — the number to watch for regressions.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m paper.carefl flexible
+```
+uv run python -m paper.carefl flexible
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

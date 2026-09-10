@@ -668,7 +668,8 @@ read-outs keep their exact signatures as flow methods.
   ``[`pmf`][]`` and the handler resolves it in scope, which cannot go stale on
   a rename. The 20 that keep a path name something outside the referring
   module's scope. Verified with griffe that all 497 documented objects parse
-  to the same numpydoc sections as before.
+  to the same numpydoc sections as before. The 19 reST literal blocks in
+  `experiments/` are fenced too, so one markup holds across the repository.
 
 ### Changed (internal, no API surface)
 

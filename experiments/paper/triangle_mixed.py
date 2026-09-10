@@ -13,9 +13,11 @@ Outputs: the coefficient trajectories (Fig. 19), the complex-shift overlay
 for ``cs`` variants, the observational plus ``do(x1)`` distributions
 (Fig. 9/20), and the odds-ratio check.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m paper.triangle_mixed linear-ls
+```
+uv run python -m paper.triangle_mixed linear-ls
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

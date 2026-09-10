@@ -14,9 +14,11 @@ Outputs: the coefficient trajectories (Fig. 14/15), the complex-shift
 overlay (Fig. 7 right / 17 left / 18 right) and the observational plus
 ``do(x1)`` distributions (Fig. 16/17).
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m paper.triangle atan-cs
+```
+uv run python -m paper.triangle atan-cs
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

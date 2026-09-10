@@ -16,10 +16,12 @@ It then compares the analytic treatment effect (an average over
 interventional PMFs) between the flow and statsmodels, and against the
 known true effect of the synthetic cohort.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m misc.validate_ls adam
-    uv run python -m misc.validate_ls classical
+```
+uv run python -m misc.validate_ls adam
+uv run python -m misc.validate_ls classical
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

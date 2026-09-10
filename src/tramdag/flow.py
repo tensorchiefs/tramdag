@@ -665,7 +665,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is ordinal; use [`pmf`][] for it.
+            If ``node`` is ordinal; use ``pmf`` for it.
         """
         self._node(node)  # the friendly unknown-node error, before the kind check
         if not isinstance(self.spec[node], ContinuousNode):

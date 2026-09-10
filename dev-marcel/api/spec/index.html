@@ -2511,7 +2511,7 @@ depends on: <a class="autorefs autorefs-internal" title="Intercept" href="#tramd
 the two intercept arities) and the notation of the docs, so use whichever
 reads better:</p>
 <ul>
-<li><code>I</code>, the <a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a> term: the parent(s) reshape the monotone
+<li><code>I</code>, the <code>Intercept</code> term: the parent(s) reshape the monotone
   transform, meaning its Bernstein coefficients or ordinal cutpoints. <code>I</code>
   dispatches on its arguments. Without parents it is the paper's simple
   intercept <a class="autorefs autorefs-internal" title="SI" href="#tramdag.spec.SI"><code>SI</code></a>, always present and optional to write, and the bare
@@ -2519,21 +2519,11 @@ reads better:</p>
   complex intercept <a class="autorefs autorefs-internal" title="CI" href="#tramdag.spec.CI"><code>CI</code></a>. <code>transform="spline"</code> picks the class of the
   monotone transform for a continuous node, and extra keyword arguments go
   straight to that class (<code>SI(transform="spline", bins=16)</code>).</li>
-<li><code>LS</code>, the <a class="autorefs autorefs-internal" title="LinearShift
-
-
-  
-      dataclass
-  " href="#tramdag.spec.LinearShift"><code>LinearShift</code></a> term: <code>beta * x</code>, one interpretable weight
+<li><code>LS</code>, the <code>LinearShift</code> term: <code>beta * x</code>, one interpretable weight
   and one parent.</li>
-<li><code>CS</code>, the <a class="autorefs autorefs-internal" title="ComplexShift
-
-
-  
-      dataclass
-  " href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a> term: an additive NN <code>g(x)</code> on the latent
+<li><code>CS</code>, the <code>ComplexShift</code> term: an additive NN <code>g(x)</code> on the latent
   scale.</li>
-<li><code>VC</code>, the <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> term: <code>beta(modifiers) * x_on</code> with
+<li><code>VC</code>, the <code>VaryingCoefficient</code> term: <code>beta(modifiers) * x_on</code> with
   <code>beta(x) = beta0 + b_theta(x)</code>, where <code>b_theta</code> is a small
   <strong>penalized</strong> network. It is a treatment-effect head with its own
   bias-variance budget (issue #28).</li>
@@ -5030,7 +5020,7 @@ function.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The serialized spec. <a class="autorefs autorefs-internal" title="spec_from_dict" href="#tramdag.spec.spec_from_dict"><code>spec_from_dict</code></a> inverts it.</p>
+                <p>The serialized spec. <code>spec_from_dict</code> inverts it.</p>
               </div>
             </td>
           </tr>

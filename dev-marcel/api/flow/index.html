@@ -2928,7 +2928,7 @@ closed form from the transform — no sampling.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>node</code> is ordinal; use <a class="autorefs autorefs-internal" title="pmf" href="#tramdag.flow.CausalFlowDAG.pmf"><code>pmf</code></a> for it.</p>
+                <p>If <code>node</code> is ordinal; use <code>pmf</code> for it.</p>
               </div>
             </td>
           </tr>
@@ -4163,7 +4163,7 @@ hooks all three points of the fit — its docstring is the
 contract (begin/epoch/end timing, the stop rule, the VC
 re-centering order). A bare callable is an <code>on_epoch_end</code>
 hook, <code>cb(flow, epoch, optimizer)</code> — use it for schedules and
-coefficient trajectories. <a class="autorefs autorefs-internal" title="tramdag.callbacks" href="../callbacks/#tramdag.callbacks"><code>callbacks</code></a> ships
+coefficient trajectories. <code>callbacks</code> ships
 <code>EarlyStopping</code> and <code>PerNodePlateau</code>, all
 reading <code>history["val"]</code>.</p>
               </div>

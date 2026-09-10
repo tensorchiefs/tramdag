@@ -2668,12 +2668,7 @@ runtime behaviour: <code>build</code>, <code>shift_value</code>/<code>theta_valu
 <code>post_init</code>, <code>regularizer</code>, <code>finalize</code>, <code>score_columns</code> and the
 side-input contract. <a class="autorefs autorefs-internal" title="module_for" href="#tramdag.terms.module_for"><code>module_for</code></a> finds the module of a term by that
 declaration, so subclassing is the whole registration.</p>
-<p>A custom term is two classes: a <a class="autorefs autorefs-internal" title="Term
-
-
-  
-      dataclass
-  " href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass for the options and checks, and a
+<p>A custom term is two classes: a <code>Term</code> subclass for the options and checks, and a
 <a class="autorefs autorefs-internal" title="ShiftTerm" href="#tramdag.terms.ShiftTerm"><code>ShiftTerm</code></a> subclass with <code>data =</code> that term class,
 <code>build</code> and <code>shift_value</code>.</p>
 

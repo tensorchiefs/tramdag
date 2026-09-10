@@ -43,7 +43,8 @@ Every run writes to `<area>/results/<name>/`. The run writes these files:
 - `metrics.json`, the numbers that CI checks,
 - `report.md`, the table plus the figures (the experiments workflow posts this
   file as a commit comment),
-- `flow.pt`,
+- `flow.pt`, the fitted model, so a finished run can be queried again with
+  `CausalFlowDAG.load` instead of refitted,
 - `plots/*.png`, for the runs that draw figures.
 
 `validate_ls` is a numbers-only comparison and draws no figures.

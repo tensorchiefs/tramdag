@@ -16,18 +16,22 @@ stopping — identical work on every machine), on every available device
   this script has to run from a bare ``curl``) — measures throughput, the
   regime where GPUs help.
 
-Usage on any machine (no repo clone needed)::
+Usage on any machine (no repo clone needed):
 
-    pip install tramdag                    # torch comes as a dependency
-    curl -O https://raw.githubusercontent.com/tensorchiefs/tramdag/main/experiments/benchmarks/perf_machine.py
-    python perf_machine.py                 # -> <YYYY-MM-DD-HHMM>_<host>.json + summary
-    python perf_machine.py --devices cpu   # restrict devices
+```
+pip install tramdag                    # torch comes as a dependency
+curl -O https://raw.githubusercontent.com/tensorchiefs/tramdag/main/experiments/benchmarks/perf_machine.py
+python perf_machine.py                 # -> <YYYY-MM-DD-HHMM>_<host>.json + summary
+python perf_machine.py --devices cpu   # restrict devices
+```
 
 Collecting results: copy each machine's JSON into the repo's ``docs/perf/``
-(when run from a repo clone the JSON is written there directly), then::
+(when run from a repo clone the JSON is written there directly), then:
 
-    # from experiments/: writes the table and docs/perf/REPORT.md
-    python -m benchmarks.perf_machine --report ../docs/perf
+```
+# from experiments/: writes the table and docs/perf/REPORT.md
+python -m benchmarks.perf_machine --report ../docs/perf
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

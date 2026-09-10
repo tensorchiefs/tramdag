@@ -2,23 +2,27 @@
 
 Originally from Sanchez-Martin et al. (2022, VACA App. E.1), used in the paper to
 benchmark TRAM-DAG against Causal Normalizing Flows (Javaloy et al. 2024) on L1
-(observational fit, Fig. 4) and L2 (interventional distributions, Fig. 5)::
+(observational fit, Fig. 4) and L2 (interventional distributions, Fig. 5):
 
-    x1 ~ 0.5 N(-2, 1.5) + 0.5 N(1.5, 1)        (bimodal; sd of the 1st comp. is
-                                                 sqrt(1.5) — the paper's headline
-                                                 L1 case that the default CNF
-                                                 fails to fit)
-    x2 = -x1 + N(0, 1)
-    x3 =  x1 + 0.25 x2 + N(0, 1)
+```
+x1 ~ 0.5 N(-2, 1.5) + 0.5 N(1.5, 1)        (bimodal; sd of the 1st comp. is
+                                             sqrt(1.5) — the paper's headline
+                                             L1 case that the default CNF
+                                             fails to fit)
+x2 = -x1 + N(0, 1)
+x3 =  x1 + 0.25 x2 + N(0, 1)
+```
 
 Gaussian noise, so this DGP is deliberately *outside* the flow's logistic-latent
 family — a flexible (all-``ci``) TRAM-DAG still has to fit it. Interventional
 queries: the paper's text says a in {-3, -2, 0}, but its Fig. 5 and the R
 code use {-3, -1, 0} — the grid this repo follows (docs/paper-replication.md).
 
-CLI::
+CLI:
 
-    uv run python -m paper.simulations.vaca --out paper/data/vaca --seed 42
+```
+uv run python -m paper.simulations.vaca --out paper/data/vaca --seed 42
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

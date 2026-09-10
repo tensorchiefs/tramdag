@@ -17,10 +17,12 @@ time (``fit`` itself records only the per-node train NLL), so every config
 runs once and time-to-target is read off that record post hoc — no
 instrumentation overhead.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m benchmarks.bench_training            # full grid (~30-45 min)
-    uv run python -m benchmarks.bench_training --quick    # 1 seed, cpu only
+```
+uv run python -m benchmarks.bench_training            # full grid (~30-45 min)
+uv run python -m benchmarks.bench_training --quick    # 1 seed, cpu only
+```
 
 Outputs -> results/bench-training/{results.csv, ranking.csv, nll_vs_time_*.png,
 reference.json}.

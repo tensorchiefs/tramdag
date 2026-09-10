@@ -17,9 +17,11 @@ it ever needs regenerating. ``carefl-cf`` is not listed either: it is
 CAREFL's own committed data (see its ``truth.json``), external frozen
 input with no generator here.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m paper.check_data
+```
+uv run python -m paper.check_data
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

@@ -11,12 +11,14 @@ standard-logistic latents (paper Section 6; original code
   cutpoints theta = (-2, 0.42, 1.02), level = #{k : u3 > theta_k + 0.2 x1 + f(x2)}
   (stored 0..3; the paper counts levels 1..4).
 
-``f`` selects the x2 -> x3 effect (paper / R-script variants)::
+``f`` selects the x2 -> x3 effect (paper / R-script variants):
 
-    linear  -0.3 x                  (=> +0.3 coefficient on x2 in h3)
-    exp     0.5 exp(x)
-    atan    0.75 atan(5 (x + 0.12))  (complex-shift experiment, Fig. 7)
-    sin     2 sin(3 x) + x           (non-monotone, App. C.3.4)
+```
+linear  -0.3 x                  (=> +0.3 coefficient on x2 in h3)
+exp     0.5 exp(x)
+atan    0.75 atan(5 (x + 0.12))  (complex-shift experiment, Fig. 7)
+sin     2 sin(3 x) + x           (non-monotone, App. C.3.4)
+```
 
 Convention mapping to ``CausalFlowDAG`` fits (see ``flow_expectations``):
 continuous nodes share the paper's sign (``z = h(x) + shift``), so the fitted
@@ -26,9 +28,11 @@ learns ``-f(x2)`` up to an additive constant. The ordinal node flips the sign
 fitted weights converge to -0.2 (x1->x3) and, for ``linear``, +0.3 (x2->x3) —
 and the ``cs`` module again learns ``-f(x2)``.
 
-CLI (regenerate the frozen CSVs for both families)::
+CLI (regenerate the frozen CSVs for both families):
 
-    uv run python -m paper.simulations.triangle --out paper/data --seed 42
+```
+uv run python -m paper.simulations.triangle --out paper/data --seed 42
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

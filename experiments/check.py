@@ -1,11 +1,13 @@
 """Compare an experiment's metrics against the committed ground truth.
 
 The experiments workflow calls this after each run. Ground truth lives in
-``<area>/ground_truth/<result-dir>.json`` as one entry per metric::
+``<area>/ground_truth/<result-dir>.json`` as one entry per metric:
 
-    {"_note": "what these numbers mean",
-     "beta12": {"value": 1.9825, "atol": 0.05},
-     "cs_curve_max_abs_err": {"max": 0.23}}
+```
+{"_note": "what these numbers mean",
+ "beta12": {"value": 1.9825, "atol": 0.05},
+ "cs_curve_max_abs_err": {"max": 0.23}}
+```
 
 Two forms. ``{value, atol}`` is two-sided, for a quantity that should stay
 where it is. ``{max}`` is an upper bound, for an **error measure**, where a
@@ -17,12 +19,14 @@ fails on another machine for no reason (measured: one such bound passed at
 A bound outside the band is reported as ``note`` — not a failure, because a
 tolerance is a judgement call, but visibly, so it gets re-pinned deliberately
 rather than drifting. A bound that is *meant* to be wide carries a ``"why"``
-string, which is printed in place of the note::
+string, which is printed in place of the note:
 
-    "max_abs_diff_flow_vs_statsmodels": {
-      "max": 0.25,
-      "why": "the max is over a coefficient with 7 of 1275 observations: 0.028
-              here, 0.113 on the CI runner"}
+```
+"max_abs_diff_flow_vs_statsmodels": {
+  "max": 0.25,
+  "why": "the max is over a coefficient with 7 of 1275 observations: 0.028
+          here, 0.113 on the CI runner"}
+```
 
 A ``"why"`` excuses width only. The *too tight* note always fires, because no
 argument makes a bound below 1.5x its measurement survive another machine.
@@ -40,9 +44,11 @@ without an entry is reported and ignored; an entry without a metric is an
 error, because that means the experiment stopped producing a number the
 ground truth claims to check.
 
-Usage (from ``experiments/``)::
+Usage (from ``experiments/``):
 
-    uv run python -m check paper triangle-atan-cs
+```
+uv run python -m check paper triangle-atan-cs
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

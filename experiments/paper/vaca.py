@@ -11,9 +11,11 @@ interventional densities ``p(x3 | do(x2 = a))`` (Fig. 5). The interventional
 means are analytic — ``E[x3 | do(x2=a)] = E[x1] + 0.25 a`` — so the metrics
 compare the flow against exact values, not against a second sample.
 
-Usage (from experiments/)::
+Usage (from experiments/):
 
-    uv run python -m paper.vaca flexible
+```
+uv run python -m paper.vaca flexible
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

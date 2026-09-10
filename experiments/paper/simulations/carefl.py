@@ -1,11 +1,13 @@
 """The CAREFL counterfactual benchmark DGP (TRAM-DAG paper App. C.2).
 
 Originally from Khemakhem et al. (2021, CAREFL Fig. 5), used in the paper to
-benchmark TRAM-DAG's L3 (counterfactual) queries (Fig. 6)::
+benchmark TRAM-DAG's L3 (counterfactual) queries (Fig. 6):
 
-    x1, x2 ~ Laplace(0, 1/sqrt(2))
-    x3 = x1 + 0.5 x2^3 + Laplace(0, 1/sqrt(2))
-    x4 = -x2 + 0.5 x1^2 + Laplace(0, 1/sqrt(2))
+```
+x1, x2 ~ Laplace(0, 1/sqrt(2))
+x3 = x1 + 0.5 x2^3 + Laplace(0, 1/sqrt(2))
+x4 = -x2 + 0.5 x1^2 + Laplace(0, 1/sqrt(2))
+```
 
 All-continuous additive-noise SCM, so individual counterfactuals are **analytic**
 via noise abduction (no Monte Carlo): eps3 = x3 - x1 - 0.5 x2^3 and
@@ -22,9 +24,11 @@ alpha in [-3, 3]:
     (i)  x3^cf  given do(x2 = alpha):  x1 + 0.5 alpha^3 + eps3
     (ii) x4^cf  given do(x1 = alpha): -x2 + 0.5 alpha^2 + eps4
 
-CLI::
+CLI:
 
-    uv run python -m paper.simulations.carefl --out paper/data/carefl --seed 42
+```
+uv run python -m paper.simulations.carefl --out paper/data/carefl --seed 42
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

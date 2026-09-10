@@ -17,10 +17,12 @@ Reading a script's YAML file is here. Checking the section it yields is not.
 Every function takes the calling script's ``__file__``, so paths resolve
 inside that script's own area with no directory names written in the code.
 
-Run an experiment as a module, from ``experiments/``::
+Run an experiment as a module, from ``experiments/``:
 
-    uv run python -m paper.triangle atan-cs
-    uv run python -m check paper triangle-atan-cs
+```
+uv run python -m paper.triangle atan-cs
+uv run python -m check paper triangle-atan-cs
+```
 """
 
 # %% imports ---------------------------------------------------------------------------

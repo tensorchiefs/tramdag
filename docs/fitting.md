@@ -186,9 +186,7 @@ within ~1e-5 of statsmodels on an all-`ls` model. A single converged
 constant-rate run gets ~1e-3. If you need the tighter agreement and the spec
 is all-`ls`, use `fit_classical` instead, which is exact and faster.
 
-Before 0.4 the per-node recipe was `fit(schedule="plateau",
-freeze_patience=)`. It is a callback now, and
-`experiments/benchmarks/bench_training.py` measures it.
+`experiments/benchmarks/bench_training.py` measures the per-node recipe.
 
 Three details are easy to get wrong:
 

@@ -10,12 +10,14 @@ bit-reproducible within one platform/BLAS build (Windows CI measurably
 differs) — the Linux CI jobs still carry the tripwire.
 """
 
+# %% imports ---------------------------------------------------------------------------
 import importlib.util
 import sys
 from pathlib import Path
 
 import pytest
 
+# %% global variables ------------------------------------------------------------------
 _spec = importlib.util.spec_from_file_location(
     "statedict_smoke", Path(__file__).parent / "tools" / "statedict_smoke.py"
 )
@@ -28,6 +30,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+# %% public functions ------------------------------------------------------------------
 def test_seeded_state_dicts_match_the_recorded_baseline():
     import torch
 

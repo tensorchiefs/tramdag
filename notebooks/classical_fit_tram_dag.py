@@ -36,7 +36,6 @@
 
 # %%
 import time
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -46,8 +45,6 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 
 from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, OrdinalNode
 from tramdag.callbacks import PerNodePlateau, per_node_adam
-
-warnings.filterwarnings("ignore")
 
 # repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
@@ -490,8 +487,9 @@ if False:
 # ### The R you can copy-paste
 #
 # `tram::Colr` fits the same model family — a continuous outcome logistic
-# transformation model with a Bernstein baseline. The cell above already wrote
-# `notebooks/data/vaca.csv`, so R reads the identical rows the flow is fitted on.
+# transformation model with a Bernstein baseline. The cell above is what wrote
+# `notebooks/data/vaca.csv`, which is committed, so R reads the identical rows
+# the flow is fitted on.
 #
 # The two libraries **count the basis differently**, and the comparison is only
 # meaningful at the same polynomial degree. The flow's `n_coeffs` unconstrained
@@ -609,7 +607,6 @@ assert corr > 0.95, f"the density's mode does not track the shifts: r = {corr:.4
 # %%
 flow_a = CausalFlowDAG(spec_vaca, seed=0)
 t0 = time.perf_counter()
-# the pre-0.4 fit(schedule="plateau", freeze_patience=) recipe, now a callback
 sched = PerNodePlateau(patience=15, freeze=60)
 flow_a.fit(
     df,

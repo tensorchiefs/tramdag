@@ -171,9 +171,7 @@ class PerNodePlateau(Callback):
     saving is in epochs, not per-epoch wall clock. Do not attach a torch lr
     scheduler to the same optimizer — two controllers would steer the same
     group rates (a ``LambdaLR`` even resets frozen nodes to ``initial_lr``).
-    This is the pre-0.4 ``fit(schedule="plateau", freeze_patience=)`` recipe,
-    back as an opt-in callback; `docs/training-speed.md` has its
-    measurements.
+    `docs/training-speed.md` carries the measurements.
 
     After a fit, ``frozen`` is ``{node: epoch}`` — the epoch in which each
     node left training — so a training figure can mark the freezes.

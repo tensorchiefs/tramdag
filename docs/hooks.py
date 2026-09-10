@@ -6,15 +6,18 @@ repository becomes a GitHub URL for the ref being built (``REF``, default
 ``main``). The PDF link is added only when the PDF was built.
 """
 
+# %% imports ---------------------------------------------------------------------------
 import os
 import pathlib
 import posixpath
 import re
 
+# %% global variables ------------------------------------------------------------------
 REPO = "https://github.com/tensorchiefs/tramdag"
 _LINK = re.compile(r"(\]\()([^)\s#][^)\s]*)(\))")
 
 
+# %% public functions ------------------------------------------------------------------
 def on_config(config):
     """Execute the notebooks only when CI asks for it (DOCS_EXECUTE=true)."""
     config.plugins["mkdocs-jupyter"].config["execute"] = (

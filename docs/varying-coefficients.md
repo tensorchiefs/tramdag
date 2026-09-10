@@ -81,8 +81,8 @@ framework.
   node classically and copy the treatment weight into
   `flow.nodes[node].shifts[t].beta0` before `fit`, so training starts at the
   classical answer and only learns deviations. Measured on the `vc_hetero`
-  DGP: `beta0` lands within 0.15 of the truth with it, 0.16 from the zero
-  start; the recovery correlation is 0.99 either way.
+  DGP: `beta0` lands within 0.15 of the truth with it, and 0.16 from the zero
+  start. The recovery correlation is 0.99 either way.
 - **Treatments**: the treatment `x_on` can be continuous or binary (2-level)
   ordinal. The term is linear in `x_on`. A binary ordinal enters as its 0/1
   level, so `beta` is the identified level-1-vs-0 contrast. Multi-level
@@ -116,12 +116,12 @@ misspecification that you do not know you have.
 The naive implementations are wrong. Thus this is a **two-stage frozen**
 design:
 
-- **Training** uses **out-of-fold** ê that *you* compute and pass as
-  the frame column `VC(center=)` names (`df.assign(ps=e_oof)`), one value per training row: any
-  propensity model, each fold predicted by a fit that never saw it. This is
-  the DML cross-fitting requirement — in-sample ê reintroduces the
-  own-observation bias and can be *worse* than no centering. Six lines with
-  the flow's own classical fit:
+- **Training** uses **out-of-fold** ê that *you* compute. Pass it as the
+  frame column `VC(center=)` names (`df.assign(ps=e_oof)`), one value per
+  training row. Any propensity model works, with each fold predicted by a fit
+  that never saw it. This is the DML cross-fitting requirement. In-sample ê
+  reintroduces the own-observation bias and can be *worse* than no centering.
+  Six lines with the flow's own classical fit:
 
   ```python
   fold_id = np.random.default_rng(0).permutation(len(train)) % 5

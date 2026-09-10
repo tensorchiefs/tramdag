@@ -1,22 +1,25 @@
 # Per-observation scores & the effect-modifier scan
 
-`flow.scores(df, node)` returns the score $\psi_i = \partial \ell_i / \partial \theta$ of each observation
-for the node's interpretable shift coefficients. These coefficients are every
+`flow.scores(df, node)` returns the score
+$\psi_i = \partial \ell_i / \partial \theta$ of each observation, for the
+node's interpretable shift coefficients. These coefficients are every
 `LS` weight and every `VC` term's `beta0`. An `LS` weight gives one column per
 continuous parent and one column per one-hot level of an ordinal parent. The
 `beta0` column is named after the treatment.
 
 The computation is **analytic and exact**, with no autograd. Shifts enter the
-latent additively. Thus $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i$, with $\partial \ell_i / \partial s$ in closed form
-(`src/tramdag/scores.py`). The function is a pure read-out. It does not touch
-the fitting or sampling code paths. At a fitted MLE, the sum of each column is
+latent additively. Thus
+$\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i$,
+with $\partial \ell_i / \partial s$ in closed form (`src/tramdag/scores.py`).
+The function is a pure read-out. It does not touch the fitting or sampling
+code paths. At a fitted MLE, the sum of each column is
 ≈ 0. Tests pin this behavior and include a float64 finite-difference check.
 
 ## Worked example: where does β(x) need to bend?
 
 The score is the cheapest effect-modifier detector available. It uses the
-structural-change logic of model-based recursive partitioning (Zeileis &
-Hornik; Dandl et al. 2024). Before you fit an expensive model, fit the
+structural-change logic of model-based recursive partitioning (Zeileis and
+Hornik, Dandl et al. 2024). Before you fit an expensive model, fit the
 **cheap all-`LS` model**. This fit takes seconds and is deterministic. Then
 scan the treatment-coefficient scores:
 
@@ -36,7 +39,7 @@ and forms the scaled cumulative sum `B_j = Σ_{i≤j} ψ_(i) / (sd(ψ)·√n)`. 
 a stable coefficient, `B` is a Brownian bridge. Thus `sup|B|` has the
 Kolmogorov distribution (5% critical value 1.358). A coefficient that truly
 varies with the covariate makes the ordered scores drift. The flagged
-covariates are the measured shortlist of `VC` modifiers
+covariates are the shortlist of `VC` modifiers to measure
 (`docs/varying-coefficients.md`):
 
 ```python
@@ -46,14 +49,14 @@ spec["Y"] = td.ContinuousNode(
 ```
 
 **Read it as screening, not as a test of effect modification.** The statistic
-measures how unstable the *cheap* model is along a covariate, and instability
-has two sources: a coefficient that genuinely varies, and a **prognostic part
-the cheap model gets wrong**. In the example above `X1` is unflagged because
-its prognostic effect is linear; make it quadratic and `X1` flags as strongly
+measures how unstable the *cheap* model is along a covariate. Instability has
+two sources: a coefficient that genuinely varies, and a **prognostic part the
+cheap model gets wrong**. In the example above `X1` is unflagged, because its
+prognostic effect is linear. Make it quadratic and `X1` flags as strongly
 as the true modifiers (0.56 → 4.14 on the DGP of
 [`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py),
 which demonstrates both cases side by side). A flag therefore means "look
-here", and what you find may be a modifier or a misspecification — both worth
+here", and what you find can be a modifier or a misspecification — both worth
 knowing.
 
 Notes: For a binary ordinal `LS` treatment, `t` resolves to the identified

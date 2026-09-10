@@ -718,8 +718,8 @@ class Intercept(Term):
     ):
         # Naming every option makes the pass-through boundary visible: what
         # binds above is an option of the term, and whatever is left in
-        # `kwargs` goes to the transform class. Python's argument binding does
-        # the split that a set-difference over option_names() used to do.
+        # `kwargs` goes to the transform class. Python's argument binding
+        # makes that split.
         # A written-out keyword wins over the same key inside the serialized
         # transform_kwargs mapping, which is why it is merged second.
         merged = {**dict(transform_kwargs or ()), **kwargs}

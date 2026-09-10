@@ -18,7 +18,7 @@ from tramdag import CausalFlowDAG, ContinuousNode, Fn, Term, spec_from_dict
 from tramdag.terms import ShiftTerm, module_for
 
 
-# %% private functions -------------------------------------------------------------
+# %% private functions -----------------------------------------------------------------
 def _double(features):
     """A module-level fn: picklable, so it survives save/load."""
     return 2.0 * features[:, 0]
@@ -26,66 +26,6 @@ def _double(features):
 
 def _two_node(term):
     return {"x1": ContinuousNode(), "x2": ContinuousNode([term])}
-
-
-# %% private classes -------------------------------------------------------------------
-class SLS(Term):
-    """A minimal custom term: ``w * x`` with a fixed scale option."""
-
-    scale: float = 1.0
-
-    def __post_init__(self):
-        """One parent, like LS."""
-        if len(self.parents) != 1:
-            raise ValueError("SLS() takes exactly one parent.")
-
-
-class _ScaledLS(ShiftTerm, nn.Module):
-    data = SLS
-
-    def __init__(self, scale: float):
-        nn.Module.__init__(self)
-        self.scale = scale
-        self.w = nn.Parameter(torch.zeros(()))
-
-    @classmethod
-    def build(cls, term, spec):
-        m = cls(scale=term.scale)
-        m.key = term.parents[0]
-        return m
-
-    def shift_value(self, node, feats):
-        return self.scale * self.w * feats[self.parents[0]][:, 0]
-
-
-class PEN(Term):
-    """A custom penalized term: the regularizer hook must reach the loss."""
-
-
-class _PenShift(ShiftTerm, nn.Module):
-    data = PEN
-
-    def __init__(self):
-        nn.Module.__init__(self)
-        self.w = nn.Parameter(torch.zeros(()))
-        self.calls = 0
-
-    @classmethod
-    def build(cls, term, spec):
-        m = cls()
-        m.key = term.parents[0]
-        return m
-
-    def shift_value(self, node, feats):
-        return self.w * feats[self.parents[0]][:, 0]
-
-    def regularizer(self):
-        self.calls += 1
-        return self.w**2
-
-
-class Orphan(Term):
-    """A term class no module builds."""
 
 
 # %% public functions ------------------------------------------------------------------
@@ -196,3 +136,63 @@ def test_a_subclass_cannot_turn_the_term_name_into_an_option():
 
         class Named(Term):
             name: str = "whatever"
+
+
+# %% private classes -------------------------------------------------------------------
+class SLS(Term):
+    """A minimal custom term: ``w * x`` with a fixed scale option."""
+
+    scale: float = 1.0
+
+    def __post_init__(self):
+        """One parent, like LS."""
+        if len(self.parents) != 1:
+            raise ValueError("SLS() takes exactly one parent.")
+
+
+class _ScaledLS(ShiftTerm, nn.Module):
+    data = SLS
+
+    def __init__(self, scale: float):
+        nn.Module.__init__(self)
+        self.scale = scale
+        self.w = nn.Parameter(torch.zeros(()))
+
+    @classmethod
+    def build(cls, term, spec):
+        m = cls(scale=term.scale)
+        m.key = term.parents[0]
+        return m
+
+    def shift_value(self, node, feats):
+        return self.scale * self.w * feats[self.parents[0]][:, 0]
+
+
+class PEN(Term):
+    """A custom penalized term: the regularizer hook must reach the loss."""
+
+
+class _PenShift(ShiftTerm, nn.Module):
+    data = PEN
+
+    def __init__(self):
+        nn.Module.__init__(self)
+        self.w = nn.Parameter(torch.zeros(()))
+        self.calls = 0
+
+    @classmethod
+    def build(cls, term, spec):
+        m = cls()
+        m.key = term.parents[0]
+        return m
+
+    def shift_value(self, node, feats):
+        return self.w * feats[self.parents[0]][:, 0]
+
+    def regularizer(self):
+        self.calls += 1
+        return self.w**2
+
+
+class Orphan(Term):
+    """A term class no module builds."""

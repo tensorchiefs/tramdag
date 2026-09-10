@@ -1,15 +1,18 @@
 # `magic-mrclean` — synthetic stroke cohort with known ground truth
 
-A fully synthetic dataset shaped like the MAGIC / MR CLEAN stroke study, used as the
-**public, reproducible** default for the tramdag experiments. It contains **no patient
-data**: every row is generated from a hand-specified structural causal model (SCM), so
-the true interventional effects are known exactly. It is a drop-in substitute for the
-private clinical data — identical column schema, dtypes and ranges — so the same
-experiment and analysis scripts run on either by changing one string.
+A fully synthetic dataset shaped like the MAGIC / MR CLEAN stroke study. It is
+the **public, reproducible** default for the tramdag experiments, and it holds
+**no patient data**. Every row comes from a hand-specified structural causal
+model (SCM), so the true interventional effects are known exactly. It is a
+drop-in substitute for the private clinical data, with identical column
+schema, dtypes and ranges. One string therefore switches the same experiment
+and analysis scripts between the two.
 
 Generator: **not in this repository.** It left with the clinical storyline in
-0.4; recover it with `git checkout pre-experiments-cut -- src/tramdag/simulations/magic_mrclean.py`. This cohort is frozen input data,
-pinned by `experiments/misc/tests/` rather than by regeneration.
+0.4. Recover it with
+`git checkout pre-experiments-cut -- src/tramdag/simulations/magic_mrclean.py`.
+This cohort is frozen input data. `experiments/misc/tests/` pins it, rather
+than regeneration.
 
 ## DAG and schema
 
@@ -42,12 +45,12 @@ contrast is what makes `ls` the *baseline* rather than the only case.
 
 The three ★ terms in `nl` (and only those) differ from `ls`:
 
-1. **accelerating disability** — `mRS_pre` gains a `+0.18·relu((Age−73)/10)²` term;
-2. **age² severity** — `NIHSSa` gains a `+0.20·relu((Age−73)/10)²` shift;
+1. **accelerating disability** — `mRS_pre` gains a `+0.18·relu((Age−73)/10)²` term.
+2. **age² severity** — `NIHSSa` gains a `+0.20·relu((Age−73)/10)²` shift.
 3. **heterogeneous, age-fading treatment effect** — the outcome shift uses
-   `τ(Age) = −0.85 + 0.85·(1 − σ((78−Age)/6))`, i.e. full benefit (≈ −0.85) in the
-   young that fades to ≈ 0 in the very old; `nl` also smoothly withholds treatment
-   from the very old. (`ls` uses a constant `τ = −0.85`.)
+   `τ(Age) = −0.85 + 0.85·(1 − σ((78−Age)/6))`. That is full benefit (≈ −0.85)
+   in the young, fading to ≈ 0 in the very old. `nl` also smoothly withholds
+   treatment from the very old. (`ls` uses a constant `τ = −0.85`.)
 
 **Trial inclusion.** The `obs.csv` (observational) and `rct.csv` (randomized) draws
 use *different* covariate populations: the trial enrols a **younger** cohort (age
@@ -78,11 +81,12 @@ match what the experiments score on `rct.csv`.
 
 Two things to read off:
 
-1. The huge gap between the **naive observational contrast** (+0.26 / +0.30) and the
-   true ATE makes the **do-operator demonstrably necessary** — both flows correct it.
-2. On `nl`, the all-`ls` flow **undershoots** the true ATE while the flexible (`ci`/`cs`)
-   flow recovers it — echoing the real-data finding (TRAM-DAG `nihss6` +0.108 vs
-   `md_dag_ls` +0.054). On `ls` (constant effect) both models and the truth coincide.
+1. The huge gap between the **naive observational contrast** (+0.26 / +0.30)
+   and the true ATE makes the **do-operator necessary**. Both flows correct it.
+2. On `nl`, the all-`ls` flow **undershoots** the true ATE. The flexible
+   (`ci`/`cs`) flow recovers it. This echoes the real-data finding, TRAM-DAG
+   `nihss6` +0.108 against `md_dag_ls` +0.054. On `ls`, a constant effect, both
+   models and the truth coincide.
 
 ## Regenerating
 

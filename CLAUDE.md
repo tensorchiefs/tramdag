@@ -92,7 +92,7 @@ The 1.0-RC refactor makes an effect TWO classes. That refactor covers three
 references:
 
 - the branch rc/1.0-architecture,
-- docs/adr/001,
+- docs/adr/001-term-owned-architecture.md,
 - the 2026-09 term-classes revision.
 
 The spec class is a `tramdag.Term` subclass in `spec.py`. It is frozen data,
@@ -203,8 +203,8 @@ docs/architecture.md carries the module map and the term-contract diagram.
 
   - `EarlyStopping` — it restores the best-validation weights automatically at
     fit end, and it takes an optional stopping `patience`.
-  - `PerNodePlateau` and `per_node_adam` — per-node lr decay and freezing, the
-    pre-0.4 plateau recipe. Afterwards `frozen = {node: epoch}`.
+  - `PerNodePlateau` and `per_node_adam` — per-node lr decay and freezing.
+    Afterwards `frozen = {node: epoch}`.
 
   All callbacks read `history["val"]`, which
   `fit(validation_data=|validation_split=)` fills per epoch. `fit` also records
@@ -224,7 +224,8 @@ docs/architecture.md carries the module map and the term-contract diagram.
 - There is no `utils.py` any more. `machine_info` moved to
   `experiments/benchmarks/perf_machine.py`, next to its only caller, so the
   package holds modelling code only.
-- `flow.py` — the `CausalFlowDAG` class. Its main methods are, with the full list in docs/code-map.md:
+- `flow.py` — the `CausalFlowDAG` class. Its main methods are, with the full
+  list in docs/code-map.md:
 
   - `fit`.
   - `fit_classical` — float64 full-batch L-BFGS, the exact MLE for all-`ls`
@@ -285,8 +286,14 @@ docs/architecture.md carries the module map and the term-contract diagram.
   - early stopping and best-weight restoration,
   - logging.
 
-  The caller reaches them through
-  `fit(validation_data=|validation_split=, validation_batch_size=, verbose=, optimizer=, callbacks=)`.
+  The caller reaches them through these `fit` keywords:
+
+  - `validation_data=` or `validation_split=`,
+  - `validation_batch_size=`,
+  - `verbose=`,
+  - `optimizer=`,
+  - `callbacks=`.
+
   `fit` fills `history["val"]` per epoch, and `verbose=N` prints every Nth
   line.
 
@@ -327,7 +334,8 @@ Framework tests (inline DGPs, `tests/conftest.py`):
 
 Experiments (`experiments/`, seed 42 unless stated, arXiv:2503.16206). The
 paper states only four training numbers: n=40000, 500 epochs, Adam, and
-Bernstein order 20. The Adam lr 1e-3 is the default of the R code's `optimizer_adam()`.
+Bernstein order 20. The Adam lr 1e-3 is the default of the R code's
+`optimizer_adam()`.
 Each config follows the paper's own R code 1:1 where the framework allows.
 
 **The triangle scripts.** One continuous Adam run with a separate validation

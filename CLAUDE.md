@@ -71,8 +71,9 @@ indirection. bench_training.yaml is workloads-shaped and follows the same rule.
 perf_machine.py is exempt, because it is a single curl-and-run file.
 
 `experiments/` splits into `paper/`, `benchmarks/` and `misc/`.
-`experiments/tests/` holds the shared `check.py`. `paper` and `misc` each own
-four directories:
+`experiments/check.py` is the shared ground-truth comparison, and
+`experiments/tests/` holds its test. `paper` and `misc` each own four
+directories:
 
 - `data/`,
 - `ground_truth/`,
@@ -220,10 +221,9 @@ docs/architecture.md carries the module map and the term-contract diagram.
   matplotlib is the optional extra `tramdag[plots]`. The module imports it on
   first call, so the package import never needs it. `plot_dag` is exported at
   top level.
-- There is no `utils.py` any more. `config_section` moved to
-  `experiments/common.py`. `machine_info` moved to
-  `experiments/benchmarks/perf_machine.py`. Each one now sits next to its only
-  caller, so the package holds modelling code only.
+- There is no `utils.py` any more. `machine_info` moved to
+  `experiments/benchmarks/perf_machine.py`, next to its only caller, so the
+  package holds modelling code only.
 - `flow.py` — the `CausalFlowDAG` class. Its methods are:
 
   - `fit`.

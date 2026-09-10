@@ -1,6 +1,6 @@
 # Architecture
 
-The package has ten modules and one rule. Term-specific behavior lives on the
+The package has eleven modules and one rule. Term-specific behavior lives on the
 term's two classes. These are its `Term` subclass (the spec) and its module in
 `terms.py`. Node-kind behavior lives in four adjacent functions. Everything
 else is framework code.

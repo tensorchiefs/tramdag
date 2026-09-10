@@ -5,7 +5,7 @@ rather than a notebook, belongs in `experiments/<area>/data/` instead.
 
 ## `birthwt.csv`
 
-Four columns of `MASS::birthwt` — the low-birth-weight study of Hosmer &
+Five columns of `MASS::birthwt` — the low-birth-weight study of Hosmer &
 Lemeshow (1989), 189 births at Baystate Medical Center — used by
 `classical_fit_tram_dag.py` as a logistic-regression example that a reader can
 re-fit in R.

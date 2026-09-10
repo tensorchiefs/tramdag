@@ -523,12 +523,8 @@ R_COLR = {  # Colr(..., order = 21) on vaca.csv; R 4.2.3 / tram 1.0.4
 
 # %%
 df = pd.read_csv(NB_DATA / "vaca.csv")
-# n_coeffs is stated rather than left to the default, because Section 1 compares
-# against R and the two libraries count the basis differently: the flow's
-# n_coeffs unconstrained coefficients become n_coeffs + 2 control points, i.e. a
-# Bernstein polynomial of degree n_coeffs + 1 (see `order = n + 1` in
-# transforms.py). So n_coeffs=20 here is tram's `order = 21`, not `order = 19`.
-N_COEFFS = 20  # -> Bernstein degree 21
+# stated rather than left to the default, for the reason the cell above gives
+N_COEFFS = 20  # -> Bernstein degree 21, which is tram's `order = 21`
 
 spec_vaca = {
     "x1": ContinuousNode([SI(n_coeffs=N_COEFFS)]),

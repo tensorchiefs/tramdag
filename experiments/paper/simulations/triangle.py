@@ -58,6 +58,7 @@ THETA_MIXED = np.array([-2.0, 0.42, 1.02])  # ordinal cutpoints (4 levels)
 PAPER_VARIANTS = {"continuous": ("linear", "atan", "sin"), "mixed": ("linear", "exp")}
 
 
+# %% private functions -----------------------------------------------------------------
 def _write_variant(cls, out_dir: Path, f: str, seed: int, n_obs: int) -> None:
     gen = cls(f=f, seed=seed)
     vdir = out_dir / f

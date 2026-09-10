@@ -40,7 +40,8 @@ the same object, so `LS is LinearShift`.
 | [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] | `log P(Y=y)`, computed in log-space. Load-bearing: the naive sigmoid difference saturates in float32 and freezes nodes at init. Do not simplify. |
 | [`ordinal_pmf()`][tramdag.transforms.ordinal_pmf] / [`ordinal_sample()`][tramdag.transforms.ordinal_sample] / [`ordinal_abduct()`][tramdag.transforms.ordinal_abduct] | Class probabilities / latent → level / truncated-logistic latent recovery (Pearl step 1) for ordinal nodes. |
 | [`ordinal_marginal_init_theta()`][tramdag.transforms.ordinal_marginal_init_theta] | Cutpoint start that matches the empirical class frequencies (`init_marginals`). |
-| (`_ScaledUT`, `_bounds`, `_log1mexp`) | Quantile pre-scaling base class (the inverse is zuko's, with its closed-form tail); per-level cutpoint intervals; stable `log(1-exp(x))`. |
+| [`ordinal_bounds()`][tramdag.transforms.ordinal_bounds] | The shifted cutpoint interval of each observed level. `scores.py` reads it for the latent-scale derivative. |
+| (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable `log(1-exp(x))`. |
 
 ## `conditioners.py` — the networks behind the terms
 
@@ -100,14 +101,14 @@ subclass it builds (`data = CS`). For the contract diagram, see
 | [`module_for()`][tramdag.terms.module_for] | The dispatch: a `TermDef` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
 | [`ShiftTerm`][tramdag.terms.ShiftTerm] / [`InterceptTerm`][tramdag.terms.InterceptTerm] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
 | [`LinearShiftTerm`][tramdag.terms.LinearShiftTerm] / [`ComplexShiftTerm`][tramdag.terms.ComplexShiftTerm] / [`VaryingCoefficientTerm`][tramdag.terms.VaryingCoefficientTerm] / [`FnShiftTerm`][tramdag.terms.FnShiftTerm] | The built-in shift terms, subclassing their conditioners (state-dict paths and the seeded RNG stream stay bit-stable). `VaryingCoefficientTerm.regressor` is both the forward regressor and the `beta0` score. |
-| [`SimpleInterceptTerm`][tramdag.terms.SimpleInterceptTerm] / [`ComplexInterceptTerm`][tramdag.terms.ComplexInterceptTerm] / [`AdditiveInterceptTerm`][tramdag.terms.AdditiveInterceptTerm] | The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. |
+| [`SimpleInterceptTerm`][tramdag.terms.SimpleInterceptTerm] / [`ComplexInterceptTerm`][tramdag.terms.ComplexInterceptTerm] / [`AdditiveInterceptTerm`][tramdag.terms.AdditiveInterceptTerm] | The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. `net_groups` gives the per-group networks a read-out needs. |
+| (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
 
 ## `nodes.py` — the node model
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | (`_Node`) | One sub-model per variable: builds its intercept and shift terms through `module_for`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
-| (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
 | (`kind_log_prob`, `kind_sample`, `kind_abduct`, `kind_marginal_theta`) | The ONLY continuous-vs-ordinal branches in the package, adjacent. |
 | (`_init_linear`) | Keras' `glorot`/`normal` initializers on one linear layer. |
 
@@ -132,7 +133,7 @@ subclass it builds (`data = CS`). For the contract diagram, see
 | [`node_scores()`][tramdag.scores.node_scores] | Analytic, exact per-observation scores `psi_i = d l_i / d theta` for every `LS` weight and VC `beta0`. No autograd. |
 | [`effect_modifier_scan()`][tramdag.scores.effect_modifier_scan] | Zeileis-Hornik fluctuation scan: order the treatment scores by each candidate, `sup|CUSUM|` against the Kolmogorov 5% value. A measured shortlist for VC modifiers from a seconds-long classical fit. |
 | [`sup_bb_pvalue()`][tramdag.scores.sup_bb_pvalue] | `P(sup |Brownian bridge| > stat)`, the Kolmogorov series. |
-| (`_dl_ds`, `CRIT_5PCT`) | Closed-form latent-scale derivative; the 5% critical value 1.3581. The per-term columns come from each term's `score_columns` hook. |
+| (`_dl_ds`, `_is_binary_ordinal`, `CRIT_5PCT`) | Closed-form latent-scale derivative. Whether a treatment is a two-level ordinal, asked of the spec. The 5% critical value 1.3581. The per-term columns come from each term's `score_columns` hook. |
 
 ## `callbacks.py` — the shipped `fit` callbacks
 

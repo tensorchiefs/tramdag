@@ -31,9 +31,13 @@ where each reference number comes from is documented in
 ## Linting
 
 ```bash
-uvx ruff check .        # report
-uvx ruff format --diff  # what formatting would change
+uvx ruff check .                    # report
+uvx ruff format --diff src tests experiments tools notebooks   # formatting
 ```
+
+`ruff format` also reformats fenced Python inside markdown, which the
+`ruff-format` hook deliberately does not do. Code in the guides is wrapped for
+reading, not for the formatter, so point the command at the source trees.
 
 Rules live in `pyproject.toml`: ruff's default set plus the extras listed
 under `extend-select`, at 88 columns with the numpy docstring convention.

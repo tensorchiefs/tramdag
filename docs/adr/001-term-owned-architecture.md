@@ -26,11 +26,11 @@ drafted against a seven-subsystem survey and judged from three lenses
 2. The **registry** (`terms.py`): one definition per term. Built-in shift terms
    subclass their conditioners (`LinearShiftTerm(ShiftTerm, LinearShift)` …), so
    checkpoints and RNG draws stay bit-stable; each term owns validation
-   (`check_arity`/`edge_parents`), construction (`build`), evaluation
+   (`__post_init__`/`edge_parents`), construction (`build`), evaluation
    (`shift_value`/`theta_value`), `post_init`, `regularizer`, post-fit
    `finalize`, `score_columns`, the side-input contract
-   (`side_keys`/`check_side`/`live_side`/`extra_columns`), adjacency `cells`,
-   `classical` and its dataclass fields.
+   (`side_columns`/`check_column`/`live_side`/`extra_columns`), adjacency
+   `cells`, `classical` and its dataclass fields.
 3. The intercept slot is a term too (`SimpleInterceptTerm`/`ComplexInterceptTerm`/`AdditiveInterceptTerm`);
    the theta read is inline in `theta_shift` and the marginal init is a hook
    (`marginal_start`, `transform.marginal_init_theta`).

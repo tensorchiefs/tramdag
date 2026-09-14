@@ -844,6 +844,12 @@ read-outs keep their exact signatures as flow methods.
   `FnShiftModule`, `SimpleInterceptModule`, `ComplexInterceptModule` and
   `AdditiveInterceptModule`. Layer order and attribute names are unchanged,
   so state dicts and the seeded RNG stream are bit-identical.
+- A term class names its module by import path, `module =
+  "tramdag.modules.ComplexShiftModule"`, and `module_for` imports it with the
+  same `import_object` that resolves a custom term in `spec_from_dict`. The
+  `data = <Term>` declaration on the module class and the `__init_subclass__`
+  that stamped the module onto the term class are gone; a custom term sets
+  `module = "mypkg.MyModule"` on its `Term` subclass.
 
 ### Fixed
 

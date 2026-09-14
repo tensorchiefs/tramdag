@@ -291,11 +291,6 @@ classDiagram
   AffineUT --|> _ScaledUT
   BernsteinUT --|> _ScaledUT
   SplineUT --|> _ScaledUT
-  ComplexShift --o ComplexShiftModule : data
-  FnShift --o FnShiftModule : data
-  Intercept --o InterceptModule : data
-  LinearShift --o LinearShiftModule : data
-  VaryingCoefficient --o VaryingCoefficientModule : data
 ```
 
 ### Call graph — flow construction (traced)
@@ -323,21 +318,22 @@ flowchart LR
     n2["Node.__init__"]
   end
   subgraph spec
-    n20["Term.check"]
-    n21["Term.edge_parents"]
-    n22["VaryingCoefficient.check"]
-    n23["VaryingCoefficient.edge_parents"]
-    n19["_check_node"]
-    n24["_kahn_sort"]
+    n21["Term.check"]
+    n22["Term.edge_parents"]
+    n23["VaryingCoefficient.check"]
+    n24["VaryingCoefficient.edge_parents"]
+    n20["_check_node"]
+    n25["_kahn_sort"]
     n8["feat_width"]
-    n16["node_parents"]
+    n16["import_object"]
+    n17["node_parents"]
     n3["validate_and_sort"]
   end
   subgraph transforms
-    n25["BernsteinUT.__init__"]
-    n17["BernsteinUT.n_params"]
-    n26["_ScaledUT.__init__"]
-    n18["make_univariate_transform"]
+    n26["BernsteinUT.__init__"]
+    n18["BernsteinUT.n_params"]
+    n27["_ScaledUT.__init__"]
+    n19["make_univariate_transform"]
   end
     n0 --> n1
     n0 -- "3x" --> n2
@@ -353,23 +349,24 @@ flowchart LR
     n14 --> n13
     n14 --> n7
     n14 --> n8
+    n15 -- "6x" --> n16
     n2 --> n6
     n2 -- "3x" --> n9
     n2 --> n11
     n2 --> n14
     n2 -- "6x" --> n15
-    n2 -- "3x" --> n16
-    n2 -- "2x" --> n17
+    n2 -- "3x" --> n17
     n2 -- "2x" --> n18
-    n19 -- "5x" --> n20
-    n19 -- "5x" --> n21
-    n19 --> n22
-    n19 --> n23
-    n24 -- "3x" --> n16
-    n3 -- "3x" --> n19
-    n3 --> n24
-    n25 -- "2x" --> n26
-    n18 -- "2x" --> n25
+    n2 -- "2x" --> n19
+    n20 -- "5x" --> n21
+    n20 -- "5x" --> n22
+    n20 --> n23
+    n20 --> n24
+    n25 -- "3x" --> n17
+    n3 -- "3x" --> n20
+    n3 --> n25
+    n26 -- "2x" --> n27
+    n19 -- "2x" --> n26
 ```
 
 ### Call graph — one fit (traced)

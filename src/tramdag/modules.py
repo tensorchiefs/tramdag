@@ -1,16 +1,16 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
 A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``Fn``, ``I``) is
-plain data and carries the spec-level rules; the module here declares which
-term class it builds (``data = CS``), holds the term's network and owns the
-runtime behaviour: ``build``, ``shift_value``/``theta_value``, ``post_init``,
-``regularizer``, ``finalize``, ``score_columns`` and the side-input contract.
-[`module_for`][] finds the module of a term by that declaration, so
-subclassing is the whole registration.
+plain data and carries the spec-level rules, and names the module here that
+trains it as an import path (``module = "tramdag.modules.ComplexShiftModule"``).
+The module holds the term's network and owns the runtime behaviour: ``build``,
+``shift_value``/``theta_value``, ``post_init``, ``regularizer``, ``finalize``,
+``score_columns`` and the side-input contract. [`module_for`][] imports the
+module a term names, so there is no registry.
 
-A custom term is two classes: a ``Term`` subclass for the options and checks,
-and a [`ShiftModule`][tramdag.modules.ShiftModule] subclass with ``data =``
-that term class, ``build`` and ``shift_value``.
+A custom term is two classes: a ``Term`` subclass for the options and checks
+whose ``module`` names a [`ShiftModule`][tramdag.modules.ShiftModule] subclass
+with ``build`` and ``shift_value``.
 
 The networks copy the defaults of the PyTorch reference this package grew out
 of, ``tramdag/models/tram_models.py`` in https://github.com/buehlpa/TramDag:
@@ -54,17 +54,7 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from .spec import (
-    CS,
-    LS,
-    VC,
-    ContinuousNode,
-    Fn,
-    I,
-    OrdinalNode,
-    Term,
-    feat_width,
-)
+from .spec import ContinuousNode, OrdinalNode, Term, feat_width, import_object
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -158,25 +148,21 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
 
 # %% public functions ------------------------------------------------------------------
 def module_for(term: Term) -> type[TermModule]:
-    """Give the module class that builds ``term``.
-
-    A [`TermModule`][] subclass that declares ``data = <Term subclass>``
-    stamps itself onto that class as ``module`` when it is defined
-    (``__init_subclass__``), so subclassing is the registration.
+    """Give the module class that builds ``term``: the one its class names.
 
     Raises
     ------
     ValueError
-        If no module class declares the term's class.
+        If the term class names no module.
     """
-    module = getattr(type(term), "module", None)
-    if module is None:
+    path = getattr(type(term), "module", None)
+    if path is None:
         raise ValueError(
-            f"no module builds a {type(term).__name__} term. Subclass "
-            f"tramdag.modules.ShiftModule with `data = {type(term).__name__}` "
-            "and implement build and shift_value."
+            f"no module builds a {type(term).__name__} term. Set `module = "
+            f'"my.pkg.{type(term).__name__}Module"` on the term class, naming a '
+            "tramdag.modules.ShiftModule subclass with build and shift_value."
         )
-    return module
+    return import_object(path)
 
 
 # %% private classes -------------------------------------------------------------------
@@ -227,19 +213,7 @@ class _InputTransform(nn.Module):
 
 # %% public classes --------------------------------------------------------------------
 class TermModule:
-    """What every term module shares: the input transform and its calibration.
-
-    ``data`` names the [`Term`][] subclass the module builds;
-    [`module_for`][] dispatches on it.
-    """
-
-    data: ClassVar[type[Term]]
-
-    def __init_subclass__(cls, **kwargs):
-        """Stamp the module onto the term class it declares with ``data =``."""
-        super().__init_subclass__(**kwargs)
-        if "data" in cls.__dict__:
-            cls.data.module = cls
+    """What every term module shares: the input transform and its calibration."""
 
     @property
     def input_transform(self):
@@ -349,8 +323,6 @@ class InterceptModule(TermModule, ABC):
     one tuple for a joint net, one per parent for an additive one — and
     ``ci_parents`` their flat order.
     """
-
-    data = I
 
     groups: list[tuple[str, ...]]
     ci_parents: list[str]
@@ -545,7 +517,6 @@ class LinearShiftModule(ShiftModule, nn.Module):
         Width of the encoded parent features.
     """
 
-    data = LS
     scored = True
 
     def __init__(self, n_features: int):
@@ -600,8 +571,6 @@ class ComplexShiftModule(ShiftModule, nn.Module):
     batch_norm : bool
         Normalize the hidden layers — see ``_nn``.
     """
-
-    data = CS
 
     def __init__(
         self,
@@ -687,7 +656,6 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     through the ``center`` buffer and leaves the modelled function unchanged.
     """
 
-    data = VC
     scored = True
     order = 1
 
@@ -865,8 +833,6 @@ class FnShiftModule(ShiftModule, nn.Module):
     ``nn.Module`` registers as a submodule and trains with the flow. Built
     by [`FnShift`][] (``Fn``).
     """
-
-    data = Fn
 
     def __init__(self, fn):
         super().__init__()

@@ -2,10 +2,10 @@
 
 The extension contract of 1.0: a callable (or ``nn.Module``) drops into the
 additive shifts via ``Fn``; a whole new term is a ``tramdag.Term``
-subclass (its options and checks) plus a ``tramdag.modules.ShiftModule`` subclass
-declaring ``data =`` that term class. Subclassing is the registration:
-checkpoints carry the term NAME only, so loading a custom spec needs the
-classes imported first — and a lambda ``fn`` refuses to save.
+subclass (its options and checks) whose ``module`` names a
+``tramdag.modules.ShiftModule`` subclass by import path. A checkpoint carries
+the term's own import path, so loading a custom spec imports it from there —
+and a lambda ``fn`` refuses to save.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ def test_fn_shift_validates_its_arguments():
 
 
 def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
-    """A Term subclass plus a ShiftModule with ``data =`` is a whole term:
+    """A Term subclass naming its ShiftModule is a whole term:
     it validates, builds, fits, serializes by name and loads back.
     """
     df = ls_chain["draw"](600, 0)[["x1", "x2"]]
@@ -107,7 +107,7 @@ def test_unknown_term_and_orphan_term_fail_by_name():
     }
     with pytest.raises(ValueError, match="unknown term 'NOPE'"):
         spec_from_dict(d)
-    with pytest.raises(ValueError, match="data = Orphan"):
+    with pytest.raises(ValueError, match="module ="):
         CausalFlowDAG(_two_node(Orphan("x1")))
 
 
@@ -134,6 +134,8 @@ def test_shift_curve_covers_fn_terms(ls_chain):
 class SLS(Term):
     """A minimal custom term: ``w * x`` with a fixed scale option."""
 
+    module = f"{__name__}._ScaledLS"
+
     def __init__(self, *parents, scale: float = 1.0):
         super().__init__(*parents)
         self.scale = scale
@@ -142,8 +144,6 @@ class SLS(Term):
 
 
 class _ScaledLS(ShiftModule, nn.Module):
-    data = SLS
-
     def __init__(self, scale: float):
         nn.Module.__init__(self)
         self.scale = scale
@@ -162,10 +162,10 @@ class _ScaledLS(ShiftModule, nn.Module):
 class PEN(Term):
     """A custom penalized term: the regularizer hook must reach the loss."""
 
+    module = f"{__name__}._PenShift"
+
 
 class _PenShift(ShiftModule, nn.Module):
-    data = PEN
-
     def __init__(self):
         nn.Module.__init__(self)
         self.w = nn.Parameter(torch.zeros(()))

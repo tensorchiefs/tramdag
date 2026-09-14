@@ -45,6 +45,12 @@ result is recorded.
 - `tramdag.terms` keeps the modules only. `register_term`, `get_term` and the
   registry are removed: a module class declares `data = <Term subclass>` and
   `module_for(term)` finds it, so subclassing is the whole registration.
+- A custom term serializes as its import path, `module.ClassName`, and
+  `spec_from_dict` imports it from there; the built-in terms keep their bare
+  names (`LS`). No "import the custom term before loading" rule, and no
+  registry of names: a bare name is a `getattr` on `tramdag.spec`, a dotted
+  path an `importlib.import_module`. The class must be module-level; one
+  defined in `__main__` loads in the same process only.
 - The spec-level hooks `check_arity`, `edge_parents`, `cells`,
   `term_is_classical` and `option_defaults` moved onto the term classes as the
   checks in `__init__`, `edge_parents`, `cells`, `classical` and the

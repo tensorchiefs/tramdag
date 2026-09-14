@@ -115,7 +115,8 @@ class also owns the spec-level rules:
 - `cells`,
 - `classical`.
 
-The module class in `modules.py` declares `data = <that class>`, holds the
+The term class names its module class in `modules.py` as an import path
+(`module = "tramdag.modules.ComplexShiftModule"`); the module holds the
 term's network and owns the runtime:
 
 - build,
@@ -128,8 +129,8 @@ term's network and owns the runtime:
 
 Each built-in module builds its layers in a fixed order under fixed attribute
 names, so checkpoints and the seeded RNG stream stay bit-stable.
-`modules.module_for(term)` dispatches on `data`. Subclassing is
-therefore the registration. There is no registry and no `register_term`.
+`modules.module_for(term)` imports the module the term names. There is no
+registry and no `register_term`.
 
 Node-kind branches live ONLY in the four `Node` methods `log_prob`, `sample`,
 `abduct` and `marginal_theta` in nodes.py.

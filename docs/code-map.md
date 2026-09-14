@@ -72,9 +72,9 @@ the same object, so `LS is LinearShift`.
 
 ## `modules.py` — the term modules (the 1.0 architecture's core)
 
-There is one module class per term. Each module class declares the `Term`
-subclass it builds (`data = CS`), holds the term's network and owns the runtime
-hooks. For the contract diagram, see [architecture.md](architecture.md).
+There is one module class per term. The term class names it as an import
+path (`module = "tramdag.modules.ComplexShiftModule"`); the module holds the
+term's network and owns the runtime hooks. For the contract diagram, see [architecture.md](architecture.md).
 
 The default architectures replicate the PyTorch reference that this package
 grew out of, which is [buehlpa/TramDag](https://github.com/buehlpa/TramDag),
@@ -86,8 +86,8 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`module_for()`][tramdag.modules.module_for] | The dispatch: a `TermModule` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
-| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
+| [`module_for()`][tramdag.modules.module_for] | The dispatch: `import_object(type(term).module)`, the module class the term names by import path; a term class naming none fails by name. |
+| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: 64-128-64 ReLU NN to one shift value. |
 | [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: `beta0 + b_theta(mods)` with a zero-initialized output layer and the L2 hook `l2()`. `beta()` evaluates the effect, `recenter()` re-splits `beta0`/`b_theta` after training (function-preserving). `regressor` is both the forward regressor and the `beta0` score. |

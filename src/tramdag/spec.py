@@ -91,14 +91,10 @@ def _term_class(name: str) -> type[Term]:
         If the name resolves to nothing, or to something that is not a
         [`Term`][] subclass.
     """
-    module_name, _, attr = name.rpartition(".")
     try:
-        module = (
-            importlib.import_module(module_name)
-            if module_name
-            else sys.modules[__name__]
+        cls = (
+            import_object(name) if "." in name else getattr(sys.modules[__name__], name)
         )
-        cls = getattr(module, attr)
     except (ImportError, AttributeError) as err:
         raise ValueError(
             f"unknown term '{name}'. A custom term serializes as its import "
@@ -271,6 +267,12 @@ def _kahn_sort(spec: dict[str, NodeSpec]) -> list[str]:
 
 
 # %% public functions ------------------------------------------------------------------
+def import_object(path: str):
+    """Give the object a dotted import path names, ``my.pkg.module.Name``."""
+    module_name, _, attr = path.rpartition(".")
+    return getattr(importlib.import_module(module_name), attr)
+
+
 def feat_width(spec: dict[str, NodeSpec], parents) -> int:
     """Total feature width of the parents (ordinal one-hot, continuous raw)."""
     return sum(
@@ -460,17 +462,20 @@ class Term:
     Terms add: ``I("a") + CS("b")`` is the same transformation as
     ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
-    (``check``, ``edge_parents``, ``cells``, ``classical``). The module that
-    trains it
-    lives in [`modules`][tramdag.modules] and declares which term class it builds
-    (``data = CS``).
+    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` names
+    the class in [`modules`][tramdag.modules] that trains it, as an import
+    path.
 
     Subclass to add a term: the class name becomes its ``name`` (what the
-    ``term`` key serializes), and the options are the keyword arguments of
-    ``__init__``, with their defaults, assigned to ``self``:
+    ``term`` key serializes), the options are the keyword arguments of
+    ``__init__``, with their defaults, assigned to ``self``, and ``module``
+    points at the [`ShiftModule`][tramdag.modules.ShiftModule] subclass that
+    builds it:
 
     ```python
     class Scaled(Term):
+        module = "mypkg.ScaledModule"
+
         def __init__(self, *parents, scale=1.0):
             super().__init__(*parents)
             self.scale = scale
@@ -645,6 +650,7 @@ class Intercept(Term):
     """
 
     name = "I"
+    module = "tramdag.modules.InterceptModule"
 
     def __init__(
         self,
@@ -708,6 +714,7 @@ class LinearShift(Term):
     """
 
     name = "LS"
+    module = "tramdag.modules.LinearShiftModule"
 
     def __init__(self, *parents: str):
         super().__init__(*parents)
@@ -751,6 +758,7 @@ class ComplexShift(Term):
     """
 
     name = "CS"
+    module = "tramdag.modules.ComplexShiftModule"
 
     def __init__(
         self,
@@ -852,6 +860,7 @@ class VaryingCoefficient(Term):
     """
 
     name = "VC"
+    module = "tramdag.modules.VaryingCoefficientModule"
 
     def __init__(
         self,
@@ -974,6 +983,7 @@ class FnShift(Term):
     """
 
     name = "Fn"
+    module = "tramdag.modules.FnShiftModule"
 
     def __init__(self, *parents: str, fn, input_transform: object = None):
         super().__init__(*parents)

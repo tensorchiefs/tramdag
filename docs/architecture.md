@@ -185,8 +185,6 @@ classDiagram
   flow --> readouts
   flow --> spec
   flow --> transforms
-  modules --> spec
-  nodes --> modules
   nodes --> spec
   nodes --> transforms
   plots --> spec
@@ -194,8 +192,10 @@ classDiagram
   readouts --> spec
   scores --> spec
   scores --> transforms
+  spec --> modules
   fitting ..> flow
   modules ..> nodes
+  modules ..> spec
 ```
 
 ### Class UML (pyreverse)
@@ -291,6 +291,11 @@ classDiagram
   AffineUT --|> _ScaledUT
   BernsteinUT --|> _ScaledUT
   SplineUT --|> _ScaledUT
+  ComplexShiftModule --o ComplexShift : module
+  FnShiftModule --o FnShift : module
+  InterceptModule --o Intercept : module
+  LinearShiftModule --o LinearShift : module
+  VaryingCoefficientModule --o VaryingCoefficient : module
 ```
 
 ### Call graph — flow construction (traced)
@@ -312,28 +317,26 @@ flowchart LR
     n14["VaryingCoefficientModule.build"]
     n7["_attach_input_transform"]
     n5["_nn"]
-    n15["module_for"]
+    n8["feat_width"]
   end
   subgraph nodes
     n2["Node.__init__"]
   end
   subgraph spec
-    n21["Term.check"]
-    n22["Term.edge_parents"]
-    n23["VaryingCoefficient.check"]
-    n24["VaryingCoefficient.edge_parents"]
-    n20["_check_node"]
-    n25["_kahn_sort"]
-    n8["feat_width"]
-    n16["import_object"]
-    n17["node_parents"]
+    n19["Term.check"]
+    n20["Term.edge_parents"]
+    n21["VaryingCoefficient.check"]
+    n22["VaryingCoefficient.edge_parents"]
+    n18["_check_node"]
+    n23["_kahn_sort"]
+    n15["node_parents"]
     n3["validate_and_sort"]
   end
   subgraph transforms
-    n26["BernsteinUT.__init__"]
-    n18["BernsteinUT.n_params"]
-    n27["_ScaledUT.__init__"]
-    n19["make_univariate_transform"]
+    n24["BernsteinUT.__init__"]
+    n16["BernsteinUT.n_params"]
+    n25["_ScaledUT.__init__"]
+    n17["make_univariate_transform"]
   end
     n0 --> n1
     n0 -- "3x" --> n2
@@ -349,24 +352,22 @@ flowchart LR
     n14 --> n13
     n14 --> n7
     n14 --> n8
-    n15 -- "6x" --> n16
     n2 --> n6
     n2 -- "3x" --> n9
     n2 --> n11
     n2 --> n14
-    n2 -- "6x" --> n15
-    n2 -- "3x" --> n17
-    n2 -- "2x" --> n18
-    n2 -- "2x" --> n19
-    n20 -- "5x" --> n21
-    n20 -- "5x" --> n22
-    n20 --> n23
-    n20 --> n24
-    n25 -- "3x" --> n17
-    n3 -- "3x" --> n20
-    n3 --> n25
-    n26 -- "2x" --> n27
-    n19 -- "2x" --> n26
+    n2 -- "3x" --> n15
+    n2 -- "2x" --> n16
+    n2 -- "2x" --> n17
+    n18 -- "5x" --> n19
+    n18 -- "5x" --> n20
+    n18 --> n21
+    n18 --> n22
+    n23 -- "3x" --> n15
+    n3 -- "3x" --> n18
+    n3 --> n23
+    n24 -- "2x" --> n25
+    n17 -- "2x" --> n24
 ```
 
 ### Call graph — one fit (traced)

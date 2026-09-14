@@ -71,6 +71,14 @@ from __future__ import annotations
 import importlib
 import sys
 
+from .modules import (
+    ComplexShiftModule,
+    FnShiftModule,
+    InterceptModule,
+    LinearShiftModule,
+    VaryingCoefficientModule,
+)
+
 # %% global variables ------------------------------------------------------------------
 # why bernstein and not spline: the `transform` parameter of Intercept
 DEFAULT_TRANSFORM = "bernstein"
@@ -273,13 +281,6 @@ def import_object(path: str):
     return getattr(importlib.import_module(module_name), attr)
 
 
-def feat_width(spec: dict[str, NodeSpec], parents) -> int:
-    """Total feature width of the parents (ordinal one-hot, continuous raw)."""
-    return sum(
-        spec[p].levels if isinstance(spec[p], OrdinalNode) else 1 for p in parents
-    )
-
-
 def SI(**options) -> Intercept:
     """Build the simple-intercept baseline, the paper's SI: ``I()`` without parents.
 
@@ -462,19 +463,18 @@ class Term:
     Terms add: ``I("a") + CS("b")`` is the same transformation as
     ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
-    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` names
-    the class in [`modules`][tramdag.modules] that trains it, as an import
-    path.
+    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
+    class in [`modules`][tramdag.modules] that trains it.
 
-    Subclass to add a term: the class name becomes its ``name`` (what the
-    ``term`` key serializes), the options are the keyword arguments of
-    ``__init__``, with their defaults, assigned to ``self``, and ``module``
-    points at the [`ShiftModule`][tramdag.modules.ShiftModule] subclass that
-    builds it:
+    Subclass to add a term: set ``name`` (what the ``term`` key serializes)
+    and ``module`` (the [`ShiftModule`][tramdag.modules.ShiftModule] subclass
+    that builds it) as class attributes, and assign the options — the keyword
+    arguments of ``__init__``, with their defaults — to ``self``:
 
     ```python
     class Scaled(Term):
-        module = "mypkg.ScaledModule"
+        name = "Scaled"
+        module = ScaledModule
 
         def __init__(self, *parents, scale=1.0):
             super().__init__(*parents)
@@ -497,9 +497,10 @@ class Term:
     """
 
     def __init_subclass__(cls, **kwargs):
-        """Name the term after its class, unless it says otherwise."""
+        """Refuse a term class that sets no ``name``; the wire key needs it."""
         super().__init_subclass__(**kwargs)
-        cls.name = cls.__dict__.get("name", cls.__name__)
+        if "name" not in cls.__dict__:
+            raise TypeError(f"{cls.__name__}: a Term subclass sets `name = ...`.")
 
     def __init__(self, *parents: str):
         self.parents = tuple(parents)
@@ -650,7 +651,7 @@ class Intercept(Term):
     """
 
     name = "I"
-    module = "tramdag.modules.InterceptModule"
+    module = InterceptModule
 
     def __init__(
         self,
@@ -714,7 +715,7 @@ class LinearShift(Term):
     """
 
     name = "LS"
-    module = "tramdag.modules.LinearShiftModule"
+    module = LinearShiftModule
 
     def __init__(self, *parents: str):
         super().__init__(*parents)
@@ -758,7 +759,7 @@ class ComplexShift(Term):
     """
 
     name = "CS"
-    module = "tramdag.modules.ComplexShiftModule"
+    module = ComplexShiftModule
 
     def __init__(
         self,
@@ -860,7 +861,7 @@ class VaryingCoefficient(Term):
     """
 
     name = "VC"
-    module = "tramdag.modules.VaryingCoefficientModule"
+    module = VaryingCoefficientModule
 
     def __init__(
         self,
@@ -983,7 +984,7 @@ class FnShift(Term):
     """
 
     name = "Fn"
-    module = "tramdag.modules.FnShiftModule"
+    module = FnShiftModule
 
     def __init__(self, *parents: str, fn, input_transform: object = None):
         super().__init__(*parents)

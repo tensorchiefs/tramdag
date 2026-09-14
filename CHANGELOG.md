@@ -850,6 +850,13 @@ read-outs keep their exact signatures as flow methods.
   `data = <Term>` declaration on the module class and the `__init_subclass__`
   that stamped the module onto the term class are gone; a custom term sets
   `module = "mypkg.MyModule"` on its `Term` subclass.
+- Every term sets `name` as an explicit class attribute (`name = "LS"`).
+  `__init_subclass__` no longer derives a name from the class; it refuses a
+  subclass that sets none.
+- `modules.py` imports nothing from `spec.py` (it reads `kind`, `levels` and
+  `parents`; `feat_width` lives there now), so a term class holds its module
+  class directly: `LinearShift.module is LinearShiftModule`. The import-path
+  strings and `module_for` are gone; a custom term sets `module = MyModule`.
 
 ### Fixed
 

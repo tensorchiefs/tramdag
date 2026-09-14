@@ -20,7 +20,6 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from .modules import module_for
 from .spec import (
     ContinuousNode,
     NodeSpec,
@@ -75,13 +74,13 @@ class Node(nn.Module):
         # net, or one net per parent summed in coefficient space
         # TODO: use generic helper for input. why is there a build fn needed:
         # refactor as __init__?
-        self.intercept = module_for(terms[0]).build(terms[0], spec, n_params)
+        self.intercept = terms[0].module.build(terms[0], spec, n_params)
         # one module per shift term, built in formula order (the seeded RNG
         # stream is pinned to it); each names its own key: the parent, "a+b"
         # for a joint CS, the treatment for a VC
         self.shifts = nn.ModuleDict()
         for term in terms[1:]:
-            m = module_for(term).build(term, spec)
+            m = term.module.build(term, spec)
             m.parents = tuple(term.parents)
             self.shifts[m.key] = m
 

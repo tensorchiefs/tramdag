@@ -324,8 +324,8 @@ classDiagram
 flowchart LR
   subgraph conditioners
     n0["ComplexShift.__init__"]
-    n22["LinearShift.__init__"]
-    n21["SimpleIntercept.__init__"]
+    n24["LinearShift.__init__"]
+    n23["SimpleIntercept.__init__"]
     n2["VaryingCoef.__init__"]
     n1["_nn"]
   end
@@ -337,11 +337,13 @@ flowchart LR
     n5["Node.__init__"]
   end
   subgraph spec
-    n16["Term.edge_parents"]
-    n17["VaryingCoefficient.edge_parents"]
+    n16["Term.check"]
+    n17["Term.edge_parents"]
+    n18["VaryingCoefficient.check"]
+    n19["VaryingCoefficient.edge_parents"]
     n15["_check_node"]
-    n18["_kahn_sort"]
-    n19["feat_width"]
+    n20["_kahn_sort"]
+    n21["feat_width"]
     n7["node_parents"]
     n6["validate_and_sort"]
   end
@@ -350,13 +352,13 @@ flowchart LR
     n9["InterceptTerm.build"]
     n10["LinearShiftTerm.build"]
     n11["VaryingCoefficientTerm.build"]
-    n20["_attach_input_transform"]
+    n22["_attach_input_transform"]
     n12["module_for"]
   end
   subgraph transforms
-    n23["BernsteinUT.__init__"]
+    n25["BernsteinUT.__init__"]
     n13["BernsteinUT.n_params"]
-    n24["_ScaledUT.__init__"]
+    n26["_ScaledUT.__init__"]
     n14["make_univariate_transform"]
   end
     n0 --> n1
@@ -373,21 +375,23 @@ flowchart LR
     n5 -- "2x" --> n13
     n5 -- "2x" --> n14
     n15 -- "5x" --> n16
-    n15 --> n17
-    n18 -- "3x" --> n7
+    n15 -- "5x" --> n17
+    n15 --> n18
+    n15 --> n19
+    n20 -- "3x" --> n7
     n6 -- "3x" --> n15
-    n6 --> n18
+    n6 --> n20
     n8 --> n0
-    n8 --> n19
-    n8 --> n20
-    n9 -- "3x" --> n21
-    n10 --> n22
-    n10 --> n19
+    n8 --> n21
+    n8 --> n22
+    n9 -- "3x" --> n23
+    n10 --> n24
+    n10 --> n21
     n11 --> n2
-    n11 --> n19
-    n11 --> n20
-    n23 -- "2x" --> n24
-    n14 -- "2x" --> n23
+    n11 --> n21
+    n11 --> n22
+    n25 -- "2x" --> n26
+    n14 -- "2x" --> n25
 ```
 
 ### Call graph — one fit (traced)

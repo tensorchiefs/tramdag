@@ -491,9 +491,6 @@ class Term:
         every other built-in term's parents all own their edges.
     """
 
-    # TODO: do we need this here? is set in __init_subclass__ anayway.
-    name = "Term"
-
     def __init_subclass__(cls, **kwargs):
         """Name the term after its class, unless it says otherwise."""
         super().__init_subclass__(**kwargs)

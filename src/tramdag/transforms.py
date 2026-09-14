@@ -98,16 +98,13 @@ def ordinal_bounds(
     return cut[idx, y], cut[idx, y + 1]
 
 
-def make_univariate_transform(name, **kwargs) -> _ScaledUT:
-    """Build a scaled univariate transform by name — or from a class.
+def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
+    """Build a scaled univariate transform by name.
 
     Parameters
     ----------
-    name : str | type[_ScaledUT]
-        One of the registered names — ``"bernstein"``, ``"spline"``,
-        ``"affine"`` — or a ``_ScaledUT`` subclass itself, the custom-transform
-        hatch (``I(transform=MyUT)``; note a class in a spec serializes
-        through pickle only, like a callable ``input_transform``).
+    name : str
+        One of ``"bernstein"``, ``"spline"``, ``"affine"``.
     **kwargs
         Passed to the transform class.
 
@@ -119,18 +116,13 @@ def make_univariate_transform(name, **kwargs) -> _ScaledUT:
     Raises
     ------
     ValueError
-        If ``name`` is neither registered nor a ``_ScaledUT`` subclass.
+        If ``name`` is not one of the three.
     """
-    if isinstance(name, type) and issubclass(name, _ScaledUT):
-        return name(**kwargs)
-    try:
-        cls = _TRANSFORMS[name]
-    except (KeyError, TypeError):
+    if name not in _TRANSFORMS:
         raise ValueError(
-            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)} "
-            "or pass a _ScaledUT subclass"
-        ) from None
-    return cls(**kwargs)
+            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)}"
+        )
+    return _TRANSFORMS[name](**kwargs)
 
 
 def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:

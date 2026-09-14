@@ -110,7 +110,8 @@ assigned to `self`. A term is exactly its `__dict__`, so `options()` is
 class also owns the spec-level rules:
 
 - the arity and option-value checks, written after the `super().__init__` call,
-- `edge_parents`,
+- `check`, the rules that need the other nodes (only `VC` has any),
+- `edge_parents`, the parents that own an edge,
 - `cells`,
 - `classical`.
 

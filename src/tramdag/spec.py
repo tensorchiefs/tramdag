@@ -221,7 +221,7 @@ def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
 
     A term validates its own shape when it is built (arity, option
     values); what needs the spec — parents exist, the ``VC`` treatment and
-    centering rules — runs here, through the term's ``edge_parents``.
+    centering rules — runs here, through the term's ``check``.
 
     Raises
     ------
@@ -234,9 +234,8 @@ def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
         for p in term.parents:
             if p not in spec:
                 raise ValueError(f"Node '{name}': unknown parent '{p}'.")
-        # TODO: this is a null op for all nodes except vc. rethink design. idea:
-        # have i check_spec(spec) methodon each term?
-        for p in term.edge_parents(name, spec):
+        term.check(name, spec)
+        for p in term.edge_parents:
             if p in seen:
                 raise ValueError(
                     f"Node '{name}': parent '{p}' appears in more than one "
@@ -461,7 +460,8 @@ class Term:
     Terms add: ``I("a") + CS("b")`` is the same transformation as
     ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
-    (``edge_parents``, ``cells``, ``classical``). The module that trains it
+    (``check``, ``edge_parents``, ``cells``, ``classical``). The module that
+    trains it
     lives in [`terms`][tramdag.terms] and declares which term class it builds
     (``data = CS``).
 
@@ -513,10 +513,17 @@ class Term:
         """Say whether the exact classical fit (``fit_classical``) handles this term."""
         return False
 
-    # BUG: this seams completely disfucntional. Is it even needed? make abous
-    # why this evenexists and explayn why args are unused.
-    def edge_parents(self, name: str, spec: dict[str, NodeSpec]) -> tuple[str, ...]:
-        """Validate against the spec; give the parents that own an edge."""
+    def check(self, name: str, spec: dict[str, NodeSpec]) -> None:
+        """Check the term against the spec it sits in; nothing to check here.
+
+        A built-in term's own checks need only its arguments and run in
+        ``__init__``. ``VC`` overrides this: its treatment and centering rules
+        need the other nodes.
+        """
+
+    @property
+    def edge_parents(self) -> tuple[str, ...]:
+        """The parents that own an edge; every parent, for a plain term."""
         return self.parents
 
     def cells(self) -> list[tuple[str, str, bool]]:
@@ -876,8 +883,8 @@ class VaryingCoefficient(Term):
         """Rebuild from the serialized parents: the treatment comes first."""
         return cls(*parents[1:], t=parents[0], **options)
 
-    def edge_parents(self, name: str, spec: dict[str, NodeSpec]) -> tuple[str, ...]:
-        """Check the treatment and the centering; only the treatment owns an edge.
+    def check(self, name: str, spec: dict[str, NodeSpec]) -> None:
+        """Check the treatment and the centering against the spec.
 
         Raises
         ------
@@ -887,8 +894,6 @@ class VaryingCoefficient(Term):
             continuous or an itself-centered treatment.
         """
         on = self.parents[0]
-        # TODO: we shall pass the propensities through __init__ instead of
-        # altering the data. rethink the design.
         if self.center is not None and not isinstance(self.center, str):
             raise ValueError(
                 f"Node '{name}': VC(center=) names the propensity COLUMN of "
@@ -922,7 +927,11 @@ class VaryingCoefficient(Term):
                 f"Node '{name}': treatment '{on}' carries a centered VC term "
                 "itself; chained centering is not supported."
             )
-        return (on,)
+
+    @property
+    def edge_parents(self) -> tuple[str, ...]:
+        """Only the treatment owns an edge; the modifiers may repeat elsewhere."""
+        return self.parents[:1]
 
     def cells(self) -> list[tuple[str, str, bool]]:
         """Tag the treatment cell ``VC`` and the modifiers ``VCm``; never joint."""

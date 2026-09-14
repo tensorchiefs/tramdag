@@ -831,6 +831,10 @@ read-outs keep their exact signatures as flow methods.
   dtype directly; the numpy twin `_np_dtype` is gone.
 - `nll` is `node_negative_log_prob`, the name that pairs with
   `node_log_prob`; `nll` stays as an alias.
+- `Term.edge_parents` is a property that only names the edge-owning parents,
+  and the spec-level checks a term needs the other nodes for are
+  `Term.check(name, spec)`. Before, the VC override of `edge_parents` did
+  both and the base ignored its arguments.
 
 ### Fixed
 

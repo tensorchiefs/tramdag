@@ -122,28 +122,14 @@ class _Node(nn.Module):
             self.ut = None
             self.levels = node.levels
             n_params = node.levels - 1
-        self._build_intercept(terms[0], n_params, spec)
-        self._build_shifts(terms, spec)
-
-    def _build_intercept(self, i_term, n_params: int, spec: dict[str, NodeSpec]):
-        """Build the node's one intercept term module.
-
-        The module decides its own shape: the free SimpleIntercept
-        theta_0, one joint ComplexIntercept, or one net per parent summed in
-        unconstrained coefficient space (``allow_interaction=False``).
-        """
-        self.intercept = module_for(i_term).build(i_term, spec, n_params)
-
-    def _build_shifts(self, terms, spec: dict[str, NodeSpec]):
-        """Build one shift term module per term after the intercept.
-
-        Each module constructs itself exactly as this method used to
-        (same widths, same order — the seeded RNG stream is pinned) and
-        names its own ModuleDict key: the parent for single-parent terms,
-        "a+b" for a joint CS, the treatment for a VC.
-        """
+        # the intercept module decides its own shape: the free theta_0, one joint
+        # net, or one net per parent summed in coefficient space
+        self.intercept = module_for(terms[0]).build(terms[0], spec, n_params)
+        # one module per shift term, built in formula order (the seeded RNG
+        # stream is pinned to it); each names its own key: the parent, "a+b"
+        # for a joint CS, the treatment for a VC
         self.shifts = nn.ModuleDict()
-        for term in terms[1:]:  # terms[0] is the intercept
+        for term in terms[1:]:
             m = module_for(term).build(term, spec)
             m.parents = tuple(term.parents)
             self.shifts[m.key] = m

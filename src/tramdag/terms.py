@@ -292,12 +292,14 @@ class InterceptTerm(TermDef, ABC):
                 batch_norm=term.batch_norm,
             )
         else:  # additive intercept: one net per parent, coefficients summed
-            net_options = {
-                "units": term.units,
-                "activation": term.activation,
-                "batch_norm": term.batch_norm,
-            }
-            m = AdditiveInterceptTerm(groups, n_params, spec, net_options)
+            m = AdditiveInterceptTerm(
+                groups,
+                n_params,
+                spec,
+                units=term.units,
+                activation=term.activation,
+                batch_norm=term.batch_norm,
+            )
         m.groups = groups
         m.ci_parents = [p for grp in groups for p in grp]
         _attach_input_transform(m, term, tuple(term.parents), spec)
@@ -361,12 +363,23 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
     coefficient space.
     """
 
-    def __init__(self, groups, n_params: int, spec, net_options: dict):
+    def __init__(
+        self,
+        groups,
+        n_params: int,
+        spec,
+        *,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
+    ):
         nn.Module.__init__(self)
         # the submodule must stay named `nets`: it is part of the state-dict
         # path that tests/test_statedict_stability.py pins
         self.nets = nn.ModuleList(
-            ComplexIntercept(feat_width(spec, grp), n_params, **net_options)
+            ComplexIntercept(
+                feat_width(spec, grp), n_params, units, activation, batch_norm
+            )
             for grp in groups
         )
 

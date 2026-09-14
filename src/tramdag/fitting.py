@@ -99,19 +99,6 @@ def _normalize_callbacks(cbs) -> list[Callback]:
     return out
 
 
-def _epoch_pass(flow, vals, opt, batch_size, penalized, val_vals) -> None:
-    """Run one training epoch and, when configured, the validation pass."""
-    flow.train()
-    flow.history["train"].append(_fit_epoch(flow, vals, opt, batch_size, penalized))
-    flow.eval()
-    if val_vals is not None:
-        flow.history.setdefault("val", []).append(_val_nll(flow, val_vals))
-        # which train epoch this entry belongs to. `history` accumulates across
-        # `fit` calls, so an unvalidated fit shifts every later validation entry
-        # away from its own epoch, and a curve drawn from 1 misleads.
-        flow.history.setdefault("val_epoch", []).append(len(flow.history["train"]))
-
-
 def _learning_rates(opt) -> dict[str, float] | float:
     """Give the optimizer's current rate(s): per node when the groups are tagged."""
     groups = opt.param_groups
@@ -207,19 +194,10 @@ class _FitMixin:
         continues the training. Everything else — validation monitoring,
         learning-rate schedules, early stopping, best-weight restoration,
         logging — is the caller's, through ``optimizer`` and ``callbacks``;
-        [`callbacks`][tramdag.callbacks] ships the common recipes:
-
-        ```python
-        from tramdag.callbacks import EarlyStopping
-
-        flow.fit(
-            train_df,
-            epochs=4000,
-            validation_data=val_df,
-            verbose=50,
-            callbacks=EarlyStopping(patience=200),
-        )
-        ```
+        [`callbacks`][tramdag.callbacks] ships the common recipes and
+        ``docs/fitting.md`` shows them in use. A ``VC`` term adds its penalty
+        to the loss, never to ``history["train"]``, and is re-centered after
+        the loop (``docs/varying-coefficients.md``).
 
         Parameters
         ----------
@@ -287,18 +265,6 @@ class _FitMixin:
         TypeError
             If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
             or is a ``Callback`` class instead of an instance.
-
-        Notes
-        -----
-        For ``VC`` terms the objective is the **penalized** NLL on the
-        total-likelihood scale: each term adds
-        ``penalty * ||b_theta weights||^2`` to the summed NLL, that is
-        ``penalty * ||w||^2 / n_train`` to the mean loss — a fixed Gaussian
-        prior whose shrinkage vanishes as n grows. ``beta0`` is not
-        penalized, and ``history["train"]`` holds pure likelihoods. After
-        the loop each ``b_theta`` is re-centered to mean zero over the
-        training rows; the constant moves into ``beta0``, the function is
-        unchanged.
         """
         _check_fit_sizes(epochs, batch_size, verbose)
         cbs = _normalize_callbacks(callbacks)
@@ -326,7 +292,17 @@ class _FitMixin:
         for cb in cbs:
             cb.on_fit_begin(self, opt)
         for epoch in range(1, epochs + 1):
-            _epoch_pass(self, vals, opt, batch_size, penalized, val_vals)
+            self.train()
+            epoch_nll = _fit_epoch(self, vals, opt, batch_size, penalized)
+            self.history["train"].append(epoch_nll)
+            self.eval()
+            if val_vals is not None:
+                self.history.setdefault("val", []).append(_val_nll(self, val_vals))
+                # which train epoch this entry belongs to: `history` accumulates
+                # across `fit` calls, so an unvalidated fit would shift every later
+                # validation entry away from its own epoch
+                n_train_epochs = len(self.history["train"])
+                self.history.setdefault("val_epoch", []).append(n_train_epochs)
             # every callback runs (a stop must not skip a monitoring one)
             stops = [bool(cb.on_epoch_end(self, epoch, opt)) for cb in cbs]
             # after the callbacks, so a scheduler's decision for this epoch shows
@@ -439,23 +415,21 @@ class _FitMixin:
                 line_search_fn="strong_wolfe",
             )
 
+            def nll() -> Tensor:
+                per_node = self.node_log_prob(vals).values()
+                return torch.stack([-lp.mean() for lp in per_node]).sum()
+
             def closure():
                 opt.zero_grad()
-                nll = torch.stack(
-                    [-lp.mean() for lp in self.node_log_prob(vals).values()]
-                ).sum()
-                nll.backward()
-                return nll
+                loss = nll()
+                loss.backward()
+                return loss
 
             opt.step(closure)
             n_iter = next(iter(opt.state.values()))["n_iter"]
             converged = n_iter < max_iter  # torch stopped on a tolerance
             with torch.no_grad():
-                final_nll = float(
-                    torch.stack(
-                        [-lp.mean() for lp in self.node_log_prob(vals).values()]
-                    ).sum()
-                )
+                final_nll = float(nll())
             grad_norm = float(
                 torch.nn.utils.get_total_norm(
                     [p.grad for p in self.parameters() if p.grad is not None]

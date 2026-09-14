@@ -240,20 +240,6 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             if name in self.spec
         }
 
-    def _require_kind(self, node: str, kind: str, *, method: str, instead: str) -> None:
-        """Refuse a node of the wrong kind, naming the method that fits it.
-
-        A domain error, not a Python type error: the caller named a node that
-        exists and asked the wrong question about it.
-        """
-        self._node(node)  # the friendly unknown-node error, before the kind check
-        actual = self.spec[node].kind
-        if actual != kind:
-            raise ValueError(
-                f"{method}() requires a{'n' if kind[0] in 'aeiou' else ''} "
-                f"{kind} node, {node!r} is {actual}; use {instead}()."
-            )
-
     def _theta_shift(
         self, nd: _Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
     ) -> tuple[Tensor, Tensor]:
@@ -644,7 +630,11 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is continuous.
         """
-        self._require_kind(node, "ordinal", method="pmf", instead="density")
+        if self._node(node).kind != "ordinal":  # a domain error, not a type error
+            raise ValueError(
+                f"pmf() requires an ordinal node, {node!r} is continuous; "
+                "use density()."
+            )
         _, theta, shift, _ = self._conditional(df, node, do)
         return ordinal_pmf(theta, shift).cpu().numpy()
 
@@ -684,7 +674,10 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is ordinal; use ``pmf`` for it.
         """
-        self._require_kind(node, "continuous", method="density", instead="pmf")
+        if self._node(node).kind != "continuous":  # a domain error, not a type error
+            raise ValueError(
+                f"density() requires a continuous node, {node!r} is ordinal; use pmf()."
+            )
         nd, theta, shift, n = self._conditional(df, node, do)
         y = torch.as_tensor(np.asarray(grid, dtype=self._np_dtype), device=self.device)
         m = y.numel()
@@ -697,30 +690,8 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
     def scores(self, df: pd.DataFrame, node: str) -> pd.DataFrame:
         """Give the per-observation scores ``psi_i = d l_i / d theta``.
 
-        The scores belong to the interpretable shift coefficients of a node
-        and are analytic and exact, see ``tramdag.scores`` (issue #29).
-
-        At a fitted MLE each column sums to about zero. Order the rows by a
-        covariate that truly modifies the treatment effect, and the
-        cumulative sum of the treatment column drifts.
-        [`effect_modifier_scan`][] measures that drift.
-
-        This is a pure read-out. It touches no fitting or sampling code
-        path.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Observations. Must contain the node, its parents, and the
-            propensity inputs of centered VC terms.
-        node : str
-            Name of the node whose coefficients are scored.
-
-        Returns
-        -------
-        pd.DataFrame
-            One column per coefficient, one row per observation. See
-            [`node_scores`][tramdag.scores.node_scores] for the column naming.
+        The method form of [`node_scores`][tramdag.scores.node_scores], which
+        documents the arguments and the column naming.
         """
         return _node_scores(self, df, node)
 
@@ -736,33 +707,9 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
     ) -> pd.DataFrame:
         """Rank candidate effect modifiers with a fluctuation scan.
 
-        Issue #29 describes the Zeileis-Hornik method. Each candidate
-        covariate is ranked by how strongly the scores of the ``t``
-        coefficient drift when the rows are ordered by it. A cheap
-        all-``ls`` fit is enough, so this gives a measured shortlist for
-        ``VC`` modifiers.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Observations, as for [`scores`][].
-        node : str
-            Name of the outcome node.
-        t : str
-            Name of the treatment whose coefficient is scanned.
-        candidates : list[str] | None, optional
-            Candidate covariates. Defaults to every column of ``df``
-            except ``node`` and ``t``.
-        column : str | None, optional
-            Score column to scan instead of the ``t``-derived one — for a
-            multi-level ordinal treatment's level contrast (``"t[2]"``).
-
-        Returns
-        -------
-        pd.DataFrame
-            One row per candidate, sorted by ``stat`` descending, with
-            columns ``stat``, ``p_value``, ``crit_5pct`` and ``flag``. See
-            [`effect_modifier_scan`][tramdag.scores.effect_modifier_scan].
+        The method form of
+        [`effect_modifier_scan`][tramdag.scores.effect_modifier_scan], which
+        documents the method, the arguments and the result columns.
         """
         return _effect_modifier_scan(
             self, df, node, t, candidates=candidates, column=column

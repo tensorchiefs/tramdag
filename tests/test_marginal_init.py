@@ -54,7 +54,7 @@ def test_bernstein_marginal_init_is_calibrated_logistic_map():
     """marginal_init θ maps the pre-scaled domain onto [logit .05, logit .95]."""
     ut = BernsteinUT()
     ut.set_range(-5.0, 5.0)  # range == bound -> _scale is identity
-    theta = ut.marginal_init_theta()  # q=0.05 default
+    theta = ut.marginal_init_theta(None)  # the data-free map, q=0.05 default
     x = torch.tensor([-5.0, 0.0, 5.0])
     z0, _ = ut.forward(theta.unsqueeze(0).expand(3, -1), x)
     logit05 = math.log(0.05) - math.log(0.95)  # -2.9444
@@ -190,7 +190,7 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
         df = pd.DataFrame({"x": column})
         flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
         flow.calibrate(df)
-        linear = flow.nodes["x"].ut.marginal_init_theta()
+        linear = flow.nodes["x"].ut.marginal_init_theta(None)
         flow.nodes["x"].intercept.marginal_start(linear)
         nll_linear = float(sum(flow.nll(df).values()))
 
@@ -204,6 +204,6 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
     ut.set_range(1.0, 1.0)
     np.testing.assert_allclose(
         ut.marginal_init_theta(np.ones(10)).numpy(),
-        ut.marginal_init_theta().numpy(),
+        ut.marginal_init_theta(None).numpy(),
         atol=1e-6,
     )

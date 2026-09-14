@@ -269,7 +269,7 @@ for j in range(5):
     proxy.fit_classical(c_train.iloc[fold_id != j][["X", "T"]])
     e_oof[fold_id == j] = proxy.pmf(c_train.iloc[fold_id == j], "T")[:, 1]
 
-for center in (False, "ps"):
+for center in (None, "ps"):
     spec_c = {
         "X": ContinuousNode([I(transform="affine")]),
         "T": OrdinalNode(2, [LS("X")]),

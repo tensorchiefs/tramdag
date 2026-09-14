@@ -4,7 +4,7 @@ beta(x) * (t - e_hat(x)) with cross-fitted (out-of-fold) e_hat.
 The stage-1 propensities are the caller's: ``VC(center="col")`` names a
 column of the training frame holding one out-of-fold value per row, and fit
 refuses a centered spec whose frame lacks it.
-Acceptance: center=False is bit-identical to #28's VC (regression guard);
+Acceptance: center=None is bit-identical to #28's VC (regression guard);
 gradient isolation (no gradient reaches the treatment node from the outcome
 loss); the Dandl reproduction (confounded DGP + deliberately under-specified
 prognostic part: centering must materially reduce the bias of beta_hat —
@@ -29,9 +29,7 @@ def _misspecified_spec(center) -> dict:
     return {
         **T_SPEC,
         # prognostic part deliberately under-specified (linear vs true x^2)
-        "Y": ContinuousNode(
-            [LS("X"), VC("X", center="ps" if center else False, t="T")]
-        ),
+        "Y": ContinuousNode([LS("X"), VC("X", center="ps" if center else None, t="T")]),
     }
 
 
@@ -102,7 +100,7 @@ def test_center_serialization_roundtrip():
 
 def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
     """The default must preserve #28's behavior exactly: a VC term written
-    without the kwarg and one with center=False produce bit-identical fits.
+    without the kwarg and one with center=None produce bit-identical fits.
     """
     df = vc_hetero["draw"](1200, 100)
 
@@ -119,8 +117,8 @@ def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
         return flow
 
     a = fit_with(VC("X2", "X3", t="T"))
-    b = fit_with(VC("X2", "X3", center=False, t="T"))
-    assert VC("X2", t="T") == VC("X2", center=False, t="T")  # Term equality
+    b = fit_with(VC("X2", "X3", center=None, t="T"))
+    assert VC("X2", t="T") == VC("X2", center=None, t="T")  # Term equality
     for (ka, pa), (kb, pb) in zip(
         a.state_dict().items(), b.state_dict().items(), strict=True
     ):

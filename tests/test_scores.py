@@ -182,7 +182,7 @@ def test_scores_error_paths(mle_flow):
     flow, df = mle_flow
     with pytest.raises(KeyError, match="unknown node"):
         flow.scores(df, node="nope")
-    with pytest.raises(KeyError, match="missing column"):
+    with pytest.raises(KeyError, match="lacks the column"):
         flow.scores(df.drop(columns=["Y"]), node="Y")
     with pytest.raises(ValueError, match="no LS or VC"):
         flow.scores(df, node="T")  # T is a source: no shift terms

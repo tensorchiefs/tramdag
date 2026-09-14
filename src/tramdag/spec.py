@@ -528,16 +528,16 @@ class Term:
         """Validate against the spec; give the parents that own an edge."""
         return self.parents
 
-    def cells(self, tag: str | None = None) -> list[tuple[str, str]]:
-        """Give the term's adjacency cells as ``(parent, tag)`` pairs.
+    def cells(self) -> list[tuple[str, str, bool]]:
+        """Give the term's adjacency cells as ``(parent, tag, joint)`` triples.
 
-        ``tag`` defaults to the term's name; a multi-parent term carries its
-        parent group as a suffix.
+        The tag is the term's name. ``joint`` says whether the term is one
+        network over several parents; it comes from the term, not from its
+        parent count, because a ``VC`` has a treatment plus modifiers and is
+        not one network over them.
         """
-        tag = tag or self.name
-        if len(self.parents) > 1:
-            tag = f"{tag}{list(self.parents)}"
-        return [(p, tag) for p in self.parents]
+        joint = len(self.parents) > 1
+        return [(p, self.name, joint) for p in self.parents]
 
     def __eq__(self, other):
         """Compare the class and everything the term carries."""
@@ -692,9 +692,9 @@ class Intercept(Term):
         """Say yes only for a parentless ``I()`` — the simple baseline."""
         return not self.parents
 
-    def cells(self) -> list[tuple[str, str]]:
+    def cells(self) -> list[tuple[str, str, bool]]:
         """Tag an intercept edge ``CI``: a cell exists only when it has parents."""
-        return super().cells("CI")
+        return [(p, "CI", len(self.parents) > 1) for p in self.parents]
 
 
 class LinearShift(Term):
@@ -812,8 +812,8 @@ class VaryingCoefficient(Term):
         the known ``beta(x)`` of the ``vc_hetero`` DGP at corr ~ 0.99. The
         penalty is on the total-NLL scale, so its effective strength moves
         with ``n``: raise it for small ``n`` or many modifiers.
-    center : str | False, optional
-        Propensity centering (issue #30), by default ``False``, which is
+    center : str | None, optional
+        Propensity centering (issue #30), by default ``None``: no centering,
         bit-identical to the uncentered term. A string names the
         **training-frame column** holding the out-of-fold propensities
         ``P(t = 1 | pa_t)`` per row — compute them with any cross-fitted
@@ -862,7 +862,7 @@ class VaryingCoefficient(Term):
         *modifiers: str,
         t: str,
         penalty: float = 1.0,
-        center: str | bool = False,
+        center: str | None = None,
         units: tuple[int, ...] | list[int] = (16,),
         activation: str = "relu",
         batch_norm: bool = False,
@@ -899,11 +899,11 @@ class VaryingCoefficient(Term):
             continuous or an itself-centered treatment.
         """
         on = self.parents[0]
-        if self.center is not False and not isinstance(self.center, str):
+        if self.center is not None and not isinstance(self.center, str):
             raise ValueError(
                 f"Node '{name}': VC(center=) names the propensity COLUMN of "
                 "the training frame (out-of-fold P(t=1|pa_t) per row), or is "
-                f"False — got {self.center!r}. Cross-fit the propensities "
+                f"None — got {self.center!r}. Cross-fit the propensities "
                 "outside and merge them as a column."
             )
         if self.center and self.center in spec:
@@ -934,9 +934,10 @@ class VaryingCoefficient(Term):
             )
         return (on,)
 
-    def cells(self) -> list[tuple[str, str]]:
-        """Tag the treatment cell ``VC`` and the modifiers ``VCm``."""
-        return [(self.parents[0], "VC")] + [(p, "VCm") for p in self.parents[1:]]
+    def cells(self) -> list[tuple[str, str, bool]]:
+        """Tag the treatment cell ``VC`` and the modifiers ``VCm``; never joint."""
+        t, mods = self.parents[0], self.parents[1:]
+        return [(t, "VC", False)] + [(p, "VCm", False) for p in mods]
 
 
 class FnShift(Term):
@@ -961,11 +962,7 @@ class FnShift(Term):
     Other Parameters
     ----------------
     fn : callable | torch.nn.Module
-        The shift function. Required in practice: the declared default of
-        ``None`` is never a usable value, and the constructor refuses it. The
-        default exists so that ``fn`` is an ordinary option, which is what
-        carries the callable into [`spec_to_dict`][] and back out of a
-        checkpoint.
+        The shift function. Required.
     input_transform : str | callable | None, optional
         As for [`ComplexShift`][]. ``None``, the default, applies no
         transform.
@@ -973,13 +970,12 @@ class FnShift(Term):
     Raises
     ------
     ValueError
-        If no parent is given or ``fn`` is not callable, which includes
-        omitting it.
+        If no parent is given or ``fn`` is not callable.
     """
 
     name = "Fn"
 
-    def __init__(self, *parents: str, fn=None, input_transform: object = None):
+    def __init__(self, *parents: str, fn, input_transform: object = None):
         super().__init__(*parents)
         self.fn = fn
         self.input_transform = _checked_input_transform(input_transform)

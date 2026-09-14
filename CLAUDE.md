@@ -129,7 +129,8 @@ Built-ins subclass their conditioners, so checkpoints and the seeded RNG stream
 stay bit-stable. `terms.module_for(term)` dispatches on `data`. Subclassing is
 therefore the registration. There is no registry and no `register_term`.
 
-Node-kind branches live ONLY in the four kind_* functions of nodes.py.
+Node-kind branches live ONLY in the four `Node` methods `log_prob`, `sample`,
+`abduct` and `marginal_theta` in nodes.py.
 `fitting.py` and `readouts.py` are mixins that CausalFlowDAG composes. Each
 method is defined once, and there is no delegate layer. The public names are:
 

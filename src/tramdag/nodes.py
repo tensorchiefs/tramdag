@@ -36,71 +36,16 @@ from .transforms import (
 )
 
 
-# %% private functions -----------------------------------------------------------------
-def _init_linear(m: nn.Linear, init: str) -> None:
-    """Keras' two initializers on one linear layer: ``glorot`` or ``normal``."""
-    if init == "glorot":
-        nn.init.xavier_uniform_(m.weight)
-        if m.bias is not None:
-            nn.init.zeros_(m.bias)
-    else:
-        nn.init.normal_(m.weight, std=0.05)
-        if m.bias is not None:
-            nn.init.normal_(m.bias, std=0.05)
-
-
-# %% public functions ------------------------------------------------------------------
-# The ONLY continuous-vs-ordinal branches of the package live in these four
-# adjacent functions. A third node kind earns a protocol; two stay an if/else
-# in one place.
-
-
-# TODO: what dos the kind prefix stand for:explain and cosider dropping it
-def kind_log_prob(node: Node, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
-    """``log p(x | pa)`` from one node's transform parameters and shift."""
-    if node.kind == "continuous":
-        u0, ladj = node.ut.forward(theta, x)
-        return StandardLogistic.log_prob(u0 + shift) + ladj
-    return ordinal_log_prob(theta, shift, x)
-
-
-def kind_sample(node: Node, theta: Tensor, shift: Tensor, u: Tensor) -> Tensor:
-    """Push one node's latent ``u`` forward to an observed value."""
-    if node.kind == "continuous":
-        return node.ut.inverse(theta, u - shift)
-    return ordinal_sample(theta, shift, u)
-
-
-def kind_abduct(
-    node: Node, theta: Tensor, shift: Tensor, x: Tensor, generator=None
-) -> Tensor:
-    """Recover one node's latent: exact (continuous) or truncated-sampled (ordinal)."""
-    if node.kind == "continuous":
-        u0, _ = node.ut.forward(theta, x)
-        return u0 + shift
-    return ordinal_abduct(theta, shift, x, generator=generator)
-
-
-def kind_marginal_theta(node: Node, column: np.ndarray):
-    """Give the marginal-start theta of a simple intercept, or ``None``.
-
-    Ordinal: the empirical class log-odds. Continuous: the transform's own
-    marginal start over the same column (``None`` for spline/affine —
-    nothing to set).
-    """
-    if node.kind == "ordinal":
-        counts = np.bincount(column.astype(np.int64), minlength=node.levels)
-        return ordinal_marginal_init_theta(counts)
-    return node.ut.marginal_init_theta(column)
-
-
-# %% private classes -------------------------------------------------------------------
-# TODO: should not be private
+# %% public classes --------------------------------------------------------------------
 class Node(nn.Module):
     """One dimension of the flow: an intercept plus additive shift terms.
 
     The intercept produces the transform parameters ``theta``. The shift
-    terms add up on the latent scale.
+    terms add up on the latent scale. The four methods ``log_prob``,
+    ``sample``, ``abduct`` and ``marginal_theta`` hold the ONLY
+    continuous-vs-ordinal branches of the package; ``encode`` is the parent
+    encoding. A third node kind earns a protocol; two stay an if/else in one
+    place.
 
     Parameters
     ----------
@@ -139,6 +84,49 @@ class Node(nn.Module):
             m = module_for(term).build(term, spec)
             m.parents = tuple(term.parents)
             self.shifts[m.key] = m
+
+    def encode(self, values: Tensor) -> Tensor:
+        """Encode this node's values for use as a parent feature.
+
+        The original TRAM-DAG convention: a continuous parent stays raw, shape
+        ``(n, 1)``; an ordinal parent is one-hot encoded, shape ``(n, levels)``.
+        """
+        if self.kind == "ordinal":
+            one_hot = nn.functional.one_hot(values.long(), num_classes=self.levels)
+            return one_hot.to(values.dtype)
+        return values.view(-1, 1)
+
+    def log_prob(self, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
+        """``log p(x | pa)`` from the transform parameters and the shift."""
+        if self.kind == "continuous":
+            u0, ladj = self.ut.forward(theta, x)
+            return StandardLogistic.log_prob(u0 + shift) + ladj
+        return ordinal_log_prob(theta, shift, x)
+
+    def sample(self, theta: Tensor, shift: Tensor, u: Tensor) -> Tensor:
+        """Push the latent ``u`` forward to an observed value."""
+        if self.kind == "continuous":
+            return self.ut.inverse(theta, u - shift)
+        return ordinal_sample(theta, shift, u)
+
+    def abduct(self, theta: Tensor, shift: Tensor, x: Tensor, generator=None) -> Tensor:
+        """Recover the latent: exact (continuous) or truncated-sampled (ordinal)."""
+        if self.kind == "continuous":
+            u0, _ = self.ut.forward(theta, x)
+            return u0 + shift
+        return ordinal_abduct(theta, shift, x, generator=generator)
+
+    def marginal_theta(self, column: np.ndarray):
+        """Give the marginal-start theta of a simple intercept, or ``None``.
+
+        Ordinal: the empirical class log-odds. Continuous: the transform's own
+        marginal start over the same column (``None`` for spline/affine —
+        nothing to set).
+        """
+        if self.kind == "ordinal":
+            counts = np.bincount(column.astype(np.int64), minlength=self.levels)
+            return ordinal_marginal_init_theta(counts)
+        return self.ut.marginal_init_theta(column)
 
     def net_input(self, feats: dict[str, Tensor], parents, key: str) -> Tensor:
         """Concatenate parent features for one term's network.

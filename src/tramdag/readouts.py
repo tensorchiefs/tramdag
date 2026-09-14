@@ -1,4 +1,4 @@
-"""Stateless read-outs: ``_ReadoutsMixin``, composed into ``CausalFlowDAG``.
+"""Stateless read-outs: ``ReadoutsMixin``, composed into ``CausalFlowDAG``.
 
 Each read-out is defined here once and is an ordinary method of the flow.
 `shift_curve` is the public replacement for reaching into
@@ -18,8 +18,8 @@ from .spec import OrdinalNode
 from .terms import VaryingCoefficientTerm
 
 
-# %% private classes -------------------------------------------------------------------
-class _ReadoutsMixin:
+# %% public classes --------------------------------------------------------------------
+class ReadoutsMixin:
     """The stateless read-outs, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""
 
     @torch.no_grad()

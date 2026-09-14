@@ -1,4 +1,4 @@
-"""The two fitting paths: ``_FitMixin``, composed into ``CausalFlowDAG``.
+"""The two fitting paths: ``FitMixin``, composed into ``CausalFlowDAG``.
 
 `fit` is one minibatch Adam loop (validation, verbose printing and the
 callback hooks included); `fit_classical` is the float64 full-batch L-BFGS
@@ -166,8 +166,8 @@ def _fit_epoch(
     return {k: v / trained for k, v in acc.items()}
 
 
-# %% private classes -------------------------------------------------------------------
-class _FitMixin:
+# %% public classes --------------------------------------------------------------------
+class FitMixin:
     """The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""
 
     def fit(

@@ -822,6 +822,15 @@ read-outs keep their exact signatures as flow methods.
   record)` call. There is no chunked or snapshotting fit helper any more.
 - `nodes._Node` is `nodes.Node`: the flow's per-variable module is part of the
   internal-but-stable surface its own docstring lists, so it is not private.
+- The node-kind branches are `Node` methods: `log_prob`, `sample`, `abduct`,
+  `marginal_theta`, and the parent encoding is `Node.encode`; the `kind_*`
+  functions and the flow's `_encode_parent` are gone. `FitMixin` and
+  `ReadoutsMixin` are public names, `_init_linear` lives next to its one
+  caller in `flow.py`, and the flow imports `scores` as a module instead of
+  two underscored aliases. Frames become tensors through the model's torch
+  dtype directly; the numpy twin `_np_dtype` is gone.
+- `nll` is `node_negative_log_prob`, the name that pairs with
+  `node_log_prob`; `nll` stays as an alias.
 
 ### Fixed
 

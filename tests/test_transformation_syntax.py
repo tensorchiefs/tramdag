@@ -34,9 +34,7 @@ def test_sum_chains_flatten_in_order():
     assert [t.name for t in node.terms] == ["I", "CS", "LS", "VC"]
 
 
-def test_bare_i_and_single_term():
-    assert ContinuousNode([I]).terms == [I()]
-    assert ContinuousNode(I).terms == [I()]
+def test_single_term_and_implicit_intercept():
     # a shifts-only formula gets the implicit simple intercept, first
     assert ContinuousNode(LS("x1")).terms == [SI(), LS("x1")]
     assert ContinuousNode(LS("x1")) == ContinuousNode([SI(), LS("x1")])
@@ -318,18 +316,8 @@ def test_wrong_term_option_errors_instead_of_defaulting():
     }
     from tramdag import spec_from_dict
 
-    with pytest.raises(TypeError, match=r"node 'y'.*'pnealty'"):
-        spec_from_dict(d)  # ... and the node name is added on the way out
-
-
-def test_transform_accepts_a_custom_class():
-    """``I(transform=<class>)`` builds a custom transform (pickle-only checkpoint)."""
-    from tramdag.transforms import BernsteinUT
-
-    spec = {"x": ContinuousNode([I(transform=BernsteinUT, n_coeffs=7)])}
-    flow = CausalFlowDAG(spec, seed=0)
-    assert isinstance(flow.nodes["x"].ut, BernsteinUT)
-    assert flow.nodes["x"].ut.n_params == 7
+    with pytest.raises(TypeError, match="'pnealty'"):
+        spec_from_dict(d)
 
 
 def test_terms_pickle_and_deepcopy():

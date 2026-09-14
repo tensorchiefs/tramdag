@@ -19,9 +19,8 @@ reads better:
 - ``I``, the ``Intercept`` term: the parent(s) reshape the monotone
   transform, meaning its Bernstein coefficients or ordinal cutpoints. ``I``
   dispatches on its arguments. Without parents it is the paper's simple
-  intercept [`SI`][], always present and optional to write, and the bare
-  names ``I`` and ``SI`` both work in a term list. With parents it is the
-  complex intercept [`CI`][]. ``transform="spline"`` picks the class of the
+  intercept [`SI`][], always present and optional to write. With parents it
+  is the complex intercept [`CI`][]. ``transform="spline"`` picks the class of the
   monotone transform for a continuous node, and extra keyword arguments go
   straight to that class (``SI(transform="spline", bins=16)``).
 - ``LS``, the ``LinearShift`` term: ``beta * x``, one interpretable weight
@@ -49,7 +48,7 @@ What ``h`` looks like per transformation, for a continuous ``x3``:
 
 | `terms=` | `u_3 = h(x_3 given pa)` |
 |---------------------------------|--------------------------------------------|
-| `None` / `[I]` | `h_theta(x3)` |
+| `None` / `[I()]` | `h_theta(x3)` |
 | `[LS("X1")]` | `h_theta(x3) + beta*x1` |
 | `[I("X1")]` | `h_theta(x1)(x3)` |
 | `[CS("X1")]` | `h_theta(x3) + g_1(x1)` |
@@ -58,7 +57,7 @@ What ``h`` looks like per transformation, for a continuous ``x3``:
 | `[CS("X1"), CS("X2")]` | `h_theta(x3) + g_1(x1) + g_2(x2)` |
 | `[I("X1", "X2")]` | `h_theta(x1,x2)(x3)`, joint |
 | `[I("X1","X2", allow_interaction=False)]` | `h_theta(x1)+theta(x2)(x3)`, additive |
-| `[I, CS("X1"), VC("X2", t="T")]` | `h_theta(x3) + g_1(x1) + beta(x2)*t` |
+| `[CS("X1"), VC("X2", t="T")]` | `h_theta(x3) + g_1(x1) + beta(x2)*t` |
 
 Each parent enters through exactly one *edge-owning* term (I/LS/CS parents,
 and a VC term's treatment ``t``). VC **modifiers** are exempt:
@@ -153,16 +152,11 @@ def _checked_input_transform(value):
 def _as_term(value) -> Term:
     """Take one entry of a formula to a [`Term`][].
 
-    The bare names ``I`` and ``SI`` stand for ``I()``, the simple-intercept
-    baseline.
-
     Raises
     ------
     TypeError
-        If the entry is neither a term nor the bare ``I``.
+        If the entry is not a term.
     """
-    if value is Intercept or value is SI:
-        return Intercept()
     if isinstance(value, Term):
         return value
     raise TypeError(
@@ -175,8 +169,8 @@ def _as_term(value) -> Term:
 def _normalize_terms(value):
     """Flatten a node's formula into its canonical term list.
 
-    Accepted: ``None`` (a source node), one term, a ``+`` sum, the bare
-    name ``I``, or a list of any of those. A ``+`` sum is already flat, so
+    Accepted: ``None`` (a source node), one term, a ``+`` sum, or a list of
+    terms. A ``+`` sum is already flat, so
     a list of lists is a mistake rather than a shape to flatten.
 
     The canonical form starts with the intercept: a formula written
@@ -423,10 +417,10 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
 def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     """Rebuild a spec from its serialized form.
 
-    Each term is rebuilt through its class, so a wrong arity fails here and a
-    misspelled option key fails as Python's own ``TypeError``, naming the
-    keyword. An option the entry does not mention takes its constructor
-    default.
+    Each term is rebuilt through its class, so a wrong arity fails as the
+    term's own ``ValueError`` and a misspelled option key as Python's own
+    ``TypeError``, naming the keyword. An option the entry does not mention
+    takes its constructor default.
 
     Parameters
     ----------
@@ -450,12 +444,7 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
         terms = []
         for t in nd["terms"]:
             cls = _term_class(t["term"])
-            try:
-                terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
-            except (TypeError, ValueError) as err:
-                # keep the kind: a bad option value is a ValueError, an option
-                # the term does not take is Python's own TypeError
-                raise type(err)(f"node '{name}': {err}") from None
+            terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
         if nd["kind"] == "continuous":
             spec[name] = ContinuousNode(terms or None)
         else:
@@ -585,8 +574,7 @@ class Intercept(Term):
     """The intercept term ``I``: the parents reshape the monotone transform.
 
     Without parents it is the paper's simple intercept **SI** — one free
-    parameter vector, the same for every row (the bare names ``I`` and
-    ``SI`` in a term list both mean ``I()``). With parents it is the
+    parameter vector, the same for every row. With parents it is the
     complex intercept **CI**: the transform parameters become a function
     of them. [`SI`][] and [`CI`][] are the two spellings with their
     arity checked.
@@ -596,10 +584,10 @@ class Intercept(Term):
     *parents : str
         Parent names. Several parents form one **joint** network (an
         interaction) unless ``allow_interaction=False``.
-    transform : str | type | None, optional
-        Class of a continuous node's monotone transform: ``"bernstein"``,
-        ``"spline"``, ``"affine"``, or a ``_ScaledUT`` subclass. ``None``,
-        the default, means the node picks ``"bernstein"``. The name stays
+    transform : str | None, optional
+        A continuous node's monotone transform: ``"bernstein"``,
+        ``"spline"`` or ``"affine"``. ``None``, the default, means the node
+        picks ``"bernstein"``. The name stays
         ``None`` here rather than becoming the literal, because ``None`` is
         also how an ordinal node tells that no transform was asked for, and
         an ordinal intercept is the cutpoint vector, which has none to pick.
@@ -654,7 +642,7 @@ class Intercept(Term):
     def __init__(
         self,
         *parents: str,
-        transform: str | type | None = None,
+        transform: str | None = None,
         transform_kwargs: dict | None = None,
         allow_interaction: bool = True,
         units: tuple[int, ...] | list[int] = (8, 8),
@@ -994,8 +982,8 @@ class ContinuousNode:
     Parameters
     ----------
     terms : Term | list[Term] | None, optional
-        The additive formula for ``h``: a list of terms, a ``+`` sum, a
-        single term, or the bare ``I``. ``None`` (default) is a source node. The
+        The additive formula for ``h``: a list of terms, a ``+`` sum or a
+        single term. ``None`` (default) is a source node. The
         class of the monotone transform is chosen on the intercept term,
         ``I(..., transform="spline")``; the default is ``"bernstein"``.
     """

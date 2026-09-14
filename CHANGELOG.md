@@ -383,6 +383,13 @@ read-outs keep their exact signatures as flow methods.
   `marginal_init_theta(column)` has no default: pass `None` for the data-free
   map. `scores` and `intercept_contributions` report a missing column through
   the one `_tensorize` message ("the data frame lacks the column(s) ...").
+- **Three spellings that existed for one caller each.** `I(transform=<class>)`
+  — the transform is one of the three names, `make_univariate_transform`
+  takes a name only; the bare class `I` or `SI` inside a term list — write
+  `I()`, or omit it, since a formula without an intercept gets `I()` first
+  anyway; and the node-name prefix `spec_from_dict` stitched onto a term's
+  own error — the term's `ValueError` and Python's `TypeError` naming the
+  keyword now propagate as they are.
 
 ### Added — `tramdag.plots` (optional extra `tramdag[plots]`)
 

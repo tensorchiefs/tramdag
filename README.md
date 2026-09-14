@@ -146,12 +146,12 @@ intercept term `I` plus any number of shifts (notation:
 
 | term | math | what gets built | interpretability |
 |------------------|------------------|---------------------------------------------|-------------------------------|
-| `I()` / omitted | `h_ϑ(x)` — constant ϑ | `SimpleIntercept`: one free parameter vector, no network | the baseline transform |
-| `I("A")` | `h_ϑ(a)(x)` — ϑ bends with the parent | `ComplexIntercept`: NN `[8, 8] → n_params` | the parent reshapes the whole distribution; no single coefficient |
+| `I()` / omitted | `h_ϑ(x)` — constant ϑ | `SimpleInterceptModule`: one free parameter vector, no network | the baseline transform |
+| `I("A")` | `h_ϑ(a)(x)` — ϑ bends with the parent | `ComplexInterceptModule`: NN `[8, 8] → n_params` | the parent reshapes the whole distribution; no single coefficient |
 | `I("A","B")` (default `allow_interaction=True`) | `h_ϑ(a,b)(x)` | **one joint** NN over both parents — they interact in ϑ | maximal flexibility |
 | `I("A","B", allow_interaction=False)` | `h_ϑ(a)+ϑ(b)(x)` | one NN **per parent**, parameter vectors summed in coefficient space | per-parent partial effects via `flow.intercept_contributions` |
 | `LS("A")` | `β·a` | `Linear(width, 1)`, no bias — **one parameter per feature column** (one for a continuous parent, `levels` for a one-hot ordinal, identified only as differences `w[k]-w[0]`) | `exp(β)` is an odds ratio |
-| `CS("A")` | `g(a)`, additive | `ComplexShift`: NN `[64, 128, 64] → 1` | plot `g` |
+| `CS("A")` | `g(a)`, additive | `ComplexShiftModule`: NN `[64, 128, 64] → 1` | plot `g` |
 | `CS("A","B")` | `g(a,b)` — joint | one NN over the concatenated features | interaction *in the shift* |
 | `CS("A") + CS("B")` | `g₁(a) + g₂(b)` | two NNs, scalars added | GAM-style, each effect plottable |
 | `VC("A","B", t="T")` | `(β₀ + b_Θ(a,b))·x_t` | scalar `β₀` + zero-initialised penalized NN `[16] → 1`; the treatment value multiplies, it never enters the net | `β₀` ≈ constant effect, `flow.varying_coef` reads `β(x)` |
@@ -258,7 +258,7 @@ See the [`tests/README.md`](tests/README.md) file for more details.
 ## Layout
 
 ```
-src/tramdag/            spec.py terms.py transforms.py conditioners.py
+src/tramdag/            spec.py modules.py transforms.py
                         nodes.py flow.py fitting.py readouts.py scores.py
                         callbacks.py plots.py     <- the framework, and nothing else
 tests/                  unit tests, identities, acceptance bars, three inline DGPs

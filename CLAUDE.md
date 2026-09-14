@@ -115,8 +115,8 @@ class also owns the spec-level rules:
 - `cells`,
 - `classical`.
 
-The module class in `terms.py` declares `data = <that class>` and owns the
-runtime:
+The module class in `modules.py` declares `data = <that class>`, holds the
+term's network and owns the runtime:
 
 - build,
 - shift_value and theta_value,
@@ -126,8 +126,9 @@ runtime:
 - score_columns,
 - side inputs.
 
-Built-ins subclass their conditioners, so checkpoints and the seeded RNG stream
-stay bit-stable. `terms.module_for(term)` dispatches on `data`. Subclassing is
+Each built-in module builds its layers in a fixed order under fixed attribute
+names, so checkpoints and the seeded RNG stream stay bit-stable.
+`modules.module_for(term)` dispatches on `data`. Subclassing is
 therefore the registration. There is no registry and no `register_term`.
 
 Node-kind branches live ONLY in the four `Node` methods `log_prob`, `sample`,
@@ -191,9 +192,9 @@ docs/architecture.md carries the module map and the term-contract diagram.
   This module also holds the ordinal ordered-logit transform
   `P(Y<=k) = sigmoid(theta_k - shift)`, with cutpoints
   `[t0, t0+cumsum(exp(...))]`.
-- `conditioners.py` — the LS, CS and intercept networks. The default widths and
-  `relu` replicate the PyTorch reference `buehlpa/TramDag`, file
-  `tram_models.py`:
+- `modules.py` — the term modules with their LS, CS, VC and intercept networks.
+  The default widths and `relu` replicate the PyTorch reference
+  `buehlpa/TramDag`, file `tram_models.py`:
 
   - `ComplexShiftDefaultTabular` 64-128-64,
   - `ComplexInterceptDefaultTabular` 8-8,

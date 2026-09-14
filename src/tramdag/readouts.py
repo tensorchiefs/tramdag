@@ -13,9 +13,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .conditioners import LinearShift
+from .modules import LinearShiftModule, VaryingCoefficientModule
 from .spec import OrdinalNode
-from .terms import VaryingCoefficientTerm
 
 
 # %% public classes --------------------------------------------------------------------
@@ -104,7 +103,7 @@ class ReadoutsMixin:
         vcs = {
             m.key: m.mods
             for m in nd.shifts.values()
-            if isinstance(m, VaryingCoefficientTerm)
+            if isinstance(m, VaryingCoefficientModule)
         }
         if not vcs:
             raise ValueError(f"node {node!r} has no VC term.")
@@ -154,7 +153,7 @@ class ReadoutsMixin:
             linear = {
                 parent: module.weight.detach().cpu().numpy().ravel().copy()
                 for parent, module in self.nodes[name].shifts.items()
-                if isinstance(module, LinearShift)
+                if isinstance(module, LinearShiftModule)
             }
             if linear:
                 out[name] = linear

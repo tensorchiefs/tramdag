@@ -835,6 +835,15 @@ read-outs keep their exact signatures as flow methods.
   and the spec-level checks a term needs the other nodes for are
   `Term.check(name, spec)`. Before, the VC override of `edge_parents` did
   both and the base ignored its arguments.
+- `conditioners.py` and `terms.py` are one module, `modules.py`. A term
+  module holds its network directly instead of inheriting it from a
+  separate conditioner class, so the four name collisions
+  (`spec.ComplexShift` versus `conditioners.ComplexShift`, and so on) are
+  gone. The classes are `TermModule`, `ShiftModule`, `InterceptModule`,
+  `LinearShiftModule`, `ComplexShiftModule`, `VaryingCoefficientModule`,
+  `FnShiftModule`, `SimpleInterceptModule`, `ComplexInterceptModule` and
+  `AdditiveInterceptModule`. Layer order and attribute names are unchanged,
+  so state dicts and the seeded RNG stream are bit-identical.
 
 ### Fixed
 

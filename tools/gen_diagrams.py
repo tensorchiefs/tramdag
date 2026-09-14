@@ -180,9 +180,8 @@ node.
 
 ### Class UML (pyreverse)
 
-The built-in terms are conditioners with a term-hook mixin: each concrete
-term class inherits its network from ``conditioners`` and its contract
-from ``ShiftTerm``/``InterceptTerm``.
+Each built-in term module holds its network and takes its contract from
+``ShiftModule``/``InterceptModule``.
 
 ```mermaid
 {classes.strip()}

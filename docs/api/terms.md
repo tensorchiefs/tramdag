@@ -1,3 +1,0 @@
-# tramdag.terms
-
-::: tramdag.terms

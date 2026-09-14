@@ -2,7 +2,7 @@
 
 The extension contract of 1.0: a callable (or ``nn.Module``) drops into the
 additive shifts via ``Fn``; a whole new term is a ``tramdag.Term``
-subclass (its options and checks) plus a ``tramdag.terms.ShiftTerm`` subclass
+subclass (its options and checks) plus a ``tramdag.modules.ShiftModule`` subclass
 declaring ``data =`` that term class. Subclassing is the registration:
 checkpoints carry the term NAME only, so loading a custom spec needs the
 classes imported first — and a lambda ``fn`` refuses to save.
@@ -15,7 +15,7 @@ import torch
 from torch import nn
 
 from tramdag import CausalFlowDAG, ContinuousNode, Fn, Term, spec_from_dict
-from tramdag.terms import ShiftTerm, module_for
+from tramdag.modules import ShiftModule, module_for
 
 
 # %% private functions -----------------------------------------------------------------
@@ -73,7 +73,7 @@ def test_fn_shift_validates_its_arguments():
 
 
 def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
-    """A Term subclass plus a ShiftTerm with ``data =`` is a whole term:
+    """A Term subclass plus a ShiftModule with ``data =`` is a whole term:
     it validates, builds, fits, serializes by name and loads back.
     """
     df = ls_chain["draw"](600, 0)[["x1", "x2"]]
@@ -141,7 +141,7 @@ class SLS(Term):
             raise ValueError("SLS() takes exactly one parent.")
 
 
-class _ScaledLS(ShiftTerm, nn.Module):
+class _ScaledLS(ShiftModule, nn.Module):
     data = SLS
 
     def __init__(self, scale: float):
@@ -163,7 +163,7 @@ class PEN(Term):
     """A custom penalized term: the regularizer hook must reach the loss."""
 
 
-class _PenShift(ShiftTerm, nn.Module):
+class _PenShift(ShiftModule, nn.Module):
     data = PEN
 
     def __init__(self):

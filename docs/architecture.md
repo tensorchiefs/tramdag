@@ -157,11 +157,11 @@ classDiagram
   }
   class callbacks {
   }
-  class conditioners {
-  }
   class fitting {
   }
   class flow {
+  }
+  class modules {
   }
   class nodes {
   }
@@ -173,8 +173,6 @@ classDiagram
   }
   class spec {
   }
-  class terms {
-  }
   class transforms {
   }
   tramdag --> flow
@@ -182,35 +180,32 @@ classDiagram
   tramdag --> spec
   fitting --> callbacks
   flow --> fitting
+  flow --> modules
   flow --> nodes
   flow --> readouts
   flow --> spec
-  flow --> terms
   flow --> transforms
+  modules --> spec
+  nodes --> modules
   nodes --> spec
-  nodes --> terms
   nodes --> transforms
   plots --> spec
-  readouts --> conditioners
+  readouts --> modules
   readouts --> spec
-  readouts --> terms
   scores --> spec
   scores --> transforms
-  terms --> conditioners
-  terms --> spec
   fitting ..> flow
-  terms ..> nodes
+  modules ..> nodes
 ```
 
 ### Class UML (pyreverse)
 
-The built-in terms are conditioners with a term-hook mixin: each concrete
-term class inherits its network from ``conditioners`` and its contract
-from ``ShiftTerm``/``InterceptTerm``.
+Each built-in term module holds its network and takes its contract from
+``ShiftModule``/``InterceptModule``.
 
 ```mermaid
 classDiagram
-  class AdditiveInterceptTerm {
+  class AdditiveInterceptModule {
   }
   class AffineUT {
   }
@@ -220,15 +215,11 @@ classDiagram
   }
   class CausalFlowDAG {
   }
-  class ComplexIntercept {
-  }
-  class ComplexInterceptTerm {
+  class ComplexInterceptModule {
   }
   class ComplexShift {
   }
-  class ComplexShift {
-  }
-  class ComplexShiftTerm {
+  class ComplexShiftModule {
   }
   class ContinuousNode {
   }
@@ -238,17 +229,15 @@ classDiagram
   }
   class FnShift {
   }
-  class FnShiftTerm {
+  class FnShiftModule {
   }
   class Intercept {
   }
-  class InterceptTerm {
+  class InterceptModule {
   }
   class LinearShift {
   }
-  class LinearShift {
-  }
-  class LinearShiftTerm {
+  class LinearShiftModule {
   }
   class Node {
   }
@@ -258,11 +247,9 @@ classDiagram
   }
   class ReadoutsMixin {
   }
-  class ShiftTerm {
+  class ShiftModule {
   }
-  class SimpleIntercept {
-  }
-  class SimpleInterceptTerm {
+  class SimpleInterceptModule {
   }
   class SplineUT {
   }
@@ -270,13 +257,11 @@ classDiagram
   }
   class Term {
   }
-  class TermDef {
-  }
-  class VaryingCoef {
+  class TermModule {
   }
   class VaryingCoefficient {
   }
-  class VaryingCoefficientTerm {
+  class VaryingCoefficientModule {
   }
   class _FnCallback {
   }
@@ -289,109 +274,102 @@ classDiagram
   _FnCallback --|> Callback
   CausalFlowDAG --|> FitMixin
   CausalFlowDAG --|> ReadoutsMixin
+  AdditiveInterceptModule --|> InterceptModule
+  ComplexInterceptModule --|> InterceptModule
+  ComplexShiftModule --|> ShiftModule
+  FnShiftModule --|> ShiftModule
+  InterceptModule --|> TermModule
+  LinearShiftModule --|> ShiftModule
+  ShiftModule --|> TermModule
+  SimpleInterceptModule --|> InterceptModule
+  VaryingCoefficientModule --|> ShiftModule
   ComplexShift --|> Term
   FnShift --|> Term
   Intercept --|> Term
   LinearShift --|> Term
   VaryingCoefficient --|> Term
-  AdditiveInterceptTerm --|> InterceptTerm
-  ComplexInterceptTerm --|> ComplexIntercept
-  ComplexInterceptTerm --|> InterceptTerm
-  ComplexShiftTerm --|> ComplexShift
-  ComplexShiftTerm --|> ShiftTerm
-  FnShiftTerm --|> ShiftTerm
-  InterceptTerm --|> TermDef
-  LinearShiftTerm --|> LinearShift
-  LinearShiftTerm --|> ShiftTerm
-  ShiftTerm --|> TermDef
-  SimpleInterceptTerm --|> SimpleIntercept
-  SimpleInterceptTerm --|> InterceptTerm
-  VaryingCoefficientTerm --|> VaryingCoef
-  VaryingCoefficientTerm --|> ShiftTerm
   AffineUT --|> _ScaledUT
   BernsteinUT --|> _ScaledUT
   SplineUT --|> _ScaledUT
-  ComplexShift --o ComplexShiftTerm : data
-  FnShift --o FnShiftTerm : data
-  Intercept --o InterceptTerm : data
-  LinearShift --o LinearShiftTerm : data
-  VaryingCoefficient --o VaryingCoefficientTerm : data
+  ComplexShift --o ComplexShiftModule : data
+  FnShift --o FnShiftModule : data
+  Intercept --o InterceptModule : data
+  LinearShift --o LinearShiftModule : data
+  VaryingCoefficient --o VaryingCoefficientModule : data
 ```
 
 ### Call graph — flow construction (traced)
 
 ```mermaid
 flowchart LR
-  subgraph conditioners
-    n0["ComplexShift.__init__"]
-    n24["LinearShift.__init__"]
-    n23["SimpleIntercept.__init__"]
-    n2["VaryingCoef.__init__"]
-    n1["_nn"]
-  end
   subgraph flow
-    n3["CausalFlowDAG.__init__"]
-    n4["CausalFlowDAG._apply_init"]
+    n0["CausalFlowDAG.__init__"]
+    n1["CausalFlowDAG._apply_init"]
+  end
+  subgraph modules
+    n4["ComplexShiftModule.__init__"]
+    n6["ComplexShiftModule.build"]
+    n9["InterceptModule.build"]
+    n12["LinearShiftModule.__init__"]
+    n11["LinearShiftModule.build"]
+    n10["SimpleInterceptModule.__init__"]
+    n13["VaryingCoefficientModule.__init__"]
+    n14["VaryingCoefficientModule.build"]
+    n7["_attach_input_transform"]
+    n5["_nn"]
+    n15["module_for"]
   end
   subgraph nodes
-    n5["Node.__init__"]
+    n2["Node.__init__"]
   end
   subgraph spec
-    n16["Term.check"]
-    n17["Term.edge_parents"]
-    n18["VaryingCoefficient.check"]
-    n19["VaryingCoefficient.edge_parents"]
-    n15["_check_node"]
-    n20["_kahn_sort"]
-    n21["feat_width"]
-    n7["node_parents"]
-    n6["validate_and_sort"]
-  end
-  subgraph terms
-    n8["ComplexShiftTerm.build"]
-    n9["InterceptTerm.build"]
-    n10["LinearShiftTerm.build"]
-    n11["VaryingCoefficientTerm.build"]
-    n22["_attach_input_transform"]
-    n12["module_for"]
+    n20["Term.check"]
+    n21["Term.edge_parents"]
+    n22["VaryingCoefficient.check"]
+    n23["VaryingCoefficient.edge_parents"]
+    n19["_check_node"]
+    n24["_kahn_sort"]
+    n8["feat_width"]
+    n16["node_parents"]
+    n3["validate_and_sort"]
   end
   subgraph transforms
     n25["BernsteinUT.__init__"]
-    n13["BernsteinUT.n_params"]
+    n17["BernsteinUT.n_params"]
     n26["_ScaledUT.__init__"]
-    n14["make_univariate_transform"]
+    n18["make_univariate_transform"]
   end
     n0 --> n1
-    n2 --> n1
-    n3 --> n4
-    n3 -- "3x" --> n5
-    n3 --> n6
-    n5 -- "3x" --> n7
-    n5 --> n8
-    n5 -- "3x" --> n9
-    n5 --> n10
-    n5 --> n11
-    n5 -- "6x" --> n12
-    n5 -- "2x" --> n13
-    n5 -- "2x" --> n14
-    n15 -- "5x" --> n16
-    n15 -- "5x" --> n17
-    n15 --> n18
-    n15 --> n19
-    n20 -- "3x" --> n7
-    n6 -- "3x" --> n15
-    n6 --> n20
-    n8 --> n0
-    n8 --> n21
-    n8 --> n22
-    n9 -- "3x" --> n23
-    n10 --> n24
-    n10 --> n21
-    n11 --> n2
-    n11 --> n21
-    n11 --> n22
+    n0 -- "3x" --> n2
+    n0 --> n3
+    n4 --> n5
+    n6 --> n4
+    n6 --> n7
+    n6 --> n8
+    n9 -- "3x" --> n10
+    n11 --> n12
+    n11 --> n8
+    n13 --> n5
+    n14 --> n13
+    n14 --> n7
+    n14 --> n8
+    n2 --> n6
+    n2 -- "3x" --> n9
+    n2 --> n11
+    n2 --> n14
+    n2 -- "6x" --> n15
+    n2 -- "3x" --> n16
+    n2 -- "2x" --> n17
+    n2 -- "2x" --> n18
+    n19 -- "5x" --> n20
+    n19 -- "5x" --> n21
+    n19 --> n22
+    n19 --> n23
+    n24 -- "3x" --> n16
+    n3 -- "3x" --> n19
+    n3 --> n24
     n25 -- "2x" --> n26
-    n14 -- "2x" --> n25
+    n18 -- "2x" --> n25
 ```
 
 ### Call graph — one fit (traced)
@@ -403,144 +381,142 @@ flowchart LR
     n1["EarlyStopping._reset"]
     n2["EarlyStopping.on_epoch_end"]
     n4["EarlyStopping.on_fit_begin"]
-    n8["EarlyStopping.on_fit_end"]
+    n6["EarlyStopping.on_fit_end"]
     n3["_last_val"]
   end
-  subgraph conditioners
-    n47["ComplexShift.forward"]
-    n49["LinearShift.forward"]
-    n50["SimpleIntercept.forward"]
-    n6["VaryingCoef.beta"]
-    n5["VaryingCoef.forward"]
-    n52["VaryingCoef.l2"]
-    n51["VaryingCoef.recenter"]
-  end
   subgraph fitting
-    n7["FitMixin.fit"]
-    n9["_check_fit_sizes"]
-    n10["_fit_epoch"]
-    n11["_learning_rates"]
-    n12["_log_epoch"]
-    n13["_normalize_callbacks"]
-    n14["_split_validation"]
-    n15["_val_nll"]
+    n5["FitMixin.fit"]
+    n7["_check_fit_sizes"]
+    n8["_fit_epoch"]
+    n9["_learning_rates"]
+    n10["_log_epoch"]
+    n11["_normalize_callbacks"]
+    n12["_split_validation"]
+    n13["_val_nll"]
   end
   subgraph flow
-    n30["CausalFlowDAG._check_columns"]
-    n31["CausalFlowDAG._check_level_values"]
-    n16["CausalFlowDAG._check_side_columns"]
-    n32["CausalFlowDAG._dtype"]
-    n25["CausalFlowDAG._features"]
-    n17["CausalFlowDAG._recenter_vc"]
-    n29["CausalFlowDAG._side_feats"]
-    n18["CausalFlowDAG._tensorize"]
-    n33["CausalFlowDAG._theta_shift"]
-    n19["CausalFlowDAG.calibrate"]
-    n22["CausalFlowDAG.node_log_prob"]
+    n28["CausalFlowDAG._check_columns"]
+    n29["CausalFlowDAG._check_level_values"]
+    n14["CausalFlowDAG._check_side_columns"]
+    n30["CausalFlowDAG._dtype"]
+    n23["CausalFlowDAG._features"]
+    n15["CausalFlowDAG._recenter_vc"]
+    n27["CausalFlowDAG._side_feats"]
+    n16["CausalFlowDAG._tensorize"]
+    n31["CausalFlowDAG._theta_shift"]
+    n17["CausalFlowDAG.calibrate"]
+    n20["CausalFlowDAG.node_log_prob"]
+  end
+  subgraph modules
+    n37["ComplexShiftModule.forward"]
+    n36["ComplexShiftModule.shift_value"]
+    n33["InterceptModule.calibrate_intercept"]
+    n41["LinearShiftModule.forward"]
+    n40["LinearShiftModule.shift_value"]
+    n25["ShiftModule.finalize"]
+    n18["ShiftModule.regularizer"]
+    n21["ShiftModule.side_columns"]
+    n43["SimpleInterceptModule.forward"]
+    n42["SimpleInterceptModule.theta_value"]
+    n34["TermModule.calibrate"]
+    n44["TermModule.input_transform"]
+    n47["VaryingCoefficientModule.beta"]
+    n26["VaryingCoefficientModule.finalize"]
+    n46["VaryingCoefficientModule.forward"]
+    n48["VaryingCoefficientModule.l2"]
+    n45["VaryingCoefficientModule.recenter"]
+    n50["VaryingCoefficientModule.regressor"]
+    n19["VaryingCoefficientModule.regularizer"]
+    n49["VaryingCoefficientModule.shift_value"]
+    n22["VaryingCoefficientModule.side_columns"]
   end
   subgraph nodes
-    n26["Node.encode"]
-    n37["Node.log_prob"]
-    n41["Node.net_input"]
-    n34["Node.theta_shift"]
-  end
-  subgraph terms
-    n43["ComplexShiftTerm.shift_value"]
-    n35["InterceptTerm.calibrate_intercept"]
-    n44["LinearShiftTerm.shift_value"]
-    n27["ShiftTerm.finalize"]
-    n20["ShiftTerm.regularizer"]
-    n23["ShiftTerm.side_columns"]
-    n45["SimpleInterceptTerm.theta_value"]
-    n36["TermDef.calibrate"]
-    n42["TermDef.input_transform"]
-    n28["VaryingCoefficientTerm.finalize"]
-    n53["VaryingCoefficientTerm.regressor"]
-    n21["VaryingCoefficientTerm.regularizer"]
-    n46["VaryingCoefficientTerm.shift_value"]
-    n24["VaryingCoefficientTerm.side_columns"]
+    n24["Node.encode"]
+    n35["Node.log_prob"]
+    n38["Node.net_input"]
+    n32["Node.theta_shift"]
   end
   subgraph transforms
     n54["BernsteinUT._build"]
-    n38["StandardLogistic.log_prob"]
+    n51["StandardLogistic.log_prob"]
     n55["_ScaledUT._log_dt_dx"]
     n56["_ScaledUT._scale"]
-    n39["_ScaledUT.forward"]
-    n48["_ScaledUT.set_range"]
+    n52["_ScaledUT.forward"]
+    n39["_ScaledUT.set_range"]
     n59["_log1mexp"]
     n57["ordinal_bounds"]
     n58["ordinal_cutpoints"]
-    n40["ordinal_log_prob"]
+    n53["ordinal_log_prob"]
   end
     n0 --> n1
     n2 -- "3x" --> n3
     n4 --> n1
-    n5 -- "9x" --> n6
-    n7 -- "3x" --> n2
-    n7 --> n4
-    n7 --> n8
-    n7 --> n9
-    n7 -- "3x" --> n10
-    n7 -- "3x" --> n11
-    n7 -- "3x" --> n12
-    n7 --> n13
-    n7 --> n14
-    n7 -- "3x" --> n15
-    n7 --> n16
-    n7 --> n17
-    n7 -- "2x" --> n18
-    n7 --> n19
-    n7 -- "2x" --> n20
-    n7 --> n21
-    n10 -- "6x" --> n22
-    n10 -- "6x" --> n21
-    n15 -- "3x" --> n22
-    n16 -- "2x" --> n23
-    n16 --> n24
-    n25 -- "30x" --> n26
-    n17 --> n25
-    n17 -- "2x" --> n27
+    n5 -- "3x" --> n2
+    n5 --> n4
+    n5 --> n6
+    n5 --> n7
+    n5 -- "3x" --> n8
+    n5 -- "3x" --> n9
+    n5 -- "3x" --> n10
+    n5 --> n11
+    n5 --> n12
+    n5 -- "3x" --> n13
+    n5 --> n14
+    n5 --> n15
+    n5 -- "2x" --> n16
+    n5 --> n17
+    n5 -- "2x" --> n18
+    n5 --> n19
+    n8 -- "6x" --> n20
+    n8 -- "6x" --> n19
+    n13 -- "3x" --> n20
+    n14 -- "2x" --> n21
+    n14 --> n22
+    n23 -- "30x" --> n24
+    n15 --> n23
+    n15 -- "2x" --> n25
+    n15 --> n26
+    n27 -- "18x" --> n21
+    n27 -- "9x" --> n22
+    n16 -- "2x" --> n28
+    n16 -- "2x" --> n29
+    n16 -- "6x" --> n30
+    n31 -- "27x" --> n27
+    n31 -- "27x" --> n32
     n17 --> n28
-    n29 -- "18x" --> n23
-    n29 -- "9x" --> n24
-    n18 -- "2x" --> n30
-    n18 -- "2x" --> n31
-    n18 -- "6x" --> n32
-    n33 -- "27x" --> n29
-    n33 -- "27x" --> n34
-    n19 --> n30
-    n19 --> n31
-    n19 -- "3x" --> n35
-    n19 -- "3x" --> n36
-    n22 -- "9x" --> n25
-    n22 -- "27x" --> n33
-    n22 -- "27x" --> n37
-    n37 -- "18x" --> n38
-    n37 -- "18x" --> n39
-    n37 -- "9x" --> n40
-    n41 -- "19x" --> n42
-    n34 -- "9x" --> n43
-    n34 -- "9x" --> n44
-    n34 -- "27x" --> n45
-    n34 -- "9x" --> n46
-    n43 -- "9x" --> n47
-    n43 -- "9x" --> n41
-    n35 -- "3x" --> n36
-    n35 -- "2x" --> n48
-    n44 -- "9x" --> n49
-    n45 -- "27x" --> n50
-    n36 -- "6x" --> n42
-    n28 --> n51
-    n28 --> n41
-    n21 -- "7x" --> n52
-    n46 -- "9x" --> n5
-    n46 -- "9x" --> n41
-    n46 -- "9x" --> n53
-    n39 -- "18x" --> n54
-    n39 -- "18x" --> n55
-    n39 -- "18x" --> n56
+    n17 --> n29
+    n17 -- "3x" --> n33
+    n17 -- "3x" --> n34
+    n20 -- "9x" --> n23
+    n20 -- "27x" --> n31
+    n20 -- "27x" --> n35
+    n36 -- "9x" --> n37
+    n36 -- "9x" --> n38
+    n33 -- "3x" --> n34
+    n33 -- "2x" --> n39
+    n40 -- "9x" --> n41
+    n42 -- "27x" --> n43
+    n34 -- "6x" --> n44
+    n26 --> n45
+    n26 --> n38
+    n46 -- "9x" --> n47
+    n19 -- "7x" --> n48
+    n49 -- "9x" --> n46
+    n49 -- "9x" --> n50
+    n49 -- "9x" --> n38
+    n35 -- "18x" --> n51
+    n35 -- "18x" --> n52
+    n35 -- "9x" --> n53
+    n38 -- "19x" --> n44
+    n32 -- "9x" --> n36
+    n32 -- "9x" --> n40
+    n32 -- "27x" --> n42
+    n32 -- "9x" --> n49
+    n52 -- "18x" --> n54
+    n52 -- "18x" --> n55
+    n52 -- "18x" --> n56
     n57 -- "9x" --> n58
-    n40 -- "9x" --> n59
-    n40 -- "9x" --> n57
+    n53 -- "9x" --> n59
+    n53 -- "9x" --> n57
 ```
 <!-- AUTOGEN:end -->

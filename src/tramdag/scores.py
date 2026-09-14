@@ -60,12 +60,6 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
     return (sl * (1 - sl) - su * (1 - su)) / (su - sl)
 
 
-def _is_binary_ordinal(flow, name: str) -> bool:
-    """Say whether a node is a two-level ordinal, so its LS has one contrast."""
-    node = flow.spec.get(name)
-    return isinstance(node, OrdinalNode) and node.levels == 2
-
-
 # %% public functions ------------------------------------------------------------------
 def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
     """Compute the per-observation scores of the interpretable coefficients.
@@ -220,7 +214,11 @@ def effect_modifier_scan(
         col = column
     elif t in psi_df.columns:
         col = t
-    elif _is_binary_ordinal(flow, t) and f"{t}[1]" in psi_df.columns:
+    elif (
+        isinstance(flow.spec.get(t), OrdinalNode)
+        and flow.spec[t].levels == 2
+        and f"{t}[1]" in psi_df.columns
+    ):
         col = f"{t}[1]"  # the identified contrast of a binary ordinal LS parent
     else:
         raise KeyError(

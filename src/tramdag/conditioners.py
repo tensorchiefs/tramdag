@@ -162,10 +162,10 @@ class ComplexIntercept(nn.Module):
     n_params : int
         Number of transform parameters to produce.
     units : tuple[int, ...]
-        Hidden layers of the network. ``Intercept`` defaults it to ``(8, 8)``,
-        the two hidden layers of ``ComplexInterceptDefaultTabular`` (see the
-        module docstring). The paper's own nets are wider; a replication sets
-        this explicitly.
+        Hidden layers of the network. The term class holds the default: the
+        reference's ``ComplexInterceptDefaultTabular`` widths (module
+        docstring). The paper's own nets are wider; a replication sets this
+        explicitly.
     activation : str
         Key of ``ACTIVATIONS``.
     batch_norm : bool
@@ -249,10 +249,9 @@ class ComplexShift(nn.Module):
     n_features : int
         Width of the encoded parent features.
     units : tuple[int, ...]
-        Hidden layers of the network. ``ComplexShift`` defaults it to
-        ``(64, 128, 64)``, the three hidden layers of
-        ``ComplexShiftDefaultTabular`` (see the module docstring). The paper's
-        own nets are narrower; a replication sets this explicitly.
+        Hidden layers of the network. The term class holds the default: the
+        reference's ``ComplexShiftDefaultTabular`` widths (module docstring).
+        The paper's own nets are narrower; a replication sets this explicitly.
     activation : str
         Key of ``ACTIVATIONS``.
     batch_norm : bool
@@ -314,13 +313,13 @@ class VaryingCoef(nn.Module):
     n_features : int
         Width of the encoded modifier features. Use 0 for no modifiers.
     penalty : float
-        L2 weight on ``b_theta``. ``VaryingCoefficient`` defaults it to ``1.0``.
+        L2 weight on ``b_theta``; the term class holds the default.
     units : tuple[int, ...]
-        Hidden layers of ``b_theta``. ``VaryingCoefficient`` defaults it to
-        ``(16,)``: one layer of 16 is the head ``tests/test_vc_term.py``
-        recovers a known ``beta(x)`` with at corr ~ 0.99; this term has no
-        counterpart in the reference implementations, so the size comes from
-        that measurement.
+        Hidden layers of ``b_theta``; the term class holds the default, one
+        layer of 16. That is the head ``tests/test_vc_term.py`` recovers a
+        known ``beta(x)`` with at corr ~ 0.99; this term has no counterpart in
+        the reference implementations, so the size comes from that
+        measurement.
     activation : str
         Key of ``ACTIVATIONS``.
     batch_norm : bool

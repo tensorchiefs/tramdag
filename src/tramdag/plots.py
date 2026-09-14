@@ -48,10 +48,6 @@ def _plt():
     return plt
 
 
-def _spec_of(spec_or_flow) -> dict[str, NodeSpec]:
-    return getattr(spec_or_flow, "spec", spec_or_flow)
-
-
 def _node_width(name: str) -> float:
     """Wide enough for the name in bold 10 pt, never narrower than 1 unit."""
     return max(1.0, 0.13 * len(name) + 0.3)
@@ -102,16 +98,6 @@ def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
         name, joint = tag.split("[")[0], "[" in tag
         edges.append((parent, child, EDGE_LABEL.get(name, name), joint))
     return edges
-
-
-def _edges(spec: dict[str, NodeSpec]) -> list[tuple[str, str, str, bool]]:
-    """Give every edge of the spec, term by term."""
-    return [
-        edge
-        for child, node in spec.items()
-        for term in node.terms
-        for edge in _term_edges(child, term)
-    ]
 
 
 def _draw_node(ax, name: str, node: NodeSpec, xy: tuple[float, float]):
@@ -217,11 +203,10 @@ def _freezes(rates: list) -> dict[str, int]:
     return frozen
 
 
-def _finish(ax, fig, path):
+def _finish(fig, path) -> None:
     fig.tight_layout()
     if path is not None:
         fig.savefig(path, dpi=150, bbox_inches="tight")
-    return ax
 
 
 # %% public functions ------------------------------------------------------------------
@@ -252,13 +237,19 @@ def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=Non
         The axes of the new figure, sized to the layout.
     """
     plt = _plt()
-    spec = _spec_of(spec_or_flow)
+    spec = getattr(spec_or_flow, "spec", spec_or_flow)  # a flow draws its spec
     if not spec:
         raise ValueError("plot_dag needs a spec with at least one node")
     pos, layer_dx = _layout(spec)
     xs, ys = (np.array(v) for v in zip(*pos.values(), strict=True))
+    edges = [
+        edge
+        for child, node in spec.items()
+        for term in node.terms
+        for edge in _term_edges(child, term)
+    ]
     parallel = defaultdict(list)
-    for edge in _edges(spec):
+    for edge in edges:
         parallel[edge[:2]].append(edge)
     bulges = {
         edge: _bulge(pos, layer_dx, edge, 0.35 * (k - (len(pair) - 1) / 2))
@@ -281,7 +272,8 @@ def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=Non
     ax.set_ylim(y_lo, y_hi)
     ax.set_aspect("equal")
     ax.set_axis_off()
-    return _finish(ax, ax.figure, path)
+    _finish(ax.figure, path)
+    return ax
 
 
 def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=None):
@@ -341,7 +333,7 @@ def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=No
         ax.set_title(name)
         ax.legend(fontsize=8, frameon=False)
     fig.suptitle("observed vs sampled marginals")
-    _finish(axes.flat[0], fig, path)
+    _finish(fig, path)
     return axes
 
 
@@ -405,4 +397,5 @@ def plot_training(flow, *, frozen=None, path=None):
         )
     ax.set_xlabel("epoch"), ax.set_ylabel("NLL"), ax.legend(frameon=False)
     ax.set_title("training")
-    return _finish(ax, ax.figure, path)
+    _finish(ax.figure, path)
+    return ax

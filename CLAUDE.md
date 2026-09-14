@@ -95,8 +95,10 @@ references:
 - docs/adr/001-term-owned-architecture.md,
 - the 2026-09 term-classes revision.
 
-The spec class is a `tramdag.Term` subclass in `spec.py`. It is frozen data,
-and its annotated attributes are the options. The spec classes are:
+The spec class is a `tramdag.Term` subclass in `spec.py`. It is plain data, and
+its options are the keyword arguments of its `__init__`, with their defaults —
+assigned to `self`. A term is exactly its `__dict__`, so `options()` is
+`dict(vars(term))`, parents included. The spec classes are:
 
 - `Intercept`, aliased `I`,
 - `LinearShift`, aliased `LS`,
@@ -107,7 +109,7 @@ and its annotated attributes are the options. The spec classes are:
 `Term.name` carries the symbol, and `term:` is the serialized key. The spec
 class also owns the spec-level rules:
 
-- the `__post_init__` arity and option checks,
+- the arity and option-value checks, written after the `super().__init__` call,
 - `edge_parents`,
 - `cells`,
 - `classical`.

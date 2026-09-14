@@ -26,11 +26,11 @@ drafted against a seven-subsystem survey and judged from three lenses
 2. The **registry** (`terms.py`): one definition per term. Built-in shift terms
    subclass their conditioners (`LinearShiftTerm(ShiftTerm, LinearShift)` …), so
    checkpoints and RNG draws stay bit-stable; each term owns validation
-   (`__post_init__`/`edge_parents`), construction (`build`), evaluation
+   (its `__init__`/`edge_parents`), construction (`build`), evaluation
    (`shift_value`/`theta_value`), `post_init`, `regularizer`, post-fit
    `finalize`, `score_columns`, the side-input contract
    (`side_columns`/`check_column`/`live_side`/`extra_columns`), adjacency
-   `cells`, `classical` and its dataclass fields.
+   `cells`, `classical` and its options.
 3. The intercept slot is a term too (`SimpleInterceptTerm`/`ComplexInterceptTerm`/`AdditiveInterceptTerm`);
    the theta read is inline in `theta_shift` and the marginal init is a hook
    (`marginal_start`, `transform.marginal_init_theta`).
@@ -51,9 +51,26 @@ drafted against a seven-subsystem survey and judged from three lenses
   term lived in three places (a constructor, `option_defaults` served
   through `__getattr__`, and static `check_arity`/`edge_parents`/`cells`
   hooks on the module class), glued by a registry. Each term is now a
-  `Term` subclass (its options are dataclass fields, its spec-level rules its
-  methods) and the module class declares `data =` it; the registry is gone.
-  The runtime polymorphism still lives once, in terms.py.
+  `Term` subclass (its options its own, its spec-level rules its methods) and
+  the module class declares `data =` it; the registry is gone. The runtime
+  polymorphism still lives once, in terms.py.
+- ~~The options are dataclass fields~~ — **revised 2026-09-10**: making the
+  fields work took a framework — `__init_subclass__` applying
+  `dataclass(frozen=True, init=False)`, a hand-written `__init__` checking
+  option names against `option_names()`, `options()` emitting only the fields
+  differing from `f.default`, and `_default_drift` reflecting over `__init__`
+  signatures because `Intercept` restated all seven of its defaults to split
+  the transform pass-through. All of it reimplemented what named keyword
+  arguments already do. The options are now the keyword arguments of each
+  term's `__init__` with their real defaults, stated once and assigned to
+  `self`, so `vars(term)` IS the term; argument binding is
+  the validity check (an unknown option is Python's `TypeError`); and
+  `spec_to_dict` writes every option, so a serialized spec describes the model
+  in full instead of depending on what the defaults are today. Three failure
+  modes stopped existing rather than being guarded: default drift, an
+  annotation becoming an option, and an unknown option name. ~155 lines went.
+  The conditioner width/activation defaults moved into the term signatures
+  with them, so each default now lives in exactly one place.
 - No transform/activation registry beyond `make_univariate_transform` accepting
   a class; no plugin entry points; no config system; no new dependencies.
 - No custom latent distribution — the standard logistic IS the TRAM semantics;

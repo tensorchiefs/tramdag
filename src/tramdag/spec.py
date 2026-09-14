@@ -69,11 +69,6 @@ prognostically through the shift *and* modifies the treatment effect.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import dataclasses
-import inspect
-from dataclasses import dataclass
-from typing import ClassVar
-
 # %% global variables ------------------------------------------------------------------
 # why bernstein and not spline: the `transform` parameter of Intercept
 DEFAULT_TRANSFORM = "bernstein"
@@ -108,30 +103,38 @@ def _term_class(name: str) -> type[Term]:
     )
 
 
-def _tupled(value):
-    """Take a serialized option value back to its canonical tuple form.
+def _serialized(term: Term) -> dict:
+    """Give one term's wire entry: its name, its parents, its other options.
 
-    Mappings become sorted tuple-of-pairs (for nested kwargs like
-    ``transform_kwargs``); lists become tuples (for ``units``, ``parents``,
-    etc.).
+    ``parents`` is the one entry the wire keeps out of ``options``: it is a
+    positional argument of every term constructor, and a hand-written spec
+    names it that way.
     """
-    if isinstance(value, dict):
-        return tuple(sorted((k, _tupled(v)) for k, v in value.items()))
-    return tuple(_tupled(v) for v in value) if isinstance(value, list) else value
+    options = term.options()
+    parents = options.pop("parents")
+    return {
+        "term": term.name,
+        "parents": list(parents),
+        "options": {
+            k: list(v) if isinstance(v, tuple) else v for k, v in options.items()
+        },
+    }
 
 
-def _mapped(value):
-    """Serialize one option value: kwargs tuples become mappings, tuples lists."""
-    if (
-        isinstance(value, tuple)
-        and value
-        and all(
-            isinstance(v, tuple) and len(v) == 2 and isinstance(v[0], str)
-            for v in value
+def _checked_input_transform(value):
+    """Give ``input_transform`` back, or refuse a value no term can apply.
+
+    Raises
+    ------
+    ValueError
+        If the value is neither a known name nor a callable ``fn(x, train)``.
+    """
+    if value is not None and not (callable(value) or value in INPUT_TRANSFORMS):
+        raise ValueError(
+            "input_transform must be 'minmax', 'standardize' or a callable "
+            f"fn(x, train), got {value!r}."
         )
-    ):
-        return {k: _mapped(v) for k, v in value}
-    return [_mapped(v) for v in value] if isinstance(value, tuple) else value
+    return value
 
 
 def _as_term(value) -> Term:
@@ -204,28 +207,6 @@ def _normalize_terms(value):
             "I(...) + <shifts>, not the other way around."
         )
     return items
-
-
-def _default_drift(cls) -> list[str]:
-    """Name the options whose ``__init__`` default disagrees with the field.
-
-    A term that spells its options out in ``__init__`` states each default
-    twice. [`options`][] serializes exactly the fields that differ
-    from ``f.default``, so a disagreement silently changes what a checkpoint
-    carries — and a round-trip test cannot catch it, because both sides of
-    the round trip carry the same drift.
-    """
-    own_init = cls.__dict__.get("__init__")
-    if own_init is None:
-        return []
-    params = inspect.signature(own_init).parameters
-    return [
-        f.name
-        for f in dataclasses.fields(cls)
-        if (p := params.get(f.name)) is not None
-        and p.default is not inspect.Parameter.empty
-        and p.default != f.default
-    ]
 
 
 def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
@@ -387,16 +368,17 @@ def validate_and_sort(spec: dict[str, NodeSpec]) -> list[str]:
 def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     """Give the serialized representation of a spec, for checkpoints.
 
-    A term serializes as its term name, its parents and the options that
-    differ from their defaults — nothing else, so the form is canonical.
-    The result is JSON- and YAML-safe: plain tuples become lists and
-    nested kwargs tuples (``transform_kwargs``) become mappings, which is
-    also how a hand-written YAML spec reads best; [`spec_from_dict`][]
-    accepts both forms and turns them back, so a spec round-trips through
-    ``json``/YAML as well as through ``torch.save`` — except when a term
-    carries a *callable* (``input_transform``, ``fn``), which serializes
-    only through pickle (``torch.save``) and only as a module-level
-    function.
+    A term serializes as its term name, its parents and **every** option it
+    carries, so the result describes the model in full and does not depend on
+    what the defaults happen to be today. A hand-written spec may still name
+    only the options it cares about: [`spec_from_dict`][] passes them to the
+    term's constructor, which fills in the rest.
+
+    The result is JSON- and YAML-safe (tuple options such as ``units`` become
+    lists), so a spec round-trips through ``json``/YAML as well as through
+    ``torch.save`` — except when a term carries a *callable*
+    (``input_transform``, ``fn``), which serializes only through pickle
+    (``torch.save``) and only as a module-level function.
 
     Parameters
     ----------
@@ -412,14 +394,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     for name, node in spec.items():
         d = {
             "kind": node.kind,
-            "terms": [
-                {
-                    "term": t.name,
-                    "parents": list(t.parents),
-                    "options": {k: _mapped(v) for k, v in t.options().items()},
-                }
-                for t in node.terms
-            ],
+            "terms": [_serialized(t) for t in node.terms],
         }
         if isinstance(node, OrdinalNode):
             d["levels"] = node.levels
@@ -430,8 +405,10 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
 def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     """Rebuild a spec from its serialized form.
 
-    Each term is rebuilt through its class, so a stale or misspelled
-    option key and a wrong arity fail here, by name.
+    Each term is rebuilt through its class, so a wrong arity fails here and a
+    misspelled option key fails as Python's own ``TypeError``, naming the
+    keyword. An option the entry does not mention takes its constructor
+    default.
 
     Parameters
     ----------
@@ -446,19 +423,21 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     Raises
     ------
     ValueError
-        If a term names an unknown term or an option that term does
-        not take.
+        If the entry names an unknown term, or a term's own checks refuse it.
+    TypeError
+        If a term does not take an option the entry names.
     """
     spec: dict[str, NodeSpec] = {}
     for name, nd in d.items():
         terms = []
         for t in nd["terms"]:
             cls = _term_class(t["term"])
-            options = {k: _tupled(v) for k, v in t["options"].items()}
             try:
-                terms.append(cls.from_serialized(tuple(t["parents"]), options))
-            except ValueError as err:
-                raise ValueError(f"node '{name}': {err}") from None
+                terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
+            except (TypeError, ValueError) as err:
+                # keep the kind: a bad option value is a ValueError, an option
+                # the term does not take is Python's own TypeError
+                raise type(err)(f"node '{name}': {err}") from None
         if nd["kind"] == "continuous":
             spec[name] = ContinuousNode(terms or None)
         else:
@@ -467,25 +446,32 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
 
 
 # %% public classes --------------------------------------------------------------------
-@dataclass(frozen=True, init=False, repr=False)
 class Term:
     """One additive term of a node's transformation; each kind is a subclass.
 
     Terms add: ``I("a") + CS("b")`` is the same transformation as
-    ``[I("a"), CS("b")]``. A term is frozen data — hashable, comparable,
-    serializable by [`spec_to_dict`][] — and knows its own spec-level
-    rules (``edge_parents``, ``cells``, ``classical``). The module
-    that trains it lives in [`terms`][tramdag.terms] and declares which term
-    class it builds (``data = CS``).
+    ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
+    serializable by [`spec_to_dict`][] — and knows its own spec-level rules
+    (``edge_parents``, ``cells``, ``classical``). The module that trains it
+    lives in [`terms`][tramdag.terms] and declares which term class it builds
+    (``data = CS``).
 
     Subclass to add a term: the class name becomes its ``name`` (what the
-    ``term`` key serializes), every annotated attribute with a default is an
-    option, and ``__post_init__`` holds the construction-time checks:
+    ``term`` key serializes), and the options are the keyword arguments of
+    ``__init__``, with their defaults, assigned to ``self``:
 
     ```python
     class Scaled(Term):
-        scale: float = 1.0
+        def __init__(self, *parents, scale=1.0):
+            super().__init__(*parents)
+            self.scale = scale
+            if len(self.parents) != 1:
+                raise ValueError("Scaled() takes exactly one parent.")
     ```
+
+    A term is exactly its ``__dict__``: the parents the base assigns and the
+    options each subclass assigns from its own signature. That is what makes
+    [`options`][], equality and serialization one line each.
 
     Attributes
     ----------
@@ -496,100 +482,24 @@ class Term:
         every other built-in term's parents all own their edges.
     """
 
-    parents: tuple[str, ...] = ()
-
-    name: ClassVar[str] = "Term"
-    cell_tag: ClassVar[str | None] = None  # to_matrix tag; None -> the term name
+    name = "Term"
 
     def __init_subclass__(cls, **kwargs):
-        """Make every subclass a frozen dataclass named after its term.
-
-        Raises
-        ------
-        TypeError
-            If an option has no plain default (a ``default_factory`` would
-            make the term unhashable and its serialization non-canonical), or
-            if a subclass annotates ``name``, which is the term's identity and
-            not an option.
-        """
+        """Name the term after its class, unless it says otherwise."""
         super().__init_subclass__(**kwargs)
-        if "name" in inspect.get_annotations(cls):
-            raise TypeError(
-                f"{cls.__name__}: `name` is the term's identity, not an option; "
-                "set it as a plain class attribute or let the class name stand."
-            )
         cls.name = cls.__dict__.get("name", cls.__name__)
-        dataclass(frozen=True, init=False, repr=False)(cls)  # decorates in place
-        missing = [
-            f.name for f in dataclasses.fields(cls) if f.default is dataclasses.MISSING
-        ]
-        if missing:
-            raise TypeError(
-                f"{cls.__name__}: option(s) {missing} need a plain default value."
-            )
-        drifted = _default_drift(cls)
-        if drifted:
-            raise TypeError(
-                f"{cls.__name__}: option(s) {drifted} carry a different default "
-                "in __init__ than on the field. The two must agree, or the "
-                "serialized form drifts away from what the caller wrote."
-            )
 
-    def __init__(self, *parents: str, **options):
-        names = self.option_names()
-        unknown = sorted(set(options) - set(names))
-        if unknown:
-            raise ValueError(
-                f"term '{self.name}' takes no option(s) {unknown}; "
-                f"it takes {sorted(names)}."
-            )
-        object.__setattr__(self, "parents", tuple(parents))
-        for f in dataclasses.fields(self):
-            if f.name != "parents":
-                object.__setattr__(self, f.name, options.get(f.name, f.default))
-        self.__post_init__()
+    def __init__(self, *parents: str):
+        self.parents = tuple(parents)
 
-    def __post_init__(self) -> None:
-        """Check the term's own shape; subclasses extend this."""
-        value = getattr(self, "input_transform", None)
-        if value is not None and not (callable(value) or value in INPUT_TRANSFORMS):
-            raise ValueError(
-                f"{self.name}(): input_transform must be 'minmax', "
-                f"'standardize' or a callable fn(x, train), got {value!r}."
-            )
-        units = getattr(self, "units", None)
-        if units is not None:
-            object.__setattr__(self, "units", tuple(units))
-
-    def net_options(self) -> dict:
-        """Give the term's network settings, for the conditioner constructor.
-
-        The three options every networked term shares. A term without a
-        network never asks.
-        """
-        return {
-            "units": self.units,
-            "activation": self.activation,
-            "batch_norm": self.batch_norm,
-        }
-
-    @classmethod
-    def option_names(cls) -> list[str]:
-        """Give the option names this term takes."""
-        return [f.name for f in dataclasses.fields(cls) if f.name != "parents"]
+    def options(self) -> dict:
+        """Give everything the term carries, by name — the parents included."""
+        return dict(vars(self))
 
     @classmethod
     def from_serialized(cls, parents: tuple[str, ...], options: dict) -> Term:
         """Rebuild a term from its serialized parents and options."""
         return cls(*parents, **options)
-
-    def options(self) -> dict:
-        """Give the options that differ from their defaults, by name."""
-        return {
-            f.name: getattr(self, f.name)
-            for f in dataclasses.fields(self)
-            if f.name != "parents" and getattr(self, f.name) != f.default
-        }
 
     @property
     def classical(self) -> bool:
@@ -600,20 +510,38 @@ class Term:
         """Validate against the spec; give the parents that own an edge."""
         return self.parents
 
-    def cells(self) -> list[tuple[str, str]]:
+    def cells(self, tag: str | None = None) -> list[tuple[str, str]]:
         """Give the term's adjacency cells as ``(parent, tag)`` pairs.
 
-        A multi-parent term carries its parent group as a suffix.
+        ``tag`` defaults to the term's name; a multi-parent term carries its
+        parent group as a suffix.
         """
-        tag = self.cell_tag or self.name
+        tag = tag or self.name
         if len(self.parents) > 1:
             tag = f"{tag}{list(self.parents)}"
         return [(p, tag) for p in self.parents]
 
+    def __eq__(self, other):
+        """Compare the class and everything the term carries."""
+        return type(self) is type(other) and vars(self) == vars(other)
+
+    def __hash__(self):
+        """Hash the class and the parents.
+
+        Deliberately coarser than ``__eq__``: two terms that differ only in
+        their options share a bucket, which costs nothing at a spec's size and
+        frees the option values from having to be hashable themselves.
+        """
+        return hash((type(self), self.parents))
+
     def __repr__(self):
-        """Show the call that builds the term: parents, then non-default options."""
-        args = [repr(p) for p in self.parents]
-        args += [f"{k}={v!r}" for k, v in self.options().items()]
+        """Name everything the term carries, the parents included.
+
+        The one ``__repr__`` of the term classes: each entry of
+        [`options`][] reads as ``name=value``, so a term with a
+        keyword-only parent (a ``VC`` treatment) needs no spelling of its own.
+        """
+        args = [f"{k}={v!r}" for k, v in self.options().items()]
         return f"{self.name}({', '.join(args)})"
 
     def __add__(self, other: Term | list[Term]) -> list[Term]:
@@ -669,16 +597,15 @@ class Intercept(Term):
         intercept with this flag, not with several intercept terms. Default
         ``True``: one joint network is what the reference implementations
         do.
-    units : list[int] | tuple[int, ...] | None, optional
-        Hidden layers of the term's network, for example ``units=[16]``.
-        ``None``, the default, takes the conditioner's own ``(8, 8)`` — the
-        PyTorch reference's widths, which live in
-        [`conditioners`][tramdag.conditioners] next to their provenance, so this class
-        does not restate them. That module also explains why a paper
-        replication sets this explicitly.
-    activation : str | None, optional
-        Activation of the network's hidden layers. ``None``, the default,
-        takes the conditioners' ``relu``, for the same reason.
+    units : list[int] | tuple[int, ...], optional
+        Hidden layers of the term's network, for example ``units=[16]``. By
+        default ``(8, 8)``, the two hidden layers of the PyTorch reference's
+        ``ComplexInterceptDefaultTabular`` — see
+        [`conditioners`][tramdag.conditioners] for the provenance and for why a
+        paper replication sets this explicitly.
+    activation : str, optional
+        Activation of the network's hidden layers, by default ``"relu"`` —
+        one of the keys of ``conditioners.ACTIVATIONS``.
     batch_norm : bool, optional
         Batch-normalize the network's hidden layers, by default False.
     input_transform : str | callable | None, optional
@@ -701,48 +628,31 @@ class Intercept(Term):
     """
 
     name = "I"
-    cell_tag = "CI"
-
-    transform: str | type | None = None
-    transform_kwargs: tuple | None = None
-    units: tuple[int, ...] | None = None
-    activation: str | None = None
-    batch_norm: bool = False
-    input_transform: object = None
-    allow_interaction: bool = True
 
     def __init__(
         self,
         *parents: str,
         transform: str | type | None = None,
-        transform_kwargs=None,
+        transform_kwargs: dict | None = None,
         allow_interaction: bool = True,
-        units: tuple[int, ...] | list[int] | None = None,
-        activation: str | None = None,
+        units: tuple[int, ...] | list[int] = (8, 8),
+        activation: str = "relu",
         batch_norm: bool = False,
         input_transform: object = None,
-        **kwargs,
+        **transform_options,
     ):
-        # Naming every option makes the pass-through boundary visible: what
-        # binds above is an option of the term, and whatever is left in
-        # `kwargs` goes to the transform class. Python's argument binding
-        # makes that split.
-        # A written-out keyword wins over the same key inside the serialized
-        # transform_kwargs mapping, which is why it is merged second.
-        merged = {**dict(transform_kwargs or ()), **kwargs}
-        super().__init__(
-            *parents,
-            transform=transform,
-            transform_kwargs=tuple(sorted(merged.items())) or None,
-            allow_interaction=allow_interaction,
-            units=units,
-            activation=activation,
-            batch_norm=batch_norm,
-            input_transform=input_transform,
-        )
-
-    def __post_init__(self) -> None:
-        """Refuse network options without parents, and a lone additive flag."""
+        # Python's argument binding IS the pass-through boundary: what binds
+        # above is an option of the term, whatever is left over is a keyword of
+        # the transform class. A written-out keyword wins over the same key
+        # inside a serialized transform_kwargs mapping, hence the merge order.
+        super().__init__(*parents)
+        self.transform = transform
+        self.transform_kwargs = {**(transform_kwargs or {}), **transform_options}
+        self.allow_interaction = allow_interaction
+        self.units = tuple(units)
+        self.activation = activation
+        self.batch_norm = batch_norm
+        self.input_transform = _checked_input_transform(input_transform)
         if not self.parents and self.input_transform is not None:
             raise ValueError(
                 "a simple intercept has no network inputs — input_transform= "
@@ -754,20 +664,15 @@ class Intercept(Term):
                 "with one parent there is no interaction to disallow — drop the "
                 "argument."
             )
-        super().__post_init__()
 
     @property
     def classical(self) -> bool:
         """Say yes only for a parentless ``I()`` — the simple baseline."""
         return not self.parents
 
-    def __repr__(self):
-        """Show the transform's keyword arguments as they were written."""
-        opts = self.options()
-        kwargs = dict(opts.pop("transform_kwargs", None) or ())
-        args = [repr(p) for p in self.parents]
-        args += [f"{k}={v!r}" for k, v in {**opts, **kwargs}.items()]
-        return f"{self.name}({', '.join(args)})"
+    def cells(self) -> list[tuple[str, str]]:
+        """Tag an intercept edge ``CI``: a cell exists only when it has parents."""
+        return super().cells("CI")
 
 
 class LinearShift(Term):
@@ -787,8 +692,8 @@ class LinearShift(Term):
 
     name = "LS"
 
-    def __post_init__(self) -> None:
-        """Refuse any parent count but one."""
+    def __init__(self, *parents: str):
+        super().__init__(*parents)
         if len(self.parents) != 1:
             raise ValueError("LS() takes exactly one parent.")
 
@@ -809,14 +714,13 @@ class ComplexShift(Term):
 
     Other Parameters
     ----------------
-    units : list[int] | tuple[int, ...] | None, optional
-        Hidden layers, for example ``units=[16]``. ``None``, the default,
-        takes the conditioner's own ``(64, 128, 64)`` — the PyTorch
-        reference's widths, which live in [`conditioners`][tramdag.conditioners] next to
-        their provenance, so this class does not restate them.
-    activation : str | None, optional
-        Activation of the hidden layers. ``None``, the default, takes the
-        conditioners' ``relu``, for the same reason.
+    units : list[int] | tuple[int, ...], optional
+        Hidden layers, for example ``units=[16]``. By default
+        ``(64, 128, 64)``, the three hidden layers of the PyTorch reference's
+        ``ComplexShiftDefaultTabular`` — see
+        [`conditioners`][tramdag.conditioners] for the provenance.
+    activation : str, optional
+        Activation of the hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
         Batch-normalize the hidden layers, by default False.
     input_transform : str | callable | None, optional
@@ -831,16 +735,21 @@ class ComplexShift(Term):
 
     name = "CS"
 
-    units: tuple[int, ...] | None = None
-    activation: str | None = None
-    batch_norm: bool = False
-    input_transform: object = None
-
-    def __post_init__(self) -> None:
-        """Refuse a parentless network."""
+    def __init__(
+        self,
+        *parents: str,
+        units: tuple[int, ...] | list[int] = (64, 128, 64),
+        activation: str = "relu",
+        batch_norm: bool = False,
+        input_transform: object = None,
+    ):
+        super().__init__(*parents)
+        self.units = tuple(units)
+        self.activation = activation
+        self.batch_norm = batch_norm
+        self.input_transform = _checked_input_transform(input_transform)
         if not self.parents:
             raise ValueError("CS() needs at least one parent.")
-        super().__post_init__()
 
 
 class VaryingCoefficient(Term):
@@ -893,13 +802,11 @@ class VaryingCoefficient(Term):
         recomputes the propensity live from the flow's own treatment node.
         Requires a binary ordinal ``t``. ``docs/varying-coefficients.md``
         measures a 5-10x bias reduction from turning it on.
-    units : list[int] | tuple[int, ...] | None, optional
-        Hidden layers of ``b_theta``. ``None``, the default, takes the
-        conditioner's own ``(16,)``, whose size is justified where it is
-        defined — see [`VaryingCoef`][tramdag.conditioners.VaryingCoef].
-    activation : str | None, optional
-        Activation of ``b_theta``'s hidden layers. ``None``, the default,
-        takes the conditioners' ``relu``.
+    units : list[int] | tuple[int, ...], optional
+        Hidden layers of ``b_theta``, by default ``(16,)`` — the size is
+        justified at [`VaryingCoef`][tramdag.conditioners.VaryingCoef].
+    activation : str, optional
+        Activation of ``b_theta``'s hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
         Batch-normalize ``b_theta``'s hidden layers, by default False.
     input_transform : str | callable | None, optional
@@ -928,27 +835,31 @@ class VaryingCoefficient(Term):
 
     name = "VC"
 
-    penalty: float = 1.0
-    center: str | bool = False
-    units: tuple[int, ...] | None = None
-    activation: str | None = None
-    batch_norm: bool = False
-    input_transform: object = None
-
-    def __init__(self, *modifiers: str, t: str, **options):
-        super().__init__(t, *modifiers, **options)
-
-    def __post_init__(self) -> None:
-        """Refuse a treatment that is also a modifier, and a negative penalty."""
-        t, modifiers = self.parents[0], self.parents[1:]
+    def __init__(
+        self,
+        *modifiers: str,
+        t: str,
+        penalty: float = 1.0,
+        center: str | bool = False,
+        units: tuple[int, ...] | list[int] = (16,),
+        activation: str = "relu",
+        batch_norm: bool = False,
+        input_transform: object = None,
+    ):
+        if penalty is None or penalty < 0:
+            raise ValueError(f"VC(): penalty must be >= 0, got {penalty}.")
+        # the treatment leads the parents: it is the one that owns an edge
+        super().__init__(t, *modifiers)
+        self.penalty = float(penalty)
+        self.center = center
+        self.units = tuple(units)
+        self.activation = activation
+        self.batch_norm = batch_norm
+        self.input_transform = _checked_input_transform(input_transform)
         if t in modifiers:
             raise ValueError(
                 f"VC(): '{t}' cannot be both the treatment (t) and a modifier."
             )
-        if self.penalty is None or self.penalty < 0:
-            raise ValueError(f"VC(): penalty must be >= 0, got {self.penalty}.")
-        object.__setattr__(self, "penalty", float(self.penalty))
-        super().__post_init__()
 
     @classmethod
     def from_serialized(cls, parents: tuple[str, ...], options: dict) -> Term:
@@ -1005,12 +916,6 @@ class VaryingCoefficient(Term):
         """Tag the treatment cell ``VC`` and the modifiers ``VCm``."""
         return [(self.parents[0], "VC")] + [(p, "VCm") for p in self.parents[1:]]
 
-    def __repr__(self):
-        """Show the modifiers, then ``t=``, then the non-default options."""
-        args = [repr(p) for p in self.parents[1:]] + [f"t={self.parents[0]!r}"]
-        args += [f"{k}={v!r}" for k, v in self.options().items()]
-        return f"{self.name}({', '.join(args)})"
-
 
 class FnShift(Term):
     """The function shift ``Fn``: ``fn(features)`` joins the additive shifts.
@@ -1035,10 +940,10 @@ class FnShift(Term):
     ----------------
     fn : callable | torch.nn.Module
         The shift function. Required in practice: the declared default of
-        ``None`` is never a usable value, and ``__post_init__`` refuses it.
-        The default exists because ``fn`` has to be a dataclass field, which
-        is what carries the callable into [`spec_to_dict`][] and back out
-        of a checkpoint.
+        ``None`` is never a usable value, and the constructor refuses it. The
+        default exists so that ``fn`` is an ordinary option, which is what
+        carries the callable into [`spec_to_dict`][] and back out of a
+        checkpoint.
     input_transform : str | callable | None, optional
         As for [`ComplexShift`][]. ``None``, the default, applies no
         transform.
@@ -1052,11 +957,10 @@ class FnShift(Term):
 
     name = "Fn"
 
-    fn: object = None
-    input_transform: object = None
-
-    def __post_init__(self) -> None:
-        """Refuse a parentless term and a non-callable ``fn``."""
+    def __init__(self, *parents: str, fn=None, input_transform: object = None):
+        super().__init__(*parents)
+        self.fn = fn
+        self.input_transform = _checked_input_transform(input_transform)
         if not self.parents:
             raise ValueError("Fn() needs at least one parent.")
         if not callable(self.fn):
@@ -1064,7 +968,6 @@ class FnShift(Term):
             raise ValueError(  # noqa: TRY004
                 f"Fn(fn=) must be callable, got {type(self.fn).__name__}."
             )
-        super().__post_init__()
 
 
 class ContinuousNode:
@@ -1087,7 +990,7 @@ class ContinuousNode:
         # wrong, that class says so — this layer does not second-guess it
         intercept = self.terms[0]
         self.transform = intercept.transform or DEFAULT_TRANSFORM
-        self.transform_kwargs = dict(intercept.transform_kwargs or ())
+        self.transform_kwargs = dict(intercept.transform_kwargs)
 
     def __repr__(self):
         """Show the terms and the transform."""

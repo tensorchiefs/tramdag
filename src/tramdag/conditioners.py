@@ -35,9 +35,11 @@ parent enters raw, in one column. An ordinal parent is one-hot encoded, in
 ``ACTIVATIONS`` holds the three activations the reference implementations
 use: ``relu`` in the PyTorch reference's default classes, ``sigmoid`` in the
 paper's ``create_param_net``, and ``tanh`` in the paper's ``make_model`` for
-the CAREFL and VACA comparisons. ``DEFAULT_ACTIVATION`` is ``relu``,
-because the architectures these conditioners copy use it, so the default
-network and the default activation come from one source.
+the CAREFL and VACA comparisons.
+
+The widths and the activation above are **defaults of the term classes**, not
+of these constructors: they are written once, in the signatures in
+[`spec`][tramdag.spec], and every conditioner here takes what it is given.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -48,7 +50,6 @@ from torch import Tensor, nn
 
 # %% global variables ------------------------------------------------------------------
 ACTIVATIONS = {"relu": nn.ReLU, "sigmoid": nn.Sigmoid, "tanh": nn.Tanh}
-DEFAULT_ACTIVATION = "relu"
 
 
 # %% private functions -----------------------------------------------------------------
@@ -57,8 +58,8 @@ def _nn(
     units: tuple[int, ...],
     n_out: int,
     *,
-    activation: str | None = None,
-    batch_norm: bool = False,
+    activation: str,
+    batch_norm: bool,
     zero_init_last: bool = False,
 ) -> nn.Sequential:
     """Build the one NN shape every conditioner uses.
@@ -76,18 +77,17 @@ def _nn(
         Hidden layer widths.
     n_out : int
         Output width.
-    activation : str | None, optional
-        Key of ``ACTIVATIONS``: ``"relu"`` (the default, and what the
-        PyTorch reference's default classes use), ``"sigmoid"`` (the paper's
-        ``create_param_net``) or ``"tanh"`` (the paper's ``make_model``, used
-        for its CAREFL/VACA comparisons). ``None`` takes
-        ``DEFAULT_ACTIVATION``.
-    batch_norm : bool, optional
-        Normalize each hidden layer before its activation, by default
-        ``False`` — neither reference implementation uses it. It needs more
-        than one row per batch and makes the fitted function depend on the
-        training batch statistics, so ``fit`` must leave the flow in
-        ``eval()`` mode for inference to be reproducible (it does).
+    activation : str
+        Key of ``ACTIVATIONS``: ``"relu"`` (what the PyTorch reference's
+        default classes use), ``"sigmoid"`` (the paper's ``create_param_net``)
+        or ``"tanh"`` (the paper's ``make_model``, used for its CAREFL/VACA
+        comparisons).
+    batch_norm : bool
+        Normalize each hidden layer before its activation — neither reference
+        implementation uses it. It needs more than one row per batch and makes
+        the fitted function depend on the training batch statistics, so ``fit``
+        must leave the flow in ``eval()`` mode for inference to be reproducible
+        (it does).
     zero_init_last : bool, optional
         Zero the output layer, by default ``False``.
 
@@ -101,12 +101,11 @@ def _nn(
     ValueError
         If ``activation`` is not a key of ``ACTIVATIONS``.
     """
-    name = activation or DEFAULT_ACTIVATION
-    if name not in ACTIVATIONS:
+    if activation not in ACTIVATIONS:
         raise ValueError(
-            f"unknown activation {name!r}; choose one of {sorted(ACTIVATIONS)}"
+            f"unknown activation {activation!r}; choose one of {sorted(ACTIVATIONS)}"
         )
-    make_activation = ACTIVATIONS[name]
+    make_activation = ACTIVATIONS[activation]
     layers: list[nn.Module] = []
     width = n_in
     for u in units:
@@ -162,29 +161,29 @@ class ComplexIntercept(nn.Module):
         Width of the encoded parent features.
     n_params : int
         Number of transform parameters to produce.
-    units : tuple[int, ...] | None, optional
-        Hidden layers of the network, by default ``(8, 8)`` — the two hidden
-        layers of ``ComplexInterceptDefaultTabular`` (see the module
-        docstring). The paper's own nets are wider; a replication should set
+    units : tuple[int, ...]
+        Hidden layers of the network. ``Intercept`` defaults it to ``(8, 8)``,
+        the two hidden layers of ``ComplexInterceptDefaultTabular`` (see the
+        module docstring). The paper's own nets are wider; a replication sets
         this explicitly.
-    activation : str | None, optional
-        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
-    batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see ``_nn``.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
     """
 
     def __init__(
         self,
         n_features: int,
         n_params: int,
-        units: tuple[int, ...] | None = None,
-        activation: str | None = None,
-        batch_norm: bool = False,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
     ):
         super().__init__()
         self.net = _nn(
             n_features,
-            units or (8, 8),
+            units,
             n_params,
             activation=activation,
             batch_norm=batch_norm,
@@ -249,28 +248,28 @@ class ComplexShift(nn.Module):
     ----------
     n_features : int
         Width of the encoded parent features.
-    units : tuple[int, ...] | None, optional
-        Hidden layers of the network, by default ``(64, 128, 64)`` — the three
-        hidden layers of ``ComplexShiftDefaultTabular`` (see the module
-        docstring). The paper's own nets are narrower; a replication should
-        set this explicitly.
-    activation : str | None, optional
-        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
-    batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see ``_nn``.
+    units : tuple[int, ...]
+        Hidden layers of the network. ``ComplexShift`` defaults it to
+        ``(64, 128, 64)``, the three hidden layers of
+        ``ComplexShiftDefaultTabular`` (see the module docstring). The paper's
+        own nets are narrower; a replication sets this explicitly.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
     """
 
     def __init__(
         self,
         n_features: int,
-        units: tuple[int, ...] | None = None,
-        activation: str | None = None,
-        batch_norm: bool = False,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
     ):
         super().__init__()
         self.net = _nn(
             n_features,
-            units or (64, 128, 64),
+            units,
             1,
             activation=activation,
             batch_norm=batch_norm,
@@ -314,17 +313,18 @@ class VaryingCoef(nn.Module):
     ----------
     n_features : int
         Width of the encoded modifier features. Use 0 for no modifiers.
-    penalty : float, optional
-        L2 weight on ``b_theta``, by default ``1.0``.
-    units : tuple[int, ...] | None, optional
-        Hidden layers of ``b_theta``, by default ``(16,)``. One layer of 16 is
-        the head ``tests/test_vc_term.py`` recovers a known ``beta(x)`` with
-        at corr ~ 0.99; this term has no counterpart in the reference
-        implementations, so the size comes from that measurement.
-    activation : str | None, optional
-        Key of ``ACTIVATIONS``, by default ``DEFAULT_ACTIVATION``.
-    batch_norm : bool, optional
-        Normalize the hidden layers, by default ``False`` — see ``_nn``.
+    penalty : float
+        L2 weight on ``b_theta``. ``VaryingCoefficient`` defaults it to ``1.0``.
+    units : tuple[int, ...]
+        Hidden layers of ``b_theta``. ``VaryingCoefficient`` defaults it to
+        ``(16,)``: one layer of 16 is the head ``tests/test_vc_term.py``
+        recovers a known ``beta(x)`` with at corr ~ 0.99; this term has no
+        counterpart in the reference implementations, so the size comes from
+        that measurement.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
 
     Notes
     -----
@@ -340,10 +340,10 @@ class VaryingCoef(nn.Module):
     def __init__(
         self,
         n_features: int,
-        penalty: float = 1.0,
-        units: tuple[int, ...] | None = None,
-        activation: str | None = None,
-        batch_norm: bool = False,
+        penalty: float,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
     ):
         super().__init__()
         self.penalty = float(penalty)
@@ -353,7 +353,7 @@ class VaryingCoef(nn.Module):
             # zero-initialised output: beta(x) == beta0 at init
             self.net = _nn(
                 n_features,
-                units or (16,),
+                units,
                 1,
                 activation=activation,
                 batch_norm=batch_norm,

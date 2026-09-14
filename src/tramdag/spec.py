@@ -462,7 +462,7 @@ class Term:
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). The module that
     trains it
-    lives in [`terms`][tramdag.terms] and declares which term class it builds
+    lives in [`modules`][tramdag.modules] and declares which term class it builds
     (``data = CS``).
 
     Subclass to add a term: the class name becomes its ``name`` (what the
@@ -618,11 +618,11 @@ class Intercept(Term):
         Hidden layers of the term's network, for example ``units=[16]``. By
         default ``(8, 8)``, the two hidden layers of the PyTorch reference's
         ``ComplexInterceptDefaultTabular`` — see
-        [`conditioners`][tramdag.conditioners] for the provenance and for why a
-        paper replication sets this explicitly.
+        [`modules`][tramdag.modules] for the provenance and for why a paper
+        replication sets this explicitly.
     activation : str, optional
         Activation of the network's hidden layers, by default ``"relu"`` —
-        one of the keys of ``conditioners.ACTIVATIONS``.
+        one of the keys of ``modules.ACTIVATIONS``.
     batch_norm : bool, optional
         Batch-normalize the network's hidden layers, by default False.
     input_transform : str | callable | None, optional
@@ -735,7 +735,7 @@ class ComplexShift(Term):
         Hidden layers, for example ``units=[16]``. By default
         ``(64, 128, 64)``, the three hidden layers of the PyTorch reference's
         ``ComplexShiftDefaultTabular`` — see
-        [`conditioners`][tramdag.conditioners] for the provenance.
+        [`modules`][tramdag.modules] for the provenance.
     activation : str, optional
         Activation of the hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
@@ -821,7 +821,8 @@ class VaryingCoefficient(Term):
         measures a 5-10x bias reduction from turning it on.
     units : list[int] | tuple[int, ...], optional
         Hidden layers of ``b_theta``, by default ``(16,)`` — the size is
-        justified at [`VaryingCoef`][tramdag.conditioners.VaryingCoef].
+        justified at
+        [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule].
     activation : str, optional
         Activation of ``b_theta``'s hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
@@ -951,7 +952,7 @@ class FnShift(Term):
     Checkpoints pickle ``fn``, so it must be a module-level function or an
     importable ``nn.Module`` — ``save()`` refuses a lambda. For a whole new
     term (own options, penalty, side inputs) subclass [`Term`][] and
-    [`ShiftTerm`][tramdag.terms.ShiftTerm] instead.
+    [`ShiftModule`][tramdag.modules.ShiftModule] instead.
 
     Parameters
     ----------

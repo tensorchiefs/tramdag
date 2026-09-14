@@ -1,21 +1,48 @@
-"""The term modules: one class per term, built from the term's spec class.
+"""The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
-A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``,
-``Fn``, ``I``) is plain data and carries the spec-level rules; the module
-here declares which term class it builds (``data = CS``) and owns the
-runtime behaviour: ``build``, ``shift_value``/``theta_value``,
-``post_init``, ``regularizer``, ``finalize``, ``score_columns`` and the
-side-input contract. [`module_for`][] finds the module of a term by that
-declaration, so subclassing is the whole registration.
+A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``Fn``, ``I``) is
+plain data and carries the spec-level rules; the module here declares which
+term class it builds (``data = CS``), holds the term's network and owns the
+runtime behaviour: ``build``, ``shift_value``/``theta_value``, ``post_init``,
+``regularizer``, ``finalize``, ``score_columns`` and the side-input contract.
+[`module_for`][] finds the module of a term by that declaration, so
+subclassing is the whole registration.
 
-A custom term is two classes: a ``Term`` subclass for the options and checks, and a
-[`ShiftTerm`][tramdag.terms.ShiftTerm] subclass with ``data =`` that term class,
-``build`` and ``shift_value``.
+A custom term is two classes: a ``Term`` subclass for the options and checks,
+and a [`ShiftModule`][tramdag.modules.ShiftModule] subclass with ``data =``
+that term class, ``build`` and ``shift_value``.
+
+The networks copy the defaults of the PyTorch reference this package grew out
+of, ``tramdag/models/tram_models.py`` in https://github.com/buehlpa/TramDag:
+``ComplexShiftDefaultTabular`` is 64-128-64 ReLU into a bias-free
+``Linear(64, 1)``, ``ComplexInterceptDefaultTabular`` is 8-8 ReLU into a
+bias-free ``Linear(8, n_thetas)`` with ``n_thetas=20``. A fitted model is
+therefore directly comparable with that implementation. Those defaults are
+**not** the TRAM-DAG paper's own nets: the paper's R implementation
+(https://github.com/tensorchiefs/tram-dag) uses
+``hidden_features_I = hidden_features_CS = c(2, 25, 25, 2)`` with sigmoid
+activations for the triangle experiments, and a 10-100 tanh net for the
+CAREFL/VACA comparisons, so every replication in ``experiments/paper/`` sets
+``units=`` and ``activation=`` from its own reference script. The widths and
+the activation are defaults of the term classes, written once in the
+signatures in [`spec`][tramdag.spec]; the modules here take what they are
+given.
+
+| Module | Network | Term |
+|--------------------------|-------------------------------------------|------|
+| `LinearShiftModule` | `Linear(n, 1, bias=False)` | `LS` |
+| `ComplexShiftModule` | 64-128-64 ReLU NN to 1, no bias | `CS` |
+| `ComplexInterceptModule` | 8-8 ReLU NN to `n_params`, bias-free out | `I` |
+| `SimpleInterceptModule` | free parameter vector, no parent | `I()` |
+| `VaryingCoefficientModule` | `beta0` + penalized 16-unit NN | `VC` |
+
+Parent features use the encoding of the original implementation: a continuous
+parent enters raw, in one column; an ordinal parent one-hot, in ``levels``
+columns. ``ACTIVATIONS`` holds the three activations the reference
+implementations use: ``relu`` in the PyTorch reference's default classes,
+``sigmoid`` in the paper's ``create_param_net``, and ``tanh`` in the paper's
+``make_model`` for the CAREFL and VACA comparisons.
 """
-
-# TODO: naming is a bit wired: we have Term living in spec and TermDef living in
-# term. maybe rename to modules since we bundle with nn.Module here? lets discuss
-# a better naming and structure ignoring all previous decisions
 
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
@@ -27,13 +54,6 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from .conditioners import (
-    ComplexIntercept,
-    ComplexShift,
-    LinearShift,
-    SimpleIntercept,
-    VaryingCoef,
-)
 from .spec import (
     CS,
     LS,
@@ -52,8 +72,77 @@ if TYPE_CHECKING:
     from .nodes import Node
     from .spec import NodeSpec
 
+# %% global variables ------------------------------------------------------------------
+ACTIVATIONS = {"relu": nn.ReLU, "sigmoid": nn.Sigmoid, "tanh": nn.Tanh}
+
 
 # %% private functions -----------------------------------------------------------------
+def _nn(
+    n_in: int,
+    units: tuple[int, ...],
+    n_out: int,
+    *,
+    activation: str,
+    batch_norm: bool,
+    zero_init_last: bool = False,
+) -> nn.Sequential:
+    """Build the one NN shape every networked term uses.
+
+    Hidden layers of the given ``units``, each followed by ``activation``,
+    then a bias-free output layer. With ``batch_norm`` a ``BatchNorm1d`` sits
+    between each hidden layer and its activation.
+
+    Parameters
+    ----------
+    n_in : int
+        Input width.
+    units : tuple[int, ...]
+        Hidden layer widths.
+    n_out : int
+        Output width.
+    activation : str
+        Key of ``ACTIVATIONS``: ``"relu"`` (what the PyTorch reference's
+        default classes use), ``"sigmoid"`` (the paper's ``create_param_net``)
+        or ``"tanh"`` (the paper's ``make_model``, used for its CAREFL/VACA
+        comparisons).
+    batch_norm : bool
+        Normalize each hidden layer before its activation — neither reference
+        implementation uses it. It needs more than one row per batch and makes
+        the fitted function depend on the training batch statistics, so ``fit``
+        must leave the flow in ``eval()`` mode for inference to be reproducible
+        (it does).
+    zero_init_last : bool, optional
+        Zero the output layer, by default ``False``.
+
+    Returns
+    -------
+    nn.Sequential
+        The network.
+
+    Raises
+    ------
+    ValueError
+        If ``activation`` is not a key of ``ACTIVATIONS``.
+    """
+    if activation not in ACTIVATIONS:
+        raise ValueError(
+            f"unknown activation {activation!r}; choose one of {sorted(ACTIVATIONS)}"
+        )
+    make_activation = ACTIVATIONS[activation]
+    layers: list[nn.Module] = []
+    width = n_in
+    for u in units:
+        layers.append(nn.Linear(width, u))
+        if batch_norm:
+            layers.append(nn.BatchNorm1d(u))
+        layers.append(make_activation())
+        width = u
+    out = nn.Linear(width, n_out, bias=False)
+    if zero_init_last:
+        nn.init.zeros_(out.weight)
+    return nn.Sequential(*layers, out)
+
+
 def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
     """Register the term's input transform over its continuous parents.
 
@@ -68,12 +157,10 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
 
 
 # %% public functions ------------------------------------------------------------------
-# TODO: since we reuse this pattern: refactor as util funcwith dot path support like
-# custom terms in spec?
-def module_for(term: Term) -> type[TermDef]:
+def module_for(term: Term) -> type[TermModule]:
     """Give the module class that builds ``term``.
 
-    A [`TermDef`][] subclass that declares ``data = <Term subclass>``
+    A [`TermModule`][] subclass that declares ``data = <Term subclass>``
     stamps itself onto that class as ``module`` when it is defined
     (``__init_subclass__``), so subclassing is the registration.
 
@@ -86,8 +173,8 @@ def module_for(term: Term) -> type[TermDef]:
     if module is None:
         raise ValueError(
             f"no module builds a {type(term).__name__} term. Subclass "
-            f"tramdag.terms.ShiftTerm with `data = {type(term).__name__}` and "
-            "implement build and shift_value."
+            f"tramdag.modules.ShiftModule with `data = {type(term).__name__}` "
+            "and implement build and shift_value."
         )
     return module
 
@@ -139,11 +226,11 @@ class _InputTransform(nn.Module):
 
 
 # %% public classes --------------------------------------------------------------------
-class TermDef:
+class TermModule:
     """What every term module shares: the input transform and its calibration.
 
-    ``data`` names the [`Term`][] subclass the module
-    builds; [`module_for`][] dispatches on it.
+    ``data`` names the [`Term`][] subclass the module builds;
+    [`module_for`][] dispatches on it.
     """
 
     data: ClassVar[type[Term]]
@@ -170,7 +257,7 @@ class TermDef:
         ``CausalFlowDAG.calibrate`` calls this once per term; a term without
         an ``input_transform`` has nothing to freeze. The intercept slot has a
         second step on top of this one — see
-        [`calibrate_intercept`][tramdag.terms.InterceptTerm.calibrate_intercept].
+        [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].
         """
         tr = self.input_transform
         if tr is None:
@@ -185,15 +272,15 @@ class TermDef:
         tr.set_stats(cols)
 
 
-class ShiftTerm(TermDef, ABC):
-    """A shift term's behavior hooks, mixed into its conditioner.
+class ShiftModule(TermModule, ABC):
+    """A shift term's behavior hooks, on top of its network.
 
-    A built term instance carries ``key`` (its ModuleDict key, set by
-    ``build``) and ``parents`` (the term's written parents, set by the
-    node); subclasses may add term-specific attributes
-    (``VaryingCoefficientTerm`` keeps ``mods``/``on_is_ord``/``center_col``).
-    ``build`` constructs the module exactly as the node used to, so
-    state-dict paths and the seeded RNG stream stay bit-stable.
+    A built module carries ``key`` (its ModuleDict key, set by ``build``) and
+    ``parents`` (the term's written parents, set by the node); subclasses may
+    add term-specific attributes (``VaryingCoefficientModule`` keeps
+    ``mods``/``on_is_ord``/``center_col``). ``build`` constructs the module
+    exactly as the node used to, so state-dict paths and the seeded RNG
+    stream stay bit-stable.
     """
 
     scored: ClassVar[bool] = False  # True when score_columns gives coefficients
@@ -204,7 +291,7 @@ class ShiftTerm(TermDef, ABC):
 
     @classmethod
     @abstractmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ShiftTerm:
+    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ShiftModule:
         """Construct the term module from its spec Term."""
 
     @abstractmethod
@@ -253,8 +340,8 @@ class ShiftTerm(TermDef, ABC):
         return []
 
 
-class InterceptTerm(TermDef, ABC):
-    """The intercept slot's behavior hooks, mixed into its module.
+class InterceptModule(TermModule, ABC):
+    """The intercept slot's behavior hooks, on top of its network.
 
     A node has exactly one intercept term (normalization guarantees
     ``node.terms[0]``); it produces the transform parameters ``theta``.
@@ -270,9 +357,14 @@ class InterceptTerm(TermDef, ABC):
 
     @classmethod
     def build(cls, term: Term, spec: dict[str, NodeSpec], n_params: int):
-        """Construct the node's intercept module from its intercept Term."""
+        """Construct the node's intercept module from its intercept Term.
+
+        One ``I`` term becomes one of three modules: the free theta without
+        parents, one joint net over all parents, or one net per parent with
+        the coefficient vectors summed (``allow_interaction=False``).
+        """
         if not term.parents:
-            m = SimpleInterceptTerm(n_params)
+            m = SimpleInterceptModule(n_params)
             m.groups, m.ci_parents = [], []
             return m
         groups = (
@@ -281,7 +373,7 @@ class InterceptTerm(TermDef, ABC):
             else [(p,) for p in term.parents]
         )
         if len(groups) == 1:
-            m = ComplexInterceptTerm(
+            m = ComplexInterceptModule(
                 feat_width(spec, groups[0]),
                 n_params,
                 units=term.units,
@@ -289,7 +381,7 @@ class InterceptTerm(TermDef, ABC):
                 batch_norm=term.batch_norm,
             )
         else:  # additive intercept: one net per parent, coefficients summed
-            m = AdditiveInterceptTerm(
+            m = AdditiveInterceptModule(
                 groups,
                 n_params,
                 spec,
@@ -332,8 +424,22 @@ class InterceptTerm(TermDef, ABC):
         """Set the calibrated marginal start; only a free intercept has one."""
 
 
-class SimpleInterceptTerm(InterceptTerm, SimpleIntercept):
-    """The free simple intercept: one theta vector, no parents."""
+class SimpleInterceptModule(InterceptModule, nn.Module):
+    """The free simple intercept: one theta vector, no parents.
+
+    Parameters
+    ----------
+    n_params : int
+        Number of transform parameters.
+    """
+
+    def __init__(self, n_params: int):
+        super().__init__()
+        self.theta = nn.Parameter(torch.zeros(n_params))
+
+    def forward(self, n: int) -> Tensor:
+        """Broadcast the parameters over a batch of ``n`` rows, shape ``(n, P)``."""
+        return self.theta.unsqueeze(0).expand(n, -1)
 
     def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Broadcast the free theta over the batch."""
@@ -345,15 +451,55 @@ class SimpleInterceptTerm(InterceptTerm, SimpleIntercept):
             self.theta.copy_(theta)
 
 
-class ComplexInterceptTerm(InterceptTerm, ComplexIntercept):
-    """A single (possibly joint multi-parent) complex intercept net."""
+class ComplexInterceptModule(InterceptModule, nn.Module):
+    """A single (possibly joint multi-parent) complex intercept net.
+
+    Several parents given to one term feed a single network, so they interact.
+
+    Parameters
+    ----------
+    n_features : int
+        Width of the encoded parent features.
+    n_params : int
+        Number of transform parameters to produce.
+    units : tuple[int, ...]
+        Hidden layers of the network. The term class holds the default: the
+        reference's ``ComplexInterceptDefaultTabular`` widths (module
+        docstring). The paper's own nets are wider; a replication sets this
+        explicitly.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
+    """
+
+    def __init__(
+        self,
+        n_features: int,
+        n_params: int,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
+    ):
+        super().__init__()
+        self.net = _nn(
+            n_features,
+            units,
+            n_params,
+            activation=activation,
+            batch_norm=batch_norm,
+        )
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Map parent features ``(n, n_features)`` to parameters ``(n, n_params)``."""
+        return self.net(x)
 
     def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Run the one net over the joint parent features."""
         return self(node.net_input(feats, self.ci_parents, "@I"))
 
 
-class AdditiveInterceptTerm(InterceptTerm, nn.Module):
+class AdditiveInterceptModule(InterceptModule, nn.Module):
     """``allow_interaction=False``: one net per parent, outputs summed.
 
     Each parent reshapes the transform independently, in unconstrained
@@ -370,11 +516,11 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
         activation: str,
         batch_norm: bool,
     ):
-        nn.Module.__init__(self)
+        super().__init__()
         # the submodule must stay named `nets`: it is part of the state-dict
         # path that tests/test_statedict_stability.py pins
         self.nets = nn.ModuleList(
-            ComplexIntercept(
+            ComplexInterceptModule(
                 feat_width(spec, grp), n_params, units, activation, batch_norm
             )
             for grp in groups
@@ -388,14 +534,35 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
         )
 
 
-class LinearShiftTerm(ShiftTerm, LinearShift):
-    """``LS`` — one raw-unit coefficient per (single) parent."""
+class LinearShiftModule(ShiftModule, nn.Module):
+    """``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
+
+    For an ordinal child, ``exp(beta)`` is an odds ratio.
+
+    Parameters
+    ----------
+    n_features : int
+        Width of the encoded parent features.
+    """
 
     data = LS
     scored = True
 
+    def __init__(self, n_features: int):
+        super().__init__()
+        self.fc = nn.Linear(n_features, 1, bias=False)
+
+    @property
+    def weight(self) -> Tensor:
+        """Tensor: the shift coefficients, shape ``(n_features,)``."""
+        return self.fc.weight.squeeze(0)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
+        return self.fc(x).squeeze(-1)
+
     @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> LinearShiftTerm:
+    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> LinearShiftModule:
         """One weight per feature of the single parent; keyed by its name."""
         m = cls(feat_width(spec, term.parents))
         m.key = term.parents[0]
@@ -417,13 +584,47 @@ class LinearShiftTerm(ShiftTerm, LinearShift):
         return {self.key: psi[:, 0]}
 
 
-class ComplexShiftTerm(ShiftTerm, ComplexShift):
-    """``CS`` — a network shift over its parents."""
+class ComplexShiftModule(ShiftModule, nn.Module):
+    """``CS`` — an additive network shift ``g(x)`` over its parents.
+
+    Parameters
+    ----------
+    n_features : int
+        Width of the encoded parent features.
+    units : tuple[int, ...]
+        Hidden layers of the network. The term class holds the default: the
+        reference's ``ComplexShiftDefaultTabular`` widths (module docstring).
+        The paper's own nets are narrower; a replication sets this explicitly.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
+    """
 
     data = CS
 
+    def __init__(
+        self,
+        n_features: int,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
+    ):
+        super().__init__()
+        self.net = _nn(
+            n_features,
+            units,
+            1,
+            activation=activation,
+            batch_norm=batch_norm,
+        )
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
+        return self.net(x).squeeze(-1)
+
     @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftTerm:
+    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftModule:
         """One net over the concatenated parents; keyed 'a' or 'a+b'."""
         ps = tuple(term.parents)
         m = cls(
@@ -441,15 +642,123 @@ class ComplexShiftTerm(ShiftTerm, ComplexShift):
         return self(node.net_input(feats, self.parents, self.key))
 
 
-class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
-    """``VC`` — ``beta(modifiers) * x_t``; only the treatment owns an edge."""
+class VaryingCoefficientModule(ShiftModule, nn.Module):
+    """``VC`` — ``beta(modifiers) * x_t`` with ``beta(x) = beta0 + b_theta(x)``.
+
+    ``b_theta`` is deliberately small: one hidden layer by default. Its
+    weights carry an L2 ``penalty`` in the fitting objective (see ``l2``;
+    ``fit`` adds ``penalty * l2()`` on the total-NLL scale). ``beta0`` is not
+    penalized.
+
+    The output layer starts at zero, so ``beta(x)`` equals ``beta0`` exactly
+    at construction. The head therefore learns only the deviation from a
+    constant effect, which makes the arm difference an estimate instead of a
+    by-product. The unpenalized reduced form ``CS(on, x...)`` reaches a
+    correlation of only about 0.5 against the true effect function (issue
+    #28). With ``n_features == 0`` there are no modifiers, there is no
+    network, and the term is exactly ``LS(on)``. Only the treatment owns an
+    edge.
+
+    Parameters
+    ----------
+    n_features : int
+        Width of the encoded modifier features. Use 0 for no modifiers.
+    penalty : float
+        L2 weight on ``b_theta``; the term class holds the default.
+    units : tuple[int, ...]
+        Hidden layers of ``b_theta``; the term class holds the default, one
+        layer of 16. That is the head ``tests/test_vc_term.py`` recovers a
+        known ``beta(x)`` with at corr ~ 0.99; this term has no counterpart in
+        the reference implementations, so the size comes from that
+        measurement.
+    activation : str
+        Key of ``ACTIVATIONS``.
+    batch_norm : bool
+        Normalize the hidden layers — see ``_nn``.
+
+    Notes
+    -----
+    A constant can move freely between ``beta0`` and ``b_theta``, so the split
+    is not identified by the likelihood alone. The penalty resolves it during
+    training, because it shrinks ``b_theta`` toward the zero function. After
+    training, ``recenter`` re-splits the two exactly: ``b_theta`` then sums to
+    zero over the training data, the GAM convention that
+    ``intercept_contributions`` also uses. Recentering is a reparameterization
+    through the ``center`` buffer and leaves the modelled function unchanged.
+    """
 
     data = VC
     scored = True
     order = 1
 
+    def __init__(
+        self,
+        n_features: int,
+        penalty: float,
+        units: tuple[int, ...],
+        activation: str,
+        batch_norm: bool,
+    ):
+        super().__init__()
+        self.penalty = float(penalty)
+        self.beta0 = nn.Parameter(torch.zeros(()))
+        self.register_buffer("center", torch.zeros(()))
+        if n_features > 0:
+            # zero-initialised output: beta(x) == beta0 at init
+            self.net = _nn(
+                n_features,
+                units,
+                1,
+                activation=activation,
+                batch_norm=batch_norm,
+                zero_init_last=True,
+            )
+        else:
+            self.net = None
+
+    def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
+        """Give the effect values ``beta(x)``, shape ``(n,)``.
+
+        ``mod_feats`` is ``None`` if, and only if, the term has no modifiers;
+        ``n`` is the batch size, used in that case.
+        """
+        if self.net is None:
+            return (self.beta0 - self.center).expand(n)
+        return self.beta0 + self.net(mod_feats).squeeze(-1) - self.center
+
+    def forward(self, t: Tensor, mod_feats: Tensor | None) -> Tensor:
+        """Give the shift ``beta(mod_feats) * t``, shape ``(n,)``.
+
+        ``t`` is the raw treatment column ``(n, 1)``, ``mod_feats`` the encoded
+        modifier features or ``None`` without modifiers.
+        """
+        return self.beta(mod_feats, t.shape[0]) * t.squeeze(-1)
+
+    def l2(self) -> Tensor:
+        """Sum the squared ``b_theta`` weights, the penalized quantity.
+
+        ``beta0`` is never included; 0 without modifiers.
+        """
+        if self.net is None:
+            return torch.zeros((), device=self.beta0.device, dtype=self.beta0.dtype)
+        return sum(p.pow(2).sum() for p in self.net.parameters())
+
+    @torch.no_grad()
+    def recenter(self, mod_feats: Tensor | None) -> None:
+        """Re-split ``beta0`` and ``b_theta`` so ``b_theta`` has mean zero.
+
+        The mean is taken over ``mod_feats``. The removed constant moves into
+        ``beta0``, so the modelled function does not change. Without
+        modifiers this does nothing.
+        """
+        if self.net is None:
+            return
+        delta = (self.net(mod_feats).squeeze(-1) - self.center).mean()
+        self.center += delta
+        self.beta0 += delta
+
     @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> VaryingCoefficientTerm:
+    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> VaryingCoefficientModule:
         """Build the effect head over the modifiers; keyed by the treatment name."""
         on, mods = term.parents[0], tuple(term.parents[1:])
         m = cls(
@@ -549,7 +858,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
         return list(flow.nodes[self.key].parents) if self.center_col else []
 
 
-class FnShiftTerm(ShiftTerm, nn.Module):
+class FnShiftModule(ShiftModule, nn.Module):
     """``Fn`` — a user-supplied shift function over the parent features.
 
     A plain function contributes a fixed (non-trained) offset; an
@@ -560,11 +869,11 @@ class FnShiftTerm(ShiftTerm, nn.Module):
     data = Fn
 
     def __init__(self, fn):
-        nn.Module.__init__(self)
+        super().__init__()
         self.fn = fn  # an nn.Module registers as a submodule here
 
     @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> FnShiftTerm:
+    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> FnShiftModule:
         """Wrap the callable; keyed like a CS ('a' or 'a+b')."""
         ps = tuple(term.parents)
         m = cls(term.fn)

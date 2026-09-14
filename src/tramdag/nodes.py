@@ -20,12 +20,12 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
+from .modules import module_for
 from .spec import (
     ContinuousNode,
     NodeSpec,
     node_parents,
 )
-from .terms import module_for
 from .transforms import (
     StandardLogistic,
     make_univariate_transform,

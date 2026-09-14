@@ -26,6 +26,7 @@ from torch import Tensor, nn
 
 from . import scores
 from .fitting import FitMixin
+from .modules import ShiftModule
 from .nodes import Node
 from .readouts import ReadoutsMixin
 from .spec import (
@@ -34,7 +35,6 @@ from .spec import (
     spec_to_dict,
     validate_and_sort,
 )
-from .terms import ShiftTerm
 from .transforms import (
     StandardLogistic,
     ordinal_pmf,
@@ -132,7 +132,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             if isinstance(m, nn.Linear):
                 _init_linear(m, init)
         for m in self.modules():
-            if isinstance(m, ShiftTerm):
+            if isinstance(m, ShiftModule):
                 m.post_init()
 
     @property
@@ -235,7 +235,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         The side columns join here, so every query that reaches a node's
         parameters gets them. A query that composed the call itself would drop
         a centered term's propensity column by omission, which is the failure
-        ``VaryingCoefficientTerm`` has to catch at run time.
+        ``VaryingCoefficientModule`` has to catch at run time.
 
         ``feats`` is passed in rather than derived, because a caller looping
         over the nodes encodes the parents once for all of them.
@@ -248,7 +248,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """Give the node's side columns: frozen from ``values``, else live.
 
         Training frames carry them as ordinary columns; queries recompute
-        them from the fitted flow (``ShiftTerm.live_side``).
+        them from the fitted flow (``ShiftModule.live_side``).
         """
         out = {}
         for m in nd.shifts.values():

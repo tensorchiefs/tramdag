@@ -22,7 +22,7 @@ import pytest
 import torch
 
 from tramdag import LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
-from tramdag.conditioners import ComplexIntercept, SimpleIntercept
+from tramdag.modules import ComplexInterceptModule, SimpleInterceptModule
 from tramdag.transforms import BernsteinUT, ordinal_marginal_init_theta, ordinal_pmf
 
 
@@ -72,8 +72,8 @@ def test_ordinal_marginal_init_reproduces_class_frequencies():
 def test_marginal_init_only_touches_unconditional_roots():
     flow, df = _mixed_flow_and_df()
     # sanity: the ci node really has a ComplexIntercept
-    assert isinstance(flow.nodes["x2"].intercept, ComplexIntercept)
-    assert isinstance(flow.nodes["x1"].intercept, SimpleIntercept)
+    assert isinstance(flow.nodes["x2"].intercept, ComplexInterceptModule)
+    assert isinstance(flow.nodes["x1"].intercept, SimpleInterceptModule)
 
     root_x1_before = flow.nodes["x1"].intercept.theta.detach().clone()
     root_y_before = flow.nodes["y"].intercept.theta.detach().clone()

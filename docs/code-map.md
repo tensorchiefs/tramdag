@@ -43,26 +43,6 @@ the same object, so `LS is LinearShift`.
 | [`ordinal_bounds()`][tramdag.transforms.ordinal_bounds] | The shifted cutpoint interval of each observed level. `scores.py` reads it for the latent-scale derivative. |
 | (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable `log(1-exp(x))`. |
 
-## `conditioners.py` — the networks behind the terms
-
-The default architectures replicate the PyTorch reference that this package
-grew out of, which is [buehlpa/TramDag](https://github.com/buehlpa/TramDag),
-file `tram_models.py`. Therefore a fitted model stays comparable to it.
-
-The defaults are **not** the TRAM-DAG paper's nets. The paper's R code uses
-`c(2, 25, 25, 2)` with sigmoid for the triangle experiments. It uses a 10-100
-tanh net for its CAREFL and VACA comparisons. Therefore each config in
-`experiments/paper/` states `units=` and `activation=` itself.
-
-| Name | Term | Role |
-|-------------------------|---------|------------------------------------------------------------------------------|
-| [`SimpleIntercept`][tramdag.conditioners.SimpleIntercept] | `I()` | Free parameter vector; no parents. |
-| [`ComplexIntercept`][tramdag.conditioners.ComplexIntercept] | `I(...)` | 8-8 ReLU NN from parent features to the transform parameters. |
-| [`LinearShift`][tramdag.conditioners.LinearShift] | `LS` | `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
-| [`ComplexShift`][tramdag.conditioners.ComplexShift] | `CS` | 64-128-64 ReLU NN to one shift value. |
-| [`VaryingCoef`][tramdag.conditioners.VaryingCoef] | `VC` | `beta0 + b_theta(mods)` with a zero-initialized output layer and the L2 hook `l2()`. `beta()` evaluates the effect, `recenter()` re-splits `beta0`/`b_theta` after training (function-preserving). |
-| (`_nn`) | — | The one NN builder: a stack of the given `units` with the term's `activation` (relu by default, optional `batch_norm` before it), then a bias-free output layer. |
-
 ## `flow.py` — the model
 
 | Name | Role |
@@ -90,20 +70,31 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 | (`_is_classical`) | Guard for `fit_classical`: every term's `classical` — `LS`, or a parentless `I()` transform carrier. |
 
 
-## `terms.py` — the term modules (the 1.0 architecture's core)
+## `modules.py` — the term modules (the 1.0 architecture's core)
 
 There is one module class per term. Each module class declares the `Term`
-subclass it builds (`data = CS`). For the contract diagram, see
-[architecture.md](architecture.md).
+subclass it builds (`data = CS`), holds the term's network and owns the runtime
+hooks. For the contract diagram, see [architecture.md](architecture.md).
+
+The default architectures replicate the PyTorch reference that this package
+grew out of, which is [buehlpa/TramDag](https://github.com/buehlpa/TramDag),
+file `tram_models.py`. Therefore a fitted model stays comparable to it. The
+defaults are **not** the TRAM-DAG paper's nets. The paper's R code uses
+`c(2, 25, 25, 2)` with sigmoid for the triangle experiments. It uses a 10-100
+tanh net for its CAREFL and VACA comparisons. Therefore each config in
+`experiments/paper/` states `units=` and `activation=` itself.
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`module_for()`][tramdag.terms.module_for] | The dispatch: a `TermDef` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
-| [`ShiftTerm`][tramdag.terms.ShiftTerm] / [`InterceptTerm`][tramdag.terms.InterceptTerm] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
-| [`LinearShiftTerm`][tramdag.terms.LinearShiftTerm] / [`ComplexShiftTerm`][tramdag.terms.ComplexShiftTerm] / [`VaryingCoefficientTerm`][tramdag.terms.VaryingCoefficientTerm] / [`FnShiftTerm`][tramdag.terms.FnShiftTerm] | The built-in shift terms, subclassing their conditioners (state-dict paths and the seeded RNG stream stay bit-stable). `VaryingCoefficientTerm.regressor` is both the forward regressor and the `beta0` score. |
-| [`SimpleInterceptTerm`][tramdag.terms.SimpleInterceptTerm] / [`ComplexInterceptTerm`][tramdag.terms.ComplexInterceptTerm] / [`AdditiveInterceptTerm`][tramdag.terms.AdditiveInterceptTerm] | The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
+| [`module_for()`][tramdag.modules.module_for] | The dispatch: a `TermModule` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
+| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
+| [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
+| [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: 64-128-64 ReLU NN to one shift value. |
+| [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: `beta0 + b_theta(mods)` with a zero-initialized output layer and the L2 hook `l2()`. `beta()` evaluates the effect, `recenter()` re-splits `beta0`/`b_theta` after training (function-preserving). `regressor` is both the forward regressor and the `beta0` score. |
+| [`FnShiftModule`][tramdag.modules.FnShiftModule] | `Fn`: a user-supplied shift function over the parent features. |
+| [`SimpleInterceptModule`][tramdag.modules.SimpleInterceptModule] / [`ComplexInterceptModule`][tramdag.modules.ComplexInterceptModule] / [`AdditiveInterceptModule`][tramdag.modules.AdditiveInterceptModule] | The intercept slot: free theta (`I()`), one joint 8-8 ReLU net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
+| (`_nn`) | The one NN builder: a stack of the given `units` with the term's `activation` (optional `batch_norm` before it), then a bias-free output layer. |
 | (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
-
 ## `nodes.py` — the node model
 
 | Name | Role |

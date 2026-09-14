@@ -1,6 +1,6 @@
 """The internal node model: one sub-model per variable.
 
-`_Node` bundles a variable's intercept (transform parameters), monotone
+`Node` bundles a variable's intercept (transform parameters), monotone
 transform and shift modules; `CausalFlowDAG` holds one per node and the DAG
 lives in which parents each node reads.
 
@@ -53,7 +53,10 @@ def _init_linear(m: nn.Linear, init: str) -> None:
 # The ONLY continuous-vs-ordinal branches of the package live in these four
 # adjacent functions. A third node kind earns a protocol; two stay an if/else
 # in one place.
-def kind_log_prob(node: _Node, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
+
+
+# TODO: what dos the kind prefix stand for:explain and cosider dropping it
+def kind_log_prob(node: Node, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
     """``log p(x | pa)`` from one node's transform parameters and shift."""
     if node.kind == "continuous":
         u0, ladj = node.ut.forward(theta, x)
@@ -61,7 +64,7 @@ def kind_log_prob(node: _Node, theta: Tensor, shift: Tensor, x: Tensor) -> Tenso
     return ordinal_log_prob(theta, shift, x)
 
 
-def kind_sample(node: _Node, theta: Tensor, shift: Tensor, u: Tensor) -> Tensor:
+def kind_sample(node: Node, theta: Tensor, shift: Tensor, u: Tensor) -> Tensor:
     """Push one node's latent ``u`` forward to an observed value."""
     if node.kind == "continuous":
         return node.ut.inverse(theta, u - shift)
@@ -69,7 +72,7 @@ def kind_sample(node: _Node, theta: Tensor, shift: Tensor, u: Tensor) -> Tensor:
 
 
 def kind_abduct(
-    node: _Node, theta: Tensor, shift: Tensor, x: Tensor, generator=None
+    node: Node, theta: Tensor, shift: Tensor, x: Tensor, generator=None
 ) -> Tensor:
     """Recover one node's latent: exact (continuous) or truncated-sampled (ordinal)."""
     if node.kind == "continuous":
@@ -78,7 +81,7 @@ def kind_abduct(
     return ordinal_abduct(theta, shift, x, generator=generator)
 
 
-def kind_marginal_theta(node: _Node, column: np.ndarray):
+def kind_marginal_theta(node: Node, column: np.ndarray):
     """Give the marginal-start theta of a simple intercept, or ``None``.
 
     Ordinal: the empirical class log-odds. Continuous: the transform's own
@@ -92,7 +95,8 @@ def kind_marginal_theta(node: _Node, column: np.ndarray):
 
 
 # %% private classes -------------------------------------------------------------------
-class _Node(nn.Module):
+# TODO: should not be private
+class Node(nn.Module):
     """One dimension of the flow: an intercept plus additive shift terms.
 
     The intercept produces the transform parameters ``theta``. The shift
@@ -124,6 +128,8 @@ class _Node(nn.Module):
             n_params = node.levels - 1
         # the intercept module decides its own shape: the free theta_0, one joint
         # net, or one net per parent summed in coefficient space
+        # TODO: use generic helper for input. why is there a build fn needed:
+        # refactor as __init__?
         self.intercept = module_for(terms[0]).build(terms[0], spec, n_params)
         # one module per shift term, built in formula order (the seeded RNG
         # stream is pinned to it); each names its own key: the parent, "a+b"

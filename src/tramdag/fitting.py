@@ -280,8 +280,6 @@ class _FitMixin:
         val_vals = (
             self._tensorize(validation_data) if validation_data is not None else None
         )
-        # callbacks read this: no stale history["val"] entry from an earlier fit
-        self._fit_validated = val_vals is not None
         opt = optimizer or torch.optim.Adam(self.parameters(), lr=learning_rate)
         penalized = [
             m
@@ -396,10 +394,6 @@ class _FitMixin:
                 "flexible models."
             )
         self.calibrate(train_df)
-        # a callback used manually afterwards must not read a pre-classical
-        # validation entry as current — this fit computes none
-        self._fit_validated = False
-
         self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
         t0 = time.perf_counter()
         try:

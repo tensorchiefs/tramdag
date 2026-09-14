@@ -186,17 +186,6 @@ def _legend(ax, names: set[str]) -> None:
         )
 
 
-def _freezes(rates: list) -> dict[str, int]:
-    """Give ``{node: epoch}`` of the first zero rate per node in ``history["lr"]``."""
-    frozen: dict[str, int] = {}
-    for epoch, entry in enumerate(rates, start=1):
-        if isinstance(entry, dict):
-            for node, lr in entry.items():
-                if lr == 0.0 and node not in frozen:
-                    frozen[node] = epoch
-    return frozen
-
-
 def _finish(fig, path) -> None:
     fig.tight_layout()
     if path is not None:
@@ -344,11 +333,9 @@ def plot_training(flow, *, frozen=None, path=None):
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
     frozen : dict[str, int] | None, optional
-        ``{node: epoch}`` of the freezes, each a dashed mark. By default read
-        off ``flow.history["lr"]`` (the first epoch a node's rate is 0, when
-        the optimizer had per-node groups); a
-        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] records the same
-        dict as its ``frozen``.
+        ``{node: epoch}`` of the freezes, each a dashed mark; a
+        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] records that dict
+        as its ``frozen``. By default no marks.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
 
@@ -376,10 +363,8 @@ def plot_training(flow, *, frozen=None, path=None):
     hi = max(c[len(c) // 10] for _, c in curves.values())
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
-    if frozen is None:
-        frozen = _freezes(hist.get("lr", []))
     # after the zoom, so the annotations hang from the visible top
-    for name, epoch in sorted(frozen.items(), key=lambda kv: kv[1]):
+    for name, epoch in sorted((frozen or {}).items(), key=lambda kv: kv[1]):
         ax.axvline(epoch, ls="--", lw=1, color="gray")
         ax.annotate(
             f" {name} frozen",

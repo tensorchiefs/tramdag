@@ -101,7 +101,7 @@ subclass it builds (`data = CS`). For the contract diagram, see
 | [`module_for()`][tramdag.terms.module_for] | The dispatch: a `TermDef` subclass declaring `data = <Term subclass>` stamps itself onto that class as `module` when defined, so subclassing is the registration; a term class no module declares fails by name. |
 | [`ShiftTerm`][tramdag.terms.ShiftTerm] / [`InterceptTerm`][tramdag.terms.InterceptTerm] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract; `data` names the `Term` subclass it builds. |
 | [`LinearShiftTerm`][tramdag.terms.LinearShiftTerm] / [`ComplexShiftTerm`][tramdag.terms.ComplexShiftTerm] / [`VaryingCoefficientTerm`][tramdag.terms.VaryingCoefficientTerm] / [`FnShiftTerm`][tramdag.terms.FnShiftTerm] | The built-in shift terms, subclassing their conditioners (state-dict paths and the seeded RNG stream stay bit-stable). `VaryingCoefficientTerm.regressor` is both the forward regressor and the `beta0` score. |
-| [`SimpleInterceptTerm`][tramdag.terms.SimpleInterceptTerm] / [`ComplexInterceptTerm`][tramdag.terms.ComplexInterceptTerm] / [`AdditiveInterceptTerm`][tramdag.terms.AdditiveInterceptTerm] | The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. `net_groups` gives the per-group networks a read-out needs. |
+| [`SimpleInterceptTerm`][tramdag.terms.SimpleInterceptTerm] / [`ComplexInterceptTerm`][tramdag.terms.ComplexInterceptTerm] / [`AdditiveInterceptTerm`][tramdag.terms.AdditiveInterceptTerm] | The intercept slot: free theta, one joint net, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
 | (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
 
 ## `nodes.py` — the node model
@@ -149,7 +149,7 @@ subclass it builds (`data = CS`). For the contract diagram, see
 |----------------------------------|------------------------------------------------------------------------------|
 | [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers / Fn, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
 | [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each. |
-| [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with the freeze marks read off `history["lr"]` (or a given `frozen=`). |
+| [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with a dashed mark per `frozen=` entry. |
 | (`_layout`, `_term_edges`) | Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split. matplotlib is imported on the first call, never at package import. |
 
 ## What is *not* in the package

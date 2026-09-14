@@ -390,6 +390,14 @@ read-outs keep their exact signatures as flow methods.
   anyway; and the node-name prefix `spec_from_dict` stitched onto a term's
   own error — the term's `ValueError` and Python's `TypeError` naming the
   keyword now propagate as they are.
+- **Six small mechanisms.** `plot_training` no longer infers freeze epochs
+  from `history["lr"]`; pass `frozen=plateau.frozen`. A callback checks that
+  the last validation entry belongs to the last train epoch through
+  `history["val_epoch"]`, so the flow carries no `_fit_validated` flag.
+  `EarlyStopping` has one "nothing to restore" message. The intercept
+  modules have no `net_groups` property; the additive one holds its nets in
+  `nets`. `Term + list` is gone (`list + Term` stays, it is how a `+` chain
+  grows). `spec_from_dict` passes an empty term list straight through.
 
 ### Added — `tramdag.plots` (optional extra `tramdag[plots]`)
 
@@ -812,6 +820,8 @@ read-outs keep their exact signatures as flow methods.
 - **`experiments/paper/helpers.py`**: the per-epoch coefficient read-out is
   `fit(callbacks=)` inside one `fit_paper(generator, spec, config, out,
   record)` call. There is no chunked or snapshotting fit helper any more.
+- `nodes._Node` is `nodes.Node`: the flow's per-variable module is part of the
+  internal-but-stable surface its own docstring lists, so it is not private.
 
 ### Fixed
 

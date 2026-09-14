@@ -10,15 +10,34 @@ result is recorded.
 ### Changed (breaking) — a term is a class, and the registry is gone
 
 - `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient` and
-  `FnShift` are the terms: frozen dataclasses with the paper's symbols `I`,
+  `FnShift` are the terms: plain classes with the paper's symbols `I`,
   `LS`, `CS`, `VC`, `Fn` as aliases, not constructor functions that return one
   string-tagged `Term`. `SI()` and `CI()` are the arity-checked intercept
   spellings. There are no snake_case names.
-- Options are typed fields with defaults. An option the term does not take
-  fails at construction, so a hand-built or serialized term can no longer
-  carry a foreign key. `Term.options` (the canonical pairs) and
-  `Term.__getattr__` are gone, and `term.options()` gives the non-default
-  options.
+- **Options are the keyword arguments of each term's `__init__`, with their
+  real defaults, stated once.** An option the term does not take fails at
+  construction as Python's own `TypeError`, naming the keyword, so a
+  hand-built or serialized term cannot carry a foreign key; `spec_from_dict`
+  adds the node name to it. Each subclass assigns its options to `self`, so a
+  term is exactly its `__dict__`: `term.options()` is `dict(vars(term))`, the
+  parents included, and equality, `__repr__` and serialization are one line
+  each. There is one `__repr__`, on `Term`, naming every entry as
+  `name=value` — so a keyword-only parent such as a `VC` treatment needs no
+  spelling of its own. `Term.options` (the canonical pairs), `Term.__getattr__`
+  and `Term.net_options()` are gone; a build site names the three network
+  settings it passes to its conditioner.
+- **`spec_to_dict` writes every option**, not only those differing from a
+  default, so a serialized spec describes the model in full and does not depend
+  on what the defaults happen to be today. A hand-written spec may still name
+  only the options it cares about — the constructor fills the rest — so
+  existing YAML specs and older checkpoints load unchanged. `units` and the
+  other tuple options serialize as lists; `transform_kwargs` is a plain
+  mapping.
+- The conditioner widths and activation are defaults of the term classes now,
+  not of the conditioner constructors: `I(units=(8, 8))`,
+  `CS(units=(64, 128, 64))`, `VC(units=(16,))`, `activation="relu"`. Each is
+  written in exactly one signature, and `conditioners.DEFAULT_ACTIVATION` is
+  gone with the `units or (...)` fallbacks.
 - A serialized term is keyed `term:`, not `effect:`, and the class variable
   holding the symbol is `Term.name`, not `Term.effect`. The word "effect"
   named two things, the causal quantity the model estimates and the kind of a
@@ -27,8 +46,10 @@ result is recorded.
   registry are removed: a module class declares `data = <Term subclass>` and
   `module_for(term)` finds it, so subclassing is the whole registration.
 - The spec-level hooks `check_arity`, `edge_parents`, `cells`,
-  `term_is_classical` and `option_defaults` moved onto the term classes as
-  `__post_init__`, `edge_parents`, `cells`, `classical` and fields.
+  `term_is_classical` and `option_defaults` moved onto the term classes as the
+  checks in `__init__`, `edge_parents`, `cells`, `classical` and the
+  constructor's own keyword arguments. `Term.cell_tag` is gone: `cells()` takes
+  the tag, and `Intercept` passes `"CI"`.
 - `ShiftTerm` slims down. Six paired flags and hooks become one each:
 
   - `regularizer()` returns `None` instead of pairing with `has_regularizer`,
@@ -38,13 +59,14 @@ result is recorded.
   - `net_parents` is gone, because nothing read it,
   - the node sets `parents` after `build`, so a custom `build` sets `key` only,
   - the summation order is the `order` class attribute, not an `isinstance`
-    check.
+    check,
+  - `build`, `shift_value` and `theta_value` are `@abstractmethod`s, so a term
+    module that forgets one fails when it is built, not when it is evaluated.
 - `term(effect, *parents)`, the string-label factory, is removed. It was a
   second and weaker way to build a term, and a generic dispatcher carrying one
   term's parameter is the shape this release removed from `Term` itself. When
   the term type comes from config or the CLI, hold the constructor in the
-  table: `{"Age": I, "NIHSSa": CS}`, then `t["Age"]("Age")` (see
-  `experiments/paper/helpers.py::shift_term`).
+  table: `{"Age": I, "NIHSSa": CS}`, then `t["Age"]("Age")`.
 - `Term.slot` is removed. It was derived from the term kind, and its only user
   in the repository was a test assertion.
 - The ADR 001 refusal of per-term classes is revised in place.
@@ -80,10 +102,6 @@ result is recorded.
   `I(n_coeffs=40)`), and a written-out keyword still wins over the same key
   inside a serialized `transform_kwargs` mapping. `CS`, `VC` and `Fn` are
   untouched.
-- `Term.__init_subclass__` refuses a term whose `__init__` default disagrees
-  with its field default. Without that check the disagreement would silently
-  change what `Term.options()` writes into a checkpoint, and a round-trip test
-  cannot see it, because both sides of the round trip carry the same drift.
 - `allow_interaction=False` makes a multi-parent intercept additive: one net
   per parent, their coefficient vectors summed, written
   `CI("a", "b", allow_interaction=False)`. A node takes at most one intercept

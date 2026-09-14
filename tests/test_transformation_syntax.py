@@ -294,8 +294,12 @@ def test_spec_survives_a_json_roundtrip():
 
 
 def test_wrong_term_option_errors_instead_of_defaulting():
-    """A key another term takes raises — no silent foreign defaults."""
-    with pytest.raises(ValueError, match="takes no option"):
+    """A key another term takes raises — no silent foreign defaults.
+
+    The options are the constructor's keyword arguments, so argument binding
+    is the check and the refusal is Python's own TypeError.
+    """
+    with pytest.raises(TypeError, match="unexpected keyword argument 'penalty'"):
         CS("a", penalty=1.0)  # penalty is VC's
     with pytest.raises(AttributeError):
         _ = LS("x").penalty  # reading a foreign option refuses too
@@ -314,8 +318,8 @@ def test_wrong_term_option_errors_instead_of_defaulting():
     }
     from tramdag import spec_from_dict
 
-    with pytest.raises(ValueError, match="takes no option"):
-        spec_from_dict(d)
+    with pytest.raises(TypeError, match=r"node 'y'.*'pnealty'"):
+        spec_from_dict(d)  # ... and the node name is added on the way out
 
 
 def test_transform_accepts_a_custom_class():
@@ -344,7 +348,7 @@ def test_ls_takes_no_input_transform():
     """An LS weight is the raw-unit coefficient: the option is not one it takes,
     written or serialized.
     """
-    with pytest.raises(ValueError, match="takes no option"):
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
         LS("a", input_transform="minmax")
     d = {
         "a": {"kind": "continuous", "terms": []},
@@ -359,5 +363,5 @@ def test_ls_takes_no_input_transform():
             ],
         },
     }
-    with pytest.raises(ValueError, match="takes no option"):
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
         spec_from_dict(d)

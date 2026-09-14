@@ -399,7 +399,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             node = self.nodes[name]
             if node.kind == "ordinal":
                 self._check_level_values(name, train_df[name].to_numpy())
-            node.intercept.calibrate(train_df, own=train_df[name], ut=node.ut)
+            node.intercept.calibrate_intercept(train_df, train_df[name], node.ut)
             for term in node.shifts.values():
                 term.calibrate(train_df)
         self.calibrated.fill_(True)

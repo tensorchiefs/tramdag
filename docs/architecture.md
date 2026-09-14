@@ -51,11 +51,12 @@ mixins that `CausalFlowDAG` composes. They import `flow` under
 ```mermaid
 classDiagram
     class Term {
-        <<spec.py, frozen data>>
+        <<spec.py, plain data>>
         parents
         name: the class name
-        option fields with defaults
-        __post_init__(): arity, option values
+        __init__(*parents): the base assigns the parents
+        options: each subclass's keyword arguments, assigned to self
+        __repr__(): the only one — every entry as name=value
         edge_parents(name, spec)
         cells()
         classical
@@ -78,12 +79,13 @@ classDiagram
         post_init()
         regularizer() -> Tensor | None
         finalize(node, feats)
-        score_columns(node, flow, feats, dlds, ehat)
+        score_columns(node, flow, feats, dlds)
         side_columns() / check_column() / live_side() / extra_columns()
     }
     class InterceptTerm {
         groups / ci_parents
         build(term, spec, n_params)
+        calibrate_intercept(train_df, own, ut)
         theta_value(node, feats, n)
         marginal_start(theta)
     }
@@ -108,8 +110,9 @@ Built-in terms subclass their conditioners. Therefore the state-dict paths
 
 A custom term is two classes:
 
-- a `tramdag.Term` subclass. Its annotated attributes are the options. Its
-  rules are `__post_init__`, `edge_parents` and `cells`.
+- a `tramdag.Term` subclass. Its options are the keyword arguments of its
+  `__init__`, assigned to `self` after `super().__init__(*parents)`; its rules
+  are the checks after that, plus `edge_parents` and `cells`.
 - a `ShiftTerm` subclass. It declares `data =` that class. It implements
   `build` and `shift_value`. The `build` method must set `key`.
 
@@ -322,8 +325,8 @@ classDiagram
 flowchart LR
   subgraph conditioners
     n0["ComplexShift.__init__"]
-    n25["LinearShift.__init__"]
-    n24["SimpleIntercept.__init__"]
+    n24["LinearShift.__init__"]
+    n23["SimpleIntercept.__init__"]
     n2["VaryingCoef.__init__"]
     n1["_nn"]
   end
@@ -338,11 +341,10 @@ flowchart LR
   end
   subgraph spec
     n18["Term.edge_parents"]
-    n21["Term.net_options"]
     n19["VaryingCoefficient.edge_parents"]
     n17["_check_node"]
     n20["_kahn_sort"]
-    n22["feat_width"]
+    n21["feat_width"]
     n9["node_parents"]
     n6["validate_and_sort"]
   end
@@ -351,13 +353,13 @@ flowchart LR
     n12["InterceptTerm.build"]
     n15["LinearShiftTerm.build"]
     n16["VaryingCoefficientTerm.build"]
-    n23["_attach_input_transform"]
+    n22["_attach_input_transform"]
     n13["module_for"]
   end
   subgraph transforms
-    n26["BernsteinUT.__init__"]
+    n25["BernsteinUT.__init__"]
     n10["BernsteinUT.n_params"]
-    n27["_ScaledUT.__init__"]
+    n26["_ScaledUT.__init__"]
     n11["make_univariate_transform"]
   end
     n0 --> n1
@@ -384,16 +386,14 @@ flowchart LR
     n14 --> n0
     n14 --> n21
     n14 --> n22
-    n14 --> n23
-    n12 -- "3x" --> n24
-    n15 --> n25
-    n15 --> n22
+    n12 -- "3x" --> n23
+    n15 --> n24
+    n15 --> n21
     n16 --> n2
     n16 --> n21
     n16 --> n22
-    n16 --> n23
-    n26 -- "2x" --> n27
-    n11 -- "2x" --> n26
+    n25 -- "2x" --> n26
+    n11 -- "2x" --> n25
 ```
 
 ### Call graph — one fit (traced)
@@ -450,7 +450,7 @@ flowchart LR
   end
   subgraph terms
     n42["ComplexShiftTerm.shift_value"]
-    n37["InterceptTerm.calibrate"]
+    n37["InterceptTerm.calibrate_intercept"]
     n43["LinearShiftTerm.shift_value"]
     n30["ShiftTerm.finalize"]
     n19["ShiftTerm.regularizer"]

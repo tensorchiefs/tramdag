@@ -80,10 +80,10 @@ def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
     term = SLS("x1", scale=3.0)
     assert module_for(term) is _ScaledLS
     assert term.name == "SLS"
-    assert repr(term) == "SLS('x1', scale=3.0)"
+    assert repr(term) == "SLS(parents=('x1',), scale=3.0)"
     with pytest.raises(ValueError, match="exactly one parent"):
         SLS("x1", "x2")
-    with pytest.raises(ValueError, match="takes no option"):
+    with pytest.raises(TypeError, match="unexpected keyword argument 'scael'"):
         SLS("x1", scael=3.0)
     flow = CausalFlowDAG(_two_node(term), seed=0)
     flow.fit(df, epochs=10, batch_size=200, learning_rate=1e-1)
@@ -130,22 +130,13 @@ def test_shift_curve_covers_fn_terms(ls_chain):
     )
 
 
-def test_a_subclass_cannot_turn_the_term_name_into_an_option():
-    """``name`` is the term's identity; annotating it would shadow it."""
-    with pytest.raises(TypeError, match="not an option"):
-
-        class Named(Term):
-            name: str = "whatever"
-
-
 # %% private classes -------------------------------------------------------------------
 class SLS(Term):
     """A minimal custom term: ``w * x`` with a fixed scale option."""
 
-    scale: float = 1.0
-
-    def __post_init__(self):
-        """One parent, like LS."""
+    def __init__(self, *parents, scale: float = 1.0):
+        super().__init__(*parents)
+        self.scale = scale
         if len(self.parents) != 1:
             raise ValueError("SLS() takes exactly one parent.")
 

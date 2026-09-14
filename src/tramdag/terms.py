@@ -1,7 +1,7 @@
 """The term modules: one class per term, built from the term's spec class.
 
 A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``,
-``Fn``, ``I``) is frozen data and carries the spec-level rules; the module
+``Fn``, ``I``) is plain data and carries the spec-level rules; the module
 here declares which term class it builds (``data = CS``) and owns the
 runtime behaviour: ``build``, ``shift_value``/``theta_value``,
 ``post_init``, ``regularizer``, ``finalize``, ``score_columns`` and the
@@ -16,6 +16,7 @@ A custom term is two classes: a ``Term`` subclass for the options and checks, an
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
@@ -55,7 +56,7 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
     Ordinal one-hots pass through untransformed, so a term whose network
     parents are all ordinal carries none.
     """
-    if term.input_transform is None:
+    if getattr(term, "input_transform", None) is None:
         return
     cps = tuple(p for p in parents if isinstance(spec[p], ContinuousNode))
     if cps:
@@ -163,9 +164,9 @@ class TermDef:
         """Freeze this term's data-dependent state: the input-transform stats.
 
         ``CausalFlowDAG.calibrate`` calls this once per term; a term without
-        an ``input_transform`` has nothing to freeze. The intercept slot
-        overrides it with two extra arguments (its node's own column and
-        transform), which the flow passes only there.
+        an ``input_transform`` has nothing to freeze. The intercept slot has a
+        second step on top of this one — see
+        [`calibrate_intercept`][tramdag.terms.InterceptTerm.calibrate_intercept].
         """
         tr = self.input_transform
         if tr is None:
@@ -180,7 +181,7 @@ class TermDef:
         tr.set_stats(cols)
 
 
-class ShiftTerm(TermDef):
+class ShiftTerm(TermDef, ABC):
     """A shift term's behavior hooks, mixed into its conditioner.
 
     A built term instance carries ``key`` (its ModuleDict key, set by
@@ -198,10 +199,11 @@ class ShiftTerm(TermDef):
     parents: tuple
 
     @classmethod
+    @abstractmethod
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ShiftTerm:
         """Construct the term module from its spec Term."""
-        raise NotImplementedError
 
+    @abstractmethod
     def shift_value(self, node: _Node, feats: dict) -> Tensor:
         """Give this term's contribution to the node's shift, shape ``(n,)``.
 
@@ -209,7 +211,6 @@ class ShiftTerm(TermDef):
         columns (frozen from the data frame during training, injected live
         by the flow at query time).
         """
-        raise NotImplementedError
 
     def post_init(self) -> None:
         """Re-apply construction-time invariants after a global weight init."""
@@ -248,7 +249,7 @@ class ShiftTerm(TermDef):
         return []
 
 
-class InterceptTerm(TermDef):
+class InterceptTerm(TermDef, ABC):
     """The intercept slot's behavior hooks, mixed into its module.
 
     A node has exactly one intercept term (normalization guarantees
@@ -286,24 +287,34 @@ class InterceptTerm(TermDef):
         )
         if len(groups) == 1:
             m = ComplexInterceptTerm(
-                feat_width(spec, groups[0]), n_params, **term.net_options()
+                feat_width(spec, groups[0]),
+                n_params,
+                units=term.units,
+                activation=term.activation,
+                batch_norm=term.batch_norm,
             )
         else:  # additive intercept: one net per parent, coefficients summed
-            m = AdditiveInterceptTerm(groups, n_params, spec, term.net_options())
+            net_options = {
+                "units": term.units,
+                "activation": term.activation,
+                "batch_norm": term.batch_norm,
+            }
+            m = AdditiveInterceptTerm(groups, n_params, spec, net_options)
         m.groups = groups
         m.ci_parents = [p for grp in groups for p in grp]
         _attach_input_transform(m, term, tuple(term.parents), spec)
         return m
 
-    def calibrate(self, train_df: pd.DataFrame, own=None, ut=None) -> None:
+    def calibrate_intercept(self, train_df: pd.DataFrame, own, ut) -> None:
         """Freeze the input stats and set the transform's domain, once.
 
-        ``own`` is the node's own training column and ``ut`` its monotone
-        transform (``None`` for ordinal nodes — cutpoints have no domain):
-        the train ``range_q``/``1 - range_q`` quantiles map onto the
-        pre-scaled domain.
+        The intercept slot calibrates one thing more than every other term, so
+        it says so in its own name rather than widening ``calibrate``: ``own``
+        is the node's training column and ``ut`` its monotone transform
+        (``None`` for an ordinal node — cutpoints have no domain), whose
+        ``range_q``/``1 - range_q`` quantiles map onto the pre-scaled domain.
         """
-        super().calibrate(train_df)
+        self.calibrate(train_df)
         if ut is None:
             return
         q = own.quantile([ut.range_q, 1.0 - ut.range_q])
@@ -316,9 +327,9 @@ class InterceptTerm(TermDef):
             )
         ut.set_range(q.iloc[0], q.iloc[1])
 
+    @abstractmethod
     def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
         """Give the transform parameters, shape ``(n, P)``."""
-        raise NotImplementedError
 
     def marginal_start(self, theta: Tensor) -> None:
         """Set the calibrated marginal start; only a free intercept has one."""
@@ -412,7 +423,12 @@ class ComplexShiftTerm(ShiftTerm, ComplexShift):
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftTerm:
         """One net over the concatenated parents; keyed 'a' or 'a+b'."""
         ps = tuple(term.parents)
-        m = cls(feat_width(spec, ps), **term.net_options())
+        m = cls(
+            feat_width(spec, ps),
+            units=term.units,
+            activation=term.activation,
+            batch_norm=term.batch_norm,
+        )
         m.key = "+".join(ps)  # the parent itself for a single-parent term
         _attach_input_transform(m, term, ps, spec)
         return m
@@ -433,7 +449,13 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
     def build(cls, term: Term, spec: dict[str, NodeSpec]) -> VaryingCoefficientTerm:
         """Build the effect head over the modifiers; keyed by the treatment name."""
         on, mods = term.parents[0], tuple(term.parents[1:])
-        m = cls(feat_width(spec, mods), penalty=term.penalty, **term.net_options())
+        m = cls(
+            feat_width(spec, mods),
+            penalty=term.penalty,
+            units=term.units,
+            activation=term.activation,
+            batch_norm=term.batch_norm,
+        )
         m.key = on
         m.mods = mods
         m.on_is_ord = isinstance(spec[on], OrdinalNode)

@@ -69,6 +69,9 @@ prognostically through the shift *and* modifies the treatment effect.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import importlib
+import sys
+
 # %% global variables ------------------------------------------------------------------
 # why bernstein and not spline: the `transform` parameter of Intercept
 DEFAULT_TRANSFORM = "bernstein"
@@ -76,31 +79,38 @@ INPUT_TRANSFORMS = ("minmax", "standardize")
 
 
 # %% private functions -----------------------------------------------------------------
-def _subclasses(cls) -> list[type]:
-    """Give every subclass of ``cls``, transitively, in definition order."""
-    out = []
-    for sub in cls.__subclasses__():
-        out.append(sub)
-        out.extend(_subclasses(sub))
-    return out
-
-
 def _term_class(name: str) -> type[Term]:
-    """Give the [`Term`][] subclass carrying this ``name``.
+    """Give the term class a serialized ``term:`` entry names.
+
+    A bare name is an attribute of this module: the paper's symbols and the
+    class names. A dotted path ``my.pkg.module.ClassName`` is imported, which
+    is how a custom term travels through a checkpoint.
 
     Raises
     ------
     ValueError
-        If no term class carries the name — a custom term must be
-        imported before a spec naming it is loaded.
+        If the name resolves to nothing, or to something that is not a
+        [`Term`][] subclass.
     """
-    for cls in _subclasses(Term):
-        if cls.name == name:
-            return cls
-    raise ValueError(
-        f"unknown term '{name}'. A custom term is a tramdag.Term "
-        "subclass; import it before the spec is built or loaded."
-    )
+    module_name, _, attr = name.rpartition(".")
+    try:
+        module = (
+            importlib.import_module(module_name)
+            if module_name
+            else sys.modules[__name__]
+        )
+        cls = getattr(module, attr)
+    except (ImportError, AttributeError) as err:
+        raise ValueError(
+            f"unknown term '{name}'. A custom term serializes as its import "
+            "path, module.ClassName, and that module must be importable here."
+        ) from err
+    if not (isinstance(cls, type) and issubclass(cls, Term)):
+        # a domain error (a wrong serialized entry), not a Python type error
+        raise ValueError(  # noqa: TRY004
+            f"unknown term '{name}': it is not a tramdag.Term subclass."
+        )
+    return cls
 
 
 def _serialized(term: Term) -> dict:
@@ -108,12 +118,15 @@ def _serialized(term: Term) -> dict:
 
     ``parents`` is the one entry the wire keeps out of ``options``: it is a
     positional argument of every term constructor, and a hand-written spec
-    names it that way.
+    names it that way. A term of this module is written by its name; any
+    other class by its import path, ``module.ClassName``.
     """
     options = term.options()
     parents = options.pop("parents")
+    cls = type(term)
+    is_builtin = getattr(sys.modules[__name__], term.name, None) is cls
     return {
-        "term": term.name,
+        "term": term.name if is_builtin else f"{cls.__module__}.{cls.__name__}",
         "parents": list(parents),
         "options": {
             k: list(v) if isinstance(v, tuple) else v for k, v in options.items()
@@ -379,6 +392,11 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     ``torch.save`` — except when a term carries a *callable*
     (``input_transform``, ``fn``), which serializes only through pickle
     (``torch.save``) and only as a module-level function.
+
+    A custom term is written as its import path, ``module.ClassName``, and
+    [`spec_from_dict`][] imports it from there. The class must be defined at
+    module level; one defined in ``__main__`` (a script, a notebook cell)
+    loads in the same process only.
 
     Parameters
     ----------

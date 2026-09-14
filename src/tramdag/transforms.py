@@ -357,7 +357,7 @@ class _ScaledUT(torch.nn.Module, ABC):
         self.register_buffer("xmin", torch.tensor(0.0))
         self.register_buffer("xmax", torch.tensor(1.0))
 
-    def marginal_init_theta(self, column: np.ndarray | None = None) -> Tensor | None:
+    def marginal_init_theta(self, column: np.ndarray | None) -> Tensor | None:
         """Give the calibrated marginal start, or ``None`` — no such start.
 
         ``BernsteinUT`` overrides with its empirical-marginal start; a
@@ -366,7 +366,7 @@ class _ScaledUT(torch.nn.Module, ABC):
 
         Parameters
         ----------
-        column : numpy.ndarray | None, optional
+        column : numpy.ndarray | None
             The node's raw training column. ``None`` asks for the
             data-free start.
         """
@@ -536,7 +536,7 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
-    def marginal_init_theta(self, column: np.ndarray | None = None) -> Tensor:
+    def marginal_init_theta(self, column: np.ndarray | None) -> Tensor:
         """Give the unconstrained Bernstein coefficients of the marginal start.
 
         With ``column`` the control points follow the node's **empirical

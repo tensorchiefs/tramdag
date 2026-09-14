@@ -82,22 +82,16 @@ def _layout(spec: dict[str, NodeSpec]) -> tuple[dict[str, tuple[float, float]], 
 
 
 def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
-    """Give ``(parent, child, term_name, joint)`` for the edges one term owns.
+    """Give ``(parent, child, label, joint)`` for the edges one term owns.
 
     Read off the term's adjacency ``cells``: the tag is the term name (``CI``
-    for an intercept edge, ``VCm`` for a VC modifier), with the parent group
-    appended for a multi-parent net — that suffix marks a ``joint`` edge.
-
-    Do not replace the suffix test with the term's parent count. Arity is not
-    jointness: a ``VC`` term has a treatment plus its modifiers, and it is not
-    one joint network over them, so ``VaryingCoefficient.cells`` deliberately
-    appends no suffix. ``cells`` is the per-term authority here.
+    for an intercept edge, ``VCm`` for a VC modifier) and ``joint`` is the
+    term's own answer — ``cells`` is the per-term authority here.
     """
-    edges = []
-    for parent, tag in term.cells():
-        name, joint = tag.split("[")[0], "[" in tag
-        edges.append((parent, child, EDGE_LABEL.get(name, name), joint))
-    return edges
+    return [
+        (parent, child, EDGE_LABEL.get(tag, tag), joint)
+        for parent, tag, joint in term.cells()
+    ]
 
 
 def _draw_node(ax, name: str, node: NodeSpec, xy: tuple[float, float]):
@@ -349,11 +343,12 @@ def plot_training(flow, *, frozen=None, path=None):
     ----------
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
-    frozen : dict[str, int] | PerNodePlateau | None, optional
+    frozen : dict[str, int] | None, optional
         ``{node: epoch}`` of the freezes, each a dashed mark. By default read
         off ``flow.history["lr"]`` (the first epoch a node's rate is 0, when
-        the optimizer had per-node groups); pass a dict, or the
-        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] whose ``frozen`` to use.
+        the optimizer had per-node groups); a
+        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] records the same
+        dict as its ``frozen``.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
 
@@ -381,7 +376,6 @@ def plot_training(flow, *, frozen=None, path=None):
     hi = max(c[len(c) // 10] for _, c in curves.values())
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
-    frozen = getattr(frozen, "frozen", frozen)
     if frozen is None:
         frozen = _freezes(hist.get("lr", []))
     # after the zoom, so the annotations hang from the visible top

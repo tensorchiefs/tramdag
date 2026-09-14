@@ -341,12 +341,13 @@ def test_per_node_plateau_rejects_a_zero_start_rate(ls_chain):
         {"params": list(flow.nodes[n].parameters()), "lr": 0.0, "node": n}
         for n in flow.order
     ]
+    plateau = PerNodePlateau(patience=15, freeze=50)
     with pytest.raises(ValueError, match="initial_lr"):
-        PerNodePlateau().step(flow.nll(df), torch.optim.Adam(groups))
+        plateau.step(flow.nll(df), torch.optim.Adam(groups), 1)
     for g in groups:
         g["initial_lr"] = 0.0
     with pytest.raises(ValueError, match="learning rate 0"):
-        PerNodePlateau().step(flow.nll(df), torch.optim.Adam(groups))
+        plateau.step(flow.nll(df), torch.optim.Adam(groups), 1)
 
 
 def test_per_node_plateau_rejects_an_untagged_optimizer(ls_chain):
@@ -356,7 +357,7 @@ def test_per_node_plateau_rejects_an_untagged_optimizer(ls_chain):
     flow.calibrate(df)
     opt = torch.optim.Adam(flow.parameters(), lr=1e-2)
     with pytest.raises(ValueError, match="per_node_adam"):
-        PerNodePlateau(patience=5, freeze=10).step(flow.nll(df), opt)
+        PerNodePlateau(patience=5, freeze=10).step(flow.nll(df), opt, 1)
 
 
 def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):

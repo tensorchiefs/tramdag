@@ -470,7 +470,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
         m.key = on
         m.mods = mods
         m.on_is_ord = isinstance(spec[on], OrdinalNode)
-        m.center_col = term.center or None
+        m.center_col = term.center
         _attach_input_transform(m, term, mods, spec)
         return m
 

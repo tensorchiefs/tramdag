@@ -145,7 +145,7 @@ def test_raises_on_unknown_node():
 def test_raises_on_missing_parent_column():
     flow = _additive_ci_flow()
     df = _data().drop(columns=["x2"])
-    with pytest.raises(KeyError, match="missing intercept-parent"):
+    with pytest.raises(KeyError, match="lacks the column"):
         flow.intercept_contributions(df, "x3")
 
 

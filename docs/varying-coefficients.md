@@ -146,7 +146,7 @@ design:
   margin (the observed propensities). `varying_coef` is unchanged, because
   centering moves the regressor, not β. The LS-nesting reading applies to
   the uncentered term only. Centering requires a binary ordinal treatment.
-  Continuous-treatment centering with E[T|x] is a follow-up. `center=False`
+  Continuous-treatment centering with E[T|x] is a follow-up. `center=None`
   (the default) is bit-identical to the uncentered term.
 
 ## Validation

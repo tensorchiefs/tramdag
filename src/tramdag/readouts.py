@@ -179,7 +179,9 @@ class _ReadoutsMixin:
         for child in self.order:
             for term in self.spec[child].terms:
                 # a VC modifier may share its cell with an edge-owning term
-                for p, tag in term.cells():
+                for p, tag, joint in term.cells():
+                    if joint:
+                        tag = f"{tag}{list(term.parents)}"
                     cur = m.loc[p, child]  # cell with a prognostic term -> "+"
                     m.loc[p, child] = f"{cur}+{tag}" if cur else tag
         return m
@@ -264,10 +266,6 @@ class _ReadoutsMixin:
                 f"node {node!r} has no complex-intercept (I) terms with parents. "
                 "Its intercept is unconditional, so there is nothing to decompose."
             )
-        missing = [p for p in nd.intercept.ci_parents if p not in df.columns]
-        if missing:
-            raise KeyError(f"df is missing intercept-parent column(s): {missing}")
-
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
         nets = nd.intercept.net_groups
 

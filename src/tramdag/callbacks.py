@@ -188,10 +188,9 @@ class PerNodePlateau(Callback):
     Parameters
     ----------
     patience, freeze : int
-        Flat epochs before a decay, and before a decayed node freezes. The
-        defaults (15/50) are the training-speed benchmark's VACA settings;
-        its stroke workload runs 30/120
-        (``experiments/benchmarks/bench_training.py``).
+        Flat epochs before a decay, and before a decayed node freezes.
+        ``docs/training-speed.md`` measures the settings of the benchmark
+        workloads.
     min_delta : float, optional
         Improvement below this is flat, by default 1e-4.
     """
@@ -199,8 +198,8 @@ class PerNodePlateau(Callback):
     def __init__(
         self,
         *,
-        patience: int = 15,
-        freeze: int = 50,
+        patience: int,
+        freeze: int,
         min_delta: float = 1e-4,
     ):
         if patience < 1 or freeze < 1:
@@ -236,14 +235,13 @@ class PerNodePlateau(Callback):
         """Step on the epoch's validation NLL; ``True`` once every node froze."""
         return self.step(_last_val(flow), optimizer, epoch)
 
-    def step(self, nll: dict[str, float], optimizer, epoch: int | None = None) -> bool:
+    def step(self, nll: dict[str, float], optimizer, epoch: int) -> bool:
         """Step every unfrozen node on its own NLL; ``True`` when all are frozen.
 
         ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that
-        freezes on this step; without it the steps are counted from 1 (a
-        hand-driven loop).
+        freezes on this step.
         """
-        self.epoch = self.epoch + 1 if epoch is None else epoch
+        self.epoch = epoch
         for g in optimizer.param_groups:
             if "node" not in g:
                 raise ValueError(

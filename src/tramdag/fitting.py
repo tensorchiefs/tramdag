@@ -9,7 +9,6 @@ ordinary methods of the flow.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import inspect
 import time
 from typing import TYPE_CHECKING
 
@@ -34,20 +33,14 @@ class _FnCallback(Callback):
         return self.fn(flow, epoch, optimizer)
 
 
-def _check_fit_sizes(
-    epochs: int, batch_size: int, verbose: int, validation_batch_size: int | None
-) -> None:
+def _check_fit_sizes(epochs: int, batch_size: int, verbose: int) -> None:
     """Reject a non-positive epoch, batch or verbose value before anything runs."""
     if epochs < 1:
         raise ValueError(f"epochs must be at least 1, got {epochs}")
     if batch_size < 1:
         raise ValueError(f"batch_size must be at least 1, got {batch_size}")
-    if verbose < 0 or int(verbose) != verbose:
+    if verbose < 0:
         raise ValueError(f"verbose must be a non-negative int, got {verbose!r}")
-    if validation_batch_size is not None and validation_batch_size < 1:
-        raise ValueError(
-            f"validation_batch_size must be at least 1, got {validation_batch_size}"
-        )
 
 
 def _split_validation(
@@ -82,8 +75,7 @@ def _normalize_callbacks(cbs) -> list[Callback]:
 
     A [`Callback`][tramdag.callbacks.Callback] instance is trusted — the base
     class defines all three hooks. A bare callable is an ``on_epoch_end``
-    hook and must accept ``(flow, epoch, optimizer)``; checked here so a
-    wrong entry fails before the first epoch, not after the last one.
+    hook, called as ``cb(flow, epoch, optimizer)``.
     """
     if cbs is None:
         return []
@@ -103,52 +95,30 @@ def _normalize_callbacks(cbs) -> list[Callback]:
             raise TypeError(
                 f"callbacks entries must be Callback instances or callables, got {cb!r}"
             )
-        _check_epoch_hook(cb)
         out.append(_FnCallback(cb))
     return out
 
 
-def _check_epoch_hook(cb) -> None:
-    """Reject a bare callable of the wrong arity before training starts."""
-    try:
-        sig = inspect.signature(cb, follow_wrapped=False)
-    except (TypeError, ValueError):  # a callable without a signature
-        return
-    try:
-        sig.bind(None, None, None)
-    except TypeError:
-        raise TypeError(
-            "a bare callable in callbacks= is called as "
-            f"cb(flow, epoch, optimizer); {cb!r} does not accept these "
-            "arguments — for the other hooks subclass tramdag.callbacks.Callback"
-        ) from None
-
-
-def _epoch_pass(
-    flow, vals, opt, batch_size, penalized, val_vals, validation_batch_size
-) -> None:
+def _epoch_pass(flow, vals, opt, batch_size, penalized, val_vals) -> None:
     """Run one training epoch and, when configured, the validation pass."""
     flow.train()
     flow.history["train"].append(_fit_epoch(flow, vals, opt, batch_size, penalized))
     flow.eval()
     if val_vals is not None:
-        flow.history.setdefault("val", []).append(
-            _val_nll(flow, val_vals, validation_batch_size)
-        )
+        flow.history.setdefault("val", []).append(_val_nll(flow, val_vals))
         # which train epoch this entry belongs to. `history` accumulates across
         # `fit` calls, so an unvalidated fit shifts every later validation entry
         # away from its own epoch, and a curve drawn from 1 misleads.
         flow.history.setdefault("val_epoch", []).append(len(flow.history["train"]))
 
 
-def _learning_rates(opt) -> dict[str, float] | float | list[float]:
+def _learning_rates(opt) -> dict[str, float] | float:
     """Give the optimizer's current rate(s): per node when the groups are tagged."""
     groups = opt.param_groups
     if all("node" in g for g in groups):
         return {g["node"]: float(g["lr"]) for g in groups}
-    if len(groups) == 1:
-        return float(groups[0]["lr"])
-    return [float(g["lr"]) for g in groups]
+    (group,) = groups  # untagged: one group over every parameter
+    return float(group["lr"])
 
 
 def _log_epoch(
@@ -165,18 +135,10 @@ def _log_epoch(
     print(line)
 
 
-def _val_nll(flow, vals: dict[str, Tensor], batch_size: int | None) -> dict[str, float]:
-    """Give the per-node mean validation NLL, chunked by validation batch size."""
-    n = len(next(iter(vals.values())))
-    chunk = batch_size or n
-    acc = dict.fromkeys(flow.order, 0.0)
+def _val_nll(flow, vals: dict[str, Tensor]) -> dict[str, float]:
+    """Give the per-node mean validation NLL, one full pass."""
     with torch.no_grad():
-        for start in range(0, n, chunk):
-            batch = {k: v[start : start + chunk] for k, v in vals.items()}
-            weight = len(next(iter(batch.values()))) / n
-            for k, v in flow.node_log_prob(batch).items():
-                acc[k] += float(-v.mean()) * weight
-    return acc
+        return {k: float(-v.mean()) for k, v in flow.node_log_prob(vals).items()}
 
 
 def _fit_epoch(
@@ -230,7 +192,6 @@ class _FitMixin:
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
-        validation_batch_size: int | None = None,
         verbose: int = 0,
         seed: int | None = None,
         optimizer: torch.optim.Optimizer | None = None,
@@ -281,17 +242,13 @@ class _FitMixin:
             there. ``flow.history["lr"]`` gets the optimizer's learning rate after every
             epoch (``{node: lr}`` with
             [`per_node_adam`][tramdag.callbacks.per_node_adam]'s tagged groups, else a
-            float, or a list for several untagged groups), so a schedule's decisions are
-            on record without a callback of your own.
+            float), so a schedule's decisions are on record without a callback of
+            your own.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
             train (and calibrate — no leakage into the frozen statistics).
             Mutually exclusive with ``validation_data``.
-        validation_batch_size : int | None, optional
-            Chunk size of the validation pass — a MEMORY ceiling for large
-            validation frames, by default one full batch (which is also the
-            fastest; chunk only when the full pass does not fit).
         verbose : int, optional
             0 (default) is silent. ``N >= 1`` prints one line every ``N``
             epochs and on the final epoch: epoch counter, summed train NLL,
@@ -328,9 +285,8 @@ class _FitMixin:
             an empty side, or a centered VC term's propensity column is
             missing from the training frame or out of [0, 1].
         TypeError
-            If a callback does not accept its hook's arguments — checked
-            before the first epoch, so a mis-registered callback cannot
-            waste a run.
+            If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
+            or is a ``Callback`` class instead of an instance.
 
         Notes
         -----
@@ -344,7 +300,7 @@ class _FitMixin:
         training rows; the constant moves into ``beta0``, the function is
         unchanged.
         """
-        _check_fit_sizes(epochs, batch_size, verbose, validation_batch_size)
+        _check_fit_sizes(epochs, batch_size, verbose)
         cbs = _normalize_callbacks(callbacks)
         if seed is not None:
             torch.manual_seed(seed)
@@ -370,15 +326,7 @@ class _FitMixin:
         for cb in cbs:
             cb.on_fit_begin(self, opt)
         for epoch in range(1, epochs + 1):
-            _epoch_pass(
-                self,
-                vals,
-                opt,
-                batch_size,
-                penalized,
-                val_vals,
-                validation_batch_size,
-            )
+            _epoch_pass(self, vals, opt, batch_size, penalized, val_vals)
             # every callback runs (a stop must not skip a monitoring one)
             stops = [bool(cb.on_epoch_end(self, epoch, opt)) for cb in cbs]
             # after the callbacks, so a scheduler's decision for this epoch shows
@@ -406,7 +354,6 @@ class _FitMixin:
         train_df: pd.DataFrame,
         *,
         max_iter: int = 400,
-        tol: float = 1e-9,
         history_size: int = 50,
     ) -> dict:
         """Fit an all-``ls`` model the classical way.
@@ -429,12 +376,6 @@ class _FitMixin:
             Training data, one column per node.
         max_iter : int, optional
             Upper limit on L-BFGS iterations, by default 400.
-        tol : float, optional
-            torch's ``tolerance_change``: the NLL (or parameter) change below
-            which L-BFGS stops, by default 1e-9. Measured on the classical
-            anchor: 1e-6 stops on a plateau step and leaves a rare one-hot
-            level 0.24 off statsmodels; 1e-9 lands within 0.03, the same as
-            running to the iteration cap.
         history_size : int, optional
             L-BFGS memory, by default 50.
 
@@ -460,8 +401,10 @@ class _FitMixin:
         cleanly.
 
         Convergence is torch's own: L-BFGS stops when the NLL or the
-        parameters move by less than ``tol`` (``tolerance_grad`` is set to
-        0, so the gradient never ends the run). ``|grad|`` and individual
+        parameters move by less than 1e-9 (``tolerance_grad`` is set to 0,
+        so the gradient never ends the run; 1e-6 was measured to stop on a
+        plateau step and leave a rare one-hot level 0.24 off statsmodels,
+        1e-9 lands within 0.03). ``|grad|`` and individual
         coefficients do *not* settle to machine precision. A continuous
         node's Bernstein intercept, and weakly-identified directions such
         as rare one-hot levels or a flat treatment-effect ridge, keep
@@ -492,7 +435,7 @@ class _FitMixin:
                 max_iter=max_iter,
                 history_size=history_size,
                 tolerance_grad=0.0,  # |grad| never settles on the flat ridges
-                tolerance_change=tol,
+                tolerance_change=1e-9,
                 line_search_fn="strong_wolfe",
             )
 
@@ -523,7 +466,7 @@ class _FitMixin:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
         self.eval()
 
-        report = {
+        return {
             "converged": converged,
             "n_iter": n_iter,
             "final_nll": final_nll,
@@ -531,7 +474,3 @@ class _FitMixin:
             "seconds": time.perf_counter() - t0,
             "coefficients": coefs,
         }
-        self.history["classical"] = {
-            k: v for k, v in report.items() if k != "coefficients"
-        }
-        return report

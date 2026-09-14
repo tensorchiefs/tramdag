@@ -553,7 +553,11 @@ class Term:
         return NotImplemented
 
     def __radd__(self, other: list[Term]) -> list[Term]:
-        """Extend a term list from the right, for ``list + term`` chains."""
+        """Extend a term list from the right.
+
+        ``I("a") + CS("b") + LS("c")`` evaluates left to right: the first
+        ``+`` gives a list, so the second is ``list + Term`` and lands here.
+        """
         if isinstance(other, list):
             return [*other, self]
         return NotImplemented
@@ -846,7 +850,7 @@ class VaryingCoefficient(Term):
         batch_norm: bool = False,
         input_transform: object = None,
     ):
-        if penalty is None or penalty < 0:
+        if penalty < 0:
             raise ValueError(f"VC(): penalty must be >= 0, got {penalty}.")
         # the treatment leads the parents: it is the one that owns an edge
         super().__init__(t, *modifiers)

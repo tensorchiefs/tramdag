@@ -20,6 +20,7 @@ Conventions follow the original TRAM-DAG implementation
 from __future__ import annotations
 
 import math
+from abc import ABC, abstractmethod
 
 import numpy as np
 import torch
@@ -192,9 +193,8 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
     counts = np.asarray(counts, dtype=np.float64)
     p = counts / counts.sum()
     F = np.clip(np.cumsum(p)[:-1], _CDF_EPS, 1 - _CDF_EPS)  # P(Y<=k), k=0..K-2
-    c = np.log(F) - np.log1p(-F)  # logit -> increasing
-    c = np.maximum.accumulate(c)  # guard ties (empty classes)
-    diffs = np.maximum(np.diff(c), _CDF_EPS)
+    c = np.log(F) - np.log1p(-F)  # logit -> non-decreasing
+    diffs = np.maximum(np.diff(c), _CDF_EPS)  # guard ties (empty classes)
     tt = np.empty_like(c)
     tt[0] = c[0]
     tt[1:] = np.log(diffs)
@@ -330,7 +330,7 @@ def ordinal_abduct(
 
 
 # %% private classes -------------------------------------------------------------------
-class _ScaledUT(torch.nn.Module):
+class _ScaledUT(torch.nn.Module, ABC):
     """Base class for the scaled univariate transforms.
 
     An affine pre-map takes ``[xmin, xmax]`` to ``[-B, B]`` with
@@ -373,11 +373,13 @@ class _ScaledUT(torch.nn.Module):
         return None
 
     @property
-    def n_params(self) -> int:  # pragma: no cover - abstract
-        raise NotImplementedError
+    @abstractmethod
+    def n_params(self) -> int:
+        """Number of unconstrained parameters the transform takes."""
 
-    def _build(self, theta: Tensor):  # pragma: no cover - abstract
-        raise NotImplementedError
+    @abstractmethod
+    def _build(self, theta: Tensor):
+        """Give the zuko transform on ``[-B, B]`` for one batch of ``theta``."""
 
     def set_range(self, xmin: float, xmax: float) -> None:
         """Set the data range that maps onto the pre-scaled domain.

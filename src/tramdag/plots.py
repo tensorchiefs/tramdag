@@ -225,9 +225,7 @@ def _finish(ax, fig, path):
 
 
 # %% public functions ------------------------------------------------------------------
-def plot_dag(
-    spec_or_flow, *, ax=None, labels: bool = True, legend: bool = True, path=None
-):
+def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=None):
     """Draw the labelled DAG of a spec (or of a fitted flow).
 
     Layers run left to right, a node one layer past its parents. Continuous
@@ -241,8 +239,6 @@ def plot_dag(
     ----------
     spec_or_flow : dict[str, NodeSpec] | CausalFlowDAG
         The DAG to draw. A flow draws its ``spec``.
-    ax : matplotlib.axes.Axes | None, optional
-        Draw into this axes; by default a new figure sized to the layout.
     labels : bool, optional
         Write the term name on each edge, by default True.
     legend : bool, optional
@@ -253,7 +249,7 @@ def plot_dag(
     Returns
     -------
     matplotlib.axes.Axes
-        The axes drawn into.
+        The axes of the new figure, sized to the layout.
     """
     plt = _plt()
     spec = _spec_of(spec_or_flow)
@@ -275,8 +271,7 @@ def plot_dag(
     half_w = max(_node_width(n) for n in spec) / 2
     x_lo, x_hi = xs.min() - half_w - 0.2, xs.max() + half_w + 0.2
     y_lo, y_hi = ys.min() - 0.5 - max(reach_down, 0), ys.max() + 0.5 + max(reach_up, 0)
-    if ax is None:
-        _, ax = plt.subplots(figsize=(0.9 * (x_hi - x_lo), 0.9 * (y_hi - y_lo) + 0.5))
+    _, ax = plt.subplots(figsize=(0.9 * (x_hi - x_lo), 0.9 * (y_hi - y_lo) + 0.5))
     patches = {name: _draw_node(ax, name, spec[name], xy) for name, xy in pos.items()}
     for edge, bulge in bulges.items():
         _draw_edge(ax, patches, pos, edge, labels, bulge)
@@ -289,9 +284,7 @@ def plot_dag(
     return _finish(ax, ax.figure, path)
 
 
-def plot_marginals(
-    flow, df: pd.DataFrame, *, ncols: int = 3, bins: int = 30, seed=None, path=None
-):
+def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=None):
     """Observed vs sampled marginal of every node, one panel each.
 
     Ordinal nodes compare level proportions side by side; continuous nodes a
@@ -306,8 +299,6 @@ def plot_marginals(
         The data to compare against (the validation split, typically).
     ncols : int, optional
         Panels per row, by default 3.
-    bins : int, optional
-        Histogram bins of a continuous node, by default 30.
     seed : int | None, optional
         Seed of the flow's sample.
     path : str | Path | None, optional
@@ -336,7 +327,7 @@ def plot_marginals(
             ax.set_xticks(lv)
             ax.set_ylabel("proportion")
         else:
-            edges = np.linspace(df[name].min(), df[name].max(), bins + 1)
+            edges = np.linspace(df[name].min(), df[name].max(), 31)  # 30 bins
             ax.hist(df[name], bins=edges, density=True, alpha=0.5, label="data")
             ax.hist(
                 sample[name],
@@ -354,7 +345,7 @@ def plot_marginals(
     return axes
 
 
-def plot_training(flow, *, frozen=None, ax=None, path=None):
+def plot_training(flow, *, frozen=None, path=None):
     """Draw the summed train and validation NLL per epoch.
 
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
@@ -371,8 +362,6 @@ def plot_training(flow, *, frozen=None, ax=None, path=None):
         off ``flow.history["lr"]`` (the first epoch a node's rate is 0, when
         the optimizer had per-node groups); pass a dict, or the
         [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] whose ``frozen`` to use.
-    ax : matplotlib.axes.Axes | None, optional
-        Draw into this axes; by default a new figure.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
 
@@ -392,8 +381,7 @@ def plot_training(flow, *, frozen=None, ax=None, path=None):
         # each entry's own epoch, so an unvalidated fit in between leaves a gap
         # rather than shifting the whole curve back to epoch 1
         curves["val"] = (np.asarray(hist["val_epoch"], dtype=float), val)
-    if ax is None:
-        _, ax = plt.subplots(figsize=(7.5, 3.6))
+    _, ax = plt.subplots(figsize=(7.5, 3.6))
     for label, (x, curve) in curves.items():
         ax.plot(x, curve, label=f"{label} NLL (total)")
     # zoom past the initial drop: the top is the curves' level after 10 % of the epochs

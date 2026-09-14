@@ -47,7 +47,8 @@ class _ReadoutsMixin:
             )
         # copy, like `_tensorize`: torch warns on a non-writable numpy array,
         # which a broadcast or read-only grid is
-        x = torch.as_tensor(np.array(grid), dtype=self._dtype).view(-1, 1)
+        x = torch.as_tensor(np.array(grid), dtype=self._dtype, device=self.device)
+        x = x.view(-1, 1)
         # through the term's own evaluation, so Fn and custom terms work too
         curve = nd.shifts[parent].shift_value(nd, {parent: x})
         return curve.cpu().numpy().ravel()

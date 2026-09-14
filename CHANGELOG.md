@@ -850,13 +850,21 @@ read-outs keep their exact signatures as flow methods.
   `data = <Term>` declaration on the module class and the `__init_subclass__`
   that stamped the module onto the term class are gone; a custom term sets
   `module = "mypkg.MyModule"` on its `Term` subclass.
-- Every term sets `name` as an explicit class attribute (`name = "LS"`).
-  `__init_subclass__` no longer derives a name from the class; it refuses a
-  subclass that sets none.
+- Every term sets `name` (`name = "LS"`) and `module` as explicit class
+  attributes. `__init_subclass__` no longer derives a name from the class; it
+  refuses a subclass that sets either one not.
 - `modules.py` imports nothing from `spec.py` (it reads `kind`, `levels` and
   `parents`; `feat_width` lives there now), so a term class holds its module
   class directly: `LinearShift.module is LinearShiftModule`. The import-path
   strings and `module_for` are gone; a custom term sets `module = MyModule`.
+- A term module is constructed from its term: `module(term, spec)`, and
+  `module(term, spec, n_params)` for the intercept slot, where
+  `intercept_module` picks one of the three intercept classes. The `build`
+  classmethods are gone, and so is the node stamping `parents` onto a built
+  module afterwards. The additive intercept's per-parent nets are plain
+  stacks, so their state-dict paths are `nets.<i>.<layer>` instead of
+  `nets.<i>.net.<layer>`; the recorded baseline moved with them, values
+  unchanged.
 
 ### Fixed
 

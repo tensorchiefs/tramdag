@@ -3,15 +3,17 @@
 A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``Fn``, ``I``) is
 plain data and carries the spec-level rules, and its ``module`` attribute is
 the class here that trains it (``LinearShift.module is LinearShiftModule``).
-The module holds the term's network and owns the runtime behaviour: ``build``,
-``shift_value``/``theta_value``, ``post_init``, ``regularizer``, ``finalize``,
-``score_columns`` and the side-input contract. This module imports nothing from
-[`spec`][tramdag.spec]: it reads a spec node's ``kind``, ``levels`` and a
-term's ``parents`` and options, so ``spec`` can import it.
+A module is constructed from its term and the spec, ``module(term, spec)``
+(the intercept slot adds ``n_params``), holds the term's network and owns the
+runtime behaviour: ``shift_value``/``theta_value``, ``post_init``,
+``regularizer``, ``finalize``, ``score_columns`` and the side-input contract.
+This module imports nothing from [`spec`][tramdag.spec]: it reads a spec
+node's ``kind``, ``levels`` and a term's ``parents`` and options, so ``spec``
+can import it.
 
 A custom term is two classes: a [`ShiftModule`][tramdag.modules.ShiftModule]
-subclass with ``build`` and ``shift_value``, and a ``Term`` subclass for the
-options and checks whose ``module`` is that class.
+subclass with ``__init__(term, spec)`` and ``shift_value``, and a ``Term``
+subclass for the options and checks whose ``module`` is that class.
 
 The networks copy the defaults of the PyTorch reference this package grew out
 of, ``tramdag/models/tram_models.py`` in https://github.com/buehlpa/TramDag:
@@ -151,6 +153,20 @@ def feat_width(spec: dict[str, NodeSpec], parents) -> int:
     return sum(spec[p].levels if spec[p].kind == "ordinal" else 1 for p in parents)
 
 
+def intercept_module(term: Term, spec: dict[str, NodeSpec], n_params: int):
+    """Construct the node's intercept module from its ``I`` term.
+
+    One ``I`` term becomes one of three modules: the free theta without
+    parents, one joint net over all parents, or one net per parent with the
+    coefficient vectors summed (``allow_interaction=False``).
+    """
+    if not term.parents:
+        return SimpleInterceptModule(term, spec, n_params)
+    if term.allow_interaction:
+        return ComplexInterceptModule(term, spec, n_params)
+    return AdditiveInterceptModule(term, spec, n_params)
+
+
 # %% private classes -------------------------------------------------------------------
 class _InputTransform(nn.Module):
     """One term's frozen network-input transform.
@@ -235,12 +251,12 @@ class TermModule:
 class ShiftModule(TermModule, ABC):
     """A shift term's behavior hooks, on top of its network.
 
-    A built module carries ``key`` (its ModuleDict key, set by ``build``) and
-    ``parents`` (the term's written parents, set by the node); subclasses may
-    add term-specific attributes (``VaryingCoefficientModule`` keeps
-    ``mods``/``on_is_ord``/``center_col``). ``build`` constructs the module
-    exactly as the node used to, so state-dict paths and the seeded RNG
-    stream stay bit-stable.
+    ``__init__(term, spec)`` builds the network from the term's options and the
+    parents' widths in the spec, and sets ``key`` (the node's ModuleDict key)
+    and ``parents`` (the term's written parents); a subclass may keep more
+    (``VaryingCoefficientModule`` keeps ``mods``/``on_is_ord``/``center_col``).
+    Layers are built in a fixed order under fixed attribute names, so
+    state-dict paths and the seeded RNG stream stay bit-stable.
     """
 
     scored: ClassVar[bool] = False  # True when score_columns gives coefficients
@@ -248,11 +264,6 @@ class ShiftModule(TermModule, ABC):
 
     key: str
     parents: tuple
-
-    @classmethod
-    @abstractmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ShiftModule:
-        """Construct the term module from its spec Term."""
 
     @abstractmethod
     def shift_value(self, node: Node, feats: dict) -> Tensor:
@@ -307,50 +318,12 @@ class InterceptModule(TermModule, ABC):
     ``node.terms[0]``); it produces the transform parameters ``theta``.
     ``groups`` carries the parent groups — empty for a simple intercept,
     one tuple for a joint net, one per parent for an additive one — and
-    ``ci_parents`` their flat order.
+    ``ci_parents`` their flat order. [`intercept_module`][] picks the class
+    for an ``I`` term; each class constructs from ``(term, spec, n_params)``.
     """
 
     groups: list[tuple[str, ...]]
     ci_parents: list[str]
-
-    @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec], n_params: int):
-        """Construct the node's intercept module from its intercept Term.
-
-        One ``I`` term becomes one of three modules: the free theta without
-        parents, one joint net over all parents, or one net per parent with
-        the coefficient vectors summed (``allow_interaction=False``).
-        """
-        if not term.parents:
-            m = SimpleInterceptModule(n_params)
-            m.groups, m.ci_parents = [], []
-            return m
-        groups = (
-            [tuple(term.parents)]
-            if term.allow_interaction
-            else [(p,) for p in term.parents]
-        )
-        if len(groups) == 1:
-            m = ComplexInterceptModule(
-                feat_width(spec, groups[0]),
-                n_params,
-                units=term.units,
-                activation=term.activation,
-                batch_norm=term.batch_norm,
-            )
-        else:  # additive intercept: one net per parent, coefficients summed
-            m = AdditiveInterceptModule(
-                groups,
-                n_params,
-                spec,
-                units=term.units,
-                activation=term.activation,
-                batch_norm=term.batch_norm,
-            )
-        m.groups = groups
-        m.ci_parents = [p for grp in groups for p in grp]
-        _attach_input_transform(m, term, tuple(term.parents), spec)
-        return m
 
     def calibrate_intercept(self, train_df: pd.DataFrame, own, ut) -> None:
         """Freeze the input stats and set the transform's domain, once.
@@ -387,13 +360,18 @@ class SimpleInterceptModule(InterceptModule, nn.Module):
 
     Parameters
     ----------
+    term : Intercept
+        The parentless intercept term.
+    spec : dict[str, NodeSpec]
+        The DAG specification (unused: no parents to size).
     n_params : int
         Number of transform parameters.
     """
 
-    def __init__(self, n_params: int):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
         super().__init__()
         self.theta = nn.Parameter(torch.zeros(n_params))
+        self.groups, self.ci_parents = [], []
 
     def forward(self, n: int) -> Tensor:
         """Broadcast the parameters over a batch of ``n`` rows, shape ``(n, P)``."""
@@ -413,40 +391,32 @@ class ComplexInterceptModule(InterceptModule, nn.Module):
     """A single (possibly joint multi-parent) complex intercept net.
 
     Several parents given to one term feed a single network, so they interact.
+    The term's ``units``, ``activation`` and ``batch_norm`` size the network;
+    the term class holds their defaults (the reference's
+    ``ComplexInterceptDefaultTabular`` widths, see the module docstring).
 
     Parameters
     ----------
-    n_features : int
-        Width of the encoded parent features.
+    term : Intercept
+        The intercept term, with at least one parent.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the parents' feature widths.
     n_params : int
         Number of transform parameters to produce.
-    units : tuple[int, ...]
-        Hidden layers of the network. The term class holds the default: the
-        reference's ``ComplexInterceptDefaultTabular`` widths (module
-        docstring). The paper's own nets are wider; a replication sets this
-        explicitly.
-    activation : str
-        Key of ``ACTIVATIONS``.
-    batch_norm : bool
-        Normalize the hidden layers — see ``_nn``.
     """
 
-    def __init__(
-        self,
-        n_features: int,
-        n_params: int,
-        units: tuple[int, ...],
-        activation: str,
-        batch_norm: bool,
-    ):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
         super().__init__()
         self.net = _nn(
-            n_features,
-            units,
+            feat_width(spec, term.parents),
+            term.units,
             n_params,
-            activation=activation,
-            batch_norm=batch_norm,
+            activation=term.activation,
+            batch_norm=term.batch_norm,
         )
+        self.groups = [tuple(term.parents)]
+        self.ci_parents = list(term.parents)
+        _attach_input_transform(self, term, tuple(term.parents), spec)
 
     def forward(self, x: Tensor) -> Tensor:
         """Map parent features ``(n, n_features)`` to parameters ``(n, n_params)``."""
@@ -462,27 +432,35 @@ class AdditiveInterceptModule(InterceptModule, nn.Module):
 
     Each parent reshapes the transform independently, in unconstrained
     coefficient space.
+
+    Parameters
+    ----------
+    term : Intercept
+        The intercept term with ``allow_interaction=False`` and two or more
+        parents.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the parents' feature widths.
+    n_params : int
+        Number of transform parameters to produce.
     """
 
-    def __init__(
-        self,
-        groups,
-        n_params: int,
-        spec,
-        *,
-        units: tuple[int, ...],
-        activation: str,
-        batch_norm: bool,
-    ):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
         super().__init__()
-        # the submodule must stay named `nets`: it is part of the state-dict
-        # path that tests/test_statedict_stability.py pins
+        self.groups = [(p,) for p in term.parents]
+        self.ci_parents = list(term.parents)
+        # the submodule stays named `nets`: tests/test_statedict_stability.py
+        # pins the state-dict path
         self.nets = nn.ModuleList(
-            ComplexInterceptModule(
-                feat_width(spec, grp), n_params, units, activation, batch_norm
+            _nn(
+                feat_width(spec, grp),
+                term.units,
+                n_params,
+                activation=term.activation,
+                batch_norm=term.batch_norm,
             )
-            for grp in groups
+            for grp in self.groups
         )
+        _attach_input_transform(self, term, tuple(term.parents), spec)
 
     def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Sum the per-parent nets in coefficient space."""
@@ -495,19 +473,24 @@ class AdditiveInterceptModule(InterceptModule, nn.Module):
 class LinearShiftModule(ShiftModule, nn.Module):
     """``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
 
-    For an ordinal child, ``exp(beta)`` is an odds ratio.
+    For an ordinal child, ``exp(beta)`` is an odds ratio. Keyed by the parent's
+    name.
 
     Parameters
     ----------
-    n_features : int
-        Width of the encoded parent features.
+    term : LinearShift
+        The term, with its one parent.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the parent's feature width.
     """
 
     scored = True
 
-    def __init__(self, n_features: int):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
-        self.fc = nn.Linear(n_features, 1, bias=False)
+        self.fc = nn.Linear(feat_width(spec, term.parents), 1, bias=False)
+        self.key = term.parents[0]
+        self.parents = tuple(term.parents)
 
     @property
     def weight(self) -> Tensor:
@@ -517,13 +500,6 @@ class LinearShiftModule(ShiftModule, nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
         return self.fc(x).squeeze(-1)
-
-    @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> LinearShiftModule:
-        """One weight per feature of the single parent; keyed by its name."""
-        m = cls(feat_width(spec, term.parents))
-        m.key = term.parents[0]
-        return m
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the raw parent column times the weight — no input transform."""
@@ -544,53 +520,35 @@ class LinearShiftModule(ShiftModule, nn.Module):
 class ComplexShiftModule(ShiftModule, nn.Module):
     """``CS`` — an additive network shift ``g(x)`` over its parents.
 
+    One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The
+    term's ``units``, ``activation`` and ``batch_norm`` size the network; the
+    term class holds their defaults (the reference's
+    ``ComplexShiftDefaultTabular`` widths, see the module docstring).
+
     Parameters
     ----------
-    n_features : int
-        Width of the encoded parent features.
-    units : tuple[int, ...]
-        Hidden layers of the network. The term class holds the default: the
-        reference's ``ComplexShiftDefaultTabular`` widths (module docstring).
-        The paper's own nets are narrower; a replication sets this explicitly.
-    activation : str
-        Key of ``ACTIVATIONS``.
-    batch_norm : bool
-        Normalize the hidden layers — see ``_nn``.
+    term : ComplexShift
+        The term, with its parents.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the parents' feature widths.
     """
 
-    def __init__(
-        self,
-        n_features: int,
-        units: tuple[int, ...],
-        activation: str,
-        batch_norm: bool,
-    ):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
+        self.parents = tuple(term.parents)
         self.net = _nn(
-            n_features,
-            units,
+            feat_width(spec, self.parents),
+            term.units,
             1,
-            activation=activation,
-            batch_norm=batch_norm,
+            activation=term.activation,
+            batch_norm=term.batch_norm,
         )
+        self.key = "+".join(self.parents)  # the parent itself for one parent
+        _attach_input_transform(self, term, self.parents, spec)
 
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
         return self.net(x).squeeze(-1)
-
-    @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> ComplexShiftModule:
-        """One net over the concatenated parents; keyed 'a' or 'a+b'."""
-        ps = tuple(term.parents)
-        m = cls(
-            feat_width(spec, ps),
-            units=term.units,
-            activation=term.activation,
-            batch_norm=term.batch_norm,
-        )
-        m.key = "+".join(ps)  # the parent itself for a single-parent term
-        _attach_input_transform(m, term, ps, spec)
-        return m
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the net over this term's (possibly input-transformed) features."""
@@ -614,22 +572,20 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     network, and the term is exactly ``LS(on)``. Only the treatment owns an
     edge.
 
+    The term's ``penalty``, ``units``, ``activation`` and ``batch_norm`` shape
+    the head; the term class holds their defaults. One hidden layer of 16 is
+    the head ``tests/test_vc_term.py`` recovers a known ``beta(x)`` with at
+    corr ~ 0.99; this term has no counterpart in the reference
+    implementations, so the size comes from that measurement. The module is
+    keyed by the treatment's name.
+
     Parameters
     ----------
-    n_features : int
-        Width of the encoded modifier features. Use 0 for no modifiers.
-    penalty : float
-        L2 weight on ``b_theta``; the term class holds the default.
-    units : tuple[int, ...]
-        Hidden layers of ``b_theta``; the term class holds the default, one
-        layer of 16. That is the head ``tests/test_vc_term.py`` recovers a
-        known ``beta(x)`` with at corr ~ 0.99; this term has no counterpart in
-        the reference implementations, so the size comes from that
-        measurement.
-    activation : str
-        Key of ``ACTIVATIONS``.
-    batch_norm : bool
-        Normalize the hidden layers — see ``_nn``.
+    term : VaryingCoefficient
+        The term: treatment first in ``parents``, then the modifiers.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the modifiers' feature widths and the
+        treatment's kind.
 
     Notes
     -----
@@ -645,30 +601,31 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     scored = True
     order = 1
 
-    def __init__(
-        self,
-        n_features: int,
-        penalty: float,
-        units: tuple[int, ...],
-        activation: str,
-        batch_norm: bool,
-    ):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
-        self.penalty = float(penalty)
+        on, mods = term.parents[0], tuple(term.parents[1:])
+        self.penalty = float(term.penalty)
         self.beta0 = nn.Parameter(torch.zeros(()))
         self.register_buffer("center", torch.zeros(()))
+        n_features = feat_width(spec, mods)
         if n_features > 0:
             # zero-initialised output: beta(x) == beta0 at init
             self.net = _nn(
                 n_features,
-                units,
+                term.units,
                 1,
-                activation=activation,
-                batch_norm=batch_norm,
+                activation=term.activation,
+                batch_norm=term.batch_norm,
                 zero_init_last=True,
             )
         else:
             self.net = None
+        self.key = on
+        self.parents = tuple(term.parents)
+        self.mods = mods
+        self.on_is_ord = spec[on].kind == "ordinal"
+        self.center_col = term.center
+        _attach_input_transform(self, term, mods, spec)
 
     def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
         """Give the effect values ``beta(x)``, shape ``(n,)``.
@@ -710,24 +667,6 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         delta = (self.net(mod_feats).squeeze(-1) - self.center).mean()
         self.center += delta
         self.beta0 += delta
-
-    @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> VaryingCoefficientModule:
-        """Build the effect head over the modifiers; keyed by the treatment name."""
-        on, mods = term.parents[0], tuple(term.parents[1:])
-        m = cls(
-            feat_width(spec, mods),
-            penalty=term.penalty,
-            units=term.units,
-            activation=term.activation,
-            batch_norm=term.batch_norm,
-        )
-        m.key = on
-        m.mods = mods
-        m.on_is_ord = spec[on].kind == "ordinal"
-        m.center_col = term.center
-        _attach_input_transform(m, term, mods, spec)
-        return m
 
     def regressor(self, feats: dict) -> Tensor:
         """Give the ``(n, 1)`` column ``beta`` multiplies — the treatment, raw.
@@ -816,22 +755,16 @@ class FnShiftModule(ShiftModule, nn.Module):
     """``Fn`` — a user-supplied shift function over the parent features.
 
     A plain function contributes a fixed (non-trained) offset; an
-    ``nn.Module`` registers as a submodule and trains with the flow. Built
-    by [`FnShift`][] (``Fn``).
+    ``nn.Module`` registers as a submodule and trains with the flow. Keyed
+    like a CS (``'a'`` or ``'a+b'``).
     """
 
-    def __init__(self, fn):
+    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
-        self.fn = fn  # an nn.Module registers as a submodule here
-
-    @classmethod
-    def build(cls, term: Term, spec: dict[str, NodeSpec]) -> FnShiftModule:
-        """Wrap the callable; keyed like a CS ('a' or 'a+b')."""
-        ps = tuple(term.parents)
-        m = cls(term.fn)
-        m.key = "+".join(ps)  # the parent itself for a single-parent term
-        _attach_input_transform(m, term, ps, spec)
-        return m
+        self.fn = term.fn  # an nn.Module registers as a submodule here
+        self.parents = tuple(term.parents)
+        self.key = "+".join(self.parents)  # the parent itself for one parent
+        _attach_input_transform(self, term, self.parents, spec)
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Run ``fn`` on the term's features; accept ``(n,)`` or ``(n, 1)``."""

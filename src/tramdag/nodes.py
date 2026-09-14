@@ -70,18 +70,15 @@ class Node(nn.Module):
             self.ut = None
             self.levels = node.levels
             n_params = node.levels - 1
-        # the intercept module decides its own shape: the free theta_0, one joint
-        # net, or one net per parent summed in coefficient space
-        # TODO: use generic helper for input. why is there a build fn needed:
-        # refactor as __init__?
-        self.intercept = terms[0].module.build(terms[0], spec, n_params)
+        # the intercept slot: the free theta_0, one joint net, or one net per
+        # parent summed in coefficient space — `intercept_module` picks
+        self.intercept = terms[0].module(terms[0], spec, n_params)
         # one module per shift term, built in formula order (the seeded RNG
         # stream is pinned to it); each names its own key: the parent, "a+b"
         # for a joint CS, the treatment for a VC
         self.shifts = nn.ModuleDict()
         for term in terms[1:]:
-            m = term.module.build(term, spec)
-            m.parents = tuple(term.parents)
+            m = term.module(term, spec)
             self.shifts[m.key] = m
 
     def encode(self, values: Tensor) -> Tensor:

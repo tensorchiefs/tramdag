@@ -86,8 +86,9 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
+| [`intercept_module()`][tramdag.modules.intercept_module] | The one factory: an `I` term becomes the free theta, one joint net, or one net per parent (`allow_interaction=False`). |
 | [`feat_width()`][tramdag.modules.feat_width] | Total encoded width of a parent set: `levels` per ordinal parent, 1 per continuous one. |
-| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
+| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `__init__(term, spec)` (builds the net, sets `key` and `parents`), `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: 64-128-64 ReLU NN to one shift value. |
 | [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: `beta0 + b_theta(mods)` with a zero-initialized output layer and the L2 hook `l2()`. `beta()` evaluates the effect, `recenter()` re-splits `beta0`/`b_theta` after training (function-preserving). `regressor` is both the forward regressor and the `beta0` score. |

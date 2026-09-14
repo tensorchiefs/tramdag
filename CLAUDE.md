@@ -106,7 +106,8 @@ assigned to `self`. A term is exactly its `__dict__`, so `options()` is
 - `VaryingCoefficient`, aliased `VC`,
 - `FnShift`, aliased `Fn`.
 
-`Term.name` carries the symbol, and `term:` is the serialized key. The spec
+`Term.name` carries the symbol, a class attribute every subclass must set
+(`__init_subclass__` refuses one without), and `term:` is the serialized key. The spec
 class also owns the spec-level rules:
 
 - the arity and option-value checks, written after the `super().__init__` call,
@@ -115,9 +116,9 @@ class also owns the spec-level rules:
 - `cells`,
 - `classical`.
 
-The term class names its module class in `modules.py` as an import path
-(`module = "tramdag.modules.ComplexShiftModule"`); the module holds the
-term's network and owns the runtime:
+The term class holds its module class from `modules.py` as `module`
+(`ComplexShift.module is ComplexShiftModule`); the module holds the term's
+network and owns the runtime:
 
 - build,
 - shift_value and theta_value,
@@ -129,8 +130,8 @@ term's network and owns the runtime:
 
 Each built-in module builds its layers in a fixed order under fixed attribute
 names, so checkpoints and the seeded RNG stream stay bit-stable.
-`modules.module_for(term)` imports the module the term names. There is no
-registry and no `register_term`.
+`modules.py` imports nothing from `spec.py`, which is what lets the term hold
+the class directly. There is no registry and no `register_term`.
 
 Node-kind branches live ONLY in the four `Node` methods `log_prob`, `sample`,
 `abduct` and `marginal_theta` in nodes.py.

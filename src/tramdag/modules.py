@@ -1,16 +1,17 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
 A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``Fn``, ``I``) is
-plain data and carries the spec-level rules, and names the module here that
-trains it as an import path (``module = "tramdag.modules.ComplexShiftModule"``).
+plain data and carries the spec-level rules, and its ``module`` attribute is
+the class here that trains it (``LinearShift.module is LinearShiftModule``).
 The module holds the term's network and owns the runtime behaviour: ``build``,
 ``shift_value``/``theta_value``, ``post_init``, ``regularizer``, ``finalize``,
-``score_columns`` and the side-input contract. [`module_for`][] imports the
-module a term names, so there is no registry.
+``score_columns`` and the side-input contract. This module imports nothing from
+[`spec`][tramdag.spec]: it reads a spec node's ``kind``, ``levels`` and a
+term's ``parents`` and options, so ``spec`` can import it.
 
-A custom term is two classes: a ``Term`` subclass for the options and checks
-whose ``module`` names a [`ShiftModule`][tramdag.modules.ShiftModule] subclass
-with ``build`` and ``shift_value``.
+A custom term is two classes: a [`ShiftModule`][tramdag.modules.ShiftModule]
+subclass with ``build`` and ``shift_value``, and a ``Term`` subclass for the
+options and checks whose ``module`` is that class.
 
 The networks copy the defaults of the PyTorch reference this package grew out
 of, ``tramdag/models/tram_models.py`` in https://github.com/buehlpa/TramDag:
@@ -54,13 +55,11 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from .spec import ContinuousNode, OrdinalNode, Term, feat_width, import_object
-
 if TYPE_CHECKING:
     import pandas as pd
 
     from .nodes import Node
-    from .spec import NodeSpec
+    from .spec import NodeSpec, Term
 
 # %% global variables ------------------------------------------------------------------
 ACTIVATIONS = {"relu": nn.ReLU, "sigmoid": nn.Sigmoid, "tanh": nn.Tanh}
@@ -141,28 +140,15 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
     """
     if term.input_transform is None:
         return
-    cps = tuple(p for p in parents if isinstance(spec[p], ContinuousNode))
+    cps = tuple(p for p in parents if spec[p].kind == "continuous")
     if cps:
         m.add_module("_input_transform", _InputTransform(term.input_transform, cps))
 
 
 # %% public functions ------------------------------------------------------------------
-def module_for(term: Term) -> type[TermModule]:
-    """Give the module class that builds ``term``: the one its class names.
-
-    Raises
-    ------
-    ValueError
-        If the term class names no module.
-    """
-    path = getattr(type(term), "module", None)
-    if path is None:
-        raise ValueError(
-            f"no module builds a {type(term).__name__} term. Set `module = "
-            f'"my.pkg.{type(term).__name__}Module"` on the term class, naming a '
-            "tramdag.modules.ShiftModule subclass with build and shift_value."
-        )
-    return import_object(path)
+def feat_width(spec: dict[str, NodeSpec], parents) -> int:
+    """Total feature width of the parents (ordinal one-hot, continuous raw)."""
+    return sum(spec[p].levels if spec[p].kind == "ordinal" else 1 for p in parents)
 
 
 # %% private classes -------------------------------------------------------------------
@@ -550,7 +536,7 @@ class LinearShiftModule(ShiftModule, nn.Module):
         """
         (parent,) = self.parents  # an LS term has exactly one parent
         psi = (dlds.unsqueeze(1) * feats[parent]).cpu().numpy()
-        if isinstance(flow.spec[parent], OrdinalNode):
+        if flow.spec[parent].kind == "ordinal":
             return {f"{parent}[{k}]": psi[:, k] for k in range(psi.shape[1])}
         return {self.key: psi[:, 0]}
 
@@ -738,7 +724,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         )
         m.key = on
         m.mods = mods
-        m.on_is_ord = isinstance(spec[on], OrdinalNode)
+        m.on_is_ord = spec[on].kind == "ordinal"
         m.center_col = term.center
         _attach_input_transform(m, term, mods, spec)
         return m

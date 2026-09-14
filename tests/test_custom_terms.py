@@ -2,10 +2,10 @@
 
 The extension contract of 1.0: a callable (or ``nn.Module``) drops into the
 additive shifts via ``Fn``; a whole new term is a ``tramdag.Term``
-subclass (its options and checks) whose ``module`` names a
-``tramdag.modules.ShiftModule`` subclass by import path. A checkpoint carries
-the term's own import path, so loading a custom spec imports it from there —
-and a lambda ``fn`` refuses to save.
+subclass (its options and checks) whose ``module`` is a
+``tramdag.modules.ShiftModule`` subclass. A checkpoint carries the term's own
+import path, so loading a custom spec imports it from there — and a lambda
+``fn`` refuses to save.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -15,7 +15,7 @@ import torch
 from torch import nn
 
 from tramdag import CausalFlowDAG, ContinuousNode, Fn, Term, spec_from_dict
-from tramdag.modules import ShiftModule, module_for
+from tramdag.modules import ShiftModule
 
 
 # %% private functions -----------------------------------------------------------------
@@ -78,7 +78,7 @@ def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
     """
     df = ls_chain["draw"](600, 0)[["x1", "x2"]]
     term = SLS("x1", scale=3.0)
-    assert module_for(term) is _ScaledLS
+    assert term.module is _ScaledLS
     assert term.name == "SLS"
     assert repr(term) == "SLS(parents=('x1',), scale=3.0)"
     with pytest.raises(ValueError, match="exactly one parent"):
@@ -107,8 +107,12 @@ def test_unknown_term_and_orphan_term_fail_by_name():
     }
     with pytest.raises(ValueError, match="unknown term 'NOPE'"):
         spec_from_dict(d)
-    with pytest.raises(ValueError, match="module ="):
-        CausalFlowDAG(_two_node(Orphan("x1")))
+    with pytest.raises(AttributeError, match="module"):
+        CausalFlowDAG(_two_node(Orphan("x1")))  # Python's own: no `module` set
+    with pytest.raises(TypeError, match="sets `name"):
+
+        class Nameless(Term):
+            pass
 
 
 def test_custom_regularizer_joins_the_loss(ls_chain):
@@ -131,18 +135,6 @@ def test_shift_curve_covers_fn_terms(ls_chain):
 
 
 # %% private classes -------------------------------------------------------------------
-class SLS(Term):
-    """A minimal custom term: ``w * x`` with a fixed scale option."""
-
-    module = f"{__name__}._ScaledLS"
-
-    def __init__(self, *parents, scale: float = 1.0):
-        super().__init__(*parents)
-        self.scale = scale
-        if len(self.parents) != 1:
-            raise ValueError("SLS() takes exactly one parent.")
-
-
 class _ScaledLS(ShiftModule, nn.Module):
     def __init__(self, scale: float):
         nn.Module.__init__(self)
@@ -159,10 +151,17 @@ class _ScaledLS(ShiftModule, nn.Module):
         return self.scale * self.w * feats[self.parents[0]][:, 0]
 
 
-class PEN(Term):
-    """A custom penalized term: the regularizer hook must reach the loss."""
+class SLS(Term):
+    """A minimal custom term: ``w * x`` with a fixed scale option."""
 
-    module = f"{__name__}._PenShift"
+    name = "SLS"
+    module = _ScaledLS
+
+    def __init__(self, *parents, scale: float = 1.0):
+        super().__init__(*parents)
+        self.scale = scale
+        if len(self.parents) != 1:
+            raise ValueError("SLS() takes exactly one parent.")
 
 
 class _PenShift(ShiftModule, nn.Module):
@@ -185,5 +184,14 @@ class _PenShift(ShiftModule, nn.Module):
         return self.w**2
 
 
+class PEN(Term):
+    """A custom penalized term: the regularizer hook must reach the loss."""
+
+    name = "PEN"
+    module = _PenShift
+
+
 class Orphan(Term):
     """A term class no module builds."""
+
+    name = "Orphan"

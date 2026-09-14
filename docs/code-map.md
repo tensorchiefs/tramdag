@@ -12,7 +12,7 @@ the same object, so `LS is LinearShift`.
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, plain data; each term is a subclass whose class name is its `name` and whose options are the keyword arguments of its `__init__`, with their defaults, assigned to `self`. A term is exactly its `__dict__`, so `options()` is `dict(vars(term))` — parents included — and `__eq__`, `__repr__` and serialization are one line each. `+` on terms builds plain lists. Carries the spec-level rules: `check`, `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new term; its module goes in `terms.py` and its options read as attributes (`term.penalty`, `term.units`, ...). |
+| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, plain data; each term is a subclass that sets `name` as a class attribute (checked at class definition) and whose options are the keyword arguments of its `__init__`, with their defaults, assigned to `self`. A term is exactly its `__dict__`, so `options()` is `dict(vars(term))` — parents included — and `__eq__`, `__repr__` and serialization are one line each. `+` on terms builds plain lists. Carries the spec-level rules: `check`, `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new term; its module goes in `terms.py` and its options read as attributes (`term.penalty`, `term.units`, ...). |
 | [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
 | [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
@@ -72,9 +72,9 @@ the same object, so `LS is LinearShift`.
 
 ## `modules.py` — the term modules (the 1.0 architecture's core)
 
-There is one module class per term. The term class names it as an import
-path (`module = "tramdag.modules.ComplexShiftModule"`); the module holds the
-term's network and owns the runtime hooks. For the contract diagram, see [architecture.md](architecture.md).
+There is one module class per term, and the term class holds it as `module`
+(`ComplexShift.module is ComplexShiftModule`); the module holds the term's
+network and owns the runtime hooks. This file imports nothing from `spec.py`. For the contract diagram, see [architecture.md](architecture.md).
 
 The default architectures replicate the PyTorch reference that this package
 grew out of, which is [buehlpa/TramDag](https://github.com/buehlpa/TramDag),
@@ -86,7 +86,7 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`module_for()`][tramdag.modules.module_for] | The dispatch: `import_object(type(term).module)`, the module class the term names by import path; a term class naming none fails by name. |
+| [`feat_width()`][tramdag.modules.feat_width] | Total encoded width of a parent set: `levels` per ordinal parent, 1 per continuous one. |
 | [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `build`, `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: 64-128-64 ReLU NN to one shift value. |
@@ -99,7 +99,7 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| (`_Node`) | One sub-model per variable: builds its intercept and shift terms through `module_for`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
+| [`Node`][tramdag.nodes.Node] | One sub-model per variable: builds its intercept and shift terms through each term's `module`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
 | [`Node`][tramdag.nodes.Node] `.log_prob` / `.sample` / `.abduct` / `.marginal_theta` / `.encode` | The ONLY continuous-vs-ordinal branches in the package, and the parent encoding. |
 
 ## `fitting.py` — `FitMixin`

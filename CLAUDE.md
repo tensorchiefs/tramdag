@@ -106,8 +106,9 @@ assigned to `self`. A term is exactly its `__dict__`, so `options()` is
 - `VaryingCoefficient`, aliased `VC`,
 - `FnShift`, aliased `Fn`.
 
-`Term.name` carries the symbol, a class attribute every subclass must set
-(`__init_subclass__` refuses one without), and `term:` is the serialized key. The spec
+`Term.name` carries the symbol and `Term.module` the module class, both class
+attributes every subclass must set (`__init_subclass__` refuses one without);
+`term:` is the serialized key. The spec
 class also owns the spec-level rules:
 
 - the arity and option-value checks, written after the `super().__init__` call,
@@ -120,7 +121,9 @@ The term class holds its module class from `modules.py` as `module`
 (`ComplexShift.module is ComplexShiftModule`); the module holds the term's
 network and owns the runtime:
 
-- build,
+- `__init__(term, spec)`, which builds the network and sets `key` and
+  `parents` (the intercept slot adds `n_params`, and `intercept_module` picks
+  one of its three classes),
 - shift_value and theta_value,
 - post_init,
 - regularizer,

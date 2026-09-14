@@ -74,9 +74,9 @@ import sys
 from .modules import (
     ComplexShiftModule,
     FnShiftModule,
-    InterceptModule,
     LinearShiftModule,
     VaryingCoefficientModule,
+    intercept_module,
 )
 
 # %% global variables ------------------------------------------------------------------
@@ -464,7 +464,9 @@ class Term:
     ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
-    class in [`modules`][tramdag.modules] that trains it.
+    class in [`modules`][tramdag.modules] that trains it, constructed as
+    ``module(term, spec)`` (the intercept's ``module`` is the function that
+    picks one of its three classes).
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
     and ``module`` (the [`ShiftModule`][tramdag.modules.ShiftModule] subclass
@@ -497,10 +499,11 @@ class Term:
     """
 
     def __init_subclass__(cls, **kwargs):
-        """Refuse a term class that sets no ``name``; the wire key needs it."""
+        """Refuse a term class without ``name`` (the wire key) or ``module``."""
         super().__init_subclass__(**kwargs)
-        if "name" not in cls.__dict__:
-            raise TypeError(f"{cls.__name__}: a Term subclass sets `name = ...`.")
+        for attr in ("name", "module"):
+            if attr not in cls.__dict__:
+                raise TypeError(f"{cls.__name__}: a Term subclass sets `{attr} = ...`.")
 
     def __init__(self, *parents: str):
         self.parents = tuple(parents)
@@ -651,7 +654,7 @@ class Intercept(Term):
     """
 
     name = "I"
-    module = InterceptModule
+    module = staticmethod(intercept_module)  # a function, not a class: no binding
 
     def __init__(
         self,

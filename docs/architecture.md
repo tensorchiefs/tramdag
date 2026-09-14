@@ -1,63 +1,70 @@
 # Architecture
 
-The package has eleven modules and one rule. Term-specific behavior lives on the
-term's two classes. These are its `Term` subclass (the spec) and its module in
-`terms.py`. Node-kind behavior lives in four adjacent functions. Everything
-else is framework code.
+The package has ten modules and one rule. Term-specific behavior lives on the
+term's two classes: its `Term` subclass (the spec) and its module in
+`modules.py`. Node-kind behavior lives in four `Node` methods. Everything else
+is framework code.
 
 [ADR 001](adr/001-term-owned-architecture.md) records these decisions and the
-alternatives that the project refused.
+alternatives that the project refused; its class names are those of its date.
 
 ## Module map
 ```mermaid
 graph TD
-    subgraph data["pure data"]
-        spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>nodes, normalization, Kahn sort, (de)serialization"]
+    subgraph data["spec"]
+        spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>each holding its module class;<br/>nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        terms["terms.py<br/>one module per term, data = its Term class;<br/>ShiftTerm/InterceptTerm hooks; module_for;<br/>_InputTransform;<br/>LinearShiftTerm ComplexShiftTerm<br/>VaryingCoefficientTerm FnShiftTerm,<br/>SimpleInterceptTerm ComplexInterceptTerm<br/>AdditiveInterceptTerm"]
-        conditioners["conditioners.py<br/>raw nn heads (frozen:<br/>anchors checkpoints + RNG)"]
+        modules["modules.py<br/>one nn.Module per term, built from (term, spec):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule FnShiftModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
-        nodes["nodes.py<br/>_Node (intercept + shifts),<br/>kind_log_prob/sample/abduct/<br/>marginal_theta"]
-        flow["flow.py<br/>CausalFlowDAG: build, calibrate,<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
+        nodes["nodes.py<br/>Node: intercept + shifts,<br/>encode, log_prob, sample,<br/>abduct, marginal_theta"]
+        flow["flow.py<br/>CausalFlowDAG: construct, calibrate,<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
     end
     subgraph functions["flow behavior by concern"]
-        fitting["fitting.py<br/>_FitMixin: fit (Adam loop, callbacks),<br/>fit_classical (L-BFGS)"]
-        readouts["readouts.py<br/>_ReadoutsMixin: ls_coefficients,<br/>varying_coef, to_matrix, contributions,<br/>design_matrix, shift_curve"]
+        fitting["fitting.py<br/>FitMixin: fit (Adam loop, callbacks),<br/>fit_classical (L-BFGS)"]
+        readouts["readouts.py<br/>ReadoutsMixin: ls_coefficients,<br/>varying_coef, to_matrix, contributions,<br/>design_matrix, shift_curve"]
         scores["scores.py<br/>node_scores,<br/>effect_modifier_scan"]
     end
     callbacks["callbacks.py<br/>Callback, EarlyStopping,<br/>PerNodePlateau, per_node_adam"]
     plots["plots.py<br/>plot_dag, plot_marginals,<br/>plot_training (matplotlib optional)"]
 
-    spec --> terms
-    plots --> spec
-    terms --> conditioners
-    nodes --> terms
+    spec --> modules
     nodes --> spec
     nodes --> transforms
     flow --> nodes
+    flow --> modules
+    flow --> spec
+    flow --> transforms
     flow --> fitting
     flow --> readouts
     flow --> scores
     fitting --> callbacks
+    readouts --> modules
+    readouts --> spec
+    scores --> spec
+    scores --> transforms
+    plots --> spec
 ```
 
-`spec.py` imports nothing from `terms.py`. Therefore the data layer stays
-importable and torch runs no model code. `fitting.py` and `readouts.py` are
-mixins that `CausalFlowDAG` composes. They import `flow` under
-`TYPE_CHECKING` only. The graph is acyclic.
+`modules.py` imports nothing from `spec.py`: it reads a spec node's `kind` and
+`levels` and a term's `parents` and options. That is what lets each term class
+hold its module class directly (`LinearShift.module is LinearShiftModule`).
+`fitting.py` and `readouts.py` are mixins that `CausalFlowDAG` composes;
+`fitting` imports `flow` under `TYPE_CHECKING` only. The graph is acyclic.
 
 ## The term contract
 ```mermaid
 classDiagram
     class Term {
         <<spec.py, plain data>>
+        name: class attribute, the wire key
+        module: class attribute, the module class
         parents
-        name: the class name
         __init__(*parents): the base assigns the parents
         options: each subclass's keyword arguments, assigned to self
         __repr__(): the only one — every entry as name=value
-        edge_parents(name, spec)
+        check(name, spec)
+        edge_parents
         cells()
         classical
         options() / from_serialized()
@@ -67,14 +74,13 @@ classDiagram
     Term <|-- ComplexShift : CS
     Term <|-- VaryingCoefficient : VC
     Term <|-- FnShift : Fn
-    class TermDef {
-        <<terms.py, module>>
-        data: the Term subclass it builds (stamps itself as its .module)
+    class TermModule {
+        <<modules.py, nn.Module>>
         input_transform / calibrate(train_df)
     }
-    class ShiftTerm {
-        key (build) / parents (node) / order
-        build(term, spec)
+    class ShiftModule {
+        __init__(term, spec): builds the net, sets key and parents
+        order
         shift_value(node, feats)
         post_init()
         regularizer() -> Tensor | None
@@ -82,54 +88,47 @@ classDiagram
         score_columns(node, flow, feats, dlds)
         side_columns() / check_column() / live_side() / extra_columns()
     }
-    class InterceptTerm {
+    class InterceptModule {
+        __init__(term, spec, n_params): intercept_module picks the class
         groups / ci_parents
-        build(term, spec, n_params)
         calibrate_intercept(train_df, own, ut)
         theta_value(node, feats, n)
         marginal_start(theta)
     }
-    TermDef <|-- ShiftTerm
-    TermDef <|-- InterceptTerm
-    ShiftTerm <|-- LinearShiftTerm
-    ShiftTerm <|-- ComplexShiftTerm
-    ShiftTerm <|-- VaryingCoefficientTerm
-    ShiftTerm <|-- FnShiftTerm
-    InterceptTerm <|-- SimpleInterceptTerm
-    InterceptTerm <|-- ComplexInterceptTerm
-    InterceptTerm <|-- AdditiveInterceptTerm
-    LinearShiftTerm --|> LinearShift : nn
-    ComplexShiftTerm --|> ComplexShift : nn
-    VaryingCoefficientTerm --|> VaryingCoef : nn
-    SimpleInterceptTerm --|> SimpleIntercept : nn
-    ComplexInterceptTerm --|> ComplexIntercept : nn
+    TermModule <|-- ShiftModule
+    TermModule <|-- InterceptModule
+    ShiftModule <|-- LinearShiftModule
+    ShiftModule <|-- ComplexShiftModule
+    ShiftModule <|-- VaryingCoefficientModule
+    ShiftModule <|-- FnShiftModule
+    InterceptModule <|-- SimpleInterceptModule
+    InterceptModule <|-- ComplexInterceptModule
+    InterceptModule <|-- AdditiveInterceptModule
 ```
 
-Built-in terms subclass their conditioners. Therefore the state-dict paths
-(`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream are those of 0.4.
+Each module builds its layers in a fixed order under fixed attribute names, so
+the state-dict paths (`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream are
+stable; `tests/test_statedict_stability.py` pins them.
 
 A custom term is two classes:
 
-- a `tramdag.Term` subclass. Its options are the keyword arguments of its
-  `__init__`, assigned to `self` after `super().__init__(*parents)`; its rules
-  are the checks after that, plus `edge_parents` and `cells`.
-- a `ShiftTerm` subclass. It declares `data =` that class. It implements
-  `build` and `shift_value`. The `build` method must set `key`.
+- a `ShiftModule` subclass with `__init__(term, spec)`, which builds the
+  network and sets `key` and `parents`, and `shift_value`;
+- a `tramdag.Term` subclass with `name` and `module` as class attributes
+  (`__init_subclass__` refuses one without). Its options are the keyword
+  arguments of its `__init__`, assigned to `self` after
+  `super().__init__(*parents)`; its rules are the checks after that, plus
+  `check` and `edge_parents`.
 
-Subclassing is the registration. For a one-off term, the cheap path is `Fn`.
+For a one-off term, the cheap path is `Fn`.
 
 ## Node kinds
 
 The two node kinds are continuous and ordinal. They stay an if/else in ONE
-place. These four functions hold that if/else, adjacent in nodes.py:
-
-- `kind_log_prob`
-- `kind_sample`
-- `kind_abduct`
-- `kind_marginal_theta`
-
-A third node kind is the trigger for a protocol. Until a third kind arrives,
-the if/else stays.
+place: the four `Node` methods `log_prob`, `sample`, `abduct` and
+`marginal_theta` in nodes.py, plus `encode` for the parent encoding. A third
+node kind is the trigger for a protocol. Until a third kind arrives, the
+if/else stays.
 
 ## Guards that pin all of this
 
@@ -293,7 +292,6 @@ classDiagram
   SplineUT --|> _ScaledUT
   ComplexShiftModule --o ComplexShift : module
   FnShiftModule --o FnShift : module
-  InterceptModule --o Intercept : module
   LinearShiftModule --o LinearShift : module
   VaryingCoefficientModule --o VaryingCoefficient : module
 ```
@@ -308,66 +306,60 @@ flowchart LR
   end
   subgraph modules
     n4["ComplexShiftModule.__init__"]
-    n6["ComplexShiftModule.build"]
-    n9["InterceptModule.build"]
-    n12["LinearShiftModule.__init__"]
-    n11["LinearShiftModule.build"]
-    n10["SimpleInterceptModule.__init__"]
-    n13["VaryingCoefficientModule.__init__"]
-    n14["VaryingCoefficientModule.build"]
-    n7["_attach_input_transform"]
-    n5["_nn"]
-    n8["feat_width"]
+    n8["LinearShiftModule.__init__"]
+    n11["SimpleInterceptModule.__init__"]
+    n9["VaryingCoefficientModule.__init__"]
+    n5["_attach_input_transform"]
+    n6["_nn"]
+    n7["feat_width"]
+    n10["intercept_module"]
   end
   subgraph nodes
     n2["Node.__init__"]
   end
   subgraph spec
-    n19["Term.check"]
-    n20["Term.edge_parents"]
-    n21["VaryingCoefficient.check"]
-    n22["VaryingCoefficient.edge_parents"]
-    n18["_check_node"]
-    n23["_kahn_sort"]
-    n15["node_parents"]
+    n16["Term.check"]
+    n17["Term.edge_parents"]
+    n18["VaryingCoefficient.check"]
+    n19["VaryingCoefficient.edge_parents"]
+    n15["_check_node"]
+    n20["_kahn_sort"]
+    n12["node_parents"]
     n3["validate_and_sort"]
   end
   subgraph transforms
-    n24["BernsteinUT.__init__"]
-    n16["BernsteinUT.n_params"]
-    n25["_ScaledUT.__init__"]
-    n17["make_univariate_transform"]
+    n21["BernsteinUT.__init__"]
+    n13["BernsteinUT.n_params"]
+    n22["_ScaledUT.__init__"]
+    n14["make_univariate_transform"]
   end
     n0 --> n1
     n0 -- "3x" --> n2
     n0 --> n3
     n4 --> n5
-    n6 --> n4
-    n6 --> n7
-    n6 --> n8
-    n9 -- "3x" --> n10
-    n11 --> n12
-    n11 --> n8
-    n13 --> n5
-    n14 --> n13
-    n14 --> n7
-    n14 --> n8
-    n2 --> n6
-    n2 -- "3x" --> n9
-    n2 --> n11
-    n2 --> n14
-    n2 -- "3x" --> n15
-    n2 -- "2x" --> n16
-    n2 -- "2x" --> n17
-    n18 -- "5x" --> n19
-    n18 -- "5x" --> n20
-    n18 --> n21
-    n18 --> n22
-    n23 -- "3x" --> n15
-    n3 -- "3x" --> n18
-    n3 --> n23
-    n24 -- "2x" --> n25
-    n17 -- "2x" --> n24
+    n4 --> n6
+    n4 --> n7
+    n8 --> n7
+    n9 --> n5
+    n9 --> n6
+    n9 --> n7
+    n10 -- "3x" --> n11
+    n2 --> n4
+    n2 --> n8
+    n2 --> n9
+    n2 -- "3x" --> n10
+    n2 -- "3x" --> n12
+    n2 -- "2x" --> n13
+    n2 -- "2x" --> n14
+    n15 -- "5x" --> n16
+    n15 -- "5x" --> n17
+    n15 --> n18
+    n15 --> n19
+    n20 -- "3x" --> n12
+    n3 -- "3x" --> n15
+    n3 --> n20
+    n21 -- "2x" --> n22
+    n14 -- "2x" --> n21
 ```
 
 ### Call graph — one fit (traced)

@@ -100,7 +100,7 @@ things:
   it uses the LAST fraction of `train_df` with no shuffle. Only the head of
   the frame calibrates, so there is no leakage. With either argument, `fit`
   computes the per-node validation NLL once after every epoch, into
-  `flow.history["val"]`. `validation_batch_size=` chunks that pass.
+  `flow.history["val"]`.
 - **Logging** — the shipped callbacks read `flow.history["val"]` there.
   `flow.history["lr"]` records the optimizer's rate after every epoch. With
   `per_node_adam` that record is a `{node: lr}` dict. A schedule's decisions
@@ -219,9 +219,9 @@ raises on any `cs`, `ci` or `vc` term.
   **deterministic**: the same init gives bit-identical results. The fit also
   lands on the **exact MLE**. `fit_classical` matches `statsmodels` and R to
   ~4 decimals. A converged Adam `fit` gets within ~1e-3.
-- **Solver budget** — `max_iter=400`, `tol=1e-9` and `history_size=50`. The
-  fit is one L-BFGS run with torch's own stopping rule. The run ends when the
-  NLL or the parameters move by less than `tol`, or at `max_iter`. The
+- **Solver budget** — `max_iter=400` and `history_size=50`. The fit is one
+  L-BFGS run with torch's own stopping rule. The run ends when the NLL or the
+  parameters move by less than 1e-9, or at `max_iter`. The
   report's `n_iter` is torch's count. The report's `converged` says whether a
   tolerance ended the run, and not the cap. `history_size` is the L-BFGS
   memory.

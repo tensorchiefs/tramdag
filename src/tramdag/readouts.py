@@ -267,7 +267,9 @@ class _ReadoutsMixin:
                 "Its intercept is unconditional, so there is nothing to decompose."
             )
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
-        nets = nd.intercept.net_groups
+        # one net per group: the additive intercept holds them in `nets`, every
+        # other intercept is itself the one network
+        nets = getattr(nd.intercept, "nets", [nd.intercept])
 
         contributions: dict[str, np.ndarray] = {}
         parents: dict[str, tuple] = {}

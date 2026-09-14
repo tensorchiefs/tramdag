@@ -24,10 +24,11 @@ import pandas as pd
 import torch
 from torch import Tensor, nn
 
+# TODO: i think we should not cross import private members.
 from .fitting import _FitMixin
 from .nodes import (
+    Node,
     _init_linear,
-    _Node,
     kind_abduct,
     kind_log_prob,
     kind_marginal_theta,
@@ -101,16 +102,16 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         self.order = validate_and_sort(spec)
         self.init = init
         self.nodes = nn.ModuleDict(
-            {name: _Node(spec[name], spec) for name in self.order}
+            {name: Node(spec[name], spec) for name in self.order}
         )
         self._apply_init(init)
         self.device = torch.device(device)
         # calibrate() takes the data-dependent state once; checkpoints carry the flag
-        self.register_buffer("calibrated", torch.tensor(False))
+        self.register_buffer("calibrated", torch.tensor(False))  # TODO: why not
+        # python boolean? what dos register buffer do? is it necessary?
+        # TODO: rethink ux of calibrate? do we ever not calibrate?if not -> put
+        # in inita and make private
         self.history: dict = {"train": []}  # per-node mean train NLL per epoch
-        self._fit_validated = (
-            False  # True while the LAST fit validated (callbacks read it)
-        )
         self.meta: dict = {}  # provenance attached at save() (version, time)
         self.to(self.device)
 
@@ -132,6 +133,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             if isinstance(m, ShiftTerm):
                 m.post_init()
 
+    # TODO: node specific code: consider moving into class
     def _encode_parent(self, name: str, values: Tensor) -> Tensor:
         """Encode the values of a node for use as a parent feature.
 
@@ -146,6 +148,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             ).to(values.dtype)
         return values.view(-1, 1)
 
+    # TODO: why this torch/numpy trickery?
     @property
     def _dtype(self) -> torch.dtype:
         """Current model dtype (float32 normally; float64 inside fit_classical)."""
@@ -215,7 +218,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         return torch.Generator(device=self.device).manual_seed(seed)
 
     @torch.no_grad()
-    def _binary_p1(self, nd: _Node, values: dict[str, Tensor], n: int) -> Tensor:
+    def _binary_p1(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
         """Give ``P(node = 1 | parents)`` for a binary ordinal node.
 
         ``P(x <= 0) = sigmoid(theta_0 - s)``, so the answer is
@@ -226,7 +229,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         theta, shift = nd.theta_shift(feats, n)
         return torch.sigmoid(shift - theta[:, 0])
 
-    def _node(self, name: str) -> _Node:
+    def _node(self, name: str) -> Node:
         """Look a node up by name, with the same error everywhere."""
         if name not in self.nodes:
             raise KeyError(f"unknown node {name!r}")
@@ -241,7 +244,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         }
 
     def _theta_shift(
-        self, nd: _Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
+        self, nd: Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
     ) -> tuple[Tensor, Tensor]:
         """Evaluate one node's transform parameters and shift.
 
@@ -256,7 +259,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
         return nd.theta_shift(feats | self._side_feats(nd, values, n), n)
 
     def _side_feats(
-        self, nd: _Node, values: dict[str, Tensor], n: int
+        self, nd: Node, values: dict[str, Tensor], n: int
     ) -> dict[str, Tensor]:
         """Give the node's side columns: frozen from ``values``, else live.
 
@@ -272,7 +275,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
                 out.update(m.live_side(self, values, n))
         return out
 
-    def _query_side_columns(self, nd: _Node) -> list[str]:
+    def _query_side_columns(self, nd: Node) -> list[str]:
         """List the extra columns a query needs to recompute live side inputs.
 
         These are the columns beyond ``nd.parents``: the parents of the
@@ -339,6 +342,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
             per_node = self.node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
+    # TODO: needed? if yes: consider rename for consistency: node_negative_log_prob
     def nll(self, df: pd.DataFrame) -> dict[str, float]:
         """Compute the mean negative log-likelihood per node (a diagnostic).
 
@@ -590,7 +594,7 @@ class CausalFlowDAG(_FitMixin, _ReadoutsMixin, nn.Module):
 
     def _conditional(
         self, df: pd.DataFrame, node: str, do: dict[str, float] | None
-    ) -> tuple[_Node, Tensor, Tensor, int]:
+    ) -> tuple[Node, Tensor, Tensor, int]:
         """Evaluate one node's conditional at the rows of ``df``.
 
         ``do`` overrides columns before the parents are read, which is what

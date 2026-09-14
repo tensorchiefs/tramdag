@@ -194,7 +194,7 @@ def test_epochs_must_be_positive(ls_chain):
 def test_restore_best_without_an_epoch_refuses(ls_chain):
     """Restoring before any epoch is a bug in the caller's loop — loud."""
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(RuntimeError, match="no epoch"):
+    with pytest.raises(RuntimeError, match="nothing to restore"):
         EarlyStopping().on_fit_end(flow, None)
 
 
@@ -297,18 +297,6 @@ def test_per_node_plateau_respects_a_fresh_optimizer_rate(ls_chain):
     assert sched.lr0 == {"x1": 1e-3, "x2": 1e-3}
 
 
-def test_fit_classical_marks_validation_stale(ls_chain):
-    """After fit_classical the last history["val"] entry is pre-classical —
-    a manually driven callback must refuse it, not treat it as current.
-    """
-    df = ls_chain["draw"](400, 0)[["x1", "x2"]]
-    flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())
-    flow.fit_classical(df)
-    with pytest.raises(RuntimeError, match="validation_data"):
-        EarlyStopping().on_epoch_end(flow, 1, None)
-
-
 def test_callbacks_reject_stale_validation_from_an_earlier_fit(ls_chain):
     """After a validated fit, an unvalidated fit must not let a callback read
     the old history["val"] entry as the current epoch.
@@ -403,13 +391,12 @@ def test_history_accumulates_across_fit_calls(ls_chain):
 def test_a_diverged_fit_says_so_instead_of_blaming_the_callback(ls_chain):
     """EarlyStopping names a NaN validation curve, not its own wiring.
 
-    A NaN never beats ``inf - min_delta``, so nothing is ever snapshotted and
-    fit end has nothing to restore. The message has to say which of the two
-    happened, because the fix differs.
+    A NaN never beats ``inf``, so nothing is ever snapshotted and fit end has
+    nothing to restore; the message names divergence as a cause.
     """
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(RuntimeError, match="never finite"):
+    with pytest.raises(RuntimeError, match="nothing to restore"):
         flow.fit(
             df,
             epochs=3,

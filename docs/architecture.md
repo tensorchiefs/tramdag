@@ -249,6 +249,8 @@ classDiagram
   }
   class LinearShiftTerm {
   }
+  class Node {
+  }
   class OrdinalNode {
   }
   class PerNodePlateau {
@@ -278,8 +280,6 @@ classDiagram
   class _FnCallback {
   }
   class _InputTransform {
-  }
-  class _Node {
   }
   class _ReadoutsMixin {
   }
@@ -335,7 +335,7 @@ flowchart LR
     n4["CausalFlowDAG._apply_init"]
   end
   subgraph nodes
-    n5["_Node.__init__"]
+    n5["Node.__init__"]
   end
   subgraph spec
     n16["Term.edge_parents"]
@@ -438,8 +438,8 @@ flowchart LR
     n22["CausalFlowDAG.node_log_prob"]
   end
   subgraph nodes
-    n39["_Node.net_input"]
-    n35["_Node.theta_shift"]
+    n39["Node.net_input"]
+    n35["Node.theta_shift"]
     n38["kind_log_prob"]
   end
   subgraph terms

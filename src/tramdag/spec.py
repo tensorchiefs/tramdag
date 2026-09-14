@@ -149,7 +149,7 @@ def _checked_input_transform(value):
     return value
 
 
-def _as_term(value) -> Term:
+def _check_term(value) -> Term:
     """Take one entry of a formula to a [`Term`][].
 
     Raises
@@ -191,7 +191,7 @@ def _normalize_terms(value):
     if value is None:
         return [Intercept()]  # a source node: the free intercept alone
     written = value if isinstance(value, (list, tuple)) else [value]
-    items = [_as_term(e) for e in written]
+    items = [_check_term(e) for e in written]
     intercept_at = [i for i, t in enumerate(items) if isinstance(t, Intercept)]
     if len(intercept_at) > 1:
         parented = [t for t in items if isinstance(t, Intercept) and t.parents]
@@ -234,6 +234,8 @@ def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
         for p in term.parents:
             if p not in spec:
                 raise ValueError(f"Node '{name}': unknown parent '{p}'.")
+        # TODO: this is a null op for all nodes except vc. rethink design. idea:
+        # have i check_spec(spec) methodon each term?
         for p in term.edge_parents(name, spec):
             if p in seen:
                 raise ValueError(
@@ -446,9 +448,9 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
             cls = _term_class(t["term"])
             terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
         if nd["kind"] == "continuous":
-            spec[name] = ContinuousNode(terms or None)
+            spec[name] = ContinuousNode(terms)
         else:
-            spec[name] = OrdinalNode(int(nd["levels"]), terms or None)
+            spec[name] = OrdinalNode(int(nd["levels"]), terms)
     return spec
 
 
@@ -489,6 +491,7 @@ class Term:
         every other built-in term's parents all own their edges.
     """
 
+    # TODO: do we need this here? is set in __init_subclass__ anayway.
     name = "Term"
 
     def __init_subclass__(cls, **kwargs):
@@ -513,6 +516,8 @@ class Term:
         """Say whether the exact classical fit (``fit_classical``) handles this term."""
         return False
 
+    # BUG: this seams completely disfucntional. Is it even needed? make abous
+    # why this evenexists and explayn why args are unused.
     def edge_parents(self, name: str, spec: dict[str, NodeSpec]) -> tuple[str, ...]:
         """Validate against the spec; give the parents that own an edge."""
         return self.parents
@@ -551,12 +556,10 @@ class Term:
         args = [f"{k}={v!r}" for k, v in self.options().items()]
         return f"{self.name}({', '.join(args)})"
 
-    def __add__(self, other: Term | list[Term]) -> list[Term]:
-        """Concatenate into a plain term list."""
+    def __add__(self, other: Term) -> list[Term]:
+        """Start a plain term list."""
         if isinstance(other, Term):
             return [self, other]
-        if isinstance(other, list):
-            return [self, *other]
         return NotImplemented
 
     def __radd__(self, other: list[Term]) -> list[Term]:
@@ -887,6 +890,8 @@ class VaryingCoefficient(Term):
             continuous or an itself-centered treatment.
         """
         on = self.parents[0]
+        # TODO: we shall pass the propensities through __init__ instead of
+        # altering the data. rethink the design.
         if self.center is not None and not isinstance(self.center, str):
             raise ValueError(
                 f"Node '{name}': VC(center=) names the propensity COLUMN of "

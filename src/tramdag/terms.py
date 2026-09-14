@@ -13,6 +13,10 @@ A custom term is two classes: a ``Term`` subclass for the options and checks, an
 ``build`` and ``shift_value``.
 """
 
+# TODO: naming is a bit wired: we have Term living in spec and TermDef living in
+# term. maybe rename to modules since we bundle with nn.Module here? lets discuss
+# a better naming and structure ignoring all previous decisions
+
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
@@ -45,7 +49,7 @@ from .spec import (
 if TYPE_CHECKING:
     import pandas as pd
 
-    from .nodes import _Node
+    from .nodes import Node
     from .spec import NodeSpec
 
 
@@ -64,6 +68,8 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
 
 
 # %% public functions ------------------------------------------------------------------
+# TODO: since we reuse this pattern: refactor as util funcwith dot path support like
+# custom terms in spec?
 def module_for(term: Term) -> type[TermDef]:
     """Give the module class that builds ``term``.
 
@@ -202,7 +208,7 @@ class ShiftTerm(TermDef, ABC):
         """Construct the term module from its spec Term."""
 
     @abstractmethod
-    def shift_value(self, node: _Node, feats: dict) -> Tensor:
+    def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give this term's contribution to the node's shift, shape ``(n,)``.
 
         ``feats`` holds the node's encoded parents plus this term's side
@@ -217,10 +223,10 @@ class ShiftTerm(TermDef, ABC):
         """Give the term's penalty on the total-likelihood scale, or ``None``."""
         return None
 
-    def finalize(self, node: _Node, feats: dict) -> None:
+    def finalize(self, node: Node, feats: dict) -> None:
         """Run the term's post-fit step (after the after-fit callbacks)."""
 
-    def score_columns(self, node: _Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
         """Give the per-observation score columns of this term's coefficients.
 
         Empty for a term with no interpretable coefficient (``CS``).
@@ -261,15 +267,6 @@ class InterceptTerm(TermDef, ABC):
 
     groups: list[tuple[str, ...]]
     ci_parents: list[str]
-
-    @property
-    def net_groups(self) -> list:
-        """Give this intercept's networks, one per entry of ``groups``.
-
-        An additive intercept holds several in ``nets`` and overrides this.
-        Every other intercept term is itself the one network.
-        """
-        return [self]
 
     @classmethod
     def build(cls, term: Term, spec: dict[str, NodeSpec], n_params: int):
@@ -328,7 +325,7 @@ class InterceptTerm(TermDef, ABC):
         ut.set_range(q.iloc[0], q.iloc[1])
 
     @abstractmethod
-    def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
+    def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Give the transform parameters, shape ``(n, P)``."""
 
     def marginal_start(self, theta: Tensor) -> None:
@@ -338,7 +335,7 @@ class InterceptTerm(TermDef, ABC):
 class SimpleInterceptTerm(InterceptTerm, SimpleIntercept):
     """The free simple intercept: one theta vector, no parents."""
 
-    def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
+    def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Broadcast the free theta over the batch."""
         return self(n)
 
@@ -351,7 +348,7 @@ class SimpleInterceptTerm(InterceptTerm, SimpleIntercept):
 class ComplexInterceptTerm(InterceptTerm, ComplexIntercept):
     """A single (possibly joint multi-parent) complex intercept net."""
 
-    def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
+    def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Run the one net over the joint parent features."""
         return self(node.net_input(feats, self.ci_parents, "@I"))
 
@@ -383,12 +380,7 @@ class AdditiveInterceptTerm(InterceptTerm, nn.Module):
             for grp in groups
         )
 
-    @property
-    def net_groups(self) -> list:
-        """Give the per-parent networks this intercept sums."""
-        return list(self.nets)
-
-    def theta_value(self, node: _Node, feats: dict, n: int) -> Tensor:
+    def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Sum the per-parent nets in coefficient space."""
         return sum(
             net(node.net_input(feats, grp, "@I"))
@@ -409,11 +401,11 @@ class LinearShiftTerm(ShiftTerm, LinearShift):
         m.key = term.parents[0]
         return m
 
-    def shift_value(self, node: _Node, feats: dict) -> Tensor:
+    def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the raw parent column times the weight — no input transform."""
         return self(torch.cat([feats[p] for p in self.parents], dim=1))
 
-    def score_columns(self, node: _Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
         """One column per weight: the parent (continuous) or its one-hot levels.
 
         ``d l_i / d beta = (d l_i / d s_i) * x_i`` — analytic and exact.
@@ -444,7 +436,7 @@ class ComplexShiftTerm(ShiftTerm, ComplexShift):
         _attach_input_transform(m, term, ps, spec)
         return m
 
-    def shift_value(self, node: _Node, feats: dict) -> Tensor:
+    def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the net over this term's (possibly input-transformed) features."""
         return self(node.net_input(feats, self.parents, self.key))
 
@@ -493,7 +485,7 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
             t = t - feats[self.center_col].view(-1, 1)
         return t
 
-    def shift_value(self, node: _Node, feats: dict) -> Tensor:
+    def shift_value(self, node: Node, feats: dict) -> Tensor:
         """``beta(modifiers) * regressor``, with the centered-term guard."""
         t = self.regressor(feats)
         mod_feat = node.net_input(feats, self.mods, self.key) if self.mods else None
@@ -513,12 +505,12 @@ class VaryingCoefficientTerm(ShiftTerm, VaryingCoef):
             return None
         return self.penalty * self.l2()
 
-    def finalize(self, node: _Node, feats: dict) -> None:
+    def finalize(self, node: Node, feats: dict) -> None:
         """Re-split ``beta0``/``b_theta``: the head sums to zero over train."""
         if self.mods:
             self.recenter(node.net_input(feats, self.mods, self.key))
 
-    def score_columns(self, node: _Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
         """One column, keyed by the treatment: the ``beta0`` score.
 
         ``d s / d beta0`` is the term's own ``regressor``, so forward
@@ -580,7 +572,7 @@ class FnShiftTerm(ShiftTerm, nn.Module):
         _attach_input_transform(m, term, ps, spec)
         return m
 
-    def shift_value(self, node: _Node, feats: dict) -> Tensor:
+    def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Run ``fn`` on the term's features; accept ``(n,)`` or ``(n, 1)``."""
         out = self.fn(node.net_input(feats, self.parents, self.key))
         return out.squeeze(-1) if out.dim() > 1 else out

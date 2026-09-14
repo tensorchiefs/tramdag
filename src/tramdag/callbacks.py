@@ -20,11 +20,12 @@ import torch
 def _last_val(flow) -> dict[str, float]:
     """Give the current epoch's per-node validation NLL, or fail loudly.
 
-    A stale entry from an earlier validated fit does not count: THIS fit
-    must validate (``fit`` records that on the flow), so the last entry is
-    the current epoch's.
+    A stale entry from an earlier validated fit does not count: the last
+    entry must belong to the last train epoch (``history["val_epoch"]``
+    records which one it belongs to).
     """
-    if not flow._fit_validated or not flow.history.get("val"):
+    val_epoch = flow.history.get("val_epoch", [])
+    if not val_epoch or val_epoch[-1] != len(flow.history["train"]):
         raise RuntimeError(
             "this callback reads flow.history['val'] — pass validation_data= "
             "or validation_split= to fit()"
@@ -127,7 +128,6 @@ class EarlyStopping(Callback):
         self.best_nll = math.inf
         self.best_epoch = 0
         self._state = None
-        self._epochs = 0
 
     def on_fit_begin(self, flow, optimizer) -> None:
         """Start fresh — neither patience nor the snapshot carries over."""
@@ -136,7 +136,6 @@ class EarlyStopping(Callback):
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Snapshot on improvement; ``True`` once the best is ``patience`` old."""
         nll = sum(_last_val(flow).values())
-        self._epochs += 1
         if nll < self.best_nll:
             self.best_nll, self.best_epoch = nll, epoch
             if self.restore_best:
@@ -147,18 +146,12 @@ class EarlyStopping(Callback):
         """Load the best weights back into the flow (``restore_best`` only)."""
         if not self.restore_best:
             return
-        # a first finite NLL always beats inf, so no snapshot means one of two
-        if self._epochs == 0:
+        if self._state is None:  # a first finite NLL always beats inf
             raise RuntimeError(
-                "EarlyStopping saw no epoch, so it has nothing to restore: "
-                "fit() ran zero epochs, or the callback never reached on_epoch_end"
-            )
-        if self._state is None:
-            raise RuntimeError(
-                f"EarlyStopping saw {self._epochs} epoch(s) and the validation "
-                "NLL was never finite, so it has nothing to restore: the fit "
-                "diverged. Lower learning_rate, or check the validation frame "
-                "for a column the model cannot score"
+                "EarlyStopping has nothing to restore: no epoch reached "
+                "on_epoch_end with a finite validation NLL. Either fit() ran no "
+                "epoch, or the fit diverged — lower learning_rate, or check the "
+                "validation frame for a column the model cannot score."
             )
         flow.load_state_dict(self._state)
 

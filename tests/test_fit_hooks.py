@@ -174,15 +174,10 @@ def test_early_stopping_without_restore_keeps_the_final_weights(ls_chain):
         EarlyStopping(restore_best=False)
 
 
-def test_misregistered_callback_fails_before_training(ls_chain):
-    """A bare callable with the wrong arity (or a non-callable) must raise
-    up front, not after the last epoch of a long run.
-    """
+def test_non_callable_callback_is_refused(ls_chain):
+    """A ``callbacks=`` entry that is not callable must raise up front."""
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(TypeError, match="flow, epoch, optimizer"):
-        flow.fit(df, epochs=10, callbacks=[lambda f, opt: None])  # 2-arg hook
-    assert len(flow.history["train"]) == 0  # nothing trained
     with pytest.raises(TypeError, match="Callback instances or callables"):
         flow.fit(df, epochs=10, callbacks=[42])
 

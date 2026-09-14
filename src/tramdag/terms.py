@@ -56,7 +56,7 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
     Ordinal one-hots pass through untransformed, so a term whose network
     parents are all ordinal carries none.
     """
-    if getattr(term, "input_transform", None) is None:
+    if term.input_transform is None:
         return
     cps = tuple(p for p in parents if isinstance(spec[p], ContinuousNode))
     if cps:
@@ -156,9 +156,7 @@ class TermDef:
         declares ``input_transform=`` over continuous parents; a plain class
         attribute would shadow the registered submodule.
         """
-        return (
-            self._modules.get("_input_transform") if hasattr(self, "_modules") else None
-        )
+        return self._modules.get("_input_transform")
 
     def calibrate(self, train_df: pd.DataFrame) -> None:
         """Freeze this term's data-dependent state: the input-transform stats.

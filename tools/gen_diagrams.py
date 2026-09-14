@@ -146,7 +146,7 @@ def main() -> None:
     spec = {
         "x1": ContinuousNode(),
         "t": OrdinalNode(2, [LS("x1")]),
-        "y": ContinuousNode(SI() + CS("x1") + VC("x1", t="t", center=False)),
+        "y": ContinuousNode(SI() + CS("x1") + VC("x1", t="t")),
     }
     holder: dict = {}
     construct = trace(lambda: holder.setdefault("flow", CausalFlowDAG(spec, seed=0)))

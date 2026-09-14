@@ -291,7 +291,6 @@ docs/architecture.md carries the module map and the term-contract diagram.
   The caller reaches them through these `fit` keywords:
 
   - `validation_data=` or `validation_split=`,
-  - `validation_batch_size=`,
   - `verbose=`,
   - `optimizer=`,
   - `callbacks=`.

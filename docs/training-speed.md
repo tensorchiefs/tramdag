@@ -34,7 +34,7 @@ page is only the measurement.
 One behaviour matters here, because the numbers below turn on it.
 `PerNodePlateau` watches each node's own validation score. When that score does
 not improve by `min_delta` for `patience` epochs, the callback multiplies the
-node's rate by `factor`, which is 0.3 by default. The floor is 1e-3 of the
+node's rate by 0.3. The floor is 1e-3 of the
 start rate. After the rate has decayed 100x and then stays flat for `freeze`
 epochs, the node leaves training at rate 0. The `min_delta` default is 1e-4,
 and the stroke run in this benchmark uses 1e-5.

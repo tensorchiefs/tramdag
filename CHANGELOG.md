@@ -76,6 +76,11 @@ result is recorded.
 - `Term.slot` is removed. It was derived from the term kind, and its only user
   in the repository was a test assertion.
 - The ADR 001 refusal of per-term classes is revised in place.
+- `Fn(fn=)` is a required keyword. `VC(center=None)` is the uncentered term;
+  `False` was a second sentinel for the same state. `Term.cells()` gives
+  `(parent, tag, joint)` triples, so `plot_dag` reads jointness from the term
+  instead of parsing a `"CS['a', 'b']"` suffix; `to_matrix` writes the same
+  strings as before.
 
 ### Changed (breaking) — the node formula reads like the math
 
@@ -203,6 +208,12 @@ default that the paper replication or the tests had to switch off.
   not, matching what `fit` requires on the way in. **`log_prob` runs under
   `no_grad`** like every other query. Differentiate through `node_log_prob`
   instead. **`abduct` keeps the caller's index.**
+- `PerNodePlateau(patience=, freeze=)` are required — every caller passed
+  them — and `step(nll, optimizer, epoch)` takes the epoch it records.
+  `plot_training(frozen=)` takes the `{node: epoch}` dict; a callback caller
+  writes `frozen=plateau.frozen`. A bare callable in `callbacks=` is no longer
+  probed for its arity before the fit; one of the wrong arity fails at its
+  first call, in epoch 1, with Python's own `TypeError`.
 
 ### Changed (breaking) — no magic: calibration is per term, the start is yours
 
@@ -363,6 +374,15 @@ read-outs keep their exact signatures as flow methods.
   companion repository `tensorchiefs/tramdag-simu`. The package keeps only
   DGPs that validate the implementation, and a benchmark comparing tramdag to
   other methods belongs in the method-neutral paper repository.
+- **Knobs without a caller.** `fit(validation_batch_size=)` — the validation
+  pass is one full batch; `fit_classical(tol=)` — `tolerance_change` is 1e-9,
+  written once; `EarlyStopping(min_delta=)`; `PerNodePlateau(factor=)` — the
+  decay is 0.3 where it applies; `per_node_adam(**adam_kwargs)`;
+  `plot_dag(ax=)`, `plot_training(ax=)`, `plot_marginals(bins=)`; and the
+  never-read `history["classical"]` (`fit_classical` returns the report).
+  `marginal_init_theta(column)` has no default: pass `None` for the data-free
+  map. `scores` and `intercept_contributions` report a missing column through
+  the one `_tensorize` message ("the data frame lacks the column(s) ...").
 
 ### Added — `tramdag.plots` (optional extra `tramdag[plots]`)
 

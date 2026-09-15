@@ -2268,7 +2268,7 @@
         <p>The DAG specification: nodes, terms, validation and (de)serialization.</p>
 <p>A model is one dict <code>{node_name: NodeSpec}</code> of <a class="autorefs autorefs-internal" title="ContinuousNode" href="#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a> and
 <a class="autorefs autorefs-internal" title="OrdinalNode" href="#tramdag.spec.OrdinalNode"><code>OrdinalNode</code></a>. Each node declares its transformation as an additive
-formula of <a class="autorefs autorefs-internal" title="Term" href="#tramdag.spec.Term"><code>Term</code></a> subclasses — a list or a <code>+</code> sum — whose first entry
+formula of <a class="autorefs autorefs-internal" title="Term" href="#tramdag.spec.Term"><code>Term</code></a> subclasses — a <code>+</code> sum — whose first entry
 is the intercept (<a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>, written or prepended as <code>I()</code>) followed
 by shifts (<a class="autorefs autorefs-internal" title="LinearShift" href="#tramdag.spec.LinearShift"><code>LinearShift</code></a>, <a class="autorefs autorefs-internal" title="ComplexShift" href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a>, <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a>,
 <a class="autorefs autorefs-internal" title="FnShift" href="#tramdag.spec.FnShift"><code>FnShift</code></a>). The paper's symbols <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>Fn</code> are
@@ -2314,8 +2314,8 @@ checkpoint form. What the terms mean is <code>docs/model.md</code>.</p>
 
 
         <p>One additive term of a node's transformation; each kind is a subclass.</p>
-<p>Terms add: <code>I("a") + CS("b")</code> is the same transformation as
-<code>I("a") + CS("b")</code>. A term is plain data — comparable, hashable,
+<p>Terms add: <code>I("a") + CS("b")</code> is the plain list of the two terms, a
+node's formula. A term is plain data — comparable, hashable,
 serializable by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a> — and knows its own spec-level rules
 (<code>check</code>, <code>edge_parents</code>, <code>cells</code>, <code>classical</code>). <code>module</code> is the
 class in <a class="autorefs autorefs-internal" title="tramdag.modules" href="../modules/#tramdag.modules"><code>modules</code></a> that trains it, constructed as
@@ -2498,8 +2498,8 @@ every other built-in term's parents all own their edges.</p>
 <span class="normal">522</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Term</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""One additive term of a node's transformation; each kind is a subclass.</span>
 
-<span class="sd">    Terms add: ``I("a") + CS("b")`` is the same transformation as</span>
-<span class="sd">    ``I("a") + CS("b")``. A term is plain data — comparable, hashable,</span>
+<span class="sd">    Terms add: ``I("a") + CS("b")`` is the plain list of the two terms, a</span>
+<span class="sd">    node's formula. A term is plain data — comparable, hashable,</span>
 <span class="sd">    serializable by [`spec_to_dict`][] — and knows its own spec-level rules</span>
 <span class="sd">    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the</span>
 <span class="sd">    class in [`modules`][tramdag.modules] that trains it, constructed as</span>
@@ -3697,7 +3697,7 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">classical</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Say yes — an LS is a classical transformation-model coefficient."""</span>
+<span class="w">        </span><span class="sd">"""Say yes — an LS is a classical coefficient."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -3730,7 +3730,7 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Say yes — an LS is a classical transformation-model coefficient.</p>
+        <p>Say yes — an LS is a classical coefficient.</p>
 
     </div>
 
@@ -4992,8 +4992,8 @@ transform.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The additive formula for <code>h</code>: a list of terms, a <code>+</code> sum or a
-single term. <code>None</code> (default) is a source node. The
+                <p>The additive formula for <code>h</code>: a <code>+</code> sum of terms or a single
+term. <code>None</code> (default) is a source node. The
 class of the monotone transform is chosen on the intercept term,
 <code>I(..., transform="spline")</code>; the default is <code>"bernstein"</code>.</p>
               </div>
@@ -5054,8 +5054,8 @@ class of the monotone transform is chosen on the intercept term,
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    terms : Term | list[Term] | None, optional</span>
-<span class="sd">        The additive formula for ``h``: a list of terms, a ``+`` sum or a</span>
-<span class="sd">        single term. ``None`` (default) is a source node. The</span>
+<span class="sd">        The additive formula for ``h``: a ``+`` sum of terms or a single</span>
+<span class="sd">        term. ``None`` (default) is a source node. The</span>
 <span class="sd">        class of the monotone transform is chosen on the intercept term,</span>
 <span class="sd">        ``I(..., transform="spline")``; the default is ``"bernstein"``.</span>
 <span class="sd">    """</span>

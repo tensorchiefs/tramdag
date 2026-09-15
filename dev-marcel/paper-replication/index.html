@@ -1466,7 +1466,7 @@ replay, so every seed here is a repository choice.</p>
 <tbody>
 <tr>
 <td>latent</td>
-<td>standard logistic, shifts added on the continuous scale, subtracted for ordinal <code>P(Y&lt;=k) = sigmoid(theta_k - shift)</code></td>
+<td>standard logistic, shifts added on the continuous scale, subtracted for ordinal <span class="arithmatex">\(P(Y \le k) = \sigma(\vartheta_k - s)\)</span></td>
 <td>same (<a href="../notation/">notation.md</a>)</td>
 </tr>
 <tr>
@@ -1829,7 +1829,7 @@ error spans 0.03–0.27 over four init draws, against 0.005–0.026 at
 do(x2 = 0). The paper shows one run's densities. The committed bound is 2.5×
 the seed-7 measurement.</p>
 <p>The table below traces what each protocol ingredient is worth under the
-reference protocol, one change at a time, on the earlier do grid −3 / −2 / 0
+reference protocol, one change at a time, on the paper text's grid −3 / −2 / 0
 with min-max inputs unless the row says otherwise.</p>
 <table>
 <thead>

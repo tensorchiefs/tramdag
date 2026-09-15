@@ -1562,7 +1562,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="LinearShift" href="../api/spec/#tramdag.spec.LinearShift"><code>LinearShift</code></a> / <code>LS</code></td>
-<td>Linear shift <code>beta * x</code> — the interpretable log-odds coefficient. Exactly one parent.</td>
+<td>Linear shift <span class="arithmatex">\(\beta x\)</span> — the interpretable log-odds coefficient. Exactly one parent.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ComplexShift" href="../api/spec/#tramdag.spec.ComplexShift"><code>ComplexShift</code></a> / <code>CS</code></td>
@@ -1570,7 +1570,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="VaryingCoefficient" href="../api/spec/#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> / <code>VC</code></td>
-<td>Varying-coefficient shift <code>(beta0 + b_theta(mods)) * x_t</code> — the penalized treatment-effect head. <code>center=</code> adds propensity centering.</td>
+<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span> — the penalized treatment-effect head. <code>center=</code> adds propensity centering.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ContinuousNode" href="../api/spec/#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a></td>
@@ -1637,7 +1637,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_log_prob" href="../api/transforms/#tramdag.transforms.ordinal_log_prob"><code>ordinal_log_prob()</code></a></td>
-<td><code>log P(Y=y)</code>, computed in log space (<a href="../model/#ordinal-nodes">model.md</a>).</td>
+<td><span class="arithmatex">\(\log P(Y=y)\)</span>, computed in log space (<a href="../model/#ordinal-nodes">model.md</a>).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_pmf" href="../api/transforms/#tramdag.transforms.ordinal_pmf"><code>ordinal_pmf()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_sample" href="../api/transforms/#tramdag.transforms.ordinal_sample"><code>ordinal_sample()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_abduct" href="../api/transforms/#tramdag.transforms.ordinal_abduct"><code>ordinal_abduct()</code></a></td>
@@ -1653,7 +1653,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td>(<code>_ScaledUT</code>, <code>_log1mexp</code>)</td>
-<td>Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable <code>log(1-exp(x))</code>.</td>
+<td>Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable <span class="arithmatex">\(\log(1-e^{x})\)</span>.</td>
 </tr>
 </tbody>
 </table>
@@ -1712,7 +1712,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="varying_coef" href="../api/flow/#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef()</code></a></td>
-<td>Closed-form read-out <code>beta(x)</code> of a fitted VC term. Deterministic, y-free.</td>
+<td>Closed-form read-out <span class="arithmatex">\(\beta(x)\)</span> of a fitted VC term. Deterministic, y-free.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="scores" href="../api/flow/#tramdag.flow.CausalFlowDAG.scores"><code>scores()</code></a> / <a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../api/flow/#tramdag.flow.CausalFlowDAG.effect_modifier_scan"><code>effect_modifier_scan()</code></a></td>
@@ -1791,7 +1791,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="VaryingCoefficientModule" href="../api/modules/#tramdag.modules.VaryingCoefficientModule"><code>VaryingCoefficientModule</code></a></td>
-<td><code>VC</code>: <code>beta0 + b_theta(mods)</code> with the L2 hook <code>l2()</code>; <code>beta()</code> evaluates the effect and <code>recenter()</code> re-splits <code>beta0</code>/<code>b_theta</code> after training (<a href="../varying-coefficients/">varying-coefficients.md</a>). <code>regressor</code> is both the forward regressor and the <code>beta0</code> score.</td>
+<td><code>VC</code>: <span class="arithmatex">\(\beta_0 + b_\Theta(\text{mod})\)</span> with the L2 hook <code>l2()</code>; <code>beta()</code> evaluates the effect and <code>recenter()</code> re-splits <code>beta0</code>/<code>b_theta</code> after training (<a href="../varying-coefficients/">varying-coefficients.md</a>). <code>regressor</code> is both the forward regressor and the <code>beta0</code> score.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="FnShiftModule" href="../api/modules/#tramdag.modules.FnShiftModule"><code>FnShiftModule</code></a></td>
@@ -1890,7 +1890,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="sup_bb_pvalue" href="../api/scores/#tramdag.scores.sup_bb_pvalue"><code>sup_bb_pvalue()</code></a></td>
-<td><code>P(sup |Brownian bridge| &gt; stat)</code>, the Kolmogorov series.</td>
+<td>$P(\sup</td>
 </tr>
 <tr>
 <td>(<code>_dl_ds</code>, <code>CRIT_5PCT</code>)</td>

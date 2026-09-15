@@ -2934,9 +2934,9 @@ output layer stays zero either way. Stored in the checkpoint.</p>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_recenter_vc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run every shift term's post-fit ``finalize`` (the VC re-centering).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Run every shift term's post-fit ``finalize`` (the VC re-centering).</span>
 
-<span class="sd">        A VC term re-splits ``beta0``/``b_theta`` so the head sums to zero</span>
+<span class="sd">        A VC term re-splits $\beta_0$ and $b_\Theta$ so the head sums to zero</span>
 <span class="sd">        over the train rows; the modelled function does not change.</span>
 <span class="sd">        """</span>
         <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
@@ -5650,8 +5650,8 @@ against the data-generating truth.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Evaluate the fitted effect function <code>beta(x)</code> of a <code>VC</code> term.</p>
-<p>The value is <code>beta0 + b_theta(modifiers)</code>, in closed form from the
+        <p>Evaluate the fitted effect function <span class="arithmatex">\(\beta(x)\)</span> of a <code>VC</code> term.</p>
+<p>The value is <span class="arithmatex">\(\beta_0 + b_\Theta(\text{modifiers})\)</span>, in closed form from the
 fitted term; only the modifier columns of <code>df</code> are read. It lives on
 the node's latent scale.</p>
 
@@ -5676,7 +5676,7 @@ the node's latent scale.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Rows at which to evaluate <code>beta</code>. Must contain every modifier
+                <p>Rows at which to evaluate <span class="arithmatex">\(\beta\)</span>. Must contain every modifier
 column of the term.</p>
               </div>
             </td>
@@ -5736,7 +5736,7 @@ exactly one VC term.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The <code>beta</code> values, shape <code>(n,)</code>. Constant when the term has
+                <p>The <span class="arithmatex">\(\beta\)</span> values, shape <code>(n,)</code>. Constant when the term has
 no modifiers.</p>
               </div>
             </td>
@@ -5844,16 +5844,16 @@ node has several VC terms.</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">varying_coef</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Evaluate the fitted effect function $\beta(x)$ of a ``VC`` term.</span>
 
-<span class="sd">    The value is ``beta0 + b_theta(modifiers)``, in closed form from the</span>
+<span class="sd">    The value is $\beta_0 + b_\Theta(\text{modifiers})$, in closed form from the</span>
 <span class="sd">    fitted term; only the modifier columns of ``df`` are read. It lives on</span>
 <span class="sd">    the node's latent scale.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    df : pd.DataFrame</span>
-<span class="sd">        Rows at which to evaluate ``beta``. Must contain every modifier</span>
+<span class="sd">        Rows at which to evaluate $\beta$. Must contain every modifier</span>
 <span class="sd">        column of the term.</span>
 <span class="sd">    node : str</span>
 <span class="sd">        Name of the node that carries the VC term.</span>
@@ -5864,7 +5864,7 @@ node has several VC terms.</p>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    np.ndarray</span>
-<span class="sd">        The ``beta`` values, shape ``(n,)``. Constant when the term has</span>
+<span class="sd">        The $\beta$ values, shape ``(n,)``. Constant when the term has</span>
 <span class="sd">        no modifiers.</span>
 
 <span class="sd">    Raises</span>

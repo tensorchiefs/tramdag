@@ -5244,7 +5244,7 @@ treatment's kind.</p>
         <span class="n">_attach_input_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">mods</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mod_feats</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Give the effect values ``beta(x)``, shape ``(n,)``.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the effect values $\beta(x)$, shape ``(n,)``.</span>
 
 <span class="sd">        ``mod_feats`` is ``None`` if, and only if, the term has no modifiers;</span>
 <span class="sd">        ``n`` is the batch size, used in that case.</span>
@@ -5285,7 +5285,7 @@ treatment's kind.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta0</span> <span class="o">+=</span> <span class="n">delta</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">regressor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Give the ``(n, 1)`` column ``beta`` multiplies — the treatment, raw.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.</span>
 
 <span class="sd">        The one-hot level-1 indicator for a binary ordinal treatment, the</span>
 <span class="sd">        value itself for a continuous one; a centered term subtracts its</span>
@@ -5394,7 +5394,7 @@ treatment's kind.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the effect values <code>beta(x)</code>, shape <code>(n,)</code>.</p>
+        <p>Give the effect values <span class="arithmatex">\(\beta(x)\)</span>, shape <code>(n,)</code>.</p>
 <p><code>mod_feats</code> is <code>None</code> if, and only if, the term has no modifiers;
 <code>n</code> is the batch size, used in that case.</p>
 
@@ -5410,7 +5410,7 @@ treatment's kind.</p>
 <span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mod_feats</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give the effect values ``beta(x)``, shape ``(n,)``.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the effect values $\beta(x)$, shape ``(n,)``.</span>
 
 <span class="sd">    ``mod_feats`` is ``None`` if, and only if, the term has no modifiers;</span>
 <span class="sd">    ``n`` is the batch size, used in that case.</span>
@@ -5568,7 +5568,7 @@ modifiers this does nothing.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the <code>(n, 1)</code> column <code>beta</code> multiplies — the treatment, raw.</p>
+        <p>Give the <code>(n, 1)</code> column <span class="arithmatex">\(\beta\)</span> multiplies — the treatment, raw.</p>
 <p>The one-hot level-1 indicator for a binary ordinal treatment, the
 value itself for a continuous one; a centered term subtracts its
 propensity column (the Robinson regressor <code>t - e_hat(x)</code>). It is
@@ -5595,7 +5595,7 @@ also the score of <code>beta0</code>, so <code>score_columns</code> reads it her
 <span class="normal">646</span>
 <span class="normal">647</span>
 <span class="normal">648</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regressor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give the ``(n, 1)`` column ``beta`` multiplies — the treatment, raw.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.</span>
 
 <span class="sd">    The one-hot level-1 indicator for a binary ordinal treatment, the</span>
 <span class="sd">    value itself for a continuous one; a centered term subtracts its</span>

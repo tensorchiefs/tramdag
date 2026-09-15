@@ -1567,7 +1567,7 @@ tests read <code>kind</code>, <code>parents</code>, <code>shifts</code>, <code>i
 
 
         <p>One dimension of the flow: an intercept plus additive shift terms.</p>
-<p>The intercept produces the transform parameters <code>theta</code>. The shift
+<p>The intercept produces the transform parameters <span class="arithmatex">\(\vartheta\)</span>. The shift
 terms add up on the latent scale. The likelihood, sampling and encoding
 branches on the node kind live in the five methods <code>log_prob</code>,
 <code>sample</code>, <code>abduct</code>, <code>marginal_theta</code> and <code>encode</code>, and nowhere
@@ -1766,9 +1766,9 @@ only.</p>
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Node</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One dimension of the flow: an intercept plus additive shift terms.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""One dimension of the flow: an intercept plus additive shift terms.</span>
 
-<span class="sd">    The intercept produces the transform parameters ``theta``. The shift</span>
+<span class="sd">    The intercept produces the transform parameters $\vartheta$. The shift</span>
 <span class="sd">    terms add up on the latent scale. The likelihood, sampling and encoding</span>
 <span class="sd">    branches on the node kind live in the five methods ``log_prob``,</span>
 <span class="sd">    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere</span>
@@ -1838,7 +1838,7 @@ only.</p>
         <span class="k">return</span> <span class="n">ordinal_abduct</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">marginal_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Give the node's marginal-start theta, or ``None`` when there is none.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the node's marginal-start $\vartheta$, or ``None`` when there is none.</span>
 
 <span class="sd">        Ordinal: the empirical class log-odds. Continuous: the transform's own</span>
 <span class="sd">        marginal start over the same column (``None`` for spline/affine —</span>
@@ -2078,7 +2078,7 @@ one-hot encoded, shape <code>(n, levels)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the node's marginal-start theta, or <code>None</code> when there is none.</p>
+        <p>Give the node's marginal-start <span class="arithmatex">\(\vartheta\)</span>, or <code>None</code> when there is none.</p>
 <p>Ordinal: the empirical class log-odds. Continuous: the transform's own
 marginal start over the same column (<code>None</code> for spline/affine —
 nothing to set). Only a free intercept applies it.</p>
@@ -2097,7 +2097,7 @@ nothing to set). Only a free intercept applies it.</p>
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">marginal_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Give the node's marginal-start theta, or ``None`` when there is none.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the node's marginal-start $\vartheta$, or ``None`` when there is none.</span>
 
 <span class="sd">    Ordinal: the empirical class log-odds. Continuous: the transform's own</span>
 <span class="sd">    marginal start over the same column (``None`` for spline/affine —</span>

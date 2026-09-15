@@ -4,7 +4,7 @@ matplotlib is an optional dependency — ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
 
 ```python
-from tramdag import plot_dag
+from tramdag.plots import plot_dag, plot_marginals, plot_training
 plot_dag(spec)            # or plot_dag(flow): the spec is the DAG
 plot_marginals(flow, df)  # observed vs sampled, one panel per node
 plot_training(flow, frozen=plateau.frozen)   # NLL per epoch, freeze marks
@@ -22,6 +22,7 @@ import pandas as pd
 from .spec import NodeSpec, node_parents, validate_and_sort
 
 # %% global variables ------------------------------------------------------------------
+__all__ = ["plot_dag", "plot_marginals", "plot_training"]
 # how each term draws its edge; an unregistered term falls back to dotted gray
 EDGE_STYLE = {
     "LS": dict(color="0.25", ls="-", lw=1.3),
@@ -240,11 +241,11 @@ def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=Non
         for k, edge in enumerate(pair)
     }
     # room for the arcs above and below the rows
-    reach_up = max((b for b in bulges.values()), default=0.0)
-    reach_down = max((-b for b in bulges.values()), default=0.0)
+    reach_up = max([*bulges.values(), 0.0])
+    reach_down = max([*(-b for b in bulges.values()), 0.0])
     half_w = max(_node_width(n) for n in spec) / 2
     x_lo, x_hi = xs.min() - half_w - 0.2, xs.max() + half_w + 0.2
-    y_lo, y_hi = ys.min() - 0.5 - max(reach_down, 0), ys.max() + 0.5 + max(reach_up, 0)
+    y_lo, y_hi = ys.min() - 0.5 - reach_down, ys.max() + 0.5 + reach_up
     _, ax = plt.subplots(figsize=(0.9 * (x_hi - x_lo), 0.9 * (y_hi - y_lo) + 0.5))
     patches = {name: _draw_node(ax, name, spec[name], xy) for name, xy in pos.items()}
     for edge, bulge in bulges.items():
@@ -374,7 +375,9 @@ def plot_training(flow, *, frozen=None, path=None):
             fontsize=8,
             color="gray",
         )
-    ax.set_xlabel("epoch"), ax.set_ylabel("NLL"), ax.legend(frameon=False)
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("NLL")
+    ax.legend(frameon=False)
     ax.set_title("training")
     _finish(ax.figure, path)
     return ax

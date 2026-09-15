@@ -81,10 +81,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         scripts — or ``"normal"`` — Keras' ``RandomNormal``, N(0, 0.05^2)
         on weights and biases, the paper's triangle scripts. A VC head's
         output layer stays zero either way. Under the reference's full-batch
-        protocol the choice decides the fit: VACA's ``do(x2)`` error at the
-        config's seed is 0.52 / 0.33 / 0.13 with torch's init and
-        0.098 / 0.159 / 0.026 with glorot (another draw: 0.035 / 0.006 /
-        0.007; measured 2026-08-26). Stored in the checkpoint.
+        protocol the choice decides the fit; ``docs/paper-replication.md``
+        carries the measurements. Stored in the checkpoint.
     """
 
     def __init__(
@@ -202,15 +200,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         return torch.Generator(device=self.device).manual_seed(seed)
 
     @torch.no_grad()
-    def _binary_p1(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
-        """Give ``P(node = 1 | parents)`` for a binary ordinal node.
+    def _propensity(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
+        """Give ``P(node = 1 | parents)`` for a binary ordinal treatment node.
 
         ``P(x <= 0) = sigmoid(theta_0 - s)``, so the answer is
         ``sigmoid(s - theta_0)``. No side columns: chained centering is refused
         by the spec, so a treatment node never carries a centered term itself.
         """
-        feats = self._features({p: values[p] for p in nd.parents})
-        theta, shift = nd.theta_shift(feats, n)
+        theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
         return torch.sigmoid(shift - theta[:, 0])
 
     def _node(self, name: str) -> Node:
@@ -222,10 +219,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def _features(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
         # spec columns only; side columns travel through _side_feats
         return {
-            name: self.nodes[name].encode(vals)
-            for name, vals in values.items()
+            name: self.nodes[name].encode(v)
+            for name, v in values.items()
             if name in self.spec
         }
+
+    def _parent_feats(self, nd: Node, values: dict[str, Tensor]) -> dict[str, Tensor]:
+        """Encode one node's parents out of the raw tensor dict."""
+        return self._features({p: values[p] for p in nd.parents})
 
     def _theta_shift(
         self, nd: Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
@@ -294,11 +295,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         n = next(iter(values.values())).shape[0]
         out = {}
         for name in self.order if nodes is None else nodes:
-            node = self.nodes[name]
-            theta, shift = self._theta_shift(node, feats, values, n)
-            out[name] = node.log_prob(theta, shift, values[name])
+            nd = self.nodes[name]
+            theta, shift = self._theta_shift(nd, feats, values, n)
+            out[name] = nd.log_prob(theta, shift, values[name])
         return out
 
+    @torch.no_grad()
     def log_prob(self, df: pd.DataFrame, *, nodes: list[str] | None = None) -> Tensor:
         """Compute the joint log-likelihood per row.
 
@@ -318,12 +320,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Tensor
             ``log p(x)`` per row, shape ``(n,)``.
         """
-        for name in nodes or ():
-            self._node(name)  # name the unknown node, not its KeyError
         if nodes is not None and not nodes:
             raise ValueError("nodes=[] sums nothing; omit it for the joint")
-        with torch.no_grad():
-            per_node = self.node_log_prob(self._tensorize(df), nodes)
+        for name in nodes or ():
+            self._node(name)  # name the unknown node, not its KeyError
+        per_node = self.node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
     def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
@@ -339,11 +340,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         dict[str, float]
             The mean NLL, keyed by node name.
         """
-        with torch.no_grad():
-            per_node = self.node_log_prob(self._tensorize(df))
-        return {k: float(-v.mean()) for k, v in per_node.items()}
+        return self._mean_nll(self._tensorize(df))
 
     nll = node_negative_log_prob  # the short name every notebook uses
+
+    @torch.no_grad()
+    def _mean_nll(self, values: dict[str, Tensor]) -> dict[str, float]:
+        """Give the per-node mean NLL of already tensorized columns."""
+        return {k: float(-v.mean()) for k, v in self.node_log_prob(values).items()}
 
     def calibrate(self, train_df: pd.DataFrame) -> CausalFlowDAG:
         """Take the data-dependent state from the training rows, once.
@@ -362,6 +366,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         never touches the weights: a calibrated start is a separate, always
         explicit step, [`init_marginals`][].
 
+        Parameters
+        ----------
+        train_df : pd.DataFrame
+            Training rows, one column per node (plus any side columns).
+
         Returns
         -------
         CausalFlowDAG
@@ -371,12 +380,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             return self
         self._check_columns(train_df, self.order)
         for name in self.order:
-            node = self.nodes[name]
-            if node.kind == "ordinal":
+            nd = self.nodes[name]
+            if nd.kind == "ordinal":
                 self._check_level_values(name, train_df[name].to_numpy())
-            node.intercept.calibrate_intercept(train_df, train_df[name], node.ut)
-            for term in node.shifts.values():
-                term.calibrate(train_df)
+            nd.intercept.calibrate_intercept(train_df, train_df[name], nd.ut)
+            for m in nd.shifts.values():
+                m.calibrate(train_df)
         self.calibrated.fill_(True)
         return self
 
@@ -396,6 +405,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         start reads the rows: the Bernstein one takes the domain from the
         stored range and the shape from the column.
 
+        Parameters
+        ----------
+        train_df : pd.DataFrame
+            Training rows, one column per node.
+
         Returns
         -------
         CausalFlowDAG
@@ -411,11 +425,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     def _marginal_start(self, name: str, train_df: pd.DataFrame) -> None:
         """Start a simple intercept at the node's data marginal."""
-        node = self.nodes[name]
-        theta = node.marginal_theta(train_df[name].to_numpy())
+        nd = self.nodes[name]
+        theta = nd.marginal_theta(train_df[name].to_numpy())
         if theta is None:  # a spline or affine transform has no calibrated start
             return
-        node.intercept.marginal_start(theta)
+        nd.intercept.marginal_start(theta)
 
     def _check_level_values(self, name: str, values) -> None:
         """Reject ordinal values that are not level indices of their node.
@@ -524,7 +538,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 for name in self.order
             }
         else:
-            raise ValueError("Provide either n or u.")
+            raise ValueError("sample() needs n or u")
 
         values: dict[str, Tensor] = {}
         for name in self.order:
@@ -533,11 +547,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                     (n,), float(do[name]), dtype=self._dtype, device=self.device
                 )
                 continue
-            node = self.nodes[name]
-            feats = self._features({p: values[p] for p in node.parents})
+            nd = self.nodes[name]
             # under do, a centered VC re-derives t_do - e_hat(x); never cached
-            theta, shift = self._theta_shift(node, feats, values, n)
-            values[name] = node.sample(theta, shift, u_vals[name])
+            feats = self._parent_feats(nd, values)
+            theta, shift = self._theta_shift(nd, feats, values, n)
+            values[name] = nd.sample(theta, shift, u_vals[name])
         return self._to_frame(values)
 
     @torch.no_grad()
@@ -568,9 +582,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         n = len(df)
         u = {}
         for name in self.order:
-            node = self.nodes[name]
-            theta, shift = self._theta_shift(node, feats, values, n)
-            u[name] = node.abduct(theta, shift, values[name], generator=gen)
+            nd = self.nodes[name]
+            theta, shift = self._theta_shift(nd, feats, values, n)
+            u[name] = nd.abduct(theta, shift, values[name], generator=gen)
         return pd.DataFrame({k: v.cpu().numpy() for k, v in u.items()}, index=df.index)
 
     def _conditional(
@@ -586,8 +600,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         df = df.assign(**(do or {}))
         n = len(df)
         values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
-        feats = self._features({p: values[p] for p in nd.parents})
-        theta, shift = self._theta_shift(nd, feats, values, n)
+        theta, shift = self._theta_shift(nd, self._parent_feats(nd, values), values, n)
         return nd, theta, shift, n
 
     @torch.no_grad()
@@ -617,8 +630,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """
         if self._node(node).kind != "ordinal":  # a domain error, not a type error
             raise ValueError(
-                f"pmf() requires an ordinal node, {node!r} is continuous; "
-                "use density()."
+                f"pmf() requires an ordinal node, {node!r} is continuous; use density()"
             )
         _, theta, shift, _ = self._conditional(df, node, do)
         return ordinal_pmf(theta, shift).cpu().numpy()
@@ -661,7 +673,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """
         if self._node(node).kind != "continuous":  # a domain error, not a type error
             raise ValueError(
-                f"density() requires a continuous node, {node!r} is ordinal; use pmf()."
+                f"density() requires a continuous node, {node!r} is ordinal; use pmf()"
             )
         nd, theta, shift, n = self._conditional(df, node, do)
         y = torch.tensor(np.asarray(grid), dtype=self._dtype, device=self.device)
@@ -697,7 +709,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         documents the method, the arguments and the result columns.
         """
         return scores.effect_modifier_scan(
-            self, df, node, t, candidates=candidates, column=column
+            self, df, node, t=t, candidates=candidates, column=column
         )
 
     def save(self, path: str | Path) -> None:

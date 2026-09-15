@@ -188,8 +188,6 @@ classDiagram
   nodes --> transforms
   plots --> spec
   readouts --> modules
-  readouts --> spec
-  scores --> spec
   scores --> transforms
   spec --> modules
   fitting ..> flow
@@ -382,14 +380,14 @@ flowchart LR
     n10["_log_epoch"]
     n11["_normalize_callbacks"]
     n12["_split_validation"]
-    n13["_val_nll"]
   end
   subgraph flow
     n28["CausalFlowDAG._check_columns"]
     n29["CausalFlowDAG._check_level_values"]
-    n14["CausalFlowDAG._check_side_columns"]
+    n13["CausalFlowDAG._check_side_columns"]
     n30["CausalFlowDAG._dtype"]
     n23["CausalFlowDAG._features"]
+    n14["CausalFlowDAG._mean_nll"]
     n15["CausalFlowDAG._recenter_vc"]
     n27["CausalFlowDAG._side_feats"]
     n16["CausalFlowDAG._tensorize"]
@@ -450,8 +448,8 @@ flowchart LR
     n5 -- "3x" --> n10
     n5 --> n11
     n5 --> n12
-    n5 -- "3x" --> n13
-    n5 --> n14
+    n5 --> n13
+    n5 -- "3x" --> n14
     n5 --> n15
     n5 -- "2x" --> n16
     n5 --> n17
@@ -459,10 +457,10 @@ flowchart LR
     n5 --> n19
     n8 -- "6x" --> n20
     n8 -- "6x" --> n19
-    n13 -- "3x" --> n20
-    n14 -- "2x" --> n21
-    n14 --> n22
+    n13 -- "2x" --> n21
+    n13 --> n22
     n23 -- "30x" --> n24
+    n14 -- "3x" --> n20
     n15 --> n23
     n15 -- "2x" --> n25
     n15 --> n26

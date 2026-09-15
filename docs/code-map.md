@@ -66,7 +66,7 @@ the same object, so `LS is LinearShift`.
 | [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
 | [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with history and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
 | (`_node`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_init_linear`) | Node lookup with one shared error; parent encoding through `Node.encode` (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing. |
-| (`_check_side_columns`, `_binary_p1`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
+| (`_check_side_columns`, `_propensity`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
 
 
 ## `modules.py` — the term modules (the 1.0 architecture's core)

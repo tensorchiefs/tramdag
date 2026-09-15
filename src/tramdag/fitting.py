@@ -2,8 +2,7 @@
 
 `fit` is one minibatch Adam loop (validation, verbose printing and the
 callback hooks included); `fit_classical` is the float64 full-batch L-BFGS
-exact-MLE route for all-`ls` specs. Both are defined here once and are
-ordinary methods of the flow.
+exact-MLE route for all-`ls` specs.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -22,17 +21,11 @@ if TYPE_CHECKING:
     from .flow import CausalFlowDAG
 
 
+# %% global variables ------------------------------------------------------------------
+__all__ = ["FitMixin"]
+
+
 # %% private functions -----------------------------------------------------------------
-class _FnCallback(Callback):
-    """A bare callable in ``callbacks=``, adapted to an ``on_epoch_end`` hook."""
-
-    def __init__(self, fn):
-        self.fn = fn
-
-    def on_epoch_end(self, flow, epoch: int, optimizer):
-        return self.fn(flow, epoch, optimizer)
-
-
 def _check_fit_sizes(epochs: int, batch_size: int, verbose: int) -> None:
     """Reject a non-positive epoch, batch or verbose value before anything runs."""
     if epochs < 1:
@@ -123,28 +116,22 @@ def _log_epoch(
     print(line)
 
 
-def _val_nll(flow, vals: dict[str, Tensor]) -> dict[str, float]:
-    """Give the per-node mean validation NLL, one full pass."""
-    with torch.no_grad():
-        return {k: float(-v.mean()) for k, v in flow.node_log_prob(vals).items()}
-
-
 def _fit_epoch(
     flow,
-    vals: dict[str, Tensor],
+    values: dict[str, Tensor],
     opt: torch.optim.Optimizer,
     batch_size: int,
     penalized: list,
 ) -> dict[str, float]:
     """One shuffled pass over the rows; give the epoch-mean train NLL per node."""
-    n = len(next(iter(vals.values())))
+    n = len(next(iter(values.values())))
     acc = dict.fromkeys(flow.order, 0.0)
     trained = 0
     for idx in torch.randperm(n, device=flow.device).split(batch_size):
         if idx.numel() < 2:
             continue  # batch norm needs two rows, and one row is no gradient
         trained += int(idx.numel())
-        batch = {k: v[idx] for k, v in vals.items()}
+        batch = {k: v[idx] for k, v in values.items()}
         per_node = flow.node_log_prob(batch)
         nlls = {k: -v.mean() for k, v in per_node.items()}
         loss = torch.stack(list(nlls.values())).sum()
@@ -165,6 +152,17 @@ def _fit_epoch(
     # over the rows actually stepped on, not over n: a skipped trailing row
     # would otherwise scale every node's epoch NLL down by 1/n
     return {k: v / trained for k, v in acc.items()}
+
+
+# %% private classes -------------------------------------------------------------------
+class _FnCallback(Callback):
+    """A bare callable in ``callbacks=``, adapted to an ``on_epoch_end`` hook."""
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def on_epoch_end(self, flow, epoch: int, optimizer):
+        return self.fn(flow, epoch, optimizer)
 
 
 # %% public classes --------------------------------------------------------------------
@@ -216,13 +214,10 @@ class FitMixin:
             full-batch step per epoch.
         validation_data : pd.DataFrame | None, optional
             Validation rows, one column per node. When given (or split off), the
-            per-node validation NLL is computed after every epoch and appended to
-            ``flow.history["val"]`` — once, centrally; the shipped callbacks read it
-            there. ``flow.history["lr"]`` gets the optimizer's learning rate after every
-            epoch (``{node: lr}`` with
-            [`per_node_adam`][tramdag.callbacks.per_node_adam]'s tagged groups, else a
-            float, or a list for several untagged groups), so a schedule's decisions
-            are on record without a callback of your own.
+            per-node validation NLL is appended to ``flow.history["val"]`` after
+            every epoch; the shipped callbacks read it there. ``history["lr"]``
+            records the optimizer's rate per epoch (``{node: lr}`` for tagged
+            groups, a float for one group, a list for several).
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
@@ -277,8 +272,8 @@ class FitMixin:
         # validate BEFORE calibrate: a malformed frame must not half-mutate the flow
         side_cols = self._check_side_columns(train_df)
         self.calibrate(train_df)
-        vals = self._tensorize(train_df, list(self.order) + side_cols)
-        val_vals = (
+        values = self._tensorize(train_df, list(self.order) + side_cols)
+        val_values = (
             self._tensorize(validation_data) if validation_data is not None else None
         )
         opt = optimizer or torch.optim.Adam(self.parameters(), lr=learning_rate)
@@ -292,11 +287,11 @@ class FitMixin:
             cb.on_fit_begin(self, opt)
         for epoch in range(1, epochs + 1):
             self.train()
-            epoch_nll = _fit_epoch(self, vals, opt, batch_size, penalized)
+            epoch_nll = _fit_epoch(self, values, opt, batch_size, penalized)
             self.history["train"].append(epoch_nll)
             self.eval()
-            if val_vals is not None:
-                self.history.setdefault("val", []).append(_val_nll(self, val_vals))
+            if val_values is not None:
+                self.history.setdefault("val", []).append(self._mean_nll(val_values))
                 # which train epoch this entry belongs to: `history` accumulates
                 # across `fit` calls, so an unvalidated fit would shift every later
                 # validation entry away from its own epoch
@@ -312,7 +307,7 @@ class FitMixin:
                 epochs,
                 verbose,
                 stopped=any(stops),
-                has_val=val_vals is not None,
+                has_val=val_values is not None,
             )
             if any(stops):
                 break
@@ -320,7 +315,7 @@ class FitMixin:
             # before the VC re-centering, so weights a callback restores
             # (EarlyStopping) still take part in it
             cb.on_fit_end(self, opt)
-        self._recenter_vc(vals)
+        self._recenter_vc(values)
         self.eval()
         return self
 
@@ -401,7 +396,7 @@ class FitMixin:
         self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
         t0 = time.perf_counter()
         try:
-            vals = self._tensorize(train_df)
+            values = self._tensorize(train_df)
             self.train()
             opt = torch.optim.LBFGS(
                 self.parameters(),
@@ -413,13 +408,13 @@ class FitMixin:
                 line_search_fn="strong_wolfe",
             )
 
-            def nll() -> Tensor:
-                per_node = self.node_log_prob(vals).values()
+            def total_nll() -> Tensor:
+                per_node = self.node_log_prob(values).values()
                 return torch.stack([-lp.mean() for lp in per_node]).sum()
 
             def closure():
                 opt.zero_grad()
-                loss = nll()
+                loss = total_nll()
                 loss.backward()
                 return loss
 
@@ -427,7 +422,7 @@ class FitMixin:
             n_iter = next(iter(opt.state.values()))["n_iter"]
             converged = n_iter < max_iter  # torch stopped on a tolerance
             with torch.no_grad():
-                final_nll = float(nll())
+                final_nll = float(total_nll())
             grad_norm = float(
                 torch.nn.utils.get_total_norm(
                     [p.grad for p in self.parameters() if p.grad is not None]

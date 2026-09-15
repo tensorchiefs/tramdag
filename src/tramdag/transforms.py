@@ -89,8 +89,21 @@ def ordinal_bounds(
 ) -> tuple[Tensor, Tensor]:
     """Give the shifted cutpoint interval of each observed level.
 
-    ``scores.py`` reads these bounds to form the latent-scale derivative, and
-    the docs list the function as public.
+    ``scores.py`` reads these bounds to form the latent-scale derivative.
+
+    Parameters
+    ----------
+    theta_tilde : Tensor
+        Unconstrained cutpoint parameters, shape ``(n, levels - 1)``.
+    shift : Tensor
+        The node's shift, shape ``(n,)``.
+    y : Tensor
+        Observed levels ``0..levels-1``, shape ``(n,)``.
+
+    Returns
+    -------
+    tuple[Tensor, Tensor]
+        The lower and upper shifted cutpoint of each row's level, ``(n,)`` each.
     """
     cut = ordinal_cutpoints(theta_tilde) - shift.view(-1, 1)
     idx = torch.arange(theta_tilde.shape[0], device=theta_tilde.device)
@@ -442,9 +455,11 @@ class _ScaledUT(torch.nn.Module, ABC):
         Tensor
             The values in original units, shape ``(n,)``.
         """
+        # zuko inverts by bisection inside the bound and in closed form
+        # (linear / identity) outside
         with torch.no_grad():
-            t = self._build(theta).inv(z0)  # zuko: bisection inside the bound,
-        return self._unscale(t)  # closed-form (linear / identity) outside
+            t = self._build(theta).inv(z0)
+        return self._unscale(t)
 
 
 # %% public classes --------------------------------------------------------------------

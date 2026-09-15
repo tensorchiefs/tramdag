@@ -1,9 +1,9 @@
-"""Stateless read-outs: ``ReadoutsMixin``, composed into ``CausalFlowDAG``.
+"""Read-outs of a fitted flow: ``ReadoutsMixin``, composed into ``CausalFlowDAG``.
 
-Each read-out is defined here once and is an ordinary method of the flow.
-`shift_curve` is the public replacement for reaching into
-``flow.nodes[..].shifts[..]`` + ``net_input`` when plotting a fitted shift
-against a grid.
+Coefficients (`ls_coefficients`), effect curves (`shift_curve`,
+`varying_coef`), the intercept decomposition (`intercept_contributions`),
+the meta-adjacency view (`to_matrix`) and the classical design matrix
+(`design_matrix`).
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -14,7 +14,9 @@ import pandas as pd
 import torch
 
 from .modules import LinearShiftModule, VaryingCoefficientModule
-from .spec import OrdinalNode
+
+# %% global variables ------------------------------------------------------------------
+__all__ = ["ReadoutsMixin"]
 
 
 # %% public classes --------------------------------------------------------------------
@@ -27,8 +29,21 @@ class ReadoutsMixin:
 
         The parent runs over ``grid`` with the term's other inputs absent, so the
         term must read exactly this one parent (an ``LS`` or one-parent ``CS``).
-        Returns the shift values as a flat array — the curve a replication plots
-        against the data-generating truth.
+
+        Parameters
+        ----------
+        node : str
+            Name of the node that carries the term.
+        parent : str
+            The term's key in the node's shifts: the parent's name.
+        grid : array-like
+            Parent values at which to evaluate the term, shape ``(m,)``.
+
+        Returns
+        -------
+        np.ndarray
+            The shift values, shape ``(m,)`` — the curve a replication plots
+            against the data-generating truth.
         """
         nd = self._node(node)
         if parent not in nd.shifts:
@@ -36,9 +51,9 @@ class ReadoutsMixin:
                 f"node {node!r} has no shift term keyed {parent!r}; "
                 f"available: {sorted(nd.shifts)}"
             )
-        if isinstance(self.spec[parent], OrdinalNode):
+        if self.spec[parent].kind == "ordinal":
             # a domain error (wrong parent kind), not a Python type error
-            raise ValueError(  # noqa: TRY004
+            raise ValueError(
                 f"{parent!r} is an ordinal parent, so it enters the term "
                 "one-hot over all its levels and a 1-D grid of level indices "
                 "is not its input. Read its effect with ls_coefficients() "
@@ -58,8 +73,8 @@ class ReadoutsMixin:
     ) -> np.ndarray:
         """Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.
 
-        This is the first-class read-out of issue #28. The value comes in
-        closed form from the fitted term, as ``beta0 + b_theta(modifiers)``.
+        The value comes in closed form from the fitted term, as
+        ``beta0 + b_theta(modifiers)``.
         It is deterministic and needs no abduction. It is free of ``y``,
         because only the modifier columns of ``df`` are read. For a binary
         treatment it is identical to the abduction difference
@@ -75,11 +90,11 @@ class ReadoutsMixin:
 
         Parameters
         ----------
-        node : str
-            Name of the node that carries the VC term.
         df : pd.DataFrame
             Rows at which to evaluate ``beta``. Must contain every modifier
             column of the term.
+        node : str
+            Name of the node that carries the VC term.
         t : str | None, optional
             Treatment name of the VC term. Optional when the node has
             exactly one VC term.
@@ -110,14 +125,12 @@ class ReadoutsMixin:
         if t is None:
             if len(vcs) > 1:
                 raise ValueError(
-                    f"node {node!r} has several VC terms ({sorted(vcs)}). "
-                    "Pass t=<treatment name>."
+                    f"node {node!r} has several VC terms ({sorted(vcs)}); "
+                    "pass t=<treatment name>"
                 )
             t = next(iter(vcs))
         if t not in vcs:
-            raise KeyError(
-                f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})."
-            )
+            raise KeyError(f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})")
         mods = vcs[t]
         mod_feat = None
         if mods:
@@ -125,6 +138,7 @@ class ReadoutsMixin:
             mod_feat = nd.net_input(feats, mods, t)
         return nd.shifts[t].beta(mod_feat, len(df)).cpu().numpy()
 
+    @torch.no_grad()
     def ls_coefficients(self) -> dict[str, dict[str, np.ndarray]]:
         """Give the per-node linear-shift weights.
 
@@ -135,8 +149,8 @@ class ReadoutsMixin:
         constant: the one-hot columns sum to 1 in every row, so adding c to
         all of them and subtracting c from the node's intercept leaves the
         likelihood unchanged. Read them as differences — ``w[k] - w[0]`` is
-        the level-k-vs-0 log-odds ratio, and the column
-        [`design_matrix`][] drops with ``drop_first=True``.
+        the level-k-vs-0 log-odds ratio; ``design_matrix(drop_first=True)``
+        drops that level-0 column.
 
         Only ``LS`` terms have a weight to give. A node's ``CS`` and ``VC``
         shifts are networks, so they are skipped — reading them needs
@@ -151,7 +165,7 @@ class ReadoutsMixin:
         out: dict[str, dict[str, np.ndarray]] = {}
         for name in self.order:
             linear = {
-                parent: module.weight.detach().cpu().numpy().ravel().copy()
+                parent: module.weight.cpu().numpy().ravel().copy()
                 for parent, module in self.nodes[name].shifts.items()
                 if isinstance(module, LinearShiftModule)
             }
@@ -181,7 +195,7 @@ class ReadoutsMixin:
                 for p, tag, joint in term.cells():
                     if joint:
                         tag = f"{tag}{list(term.parents)}"
-                    cur = m.loc[p, child]  # cell with a prognostic term -> "+"
+                    cur = m.loc[p, child]
                     m.loc[p, child] = f"{cur}+{tag}" if cur else tag
         return m
 
@@ -212,18 +226,18 @@ class ReadoutsMixin:
         ``baseline`` plus the uncentered row sum of the contributions
         reproduces the model's transform parameters. This is **post-hoc
         only**: it reads the fitted weights and changes nothing about the
-        model or any frozen number (issue #20, Option A). Shift terms
+        model or any frozen number. Shift terms
         (``LS``/``CS``) are a separate, already-interpretable slot — see
         [`ls_coefficients`][].
 
         Parameters
         ----------
-        node : str
-            Name of a node with at least one complex-intercept (``I``) term
-            that has parents.
         df : pd.DataFrame
             Rows over which to center and at which to evaluate the
             contributions. Must contain every intercept-parent column.
+        node : str
+            Name of a node with at least one complex-intercept (``I``) term
+            that has parents.
 
         Returns
         -------
@@ -322,7 +336,7 @@ class ReadoutsMixin:
         cols: dict[str, np.ndarray] = {}
         for p in nd.parents:
             arr = feats[p].cpu().numpy()
-            if not isinstance(self.spec[p], OrdinalNode):  # continuous: raw
+            if self.spec[p].kind == "continuous":  # raw
                 cols[p] = arr[:, 0]
             else:
                 for k in range(1 if drop_first else 0, arr.shape[1]):

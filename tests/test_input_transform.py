@@ -139,7 +139,7 @@ def test_save_load_keeps_option_and_calibration(tmp_path):
     flow.fit(df, epochs=1, batch_size=100)
     flow.save(tmp_path / "flow.pt")
     loaded = CausalFlowDAG.load(tmp_path / "flow.pt")
-    assert loaded.nodes["x2"].intercept.input_transform.kind == "minmax"
+    assert loaded.nodes["x2"].intercept.input_transform.method == "minmax"
     u = pd.DataFrame(np.random.default_rng(1).logistic(size=(20, 3)), columns=SPEC)
     pd.testing.assert_frame_equal(
         flow.sample(20, u=u, do={"x1": 9.0}), loaded.sample(20, u=u, do={"x1": 9.0})

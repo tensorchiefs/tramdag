@@ -21,7 +21,6 @@ import torch
 from torch import Tensor, nn
 
 from .spec import (
-    ContinuousNode,
     NodeSpec,
     node_parents,
 )
@@ -40,10 +39,11 @@ class Node(nn.Module):
     """One dimension of the flow: an intercept plus additive shift terms.
 
     The intercept produces the transform parameters ``theta``. The shift
-    terms add up on the latent scale. The four methods ``log_prob``,
-    ``sample``, ``abduct`` and ``marginal_theta`` hold the ONLY
-    continuous-vs-ordinal branches of the package; ``encode`` is the parent
-    encoding. A third node kind earns a protocol; two stay an if/else in one
+    terms add up on the latent scale. The likelihood, sampling and encoding
+    branches on the node kind live in the five methods ``log_prob``,
+    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere
+    else; the rest of the package reads ``kind`` for dispatch and display
+    only. A third node kind earns a protocol; two stay an if/else in one
     place.
 
     Parameters
@@ -54,16 +54,12 @@ class Node(nn.Module):
         The full DAG specification. Needed for the parent feature widths.
     """
 
-    def __init__(
-        self,
-        node: NodeSpec,
-        spec: dict[str, NodeSpec],
-    ):
+    def __init__(self, node: NodeSpec, spec: dict[str, NodeSpec]):
         super().__init__()
         self.kind = node.kind
         terms = node.terms
-        self.parents = tuple(node_parents(node))  # ordered parent names
-        if isinstance(node, ContinuousNode):
+        self.parents = tuple(node_parents(node))
+        if node.kind == "continuous":
             self.ut = make_univariate_transform(node.transform, **node.transform_kwargs)
             n_params = self.ut.n_params
         else:
@@ -113,11 +109,11 @@ class Node(nn.Module):
         return ordinal_abduct(theta, shift, x, generator=generator)
 
     def marginal_theta(self, column: np.ndarray):
-        """Give the marginal-start theta of a simple intercept, or ``None``.
+        """Give the node's marginal-start theta, or ``None`` when there is none.
 
         Ordinal: the empirical class log-odds. Continuous: the transform's own
         marginal start over the same column (``None`` for spline/affine —
-        nothing to set).
+        nothing to set). Only a free intercept applies it.
         """
         if self.kind == "ordinal":
             counts = np.bincount(column.astype(np.int64), minlength=self.levels)

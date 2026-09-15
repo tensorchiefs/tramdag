@@ -37,7 +37,8 @@ def test_plot_dag_draws_every_node_and_edge():
     assert ax.get_legend() is not None
     # a flow draws its spec; labels and legend are optional
     flow = CausalFlowDAG(spec, seed=0)
-    ax2 = plot_dag(flow, labels=False, legend=False)
+    ax2 = plot_dag(flow, labels=False, legend=False, title="d")
+    assert ax2.get_title() == "d"
     assert len(ax2.patches) == len(ax.patches)
     assert ax2.get_legend() is None
     assert {t.get_text() for t in ax2.texts} == {
@@ -70,10 +71,12 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
         optimizer=per_node_adam(flow, lr=1e-2),
         callbacks=plateau,
     )
-    axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png")
+    axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png", title="m")
+    assert axes.flat[0].figure._suptitle.get_text() == "m"
     assert axes.shape == (1, 2)
     assert (tmp_path / "m.png").exists()
-    ax = plot_training(flow, path=tmp_path / "t.png")
+    ax = plot_training(flow, path=tmp_path / "t.png", title="t")
+    assert ax.get_title() == "t"
     assert len(ax.lines) == 2  # train and val, no marks without frozen=
     assert (tmp_path / "t.png").exists()
     ax = plot_training(flow, frozen=plateau.frozen)

@@ -28,12 +28,20 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from common import cli, load_variant, make_output_dir, save_metrics, write_report
+from common import (
+    cli,
+    figure_specs,
+    load_variant,
+    make_output_dir,
+    save_metrics,
+    write_report,
+)
 from helpers import (
     compare_do_x1,
     cs_curve_error,
     finish,
     fit_paper,
+    framework_figures,
     level_bars,
     plot_trajectories,
     snapshot,
@@ -163,7 +171,7 @@ def run(variant: str) -> dict:
     """Run one variant end to end and give its metrics."""
     config = load_variant(__file__, variant)
     out = make_output_dir(__file__, f"triangle-mixed-{variant}")
-    figures = ["coefficients.png"]
+    figs = figure_specs(config)
 
     generator = TriangleMixed(f=config["f"], seed=config["dgp_seed"])
     print(
@@ -180,14 +188,15 @@ def run(variant: str) -> dict:
         record=partial(snapshot, shift=config["shift"]),
     )
 
+    figures = framework_figures(flow, val, out, figs, config["sample_seed"])
     truths = true_coefficients(config)
     plot_trajectories(
         trajectory,
         truths,
         out / "plots" / "coefficients.png",
-        f"triangle-mixed/{config['f']}, {config['shift']} model — "
-        "coefficients in the flow's sign convention (Fig. 19)",
+        figs["coefficients.png"]["title"],
     )
+    figures.append("coefficients.png")
 
     metrics = {key: value for key, value in trajectory[-1].items() if key != "epoch"}
     metrics["val_nll_x3"] = float(flow.nll(val)["x3"])
@@ -199,7 +208,7 @@ def run(variant: str) -> dict:
             generator,
             config,
             out,
-            f"complex shift on an ordinal node, DGP f = {config['f']}",
+            figs["cs_curve.png"]["title"],
         )
         figures.append("cs_curve.png")
 
@@ -210,8 +219,7 @@ def run(variant: str) -> dict:
             config,
             out,
             ordinal_levels={"x3": config["levels"]},
-            title=f"triangle-mixed/{config['f']}, {config['shift']} model — "
-            "L1/L2 (Fig. 9/20)",
+            title=figs["distributions.png"]["title"],
         )
     )
     figures.append("distributions.png")
@@ -236,18 +244,20 @@ def run(variant: str) -> dict:
         flow_pmf,
         analytic_pmf,
         out / "plots" / "counterfactual_pmf.png",
-        f"ordinal counterfactuals under do(x1={config['do_x1']:+.0f})\n"
-        "only a distribution is identified (App. B)",
+        figs["counterfactual_pmf.png"]["title"],
     )
     figures.append("counterfactual_pmf.png")
 
     save_metrics(out, metrics)
     write_report(
         out,
-        f"triangle-mixed — f = {config['f']}, {config['shift']} shift "
-        f"(paper Sec. 6.2; cutpoints {generator.theta.tolist()})",
+        f"triangle-mixed: f = {config['f']}, {config['shift']} shift",
+        f"Paper Sec. 6.2, App. C.4 and App. B: the triangle with an ordinal x3 "
+        f"(cutpoints {generator.theta.tolist()}) and f = {config['f']} on the "
+        f"x2 -> x3 edge, fitted with a {config['shift']} shift. Coefficients are "
+        "in the flow's sign convention, the odds ratio is convention-free.",
         metrics,
-        figures,
+        {name: figs[name] for name in figures},
         truths={
             **truths,
             "mean_x3_flow_do_x1": metrics["mean_x3_dgp_do_x1"],

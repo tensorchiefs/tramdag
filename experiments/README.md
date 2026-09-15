@@ -22,11 +22,12 @@ uv run pytest .                          # the checks on the checker, configs an
 Every run writes to `results/<name>/` (gitignored):
 
 - `metrics.json`, the numbers that CI checks,
-- `report.md`, the table plus the figures (the experiments workflow posts this
-  file as a commit comment),
+- `report.md`, what the run is, the metrics table and the figures with their
+  captions (the experiments workflow posts this file as a commit comment),
 - `flow.pt`, the fitted model, so a finished run can be queried again with
   `CausalFlowDAG.load` instead of refitted,
-- `plots/*.png`.
+- `plots/*.png`: the package's own DAG, training and marginals figures, and
+  the paper's figures.
 
 ## The scripts
 
@@ -69,6 +70,8 @@ verbose, so one variant reads top to bottom:
   `batch_size` and `seed`. `learning_rate`, `schedule` and the `plateau_*`
   keys stay top-level, because they configure the optimizer and the scheduler
   the script builds.
+- `figures:` gives every figure of the report its title and caption;
+  placeholders such as `{f}` fill from the variant.
 - everything else is data and scoring configuration, for example `n_train`,
   `dgp_seed` and the grids.
 

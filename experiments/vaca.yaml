@@ -61,6 +61,22 @@ variants:
     n_compare: 50000          # rows per interventional panel (Fig. 5)
     n_scatter: 2000           # points per off-diagonal scatter (Fig. 4)
     hist_bins: 60
+    figures:                  # titles and report captions
+      dag.png:
+        title: 'VACA triangle: the DAG, complex intercepts on x2 and x3'
+        caption: The model as declared, one edge per term, labelled by the term that owns it.
+      training.png:
+        title: 'VACA triangle: training'
+        caption: Summed train and validation NLL per epoch under the reference's plateau rule.
+      marginals.png:
+        title: 'VACA triangle: observed vs sampled marginals'
+        caption: The validation rows against a sample of the fitted flow, one panel per node.
+      pairs.png:
+        title: 'VACA triangle: observational joint, DGP vs flow (Fig. 4)'
+        caption: Marginals on the diagonal, scatters off it; the bimodal source is what the default CNF misses.
+      interventional.png:
+        title: 'VACA triangle: interventional distributions (Fig. 5)'
+        caption: p(x3 | do(x2)) for the three intervention values, DGP against flow; the mean errors are the metrics.
     spec:
       x1:
         kind: continuous

@@ -101,6 +101,20 @@ def cli(script: str, doc: str) -> str:
     return parser.parse_args().variant
 
 
+def figure_specs(config: dict, **extra) -> dict[str, dict[str, str]]:
+    """Give the variant's ``figures`` with titles and captions filled in.
+
+    Every value is formatted with the variant's own keys, so a title in the
+    YAML may say ``{f}`` or ``{shift}``; ``extra`` adds run-time values such
+    as an observation the title quotes.
+    """
+    values = {**config, **extra}
+    return {
+        name: {field: text.format(**values) for field, text in spec.items()}
+        for name, spec in config["figures"].items()
+    }
+
+
 def make_output_dir(script: str, name: str) -> Path:
     """Create ``results/<name>/plots/`` and give the results directory."""
     out = Path(script).resolve().parent / "results" / name
@@ -114,9 +128,14 @@ def save_metrics(out: Path, metrics: dict) -> None:
 
 
 def write_report(
-    out: Path, title: str, metrics: dict, figures: list[str], truths: dict | None = None
+    out: Path,
+    title: str,
+    summary: str,
+    metrics: dict,
+    figures: dict[str, dict[str, str]],
+    truths: dict | None = None,
 ) -> None:
-    """Write ``report.md``: the metrics table and the figures.
+    """Write ``report.md``: what the run is, its metrics table, its figures.
 
     The experiments workflow posts this file as a commit comment, so the
     figure links are plain relative paths that ``cml comment`` resolves and
@@ -128,17 +147,25 @@ def write_report(
         The experiment's results directory.
     title : str
         Heading of the report.
+    summary : str
+        One or two sentences on what the run replicates.
     metrics : dict
         Flat ``{name: value}`` mapping, as written to ``metrics.json``.
-    figures : list[str]
-        File names under ``plots/``, in the order they should appear.
+    figures : dict[str, dict[str, str]]
+        ``{file name under plots/: {"title": ..., "caption": ...}}`` in the
+        order they should appear; [`figure_specs`][] builds it from the YAML.
     truths : dict | None, optional
         ``{metric_name: true_value}`` — the DGP/analytic ground truth for the
         metrics that have one. Those rows gain a truth and an ``|err|``
         column, so the commit comment shows fitted-vs-true at a glance.
     """
     truths = truths or {}
-    lines = [f"## {title}", ""]
+    about = (
+        "The numbers `metrics.json` holds and `check.py` compares against the "
+        "committed ground truth. Where the DGP truth is known, the row also "
+        "shows it and the absolute error."
+    )
+    lines = [f"## {title}", "", summary, "", "### Metrics", "", about, ""]
     if truths:
         # no pipes in cell text: cml strips the backslash escapes, which
         # desyncs the header from the |---| separator row
@@ -146,7 +173,14 @@ def write_report(
     else:
         lines += ["| metric | value |", "|---|---|"]
     lines += [_report_row(name, value, truths) for name, value in metrics.items()]
-    lines.append("")
-    for figure in figures:
-        lines += [f"![{figure}](plots/{figure})", ""]
+    lines += ["", "### Figures", ""]
+    for figure, spec in figures.items():
+        lines += [
+            f"#### {spec['title']}",
+            "",
+            spec["caption"],
+            "",
+            f"![{figure}](plots/{figure})",
+            "",
+        ]
     (out / "report.md").write_text("\n".join(lines))

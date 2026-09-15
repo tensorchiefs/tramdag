@@ -22,9 +22,31 @@ import torch
 from scipy.stats import gaussian_kde
 
 from tramdag import CausalFlowDAG, spec_from_dict
+from tramdag.plots import plot_dag, plot_marginals, plot_training
 
 
 # %% public functions ------------------------------------------------------------------
+def framework_figures(flow: CausalFlowDAG, df, out: Path, figs: dict, seed) -> list:
+    """Draw the package's own figures of a fitted flow into ``plots/``.
+
+    The DAG as declared, the training curves and the observed-against-sampled
+    marginals of ``df``; titles come from the variant's ``figures``. Gives
+    the file names, in report order.
+    """
+    names = ["dag.png", "training.png", "marginals.png"]
+    plot_dag(flow, path=out / "plots" / names[0], title=figs[names[0]]["title"])
+    plot_training(flow, path=out / "plots" / names[1], title=figs[names[1]]["title"])
+    plot_marginals(
+        flow,
+        df,
+        seed=seed,
+        path=out / "plots" / names[2],
+        title=figs[names[2]]["title"],
+    )
+    plt.close("all")
+    return names
+
+
 def fit_paper(train, val, config: dict, out: Path, record=None):
     """Fit the way the paper's R code does: one run, one optimizer, per-epoch read-out.
 

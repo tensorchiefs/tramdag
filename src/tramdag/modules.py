@@ -1,6 +1,6 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
-A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``Fn``, ``I``) is
+A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``I``) is
 plain data and carries the spec-level rules, and its ``module`` attribute is
 the class here that trains it (``LinearShift.module is LinearShiftModule``).
 A module is constructed from its term and the spec, ``module(term, spec)``
@@ -27,7 +27,6 @@ here take what they are given.
 | `AdditiveInterceptModule` | one stack per parent, outputs summed | additive `I` |
 | `SimpleInterceptModule` | free parameter vector, no parent | `I()` |
 | `VaryingCoefficientModule` | `beta0` + penalized hidden stack to 1 | `VC` |
-| `FnShiftModule` | a user callable or `nn.Module` | `Fn` |
 
 Parent features: a continuous parent enters raw, in one column; an ordinal
 parent one-hot, in ``levels`` columns. ``ACTIVATIONS`` maps the activation
@@ -709,31 +708,3 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     def extra_columns(self, flow) -> list[str]:
         """Give the treatment's parents (a treatment cannot be centered itself)."""
         return list(flow.nodes[self.key].parents) if self.center_col else []
-
-
-class FnShiftModule(ShiftModule, nn.Module):
-    """``Fn`` — a user-supplied shift function over the parent features.
-
-    A plain function contributes a fixed (non-trained) offset; an
-    ``nn.Module`` registers as a submodule and trains with the flow. Keyed
-    like a CS (``'a'`` or ``'a+b'``).
-
-    Parameters
-    ----------
-    term : FnShift
-        The term, with its callable and its parents.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the parents' kinds.
-    """
-
-    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
-        super().__init__()
-        self.fn = term.fn  # an nn.Module registers as a submodule here
-        self.parents = tuple(term.parents)
-        self.key = "+".join(self.parents)
-        _attach_input_transform(self, term, spec, self.parents)
-
-    def shift_value(self, node: Node, feats: dict) -> Tensor:
-        """Run ``fn`` on the term's features; accept ``(n,)`` or ``(n, 1)``."""
-        out = self.fn(node.net_input(feats, self.parents, self.key))
-        return out.squeeze(-1) if out.dim() > 1 else out

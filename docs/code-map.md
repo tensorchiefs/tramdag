@@ -88,7 +88,6 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: an NN to one shift value. |
 | [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: $\beta_0 + b_\Theta(\text{mod})$ with the L2 hook `l2()`; `beta()` evaluates the effect and `recenter()` re-splits `beta0`/`b_theta` after training ([varying-coefficients.md](varying-coefficients.md)). `regressor` is both the forward regressor and the `beta0` score. |
-| [`FnShiftModule`][tramdag.modules.FnShiftModule] | `Fn`: a user-supplied shift function over the parent features. |
 | [`SimpleInterceptModule`][tramdag.modules.SimpleInterceptModule] / [`ComplexInterceptModule`][tramdag.modules.ComplexInterceptModule] / [`AdditiveInterceptModule`][tramdag.modules.AdditiveInterceptModule] | The intercept slot: free theta (`I()`), one joint net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
 | (`_nn`) | The one NN builder: a stack of the given `units` with the term's `activation` (optional `batch_norm` before it), then a bias-free output layer. |
 | (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
@@ -104,7 +103,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Defined here once, methods of the flow via the mixin. |
-| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_val_nll`, `_fit_epoch`, `_FnCallback`) | The loop plumbing: Keras-shaped validation split, callback normalization, the validation pass, the rate record, verbose printing. |
+| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`) | The loop plumbing: Keras-shaped validation split, callback normalization, the validation pass, the rate record, verbose printing. |
 
 ## `readouts.py` — `ReadoutsMixin`
 
@@ -134,7 +133,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers / Fn, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
+| [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
 | [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each. |
 | [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with a dashed mark per `frozen=` entry. |
 | (`_layout`, `_term_edges`) | Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split. matplotlib is imported on the first call, never at package import. |

@@ -80,7 +80,7 @@ conditional without sampling it.
 `flow.shift_curve(node, parent, grid)` evaluates one fitted shift term along a
 grid of parent values. Use it to plot a `CS` term against the function it was
 supposed to learn. It goes through the term's own evaluation, so a custom term
-and an `Fn` term work too.
+works too.
 
 A caution on both: a `CS` term is identified only up to a constant, because
 that constant can move into the intercept. Compare a fitted curve to the truth

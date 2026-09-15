@@ -69,8 +69,6 @@ parents $\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}$ as the example.
   a treatment $x_t$ whose effect $\beta$ varies with modifier covariates
   through a small penalized network. [varying-coefficients.md](varying-coefficients.md)
   is its guide.
-- **Function shift, Fn.** $f(x_{\text{pa}})$ for a user-supplied function or
-  `nn.Module`, for a one-off term.
 
 Sampling has to invert only the intercept, because the shifts move to the
 other side:
@@ -85,8 +83,8 @@ $$
 
 Each node declares its transformation as an additive formula of terms. The
 formula is the node's first argument, a `+` sum of terms. Each constructor
-names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`, `VC`, `Fn` are the classes
-`Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`, `FnShift`.
+names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`, `VC`
+are the classes `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`.
 
 | formula for a continuous node $x_3$ | $u_3 = h(x_3 \mid \mathrm{pa})$ |
 |---|---|

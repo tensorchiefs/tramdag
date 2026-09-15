@@ -4,10 +4,10 @@ A model is one dict ``{node_name: NodeSpec}`` of [`ContinuousNode`][] and
 [`OrdinalNode`][]. Each node declares its transformation as an additive
 formula of [`Term`][] subclasses — a ``+`` sum — whose first entry
 is the intercept ([`Intercept`][], written or prepended as ``I()``) followed
-by shifts ([`LinearShift`][], [`ComplexShift`][], [`VaryingCoefficient`][],
-[`FnShift`][]). The paper's symbols ``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are
-the same classes; ``SI()`` and ``CI(*parents)`` are the two intercept
-spellings with their arity checked.
+by shifts ([`LinearShift`][], [`ComplexShift`][], [`VaryingCoefficient`][]).
+The paper's symbols ``I``, ``LS``, ``CS``, ``VC`` are the same classes;
+``SI()`` and ``CI(*parents)`` are the two intercept spellings with their
+arity checked.
 
 [`validate_and_sort`][] checks that every parent exists and enters through
 exactly one edge-owning term (VC modifiers may repeat) and gives the
@@ -23,7 +23,6 @@ import sys
 
 from .modules import (
     ComplexShiftModule,
-    FnShiftModule,
     LinearShiftModule,
     VaryingCoefficientModule,
     intercept_module,
@@ -328,7 +327,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     The result is JSON- and YAML-safe (tuple options such as ``units`` become
     lists), so a spec round-trips through ``json``/YAML as well as through
     ``torch.save`` — except when a term carries a *callable*
-    (``input_transform``, ``fn``), which serializes only through pickle
+    ``input_transform``, which serializes only through pickle
     (``torch.save``) and only as a module-level function.
 
     A custom term is written as its import path, ``module.ClassName``, and
@@ -844,52 +843,6 @@ class VaryingCoefficient(Term):
         return [(t, "VC", False)] + [(p, "VCm", False) for p in mods]
 
 
-class FnShift(Term):
-    """The function shift ``Fn``: ``fn(features)`` joins the additive shifts.
-
-    ``fn`` takes the term's concatenated parent features ``(n, k)``
-    (continuous raw, ordinal one-hot, through ``input_transform`` when given)
-    and returns the shift contribution, shape ``(n,)`` or ``(n, 1)``. A plain
-    function is a fixed offset; an ``nn.Module`` registers as a submodule and
-    trains with the flow. Checkpoints pickle ``fn``, so it must be a
-    module-level function or an importable ``nn.Module``; ``save()`` refuses
-    a lambda.
-
-    Parameters
-    ----------
-    *parents : str
-        Parent node names feeding ``fn``.
-
-    Other Parameters
-    ----------------
-    fn : callable | torch.nn.Module
-        The shift function. Required.
-    input_transform : str | callable | None, optional
-        As for [`ComplexShift`][]. ``None``, the default, applies no
-        transform.
-
-    Raises
-    ------
-    ValueError
-        If no parent is given or ``fn`` is not callable.
-    """
-
-    name = "Fn"
-    module = FnShiftModule
-
-    def __init__(self, *parents: str, fn, input_transform: object = None):
-        super().__init__(*parents)
-        self.fn = fn
-        self.input_transform = _checked_input_transform(input_transform)
-        if not self.parents:
-            raise ValueError("Fn() needs at least one parent.")
-        if not callable(self.fn):
-            # a domain error (a wrong option value), not a Python type error
-            raise ValueError(  # noqa: TRY004
-                f"Fn(fn=) must be callable, got {type(self.fn).__name__}"
-            )
-
-
 class ContinuousNode:
     """Continuous variable, modelled by a monotone 1-D transform + shifts.
 
@@ -983,4 +936,3 @@ I = Intercept  # noqa: E741 - ambiguous only out of context
 LS = LinearShift
 CS = ComplexShift
 VC = VaryingCoefficient
-Fn = FnShift

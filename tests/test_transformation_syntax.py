@@ -228,15 +228,14 @@ def test_malformed_serialized_spec_is_rejected():
 
 
 def test_paper_symbols_are_the_classes():
-    """I/LS/CS/VC/Fn are the term classes; SI/CI build the intercept arities."""
+    """I/LS/CS/VC are the term classes; SI/CI build the intercept arities."""
     import tramdag as td
 
-    assert (td.I, td.LS, td.CS, td.VC, td.Fn) == (
-        td.Intercept,
-        td.LinearShift,
-        td.ComplexShift,
-        td.VaryingCoefficient,
-        td.FnShift,
+    assert (td.Intercept, td.LinearShift, td.ComplexShift, td.VaryingCoefficient) == (
+        td.I,
+        td.LS,
+        td.CS,
+        td.VC,
     )
     assert SI() == I()
     assert CI("a") == I("a")

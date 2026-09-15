@@ -51,7 +51,7 @@ implementations use: ``relu`` in the PyTorch reference's default classes,
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -134,7 +134,9 @@ def _nn(
     return nn.Sequential(*layers, out)
 
 
-def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
+def _attach_input_transform(
+    m: nn.Module, term: Term, spec: dict[str, NodeSpec], parents: tuple[str, ...]
+) -> None:
     """Register the term's input transform over its continuous parents.
 
     Ordinal one-hots pass through untransformed, so a term whose network
@@ -148,12 +150,14 @@ def _attach_input_transform(m, term: Term, parents: tuple, spec: dict) -> None:
 
 
 # %% public functions ------------------------------------------------------------------
-def feat_width(spec: dict[str, NodeSpec], parents) -> int:
+def feat_width(spec: dict[str, NodeSpec], parents: tuple[str, ...]) -> int:
     """Total feature width of the parents (ordinal one-hot, continuous raw)."""
     return sum(spec[p].levels if spec[p].kind == "ordinal" else 1 for p in parents)
 
 
-def intercept_module(term: Term, spec: dict[str, NodeSpec], n_params: int):
+def intercept_module(
+    term: Term, spec: dict[str, NodeSpec], n_params: int
+) -> InterceptModule:
     """Construct the node's intercept module from its ``I`` term.
 
     One ``I`` term becomes one of three modules: the free theta without
@@ -180,14 +184,14 @@ class _InputTransform(nn.Module):
 
     def __init__(self, value, cols: tuple[str, ...]):
         super().__init__()
-        self.kind = "callable" if callable(value) else value
+        self.method = "callable" if callable(value) else value
         self.fn = value if callable(value) else None
         self.cols = cols  # the term's continuous parents, in parent order
         k = len(cols)
-        if self.kind == "minmax":
+        if self.method == "minmax":
             self.register_buffer("lo", torch.zeros(k))
             self.register_buffer("hi", torch.ones(k))
-        elif self.kind == "standardize":
+        elif self.method == "standardize":
             self.register_buffer("mean", torch.zeros(k))
             self.register_buffer("std", torch.ones(k))
         else:  # callable: the raw train columns, shaped at calibrate
@@ -195,10 +199,10 @@ class _InputTransform(nn.Module):
 
     def set_stats(self, cols: Tensor) -> None:
         """Freeze the statistics from the raw ``(n_train, k)`` train columns."""
-        if self.kind == "minmax":
+        if self.method == "minmax":
             self.lo.copy_(cols.min(0).values)
             self.hi.copy_(cols.max(0).values)
-        elif self.kind == "standardize":
+        elif self.method == "standardize":
             self.mean.copy_(cols.mean(0))
             self.std.copy_(cols.std(0))
         else:
@@ -206,9 +210,9 @@ class _InputTransform(nn.Module):
 
     def forward(self, x: Tensor, i: int) -> Tensor:
         """Transform one continuous parent column ``(n, 1)``."""
-        if self.kind == "minmax":
+        if self.method == "minmax":
             return (x - self.lo[i]) / (self.hi[i] - self.lo[i])
-        if self.kind == "standardize":
+        if self.method == "standardize":
             return (x - self.mean[i]) / self.std[i]
         return self.fn(x, self.train_cols[:, i : i + 1])
 
@@ -221,9 +225,9 @@ class TermModule:
     def input_transform(self):
         """The term's frozen network-input transform, or ``None``.
 
-        Builds register one (``_attach_input_transform``) when the term
-        declares ``input_transform=`` over continuous parents; a plain class
-        attribute would shadow the registered submodule.
+        A module's ``__init__`` registers one (``_attach_input_transform``) when
+        the term declares ``input_transform=`` over continuous parents; a plain
+        class attribute would shadow the registered submodule.
         """
         return self._modules.get("_input_transform")
 
@@ -254,16 +258,16 @@ class ShiftModule(TermModule, ABC):
     ``__init__(term, spec)`` builds the network from the term's options and the
     parents' widths in the spec, and sets ``key`` (the node's ModuleDict key)
     and ``parents`` (the term's written parents); a subclass may keep more
-    (``VaryingCoefficientModule`` keeps ``mods``/``on_is_ord``/``center_col``).
+    (``VaryingCoefficientModule`` keeps ``mods``/``t_is_ord``/``center_col``).
     Layers are built in a fixed order under fixed attribute names, so
     state-dict paths and the seeded RNG stream stay bit-stable.
     """
 
-    scored: ClassVar[bool] = False  # True when score_columns gives coefficients
-    order: ClassVar[int] = 0  # shifts sum in this order (VC last: the pinned order)
+    scored = False  # True when score_columns gives coefficients
+    order = 0  # shifts sum in this order (VC last: the pinned order)
 
     key: str
-    parents: tuple
+    parents: tuple[str, ...]
 
     @abstractmethod
     def shift_value(self, node: Node, feats: dict) -> Tensor:
@@ -416,7 +420,7 @@ class ComplexInterceptModule(InterceptModule, nn.Module):
         )
         self.groups = [tuple(term.parents)]
         self.ci_parents = list(term.parents)
-        _attach_input_transform(self, term, tuple(term.parents), spec)
+        _attach_input_transform(self, term, spec, tuple(term.parents))
 
     def forward(self, x: Tensor) -> Tensor:
         """Map parent features ``(n, n_features)`` to parameters ``(n, n_params)``."""
@@ -460,7 +464,7 @@ class AdditiveInterceptModule(InterceptModule, nn.Module):
             )
             for grp in self.groups
         )
-        _attach_input_transform(self, term, tuple(term.parents), spec)
+        _attach_input_transform(self, term, spec, tuple(term.parents))
 
     def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Sum the per-parent nets in coefficient space."""
@@ -543,8 +547,8 @@ class ComplexShiftModule(ShiftModule, nn.Module):
             activation=term.activation,
             batch_norm=term.batch_norm,
         )
-        self.key = "+".join(self.parents)  # the parent itself for one parent
-        _attach_input_transform(self, term, self.parents, spec)
+        self.key = "+".join(self.parents)
+        _attach_input_transform(self, term, spec, self.parents)
 
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
@@ -566,11 +570,10 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     The output layer starts at zero, so ``beta(x)`` equals ``beta0`` exactly
     at construction. The head therefore learns only the deviation from a
     constant effect, which makes the arm difference an estimate instead of a
-    by-product. The unpenalized reduced form ``CS(on, x...)`` reaches a
-    correlation of only about 0.5 against the true effect function (issue
-    #28). With ``n_features == 0`` there are no modifiers, there is no
-    network, and the term is exactly ``LS(on)``. Only the treatment owns an
-    edge.
+    by-product. The unpenalized reduced form ``CS(t, x...)`` reaches a
+    correlation of only about 0.5 against the true effect function. With
+    ``n_features == 0`` there are no modifiers, there is no network, and the
+    term is exactly ``LS(t)``. Only the treatment owns an edge.
 
     The term's ``penalty``, ``units``, ``activation`` and ``batch_norm`` shape
     the head; the term class holds their defaults. One hidden layer of 16 is
@@ -603,7 +606,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
 
     def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
-        on, mods = term.parents[0], tuple(term.parents[1:])
+        t, mods = term.parents[0], tuple(term.parents[1:])
         self.penalty = float(term.penalty)
         self.beta0 = nn.Parameter(torch.zeros(()))
         self.register_buffer("center", torch.zeros(()))
@@ -620,12 +623,12 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
             )
         else:
             self.net = None
-        self.key = on
+        self.key = t
         self.parents = tuple(term.parents)
         self.mods = mods
-        self.on_is_ord = spec[on].kind == "ordinal"
+        self.t_is_ord = spec[t].kind == "ordinal"
         self.center_col = term.center
-        _attach_input_transform(self, term, mods, spec)
+        _attach_input_transform(self, term, spec, mods)
 
     def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
         """Give the effect values ``beta(x)``, shape ``(n,)``.
@@ -682,7 +685,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
                 f"column {self.center_col!r}. Internal callers inject it; "
                 "never evaluate a centered term without its propensity."
             )
-        t = feats[self.key][:, -1:] if self.on_is_ord else feats[self.key]
+        t = feats[self.key][:, -1:] if self.t_is_ord else feats[self.key]
         if self.center_col:
             t = t - feats[self.center_col].view(-1, 1)
         return t
@@ -743,7 +746,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         """
         if not self.center_col:
             return {}
-        p1 = flow._binary_p1(flow.nodes[self.key], values, n).detach()
+        p1 = flow._propensity(flow.nodes[self.key], values, n).detach()
         return {self.center_col: p1}
 
     def extra_columns(self, flow) -> list[str]:
@@ -757,14 +760,21 @@ class FnShiftModule(ShiftModule, nn.Module):
     A plain function contributes a fixed (non-trained) offset; an
     ``nn.Module`` registers as a submodule and trains with the flow. Keyed
     like a CS (``'a'`` or ``'a+b'``).
+
+    Parameters
+    ----------
+    term : FnShift
+        The term, with its callable and its parents.
+    spec : dict[str, NodeSpec]
+        The DAG specification, for the parents' kinds.
     """
 
     def __init__(self, term: Term, spec: dict[str, NodeSpec]):
         super().__init__()
         self.fn = term.fn  # an nn.Module registers as a submodule here
         self.parents = tuple(term.parents)
-        self.key = "+".join(self.parents)  # the parent itself for one parent
-        _attach_input_transform(self, term, self.parents, spec)
+        self.key = "+".join(self.parents)
+        _attach_input_transform(self, term, spec, self.parents)
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Run ``fn`` on the term's features; accept ``(n,)`` or ``(n, 1)``."""

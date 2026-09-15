@@ -30,7 +30,7 @@ reads better:
 - ``VC``, the ``VaryingCoefficient`` term: ``beta(modifiers) * x_on`` with
   ``beta(x) = beta0 + b_theta(x)``, where ``b_theta`` is a small
   **penalized** network. It is a treatment-effect head with its own
-  bias-variance budget (issue #28).
+  bias-variance budget.
 
 A formula holds **exactly one intercept term, first** — written, or added as
 ``SI()`` when the formula only lists shifts — so ``node.terms[0]`` is always
@@ -87,7 +87,7 @@ INPUT_TRANSFORMS = ("minmax", "standardize")
 
 # %% private functions -----------------------------------------------------------------
 def _term_class(name: str) -> type[Term]:
-    """Give the term class a serialized ``term:`` entry names.
+    """Give the term class that a serialized ``term:`` entry names.
 
     A bare name is an attribute of this module: the paper's symbols and the
     class names. A dotted path ``my.pkg.module.ClassName`` is imported, which
@@ -105,13 +105,13 @@ def _term_class(name: str) -> type[Term]:
         )
     except (ImportError, AttributeError) as err:
         raise ValueError(
-            f"unknown term '{name}'. A custom term serializes as its import "
+            f"unknown term {name!r}. A custom term serializes as its import "
             "path, module.ClassName, and that module must be importable here."
         ) from err
     if not (isinstance(cls, type) and issubclass(cls, Term)):
         # a domain error (a wrong serialized entry), not a Python type error
         raise ValueError(  # noqa: TRY004
-            f"unknown term '{name}': it is not a tramdag.Term subclass."
+            f"unknown term {name!r}: it is not a tramdag.Term subclass"
         )
     return cls
 
@@ -148,7 +148,7 @@ def _checked_input_transform(value):
     if value is not None and not (callable(value) or value in INPUT_TRANSFORMS):
         raise ValueError(
             "input_transform must be 'minmax', 'standardize' or a callable "
-            f"fn(x, train), got {value!r}."
+            f"fn(x, train), got {value!r}"
         )
     return value
 
@@ -180,20 +180,10 @@ def _normalize_terms(value):
     The canonical form starts with the intercept: a formula written
     without one gets ``I()`` prepended, so ``terms[0]`` is always the
     intercept term. Exactly one intercept is allowed, and it must come
-    first when written.
-
-    Parameters
-    ----------
-    value : Term | list[Term] | None
-        The formula as written.
-
-    Returns
-    -------
-    list[Term]
-        The canonical term list; a source node gives ``[I()]``.
+    first when written; a source node (``None``) gives ``[I()]``.
     """
     if value is None:
-        return [Intercept()]  # a source node: the free intercept alone
+        return [Intercept()]
     written = value if isinstance(value, (list, tuple)) else [value]
     items = [_check_term(e) for e in written]
     intercept_at = [i for i, t in enumerate(items) if isinstance(t, Intercept)]
@@ -208,14 +198,14 @@ def _normalize_terms(value):
             )
         raise ValueError(
             "a formula takes exactly one intercept term, and CI(...) already "
-            "contains the baseline — drop the extra I/SI."
+            "contains the baseline — drop the extra I/SI"
         )
     if not intercept_at:
-        return [Intercept(), *items]  # canonical form: intercept first
+        return [Intercept(), *items]
     if intercept_at[0] != 0:
         raise ValueError(
             "the intercept term comes first: write "
-            "I(...) + <shifts>, not the other way around."
+            "I(...) + <shifts>, not the other way around"
         )
     return items
 
@@ -237,12 +227,12 @@ def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
     for term in node.terms:
         for p in term.parents:
             if p not in spec:
-                raise ValueError(f"Node '{name}': unknown parent '{p}'.")
+                raise ValueError(f"node {name!r}: unknown parent {p!r}")
         term.check(name, spec)
         for p in term.edge_parents:
             if p in seen:
                 raise ValueError(
-                    f"Node '{name}': parent '{p}' appears in more than one "
+                    f"node {name!r}: parent {p!r} appears in more than one "
                     "term. Each parent must enter through exactly one "
                     "edge-owning term. Only VC modifiers may repeat."
                 )
@@ -265,7 +255,7 @@ def _kahn_sort(spec: dict[str, NodeSpec]) -> list[str]:
     while remaining:
         ready = sorted(n for n, deps in remaining.items() if not deps)
         if not ready:
-            raise ValueError(f"Graph has a cycle among: {sorted(remaining)}")
+            raise ValueError(f"graph has a cycle among {sorted(remaining)}")
         for n in ready:
             order.append(n)
             del remaining[n]
@@ -276,7 +266,7 @@ def _kahn_sort(spec: dict[str, NodeSpec]) -> list[str]:
 
 # %% public functions ------------------------------------------------------------------
 def import_object(path: str):
-    """Give the object a dotted import path names, ``my.pkg.module.Name``."""
+    """Give the object that a dotted import path names, ``my.pkg.module.Name``."""
     module_name, _, attr = path.rpartition(".")
     return getattr(importlib.import_module(module_name), attr)
 
@@ -319,7 +309,7 @@ def CI(*parents: str, **options) -> Intercept:
     """
     if not parents:
         raise ValueError(
-            "CI() needs at least one parent. The parentless baseline is SI()."
+            "CI() needs at least one parent; the parentless baseline is SI()"
         )
     return Intercept(*parents, **options)
 
@@ -412,7 +402,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
             "kind": node.kind,
             "terms": [_serialized(t) for t in node.terms],
         }
-        if isinstance(node, OrdinalNode):
+        if node.kind == "ordinal":
             d["levels"] = node.levels
         out[name] = d
     return out
@@ -444,15 +434,17 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
         If a term does not take an option the entry names.
     """
     spec: dict[str, NodeSpec] = {}
-    for name, nd in d.items():
+    for name, entry in d.items():
         terms = []
-        for t in nd["terms"]:
+        for t in entry["terms"]:
             cls = _term_class(t["term"])
             terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
-        if nd["kind"] == "continuous":
+        if entry["kind"] == "continuous":
             spec[name] = ContinuousNode(terms)
+        elif entry["kind"] == "ordinal":
+            spec[name] = OrdinalNode(int(entry["levels"]), terms)
         else:
-            spec[name] = OrdinalNode(int(nd["levels"]), terms)
+            raise ValueError(f"node {name!r}: unknown kind {entry['kind']!r}")
     return spec
 
 
@@ -465,13 +457,12 @@ class Term:
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
     class in [`modules`][tramdag.modules] that trains it, constructed as
-    ``module(term, spec)`` (the intercept's ``module`` is the function that
-    picks one of its three classes).
+    ``module(term, spec)``; the intercept slot adds ``n_params``.
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
-    and ``module`` (the [`ShiftModule`][tramdag.modules.ShiftModule] subclass
-    that builds it) as class attributes, and assign the options — the keyword
-    arguments of ``__init__``, with their defaults — to ``self``:
+    and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)
+    as class attributes, and assign the options — the keyword arguments of
+    ``__init__``, with their defaults — to ``self``:
 
     ```python
     class Scaled(Term):
@@ -623,6 +614,9 @@ class Intercept(Term):
         intercept with this flag, not with several intercept terms. Default
         ``True``: one joint network is what the reference implementations
         do.
+
+    Other Parameters
+    ----------------
     units : list[int] | tuple[int, ...], optional
         Hidden layers of the term's network, for example ``units=[16]``. By
         default ``(8, 8)``, the two hidden layers of the PyTorch reference's
@@ -683,13 +677,13 @@ class Intercept(Term):
         if not self.parents and self.input_transform is not None:
             raise ValueError(
                 "a simple intercept has no network inputs — input_transform= "
-                "belongs on CI/CS/VC terms."
+                "belongs on CI/CS/VC terms"
             )
         if not self.allow_interaction and len(self.parents) < 2:
             raise ValueError(
                 "allow_interaction=False makes a MULTI-parent intercept additive; "
                 "with one parent there is no interaction to disallow — drop the "
-                "argument."
+                "argument"
             )
 
     @property
@@ -784,7 +778,7 @@ class ComplexShift(Term):
 class VaryingCoefficient(Term):
     """The varying-coefficient shift ``VC``: ``beta(modifiers) * x_t``.
 
-    The treatment-effect term of issue #28: ``VC("X2", "X3", t="T")`` is
+    The treatment-effect term: ``VC("X2", "X3", t="T")`` is
     ``(beta0 + b_theta(x2, x3)) * x_t``, with ``b_theta`` a small network
     whose weights carry the L2 ``penalty``. The fitting objective is the
     penalized NLL ``sum_i nll_i + penalty * ||b_theta weights||^2`` on the
@@ -820,7 +814,7 @@ class VaryingCoefficient(Term):
         penalty is on the total-NLL scale, so its effective strength moves
         with ``n``: raise it for small ``n`` or many modifiers.
     center : str | None, optional
-        Propensity centering (issue #30), by default ``None``: no centering,
+        Propensity centering, by default ``None``: no centering,
         bit-identical to the uncentered term. A string names the
         **training-frame column** holding the out-of-fold propensities
         ``P(t = 1 | pa_t)`` per row — compute them with any cross-fitted
@@ -878,7 +872,7 @@ class VaryingCoefficient(Term):
         input_transform: object = None,
     ):
         if penalty < 0:
-            raise ValueError(f"VC(): penalty must be >= 0, got {penalty}.")
+            raise ValueError(f"VC(): penalty must be >= 0, got {penalty}")
         # the treatment leads the parents: it is the one that owns an edge
         super().__init__(t, *modifiers)
         self.penalty = float(penalty)
@@ -889,7 +883,7 @@ class VaryingCoefficient(Term):
         self.input_transform = _checked_input_transform(input_transform)
         if t in modifiers:
             raise ValueError(
-                f"VC(): '{t}' cannot be both the treatment (t) and a modifier."
+                f"VC(): {t!r} cannot be both the treatment (t) and a modifier"
             )
 
     @classmethod
@@ -907,39 +901,39 @@ class VaryingCoefficient(Term):
             the treatment is a multi-level ordinal, or centering meets a
             continuous or an itself-centered treatment.
         """
-        on = self.parents[0]
+        t = self.parents[0]
+        t_node = spec[t]
         if self.center is not None and not isinstance(self.center, str):
             raise ValueError(
-                f"Node '{name}': VC(center=) names the propensity COLUMN of "
+                f"node {name!r}: VC(center=) names the propensity COLUMN of "
                 "the training frame (out-of-fold P(t=1|pa_t) per row), or is "
                 f"None — got {self.center!r}. Cross-fit the propensities "
                 "outside and merge them as a column."
             )
         if self.center and self.center in spec:
             raise ValueError(
-                f"Node '{name}': the propensity column {self.center!r} "
-                "collides with a node name."
+                f"node {name!r}: the propensity column {self.center!r} "
+                "collides with a node name"
             )
-        on_node = spec[on]
-        if isinstance(on_node, OrdinalNode) and on_node.levels != 2:
+        if t_node.kind == "ordinal" and t_node.levels != 2:
             raise ValueError(
-                f"Node '{name}': VC treatment '{on}' is ordinal with "
-                f"{on_node.levels} levels. Only a 2-level (binary) "
-                "ordinal treatment is supported. Multi-level is a "
+                f"node {name!r}: VC treatment {t!r} is ordinal with "
+                f"{t_node.levels} levels. Only a 2-level (binary) ordinal "
+                "treatment is supported. Multi-level is a follow-up."
+            )
+        if self.center and t_node.kind != "ordinal":
+            raise ValueError(
+                f"node {name!r}: VC(center=...) needs a binary ordinal "
+                f"treatment, and {t!r} is continuous. E[T|x] centering is a "
                 "follow-up."
             )
-        if self.center and not isinstance(on_node, OrdinalNode):
-            raise ValueError(
-                f"Node '{name}': VC(center=...) needs a binary ordinal "
-                f"treatment, and '{on}' is continuous. E[T|x] centering "
-                "is a follow-up."
-            )
         if self.center and any(
-            isinstance(t, VaryingCoefficient) and t.center for t in on_node.terms
+            isinstance(term, VaryingCoefficient) and term.center
+            for term in t_node.terms
         ):
             raise ValueError(
-                f"Node '{name}': treatment '{on}' carries a centered VC term "
-                "itself; chained centering is not supported."
+                f"node {name!r}: treatment {t!r} carries a centered VC term "
+                "itself; chained centering is not supported"
             )
 
     @property
@@ -998,7 +992,7 @@ class FnShift(Term):
         if not callable(self.fn):
             # a domain error (a wrong option value), not a Python type error
             raise ValueError(  # noqa: TRY004
-                f"Fn(fn=) must be callable, got {type(self.fn).__name__}."
+                f"Fn(fn=) must be callable, got {type(self.fn).__name__}"
             )
 
 
@@ -1058,7 +1052,7 @@ class OrdinalNode:
     def __init__(self, levels: int, terms=None):
         self.levels = int(levels)
         if self.levels < 2:
-            raise ValueError(f"ordinal levels must be >= 2, got {self.levels}.")
+            raise ValueError(f"OrdinalNode(levels=) must be >= 2, got {self.levels}")
         self.terms = _normalize_terms(terms)
         intercept = self.terms[0]
         if intercept.transform or intercept.transform_kwargs:

@@ -15,9 +15,12 @@ import math
 
 import torch
 
+# %% global variables ------------------------------------------------------------------
+__all__ = ["Callback", "EarlyStopping", "PerNodePlateau", "per_node_adam"]
+
 
 # %% private functions -----------------------------------------------------------------
-def _last_val(flow) -> dict[str, float]:
+def _last_val(flow, cb: Callback) -> dict[str, float]:
     """Give the current epoch's per-node validation NLL, or fail loudly.
 
     A stale entry from an earlier validated fit does not count: the last
@@ -27,7 +30,7 @@ def _last_val(flow) -> dict[str, float]:
     val_epoch = flow.history.get("val_epoch", [])
     if not val_epoch or val_epoch[-1] != len(flow.history["train"]):
         raise RuntimeError(
-            "this callback reads flow.history['val'] — pass validation_data= "
+            f"{type(cb).__name__} reads flow.history['val'] — pass validation_data= "
             "or validation_split= to fit()"
         )
     return flow.history["val"][-1]
@@ -40,6 +43,18 @@ def per_node_adam(flow, lr: float = 1e-2) -> torch.optim.Adam:
     The per-node NLLs have independent gradients, so a learning rate per
     group is exactly independent per-node training. This is the optimizer
     [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] needs.
+
+    Parameters
+    ----------
+    flow : CausalFlowDAG
+        The flow whose nodes' parameters form the groups.
+    lr : float, optional
+        The rate of every group, by default 1e-2.
+
+    Returns
+    -------
+    torch.optim.Adam
+        One group per node, tagged ``node`` and stamped ``initial_lr``.
     """
     return torch.optim.Adam(
         [
@@ -135,7 +150,7 @@ class EarlyStopping(Callback):
 
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Snapshot on improvement; ``True`` once the best is ``patience`` old."""
-        nll = sum(_last_val(flow).values())
+        nll = sum(_last_val(flow, self).values())
         if nll < self.best_nll:
             self.best_nll, self.best_epoch = nll, epoch
             if self.restore_best:
@@ -186,6 +201,11 @@ class PerNodePlateau(Callback):
         workloads.
     min_delta : float, optional
         Improvement below this is flat, by default 1e-4.
+
+    Attributes
+    ----------
+    frozen : dict[str, int]
+        ``{node: epoch}`` of the nodes that left training, after a fit.
     """
 
     def __init__(
@@ -226,7 +246,7 @@ class PerNodePlateau(Callback):
 
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Step on the epoch's validation NLL; ``True`` once every node froze."""
-        return self.step(_last_val(flow), optimizer, epoch)
+        return self.step(_last_val(flow, self), optimizer, epoch)
 
     def step(self, nll: dict[str, float], optimizer, epoch: int) -> bool:
         """Step every unfrozen node on its own NLL; ``True`` when all are frozen.

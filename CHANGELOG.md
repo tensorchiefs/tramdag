@@ -865,6 +865,20 @@ read-outs keep their exact signatures as flow methods.
   stacks, so their state-dict paths are `nets.<i>.<layer>` instead of
   `nets.<i>.net.<layer>`; the recorded baseline moved with them, values
   unchanged.
+- One spelling per thing: error messages start lowercase, quote names with
+  `!r` and end without a period unless they run to several sentences; a
+  `Node` is `nd` and a node's name is `node` everywhere; the node kind is
+  read as `.kind` everywhere (no `isinstance` against the spec classes
+  outside `spec.py`); the VC treatment is `t` in code and docstrings
+  (`t_is_ord`); `_InputTransform.method` names its minmax/standardize/
+  callable choice, `kind` is the node kind only; every read-out that touches
+  tensors runs under `@torch.no_grad()`; `scores.effect_modifier_scan` takes
+  `t=`, `candidates=`, `column=` by keyword like the flow method;
+  `_binary_p1` is `_propensity`; `fitting`, `readouts`, `callbacks` and
+  `plots` declare `__all__`; `_FnCallback` sits under its own section marker.
+  Docstrings gained the Parameters sections their siblings had, and lost the
+  issue numbers, the version numbers and the sentences that argued against
+  code that no longer exists.
 
 ### Fixed
 

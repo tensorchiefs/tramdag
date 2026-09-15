@@ -1,7 +1,7 @@
-"""Per-observation scores and the effect-modifier scan (issue #29).
+"""Per-observation scores and the effect-modifier scan.
 
-The score psi_i = d l_i / d theta of a fitted model is the cheapest
-effect-modifier detector we know (model-based recursive partitioning /
+The score psi_i = d l_i / d theta of a fitted model is a cheap
+effect-modifier detector (model-based recursive partitioning /
 structural-change logic; Zeileis & Hornik 2007; Zeileis, Hothorn & Hornik 2008;
 Dandl et al. 2024): at the MLE the scores sum to zero, but if the true effect
 of a treatment *varies* with a covariate, the scores of the treatment
@@ -34,7 +34,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .spec import OrdinalNode
 from .transforms import ordinal_bounds
 
 # %% global variables ------------------------------------------------------------------
@@ -61,6 +60,7 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
 
 
 # %% public functions ------------------------------------------------------------------
+@torch.no_grad()
 def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
     """Compute the per-observation scores of the interpretable coefficients.
 
@@ -108,7 +108,7 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
     # not y-free: l_i needs x. Plus the e_hat inputs of centered terms.
     needed = [*nd.parents, node, *flow._query_side_columns(nd)]
     values = flow._tensorize(df, needed)  # names a missing column
-    feats = flow._features({p: values[p] for p in nd.parents})
+    feats = flow._parent_feats(nd, values)
     feats |= flow._side_feats(nd, values, len(df))
     dlds = _dl_ds(nd, feats, values[node])
 
@@ -144,10 +144,12 @@ def sup_bb_pvalue(stat: float) -> float:
     return min(1.0, max(0.0, 2.0 * s))
 
 
+@torch.no_grad()
 def effect_modifier_scan(
     flow,
     df: pd.DataFrame,
     node: str,
+    *,
     t: str,
     candidates: list[str] | None = None,
     column: str | None = None,
@@ -206,13 +208,14 @@ def effect_modifier_scan(
         if column not in psi_df.columns:
             raise KeyError(
                 f"no score column {column!r} on node {node!r} "
-                f"(have {list(psi_df.columns)})."
+                f"(have {list(psi_df.columns)})"
             )
         col = column
     elif t in psi_df.columns:
         col = t
     elif (
-        isinstance(flow.spec.get(t), OrdinalNode)
+        t in flow.spec
+        and flow.spec[t].kind == "ordinal"
         and flow.spec[t].levels == 2
         and f"{t}[1]" in psi_df.columns
     ):
@@ -227,7 +230,7 @@ def effect_modifier_scan(
     n = len(psi)
     sd = psi.std()
     if sd == 0:
-        raise ValueError(f"score column {col!r} is constant. There is nothing to scan.")
+        raise ValueError(f"score column {col!r} is constant; there is nothing to scan")
 
     if candidates is None:
         candidates = [c for c in df.columns if c not in (node, t)]

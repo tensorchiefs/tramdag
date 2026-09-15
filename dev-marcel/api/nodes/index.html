@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/adr/001-term-owned-architecture/">
+        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/api/nodes/">
       
       
-        <link rel="prev" href="../../architecture/">
+        <link rel="prev" href="../modules/">
       
       
-        <link rel="next" href="../../code-map/">
+        <link rel="next" href="../fitting/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR 001 (1.0 architecture) - tramdag</title>
+        <title>nodes - tramdag</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-001-term-owned-architecture-for-10-rc" class="md-skip">
+        <a href="#tramdagnodes" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR 001 (1.0 architecture)
+              nodes
             
           </span>
         </div>
@@ -290,8 +290,6 @@
       
   
   
-    
-  
   
   
     
@@ -304,11 +302,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -329,7 +327,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -587,125 +585,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#refused-deliberately-so-a-later-proposal-can-find-the-reasoning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Refused (deliberately, so a later proposal can find the reasoning)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -977,8 +856,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -989,11 +870,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -1014,7 +895,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1032,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/tramdag/" class="md-nav__link">
+      <a href="../tramdag/" class="md-nav__link">
         
   
   
@@ -1060,7 +941,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/spec/" class="md-nav__link">
+      <a href="../spec/" class="md-nav__link">
         
   
   
@@ -1088,7 +969,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/flow/" class="md-nav__link">
+      <a href="../flow/" class="md-nav__link">
         
   
   
@@ -1116,14 +997,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/terms/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
   
 
     
@@ -1141,10 +1022,196 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tramdag.nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nodes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Node">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.encode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.log_prob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        log_prob
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sample
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.abduct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        abduct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.marginal_theta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        marginal_theta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.net_input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.theta_shift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        theta_shift
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
-      <a href="../../api/fitting/" class="md-nav__link">
+      <a href="../fitting/" class="md-nav__link">
         
   
   
@@ -1172,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/readouts/" class="md-nav__link">
+      <a href="../readouts/" class="md-nav__link">
         
   
   
@@ -1200,7 +1267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/transforms/" class="md-nav__link">
+      <a href="../transforms/" class="md-nav__link">
         
   
   
@@ -1228,35 +1295,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/scores/" class="md-nav__link">
+      <a href="../scores/" class="md-nav__link">
         
   
   
@@ -1284,7 +1323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/callbacks/" class="md-nav__link">
+      <a href="../callbacks/" class="md-nav__link">
         
   
   
@@ -1312,7 +1351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/plots/" class="md-nav__link">
+      <a href="../plots/" class="md-nav__link">
         
   
   
@@ -1367,46 +1406,113 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#tramdag.nodes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
+        nodes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Node">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.encode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.log_prob" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Decision
+        log_prob
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#refused-deliberately-so-a-later-proposal-can-find-the-reasoning" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.sample" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refused (deliberately, so a later proposal can find the reasoning)
+        sample
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.abduct" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Consequences
+        abduct
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.marginal_theta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        marginal_theta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.net_input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        net_input
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.nodes.Node.theta_shift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        theta_shift
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1430,83 +1536,406 @@
   
 
 
-<h1 id="adr-001-term-owned-architecture-for-10-rc">ADR 001 — Term-owned architecture for 1.0-RC<a class="headerlink" href="#adr-001-term-owned-architecture-for-10-rc" title="Permanent link">&para;</a></h1>
-<p>Date: 2026-09-02 · Status: accepted · Branch: <code>rc/1.0-architecture</code></p>
-<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>At 0.4 the package was seven modules with flow.py a 2020-line monolith; per-term
-behavior (validation, construction, evaluation, penalty, post-fit steps, score
-columns, adjacency cells, classical-fit eligibility) lived in five parallel string
-switches across spec.py/flow.py/scores.py — VC alone had ~27 sites. Three
-architecture proposals (term-owned, one-dispatch-table, pure seam-split) were
-drafted against a seven-subsystem survey and judged from three lenses
-(maintainability, migration risk, extensibility without over-engineering).</p>
-<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p><strong>Term-owned flow, executed in the seam-split's order.</strong></p>
-<ol>
-<li>Verbatim code motion first: <code>nodes.py</code> (node model), <code>fitting.py</code>
-   (<code>_FitMixin</code>: fit/fit_classical), <code>readouts.py</code> (<code>_ReadoutsMixin</code>: the
-   stateless read-outs + the new <code>shift_curve</code>) — state-dict paths and the
-   seeded RNG stream untouched. The methods stay methods of
-   <code>CausalFlowDAG</code> (it composes the two mixins), each defined once in its
-   module; a first draft used free functions behind one-line delegates and
-   the delegate layer was cut as duplication.</li>
-<li>The <strong>registry</strong> (<code>terms.py</code>): one definition per term. Built-in shift terms
-   subclass their conditioners (<code>LinearShiftTerm(ShiftTerm, LinearShift)</code> …), so
-   checkpoints and RNG draws stay bit-stable; each term owns validation
-   (<code>__post_init__</code>/<code>edge_parents</code>), construction (<code>build</code>), evaluation
-   (<code>shift_value</code>/<code>theta_value</code>), <code>post_init</code>, <code>regularizer</code>, post-fit
-   <code>finalize</code>, <code>score_columns</code>, the side-input contract
-   (<code>side_columns</code>/<code>check_column</code>/<code>live_side</code>/<code>extra_columns</code>), adjacency
-   <code>cells</code>, <code>classical</code> and its dataclass fields.</li>
-<li>The intercept slot is a term too (<code>SimpleInterceptTerm</code>/<code>ComplexInterceptTerm</code>/<code>AdditiveInterceptTerm</code>);
-   the theta read is inline in <code>theta_shift</code> and the marginal init is a hook
-   (<code>marginal_start</code>, <code>transform.marginal_init_theta</code>).</li>
-<li><strong>Node kinds stay an if/else in ONE place</strong>: the four adjacent functions
-   <code>kind_log_prob</code>/<code>kind_sample</code>/<code>kind_abduct</code>/<code>kind_marginal_theta</code> in
-   nodes.py. The judges cut the drafted per-kind Head protocol as an n=2
-   abstraction — a third node kind earns the protocol.</li>
-<li>Extension points: a <code>Term</code> subclass plus a <code>ShiftTerm</code> subclass declaring
-   <code>data =</code> it (subclassing is the registration — see the 2026-09 revision
-   below) and <code>Fn</code> (a callable / <code>nn.Module</code> in the additive shifts);
-   <code>I(transform=&lt;_ScaledUT subclass&gt;)</code> for a custom transform.</li>
-</ol>
-<h2 id="refused-deliberately-so-a-later-proposal-can-find-the-reasoning">Refused (deliberately, so a later proposal can find the reasoning)<a class="headerlink" href="#refused-deliberately-so-a-later-proposal-can-find-the-reasoning" title="Permanent link">&para;</a></h2>
-<ul>
-<li>No per-kind node protocol (n=2), no new node kinds at 1.0.</li>
-<li>~~No per-term <code>Term</code> subclasses in the data layer~~ — <strong>revised
-  2026-09-07</strong>: one string-dispatched <code>Term</code> meant the spec knowledge of a
-  term lived in three places (a constructor, <code>option_defaults</code> served
-  through <code>__getattr__</code>, and static <code>check_arity</code>/<code>edge_parents</code>/<code>cells</code>
-  hooks on the module class), glued by a registry. Each term is now a
-  <code>Term</code> subclass (its options are dataclass fields, its spec-level rules its
-  methods) and the module class declares <code>data =</code> it; the registry is gone.
-  The runtime polymorphism still lives once, in terms.py.</li>
-<li>No transform/activation registry beyond <code>make_univariate_transform</code> accepting
-  a class; no plugin entry points; no config system; no new dependencies.</li>
-<li>No custom latent distribution — the standard logistic IS the TRAM semantics;
-  every pinned number depends on it.</li>
-<li>No collapse of ComplexIntercept/ComplexShift into factories: their names
-  anchor checkpoint paths and the seeded RNG stream that ten CI ground truths pin.</li>
-<li>No side-input channel at all (revised 2026-09-02): the first RC kept
-  <code>fit(vc_ehat=)</code>; the final one deletes it — a centered <code>VC</code> names its
-  out-of-fold propensity COLUMN (<code>VC(center="ps")</code>) and the values ride the
-  training frame like any data, so splitting/slicing/validation come free
-  and no term-specific argument crosses <code>fit</code>. Queries still recompute the
-  propensity live from the treatment node (<code>ShiftTerm.live_side</code>).</li>
-<li>Error messages reworded only where a responsibility physically moved.</li>
-</ul>
-<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
-<ul>
-<li>flow.py ≈ 900 lines of framework only; no term string-switch survives
-  outside terms.py; a new term touches one class.</li>
-<li>One deliberate checkpoint break (0.4 unreleased): additive-CI keys
-  <code>nodes.*.intercept_nets.*</code> → <code>nodes.*.intercept.nets.*</code> (parameters proven
-  bit-identical under the rename).</li>
-<li>Every migration step landed with the full quick suite, a seeded
-  state-dict-diff smoke (<code>tests/tools/statedict_smoke.py</code>), and experiment
-  reproductions against the committed ground truths; guards were only
-  tightened, never re-based silently.</li>
-</ul>
+<h1 id="tramdagnodes">tramdag.nodes<a class="headerlink" href="#tramdagnodes" title="Permanent link">&para;</a></h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="tramdag.nodes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">tramdag.nodes</span>
+
+
+<a href="#tramdag.nodes" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>The internal node model: one sub-model per variable.</p>
+<p><code>Node</code> bundles a variable's intercept (transform parameters), monotone
+transform and shift modules; <code>CausalFlowDAG</code> holds one per node and the DAG
+lives in which parents each node reads. <code>scores.py</code>, the read-outs and the
+tests read <code>kind</code>, <code>parents</code>, <code>shifts</code>, <code>intercept</code>, <code>ut</code>,
+<code>net_input</code> and <code>theta_shift</code> by name.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="tramdag.nodes.Node" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">Node</span>
+
+
+<a href="#tramdag.nodes.Node" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="torch.nn.Module">Module</span></code></p>
+
+
+
+        <p>One dimension of the flow: an intercept plus additive shift terms.</p>
+<p>The intercept produces the transform parameters <code>theta</code>. The shift
+terms add up on the latent scale. The likelihood, sampling and encoding
+branches on the node kind live in the five methods <code>log_prob</code>,
+<code>sample</code>, <code>abduct</code>, <code>marginal_theta</code> and <code>encode</code>, and nowhere
+else; the rest of the package reads <code>kind</code> for dispatch and display
+only.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>node</code>
+            </td>
+            <td>
+                  <code><span title="tramdag.spec.NodeSpec">NodeSpec</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Specification of the node.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>spec</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="tramdag.spec.NodeSpec">NodeSpec</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The full DAG specification. Needed for the parent feature widths.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.encode" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">encode</span>
+
+
+<a href="#tramdag.nodes.Node.encode" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">encode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Encode this node's values for use as a parent feature.</p>
+<p>A continuous parent stays raw, shape <code>(n, 1)</code>; an ordinal parent is
+one-hot encoded, shape <code>(n, levels)</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.log_prob" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">log_prob</span>
+
+
+<a href="#tramdag.nodes.Node.log_prob" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">log_prob</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>log p(x | pa)</code> from the transform parameters and the shift.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.sample" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample</span>
+
+
+<a href="#tramdag.nodes.Node.sample" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Push the latent <code>u</code> forward to an observed value.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.abduct" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">abduct</span>
+
+
+<a href="#tramdag.nodes.Node.abduct" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">abduct</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Recover the latent: exact (continuous) or truncated-sampled (ordinal).</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.marginal_theta" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">marginal_theta</span>
+
+
+<a href="#tramdag.nodes.Node.marginal_theta" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">marginal_theta</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Give the node's marginal-start theta, or <code>None</code> when there is none.</p>
+<p>Ordinal: the empirical class log-odds. Continuous: the transform's own
+marginal start over the same column (<code>None</code> for spline/affine —
+nothing to set). Only a free intercept applies it.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.net_input" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">net_input</span>
+
+
+<a href="#tramdag.nodes.Node.net_input" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">net_input</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">parents</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Concatenate parent features for one term's network.</p>
+<p><code>key</code> names the term ("@I" for the intercept, the shift key
+otherwise); a term with an <code>input_transform</code> gets its continuous
+parent columns transformed with the statistics frozen at
+<code>calibrate</code>. Every network input goes through here — training and
+the read-outs (<code>varying_coef</code>, <code>intercept_contributions</code>) alike —
+so the model seen at inference is the model that was fitted. Linear
+shifts and the VC treatment column are not network inputs and never
+pass through.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.nodes.Node.theta_shift" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">theta_shift</span>
+
+
+<a href="#tramdag.nodes.Node.theta_shift" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">theta_shift</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the transform parameters and the total shift of the node.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feats</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="torch.Tensor">Tensor</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Encoded parent features keyed by parent name, plus the terms'
+side columns (a centered VC's propensities — frozen from the
+training frame, injected live by the flow at query time).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Batch size.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="torch.Tensor">Tensor</span>, <span title="torch.Tensor">Tensor</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The transform parameters, shape <code>(n, P)</code>, and the total
+shift, shape <code>(n,)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeError">RuntimeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a centered VC term is evaluated without its propensity
+column in <code>feats</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 

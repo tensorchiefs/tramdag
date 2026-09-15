@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/api/scores/">
       
       
-        <link rel="prev" href="../conditioners/">
+        <link rel="prev" href="../transforms/">
       
       
         <link rel="next" href="../callbacks/">
@@ -597,34 +597,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../code-map/" class="md-nav__link">
         
   
@@ -1025,14 +997,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../terms/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1117,34 +1117,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1457,29 +1429,13 @@
 
     <div class="doc doc-contents first">
 
-        <p>Per-observation scores and the effect-modifier scan (issue #29).</p>
-<p>The score psi_i = d l_i / d theta of a fitted model is the cheapest
-effect-modifier detector we know (model-based recursive partitioning /
-structural-change logic; Zeileis &amp; Hornik 2007; Zeileis, Hothorn &amp; Hornik 2008;
-Dandl et al. 2024): at the MLE the scores sum to zero, but if the true effect
-of a treatment <em>varies</em> with a covariate, the scores of the treatment
-coefficient drift systematically when ordered by that covariate. Fitting the
-cheap all-<code>ls</code> model (seconds, <code>fit_classical</code>) and scanning the scores
-turns "which VC modifiers should I declare?" from a modeling guess into a
-measured decision — <em>before</em> fitting anything expensive.</p>
-<p>Because every shift coefficient enters the latent additively, the scores are
-<strong>analytic and exact</strong> (no autograd): <code>d l_i / d beta = (d l_i / d s_i) * x_i</code>
-with the latent-scale derivative in closed form —</p>
-<ul>
-<li>continuous node (<code>u = h(x) + s</code>, standard-logistic latent):
-  <code>d l / d s = 1 - 2 sigmoid(u)</code>;</li>
-<li>ordinal node (<code>P(Y&lt;=k) = sigmoid(theta_k - s)</code>):
-  <code>d l / d s = (sig'(l) - sig'(u)) / (sig(u) - sig(l))</code> with <code>l</code>/<code>u</code> the
-  observed level's shifted cutpoint bounds.</li>
-</ul>
-<p>The public entry points are the <code>CausalFlowDAG</code> methods
-<a class="autorefs autorefs-internal" title="tramdag.scores" href="#tramdag.scores"><code>scores</code></a> and
-<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan</code></a>. Both delegate here.</p>
+        <p>Per-observation scores of the shift coefficients, and the effect-modifier scan.</p>
+<p>The scores <code>psi_i = d l_i / d beta</code> are analytic: every shift coefficient
+enters the latent additively, so <code>d l_i / d beta = (d l_i / d s_i) * x_i</code>
+with the latent-scale derivative in closed form (<code>_dl_ds</code>). The scan orders
+one coefficient's scores by a candidate covariate and reports a CUSUM
+statistic with its p-value. The <code>CausalFlowDAG</code> methods <a class="autorefs autorefs-internal" title="tramdag.scores" href="#tramdag.scores"><code>scores</code></a> and
+<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan</code></a> delegate here; <code>docs/scores.md</code> is the guide.</p>
 
 
 
@@ -1734,24 +1690,17 @@ contrast of level 1 against level 0.</p>
 
 <a href="#tramdag.scores.effect_modifier_scan" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">effect_modifier_scan</span><span class="p">(</span>
-    <span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Scan the <code>t</code>-coefficient scores for effect-modifier drift.</p>
-<p>For each candidate covariate <code>c</code>, the scan orders the
-per-observation scores of the treatment coefficient by <code>c</code> and forms
-the scaled cumulative-sum process
-<code>B_j = sum_{i&lt;=j} psi_(i) / (sd(psi) * sqrt(n))</code>. Under parameter
-stability <code>B</code> converges to a Brownian bridge, so <code>sup_j |B_j|</code> has
-the Kolmogorov distribution (5% critical value 1.3581). A systematic
-drift — the true effect varying with <code>c</code> — inflates it. Covariates
-flagged here are the measured candidates for <code>VC</code> modifiers
-(Zeileis-Hornik fluctuation test).</p>
-<p>For heavily tied (few-level) candidates the ordering is only partial.
-Read the scan as a ranking diagnostic, not as an exact-size test.</p>
+<p>For each candidate covariate the scan orders the treatment coefficient's
+scores by it, forms the scaled cumulative sum
+<code>B_j = sum_{i&lt;=j} psi_(i) / (sd(psi) * sqrt(n))</code> and reports
+<code>sup_j |B_j|</code> with its Kolmogorov p-value and the 5% critical value.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

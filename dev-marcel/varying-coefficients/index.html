@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty" class="md-skip">
+        <a href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center" class="md-skip">
           Skip to content
         </a>
       
@@ -575,10 +575,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-not-cst-x2-x3-anti-pattern" class="md-nav__link">
+  <a href="#why-not-a-joint-cs-over-treatment-and-modifiers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why not CS("T", "X2", "X3")? (anti-pattern)
+        Why not a joint CS over treatment and modifiers
       
     </span>
   </a>
@@ -597,10 +597,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#propensity-centered-vc-centercol-r-learner-orthogonalization" class="md-nav__link">
+  <a href="#propensity-centering-centercol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Propensity-centered VC: center="col" (R-learner orthogonalization)
+        Propensity centering: center="col"
       
     </span>
   </a>
@@ -670,34 +670,6 @@
     
   
     Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
   
 
     
@@ -1116,14 +1088,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/terms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1208,34 +1208,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1367,10 +1339,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-not-cst-x2-x3-anti-pattern" class="md-nav__link">
+  <a href="#why-not-a-joint-cs-over-treatment-and-modifiers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why not CS("T", "X2", "X3")? (anti-pattern)
+        Why not a joint CS over treatment and modifiers
       
     </span>
   </a>
@@ -1389,10 +1361,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#propensity-centered-vc-centercol-r-learner-orthogonalization" class="md-nav__link">
+  <a href="#propensity-centering-centercol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Propensity-centered VC: center="col" (R-learner orthogonalization)
+        Propensity centering: center="col"
       
     </span>
   </a>
@@ -1430,152 +1402,101 @@
   
 
 
-<h1 id="varying-coefficient-treatment-effects-vcmodifiers-t-penalty">Varying-coefficient treatment effects: <code>VC(*modifiers, t=, penalty=)</code><a class="headerlink" href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty" title="Permanent link">&para;</a></h1>
-<p>A <code>VC</code> term gives a node a <strong>treatment-effect head with its own bias–variance
-budget</strong> (issue #28). The term contributes</p>
-<div class="highlight"><pre><span></span><code>beta(modifiers) * x_on        with    beta(x) = beta0 + b_theta(x)
-</code></pre></div>
-<p>to the node's shift. Here <code>b_theta</code> is a deliberately small (one 16-unit
-hidden layer), <strong>penalized</strong> network. The point is not expressiveness. The
-point is that the flow estimates the effect function <em>with care</em>, not as a
-by-product:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">td</span>
-
-<span class="n">spec</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"X1"</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(),</span>
-    <span class="s2">"X2"</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(),</span>
-    <span class="s2">"X3"</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(),</span>
-    <span class="s2">"T"</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">td</span><span class="o">.</span><span class="n">LS</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">)</span> <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">LS</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">)),</span>
-    <span class="s2">"Y"</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(</span>
-        <span class="n">td</span><span class="o">.</span><span class="n">CS</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">,</span> <span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">)</span>  <span class="c1"># prognostic part g(x): as flexible as you like</span>
-        <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">VC</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># effect beta(X2, X3) * T</span>
-    <span class="p">),</span>
-<span class="p">}</span>
-<span class="n">flow</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span>
-<span class="p">)</span>  <span class="c1"># best-validation weights: callbacks.EarlyStopping, see fitting.md</span>
-
-<span class="n">beta</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">varying_coef</span><span class="p">(</span><span class="n">df_new</span><span class="p">,</span> <span class="s2">"Y"</span><span class="p">)</span>  <span class="c1"># (n,) array beta(x) — deterministic, y-free</span>
-<span class="n">beta0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="s2">"T"</span><span class="p">]</span><span class="o">.</span><span class="n">beta0</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>  <span class="c1"># interpretable main effect</span>
-</code></pre></div>
-<p><code>X2</code> and <code>X3</code> appear <strong>twice</strong>: as prognostic parents through <code>CS</code> and as
-effect modifiers through <code>VC</code>. This pattern is intended. Only the treatment
-node named by <code>t=</code> owns its edge, and a second term that declares it raises
-an error. Modifiers can repeat.</p>
-<h2 id="why-not-cst-x2-x3-anti-pattern">Why not <code>CS("T", "X2", "X3")</code>? (anti-pattern)<a class="headerlink" href="#why-not-cst-x2-x3-anti-pattern" title="Permanent link">&para;</a></h2>
-<p>For a binary treatment, the multi-parent <code>CS</code> is equivalent in
-<em>expressiveness</em>. Any shift decomposes exactly as
-<code>s(x,t) = s(x,0) + [s(x,1) − s(x,0)]·t</code>. But the <code>CS</code> form has <strong>no
-effect-specific regularization</strong>. The likelihood rewards a good average fit
-of <code>s(x,t)</code>, and nothing rewards a smooth difference between the arms. The
-read-out is thus the difference of two jointly fitted, unregularized
-networks, which amplifies noise.</p>
-<p>On the heterogeneous-effect validation DGP (see below), the <code>CS</code> reduced form reaches
-corr ≈ 0.5 against the true effect function (tramdag-simu#18 / PR #21). This
-holds <strong>even when the model is exactly in-class</strong>. The <code>VC</code> term reaches
-corr ≈ 0.99 on the same protocol (<code>tests/test_vc_term.py</code>, acceptance bar
-0.9). Causal forests and R-learners work not because they <em>target</em> the
-effect, but because they <strong>regularize</strong> it (Nie &amp; Wager 2021,
-Athey–Tibshirani–Wager 2019). <code>VC</code> brings that ingredient into the TRAM
-framework.</p>
+<h1 id="varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center">Varying-coefficient treatment effects: <code>VC(*modifiers, t=, penalty=, center=)</code><a class="headerlink" href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center" title="Permanent link">&para;</a></h1>
+<p>A <code>VC</code> term gives a node a treatment-effect head with its own bias-variance
+budget. It contributes <span class="arithmatex">\(\beta(x)\, x_t\)</span> with
+<span class="arithmatex">\(\beta(x) = \beta_0 + b_\Theta(x)\)</span> to the node's shift, where <span class="arithmatex">\(b_\Theta\)</span> is a
+deliberately small, penalized network of the modifiers. The point is not
+expressiveness. The point is that the flow estimates the effect function with
+care, not as a by-product. Every claim here runs in
+<a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>,
+which is the one place for the code.</p>
+<p>Modifiers may appear twice in a node, as prognostic parents through <code>CS</code> or
+<code>LS</code> and as effect modifiers through <code>VC</code>. That pattern is intended. Only the
+treatment named by <code>t=</code> owns its edge, and a second term that declares it
+raises an error.</p>
+<h2 id="why-not-a-joint-cs-over-treatment-and-modifiers">Why not a joint <code>CS</code> over treatment and modifiers<a class="headerlink" href="#why-not-a-joint-cs-over-treatment-and-modifiers" title="Permanent link">&para;</a></h2>
+<p>For a binary treatment the multi-parent <code>CS</code> is equivalent in expressiveness,
+since any shift decomposes as <span class="arithmatex">\(s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t\)</span>. But
+the <code>CS</code> form has no effect-specific regularization. The likelihood rewards a
+good average fit of <span class="arithmatex">\(s(x,t)\)</span>, and nothing rewards a smooth difference between
+the arms, so the read-out is the difference of two jointly fitted,
+unregularized networks and amplifies noise. On the <code>vc_hetero</code> process the
+<code>CS</code> reduced form reaches a correlation of about 0.5 with the true effect
+function even though the model is in-class; the <code>VC</code> term reaches about 0.99
+on the same protocol. Causal
+forests and R-learners work not because they target the effect but because
+they regularize it (Nie &amp; Wager 2021; Athey, Tibshirani &amp; Wager 2019). <code>VC</code>
+brings that ingredient into the TRAM framework.</p>
 <h2 id="semantics">Semantics<a class="headerlink" href="#semantics" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Scale</strong>: <code>beta(x)</code> lives on the node's latent (log-odds) scale. The flow
-  adds it for a continuous node (<code>u = h(y) + …</code>) and subtracts it from the
-  cutpoints for an ordinal node, exactly like an <code>LS</code> weight. With no
-  modifiers, <code>VC(t="T")</code> <em>is</em> <code>LS("T")</code> (identical model, testably
-  bit-exact). Thus <code>VC</code> versus <code>LS</code> is a nested question.</li>
-<li><strong>Penalty</strong>: the fitting objective is the penalized likelihood
-  <span class="arithmatex">\(\sum_i \mathrm{NLL}_i + \lambda \lVert b_\Theta \rVert^2\)</span> (<code>penalty=</code> is
-  <span class="arithmatex">\(\lambda\)</span>) on the total-NLL scale. This is a
-  fixed Gaussian prior whose shrinkage vanishes as n grows. The penalty
-  never applies to <code>beta0</code>. <code>penalty → ∞</code> shrinks <code>b_theta</code> to the zero
-  function and recovers the classical <code>LS</code> fit. The default is
-  <code>penalty=1.0</code>. If the modifiers are many or n is small, raise the penalty.</li>
-<li><strong>Identification / centering</strong>: a constant moves freely between <code>beta0</code>
-  and <code>b_theta</code>. The head's output layer is zero-initialized
-  (<code>beta(x) = beta0</code> at step 0). After <code>fit</code>, the flow re-centers the head
-  to mean zero over the training data, which preserves the function. Thus
-  <code>beta0</code> is the main effect in the training population, the <code>Colr</code> reading
-  when <code>beta</code> is constant.</li>
-<li><strong>Warm start</strong> (optional, two lines): fit the all-<code>ls</code> version of the
-  node classically and copy the treatment weight into
-  <code>flow.nodes[node].shifts[t].beta0</code> before <code>fit</code>, so training starts at the
-  classical answer and only learns deviations. Measured on the <code>vc_hetero</code>
-  DGP: <code>beta0</code> lands within 0.15 of the truth with it, and 0.16 from the zero
-  start. The recovery correlation is 0.99 either way.</li>
-<li><strong>Treatments</strong>: the treatment <code>x_on</code> can be continuous or binary (2-level)
-  ordinal. The term is linear in <code>x_on</code>. A binary ordinal enters as its 0/1
-  level, so <code>beta</code> is the identified level-1-vs-0 contrast. Multi-level
-  ordinal treatments are a planned follow-up.</li>
-<li><strong>Read-out</strong>: <code>flow.varying_coef(df, node, t=...)</code> evaluates
-  <code>beta0 + b_theta(modifiers)</code> in closed form. The result is deterministic
-  and y-free, and it needs no abduction. For a binary treatment, it equals
-  the abduct-difference <code>u(x, t=1, y) − u(x, t=0, y)</code> identically (pinned by
-  a test).</li>
+<li><strong>Scale.</strong> <span class="arithmatex">\(\beta(x)\)</span> lives on the node's latent scale, added for a
+  continuous node and subtracted from the cutpoints for an ordinal one,
+  exactly like an <code>LS</code> weight. With no modifiers, <code>VC(t="T")</code> is <code>LS("T")</code>
+  bit-exactly, so <code>VC</code> against <code>LS</code> is a nested question.</li>
+<li><strong>Penalty.</strong> The objective is <span class="arithmatex">\(\sum_i \mathrm{NLL}_i + \lambda \lVert
+  b_\Theta \rVert^2\)</span> on the total-NLL scale, with <code>penalty=</code> as <span class="arithmatex">\(\lambda\)</span>.
+  It is a fixed Gaussian prior whose shrinkage vanishes as <span class="arithmatex">\(n\)</span> grows, it never
+  applies to <span class="arithmatex">\(\beta_0\)</span>, and <span class="arithmatex">\(\lambda \to \infty\)</span> recovers the <code>LS</code> fit. Raise
+  it when the modifiers are many or <span class="arithmatex">\(n\)</span> is small.</li>
+<li><strong>Identification.</strong> A constant moves freely between <span class="arithmatex">\(\beta_0\)</span> and
+  <span class="arithmatex">\(b_\Theta\)</span>. The head's output layer is zero-initialized, so
+  <span class="arithmatex">\(\beta(x) = \beta_0\)</span> at step 0, and after <code>fit</code> the flow re-centers the head
+  to mean zero over the training data, which preserves the function. <span class="arithmatex">\(\beta_0\)</span>
+  is therefore the main effect in the training population, the Colr reading
+  when <span class="arithmatex">\(\beta\)</span> is constant.</li>
+<li><strong>Warm start.</strong> Fit the all-<code>LS</code> version classically and copy the treatment
+  weight into <code>beta0</code> before <code>fit</code>, so training starts at the classical answer
+  and learns only deviations.</li>
+<li><strong>Treatments.</strong> Continuous or binary ordinal, entering as its 0/1 level so
+  that <span class="arithmatex">\(\beta\)</span> is the identified level-1-against-0 contrast. The term is
+  linear in the treatment.</li>
+<li><strong>Read-out.</strong> <code>flow.varying_coef(df, node)</code> evaluates <span class="arithmatex">\(\beta(x)\)</span> in closed
+  form, deterministic and free of the outcome. For a binary treatment it
+  equals the abduction difference <span class="arithmatex">\(u(x,1,y) - u(x,0,y)\)</span> identically, which a
+  test pins.</li>
 </ul>
-<h2 id="propensity-centered-vc-centercol-r-learner-orthogonalization">Propensity-centered VC: <code>center="col"</code> (R-learner orthogonalization)<a class="headerlink" href="#propensity-centered-vc-centercol-r-learner-orthogonalization" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="n">td</span><span class="o">.</span><span class="n">VC</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="s2">"ps"</span><span class="p">)</span>
-<span class="c1"># contributes  beta(x) * (t - e_hat(x))  to the shift; e_hat comes from you,</span>
-<span class="c1"># out of fold, as the training-frame column named by center=</span>
-</code></pre></div>
-<p>This is Robinson/R-learner centering inside the likelihood. Dandl et al.
-(2024) found treatment-centering to be <em>the</em> decisive ingredient for effect
-estimation under confounding in model-based forests. That finding reproduces
-here. The test DGP is strongly confounded, and the model deliberately
-under-specifies its prognostic part (true g(x) quadratic, model linear). On
-that DGP, the uncentered β̂ absorbs the confounded misfit. The mean
-|β̂ − τ| is ≈ 1.1–1.2, which effectively destroys the effect estimate. The
-centered β̂ stays near truth (≈ 0.1–0.3), a <strong>5–10× bias reduction</strong>
-(<code>tests/test_vc_centered.py</code>). If the prognostic part is correctly
-specified, centering changes little. Centering is insurance against the
-misspecification that you do not know you have.</p>
-<p>The naive implementations are wrong. Thus this is a <strong>two-stage frozen</strong>
-design:</p>
+<h2 id="propensity-centering-centercol">Propensity centering: <code>center="col"</code><a class="headerlink" href="#propensity-centering-centercol" title="Permanent link">&para;</a></h2>
+<p>With <code>center=</code> the term contributes <span class="arithmatex">\(\beta(x)\,(t - \hat e(x))\)</span> instead of
+<span class="arithmatex">\(\beta(x)\, t\)</span>. This is Robinson's R-learner orthogonalization inside the
+likelihood, the ingredient Dandl et al. (2024) found decisive for effect
+estimation under confounding in model-based forests. The finding reproduces
+here on the <code>confounded</code> process, where the model deliberately
+under-specifies its prognostic part: the uncentered <span class="arithmatex">\(\hat\beta\)</span> absorbs the
+confounded misfit, and centering brings it back near the truth. The notebook
+reports the measured reduction and <code>tests/test_vc_centered.py</code> requires at
+least a factor of two. If the prognostic part is correctly specified,
+centering changes little. It is insurance against the misspecification you do
+not know you have.</p>
+<p>The design is two-stage and frozen, because the naive versions are wrong.</p>
 <ul>
-<li><strong>Training</strong> uses <strong>out-of-fold</strong> ê that <em>you</em> compute. Pass it as the
-  frame column <code>VC(center=)</code> names (<code>df.assign(ps=e_oof)</code>), one value per
-  training row. Any propensity model works, with each fold predicted by a fit
-  that never saw it. This is the DML cross-fitting requirement. In-sample ê
-  reintroduces the own-observation bias and can be <em>worse</em> than no centering.
-  Six lines with the flow's own classical fit:</li>
+<li><strong>Training</strong> uses out-of-fold propensities that you compute and pass as the
+  training-frame column <code>center=</code> names, one value per row. Any propensity
+  model works as long as each fold is predicted by a fit that never saw it,
+  the cross-fitting requirement of double machine learning. In-sample
+  propensities reintroduce the own-observation bias and can be worse than no
+  centering. The values enter the loss as frozen data, so no gradient reaches
+  the treatment node and the per-node factorization stays intact. <code>fit</code>
+  refuses a centered spec whose frame lacks the column.</li>
+<li><strong>Inference</strong>, in <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>pmf</code> and <code>scores</code>,
+  recomputes <span class="arithmatex">\(\hat e\)</span> from the flow's own fitted treatment node on the current
+  parent values, detached. Under <code>do(T=t)</code> the regressor becomes
+  <span class="arithmatex">\(t - \hat e(x)\)</span>. Nothing is cached.</li>
+<li><strong>Interpretation.</strong> With centering, <span class="arithmatex">\(\beta_0\)</span> is the effect at the
+  treatment margin. <code>varying_coef</code> is unchanged, because centering moves the
+  regressor and not <span class="arithmatex">\(\beta\)</span>. Centering requires a binary ordinal treatment.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="n">fold_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">))</span> <span class="o">%</span> <span class="mi">5</span>
-<span class="n">e_oof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">))</span>
-<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
-    <span class="n">proxy</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">t_spec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># the treatment node's spec</span>
-    <span class="n">proxy</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">fold_id</span> <span class="o">!=</span> <span class="n">j</span><span class="p">][[</span><span class="s2">"X"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">]])</span>
-    <span class="n">e_oof</span><span class="p">[</span><span class="n">fold_id</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">proxy</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">fold_id</span> <span class="o">==</span> <span class="n">j</span><span class="p">],</span> <span class="s2">"T"</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
-</code></pre></div>
-<p>The OOF values enter the outcome loss as frozen data. Thus <strong>no gradient
-  reaches the treatment node</strong> from the outcome node, and the per-node
-  factorization stays intact (pinned by a gradient-isolation test). <code>fit</code>
-  refuses a centered spec whose frame lacks the column, and one that does not
-  match the spec.
-- <strong>Inference</strong> (<code>log_prob</code> / <code>sample</code> / <code>abduct</code> / <code>pmf</code> / <code>scores</code>)
-  recomputes ê from the flow's <strong>own fitted treatment node</strong>, the full-data
-  fit (the standard DML train/predict split). The computation is detached
-  and uses the current parent values. Under <code>do(T=t)</code>, the flow re-derives
-  the regressor as <code>t − ê(x)</code>. The flow caches nothing.
-- <strong>Interpretation</strong>: with centering, <code>beta0</code> is the effect at the treatment
-  margin (the observed propensities). <code>varying_coef</code> is unchanged, because
-  centering moves the regressor, not β. The LS-nesting reading applies to
-  the uncentered term only. Centering requires a binary ordinal treatment.
-  Continuous-treatment centering with E[T|x] is a follow-up. <code>center=False</code>
-  (the default) is bit-identical to the uncentered term.</p>
 <h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
-<p>The <code>vc_hetero</code> DGP in <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/conftest.py"><code>tests/conftest.py</code></a> is a
-logistic-shift SCM with known <code>beta_true(x) = −1 + 0.8·X2 − 0.6·X3</code>. It has a
-nonlinear prognostic part and confounded assignment (X2 is confounder <em>and</em>
-modifier), which is the configuration where the <code>CS</code> reduced form fails
-hardest. Acceptance (<code>tests/test_vc_term.py</code>) requires three results:
-recovery corr ≥ 0.9 at n = 5000 (measured ≈ 0.99, min over 3 seeds 0.986), a
-fitted <code>beta0</code> that matches <code>fit_classical</code> under a large penalty, and the
-read-out identities. The centering claims are measured against the
-<code>confounded</code> DGP in the same file. Both former follow-ups have since
-shipped: propensity centering (#30) is <code>center="col"</code>, documented above, and the
-per-observation scores for effect-modifier scans (#29) are <code>flow.scores</code> and
-<code>flow.effect_modifier_scan</code> — see <a href="../scores/">scores.md</a>.</p>
+<p>The <code>vc_hetero</code> process in <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/conftest.py"><code>tests/conftest.py</code></a> is a
+logistic-shift SCM with a known <span class="arithmatex">\(\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3\)</span>, a
+nonlinear prognostic part and confounded assignment, where <span class="arithmatex">\(X_2\)</span> is
+confounder and modifier at once. That is the configuration in which the <code>CS</code>
+reduced form fails hardest. <code>tests/test_vc_term.py</code> requires a recovery
+correlation of at least 0.9 at <span class="arithmatex">\(n = 5000\)</span>, a fitted <span class="arithmatex">\(\beta_0\)</span> that matches
+<code>fit_classical</code> under a large penalty, and the read-out identities. The
+centering claims are measured on the <code>confounded</code> process in the same file.
+<a href="../scores/">scores.md</a> covers the scan that shortlists modifiers before a <code>VC</code>
+term is declared.</p>
 
 
 

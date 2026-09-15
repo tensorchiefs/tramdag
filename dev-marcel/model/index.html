@@ -418,10 +418,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-four-components" class="md-nav__link">
+  <a href="#the-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The four components
+        The components
       
     </span>
   </a>
@@ -436,6 +436,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="The components in code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-three-knobs-on-a-term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three knobs on a term
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -681,34 +698,6 @@
     
   
     Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
   
 
     
@@ -1127,14 +1116,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/terms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1219,34 +1236,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1389,10 +1378,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-four-components" class="md-nav__link">
+  <a href="#the-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The four components
+        The components
       
     </span>
   </a>
@@ -1407,6 +1396,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="The components in code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-three-knobs-on-a-term" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three knobs on a term
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1454,10 +1460,11 @@
 
 <h1 id="the-model">The model<a class="headerlink" href="#the-model" title="Permanent link">&para;</a></h1>
 <p>A TRAM-DAG is one triangular normalizing flow whose sparsity is a causal DAG.
-This page states the model in the notation of the paper, and maps each part of
-it onto the constructors in <code>tramdag.spec</code>. For the symbols themselves see
-<a href="../notation/">notation.md</a>. To read a model after it is fitted see
-<a href="../interpretation/">interpretation.md</a>.</p>
+This page states the model in the notation of the paper and maps each part of
+it onto the constructors in <code>tramdag.spec</code>. For the symbols see
+<a href="../notation/">notation.md</a>; to read a model after it is fitted see
+<a href="../interpretation/">interpretation.md</a>; for a worked fit see the
+<a href="../notebooks/demo_tram_dag_colab/">demo notebook</a>.</p>
 <h2 id="the-transformation-function">The transformation function<a class="headerlink" href="#the-transformation-function" title="Permanent link">&para;</a></h2>
 <p>The variables have a causal ordering. For each variable a TRAM-DAG fits a
 monotone transformation function <span class="arithmatex">\(h\)</span>. The function maps the observed value to
@@ -1483,14 +1490,15 @@ Jacobian sparsity of the flow is therefore the DAG itself.</p>
 <p>The latents <span class="arithmatex">\(u_1,\dots,u_p\)</span> are standard logistic. That choice is what makes
 the fitted parameters interpretable, because a shift on the latent scale is
 then a log-odds ratio.</p>
-<h2 id="the-four-components">The four components<a class="headerlink" href="#the-four-components" title="Permanent link">&para;</a></h2>
+<h2 id="the-components">The components<a class="headerlink" href="#the-components" title="Permanent link">&para;</a></h2>
 <p>The transformation decomposes additively on the latent scale, which is what
 keeps the interpretation valid. Each node's <span class="arithmatex">\(h\)</span> is</p>
 <div class="arithmatex">\[
 u_i \;=\; h(x_i \mid \mathrm{pa}(x_i)) \;=\;
 \underbrace{h_{\boldsymbol{\vartheta}}(x_i)}_{\text{intercept}}
 \;+\; \underbrace{\textstyle\sum_j \beta_{ij}\, x_j}_{\text{linear shifts}}
-\;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}} ,
+\;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}}
+\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}_{\text{varying coefficient}} ,
 \]</div>
 <p>and every causal parent enters through exactly one term. Take <span class="arithmatex">\(x_5\)</span> with
 parents <span class="arithmatex">\(\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}\)</span> as the example.</p>
@@ -1505,6 +1513,12 @@ parents <span class="arithmatex">\(\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}\)</span>
   number per parent.</li>
 <li><strong>Complex shift, CS.</strong> <span class="arithmatex">\(g(x_4)\)</span>, an unrestricted network of the parent. It
   stays additive on the latent scale.</li>
+<li><strong>Varying coefficient, VC.</strong> <span class="arithmatex">\((\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t\)</span>:
+  a treatment <span class="arithmatex">\(x_t\)</span> whose effect <span class="arithmatex">\(\beta\)</span> varies with modifier covariates
+  through a small penalized network. <a href="../varying-coefficients/">varying-coefficients.md</a>
+  is its guide.</li>
+<li><strong>Function shift, Fn.</strong> <span class="arithmatex">\(f(x_{\text{pa}})\)</span> for a user-supplied function or
+  <code>nn.Module</code>, for a one-off term.</li>
 </ul>
 <p>Sampling has to invert only the intercept, because the shifts move to the
 other side:</p>
@@ -1515,56 +1529,125 @@ x_5 = h^{-1}(u_5 \mid x_1, x_2, x_4) = h_{\boldsymbol{\vartheta}}^{-1}\Big(u_5
 \]</div>
 <h2 id="the-components-in-code">The components in code<a class="headerlink" href="#the-components-in-code" title="Permanent link">&para;</a></h2>
 <p>Each node declares its transformation as an additive formula of terms. The
-formula is the node's first argument, written as a list or as a <code>+</code> sum. Each
-constructor names the parents its term depends on.</p>
+formula is the node's first argument, a <code>+</code> sum of terms. Each constructor
+names the parents its term depends on. The paper's symbols <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>Fn</code> are the classes
+<code>Intercept</code>, <code>LinearShift</code>, <code>ComplexShift</code>, <code>VaryingCoefficient</code>, <code>FnShift</code>.</p>
 <table>
 <thead>
 <tr>
-<th>paper component</th>
-<th><code>tramdag</code></th>
+<th>formula for a continuous node <span class="arithmatex">\(x_3\)</span></th>
+<th><span class="arithmatex">\(u_3 = h(x_3 \mid \mathrm{pa})\)</span></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>SI, baseline <span class="arithmatex">\(h_{\boldsymbol{\vartheta}}(x_i)\)</span> with constant <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span></td>
-<td>automatic: every node owns a monotone transform. Without an intercept term its <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span> is a free parameter vector</td>
+<td>nothing, or <code>I()</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3)\)</span>, the simple intercept</td>
 </tr>
 <tr>
-<td>CI, <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span> depends on parents</td>
-<td><code>I("X1")</code>. Several parents in one <code>I(...)</code> feed one joint network, which is how interactions arise</td>
+<td><code>LS("X1")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + \beta x_1\)</span></td>
 </tr>
 <tr>
-<td>LS, <span class="arithmatex">\(\beta_{ij} x_j\)</span></td>
-<td><code>LS("X1")</code>, a single weight and no bias</td>
+<td><code>I("X1")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta(x_1)}(x_3)\)</span>, the complex intercept</td>
 </tr>
 <tr>
-<td>CS, <span class="arithmatex">\(g_{ik}(x_k)\)</span></td>
-<td><code>CS("X1")</code>, an additive network</td>
+<td><code>CS("X1")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + g_1(x_1)\)</span></td>
+</tr>
+<tr>
+<td><code>LS("X1") + CS("X2")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + \beta x_1 + g_2(x_2)\)</span></td>
+</tr>
+<tr>
+<td><code>CS("X1", "X2")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + g_{12}(x_1, x_2)\)</span>, one joint network</td>
+</tr>
+<tr>
+<td><code>CS("X1") + CS("X2")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + g_1(x_1) + g_2(x_2)\)</span>, two additive networks</td>
+</tr>
+<tr>
+<td><code>I("X1", "X2")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta(x_1, x_2)}(x_3)\)</span>, one joint network</td>
+</tr>
+<tr>
+<td><code>I("X1", "X2", allow_interaction=False)</code></td>
+<td><span class="arithmatex">\(h_{\vartheta(x_1) + \vartheta(x_2)}(x_3)\)</span>, one network per parent, summed in coefficient space</td>
+</tr>
+<tr>
+<td><code>CS("X1") + VC("X2", t="T")</code></td>
+<td><span class="arithmatex">\(h_{\vartheta}(x_3) + g_1(x_1) + \beta(x_2)\, x_T\)</span></td>
 </tr>
 </tbody>
 </table>
-<p><code>I(...)</code> dispatches on its arguments. Without parents it is a simple
-intercept, with parents a complex one. <code>SI()</code> and <code>CI(...)</code> spell that out and
-check the arity.</p>
-<p>The formulas for each combination of terms, and the difference between a joint
-and an additive grouping, are tabulated in the
-<a href="https://github.com/tensorchiefs/tramdag#the-model-in-detail-spec--math--networks">README</a>.</p>
+<p>Three rules follow from the model.</p>
+<ul>
+<li><strong>Exactly one intercept, first.</strong> A formula written without one gets <code>I()</code>
+  prepended. <code>I()</code> without parents is the simple intercept, <code>I(...)</code> with
+  parents the complex one; <code>SI()</code> and <code>CI(...)</code> spell that out with the arity
+  checked.</li>
+<li><strong>Joint versus additive is argument grouping.</strong> Several parents in one term
+  form one network over all of them, an interaction; the same parents in
+  separate terms act additively. For the intercept the grouping is said with
+  <code>allow_interaction</code>, because a node takes at most one intercept with
+  parents.</li>
+<li><strong>Every parent enters through exactly one edge-owning term.</strong> The VC
+  modifiers are the one exception: <code>CS("X2") + VC("X2", t="T")</code> is the
+  intended pattern, where <span class="arithmatex">\(x_2\)</span> acts prognostically through the shift and
+  modifies the treatment effect.</li>
+</ul>
+<h3 id="the-three-knobs-on-a-term">The three knobs on a term<a class="headerlink" href="#the-three-knobs-on-a-term" title="Permanent link">&para;</a></h3>
+<p><strong><code>transform=</code> on <code>I</code></strong> picks the class of <span class="arithmatex">\(h_{\boldsymbol{\vartheta}}\)</span> for a
+continuous node:</p>
+<ul>
+<li><code>"bernstein"</code>, the default: a Bernstein polynomial with <code>n_coeffs=20</code>
+  unconstrained coefficients whose tails extrapolate along the boundary
+  slope;</li>
+<li><code>"spline"</code>: a monotone rational-quadratic spline with <code>bins=8</code>, whose tail
+  slope is fixed (<a href="../zuko-upstream/">zuko-upstream.md</a> explains the
+  consequence);</li>
+<li><code>"affine"</code>: location and scale only, so the node-conditional is a logistic
+  GLM.</li>
+</ul>
+<p>Extra keyword arguments of <code>I</code> pass straight to the transform class,
+<code>I(transform="spline", bins=16)</code>. Each transform pre-scales the data from the
+training <code>range_q</code> and $1 - $<code>range_q</code> quantiles onto a fixed domain;
+<code>range_q</code> is an intercept option, default 0.05, and <code>range_q=0</code> uses the
+minimum and maximum. Ordinal nodes have no transform to pick.</p>
+<p><strong><code>input_transform=</code> on <code>I</code>, <code>CS</code>, <code>VC</code></strong> transforms that term's continuous
+network inputs, with statistics frozen at the first fit: <code>"minmax"</code>,
+<code>"standardize"</code>, or a callable <code>fn(x, train)</code>. <code>LS</code> and the <code>VC</code> treatment
+stay raw, so their coefficients keep their units.</p>
+<p><strong><code>units=</code>, <code>activation=</code>, <code>batch_norm=</code> on <code>I</code>, <code>CS</code>, <code>VC</code></strong> size the
+term's network. <a href="../code-map/">code-map.md</a> lists every default.</p>
 <h2 id="ordinal-nodes">Ordinal nodes<a class="headerlink" href="#ordinal-nodes" title="Permanent link">&para;</a></h2>
 <p>An ordinal node has no monotone transform to choose. Its intercept is the
-cutpoint vector of an ordered logit. The model is
-<span class="arithmatex">\(P(Y \le k) = \mathrm{sigmoid}(\theta_k - s)\)</span>, where <span class="arithmatex">\(\theta\)</span> holds the
-increasing cutpoints and <span class="arithmatex">\(s\)</span> is the total shift.</p>
-<p>Note the sign. A continuous node adds its shift on the latent scale, and an
-ordinal node subtracts it. Both follow the original TRAM-DAG conventions, and
-the test suite pins them. A parent that raises a continuous child therefore
-gets a negative weight, which
-<a href="../interpretation/">interpretation.md</a> works through.</p>
+cutpoint vector of an ordered logit,</p>
+<div class="arithmatex">\[
+P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
+\]</div>
+<p>with increasing cutpoints <span class="arithmatex">\(\vartheta\)</span> and <span class="arithmatex">\(s\)</span> the total shift. The shift is
+subtracted where a continuous node adds it; <a href="../notation/">notation.md</a> states
+the convention and <a href="../interpretation/">interpretation.md</a> works through what
+it does to the sign of a coefficient.</p>
+<p>The log-probability of an observed level is the difference of two sigmoids,
+computed in log space with <code>logsigmoid</code> and a stable <code>log(1 - exp(x))</code> and
+taking per element the better-conditioned side. The direct difference of two
+sigmoids has exactly zero gradient once they saturate in float32, and a node
+that starts there never recovers.</p>
+<p>Parents enter every network as features: a continuous parent raw, in one
+column; an ordinal parent one-hot, in one column per level. Abduction is exact
+for continuous nodes and truncated-logistic for ordinal ones, so
+<code>flow.sample(u=flow.abduct(df))</code> reproduces <code>df</code> exactly, level-exactly for
+ordinal nodes.</p>
 <h2 id="what-the-model-cannot-do">What the model cannot do<a class="headerlink" href="#what-the-model-cannot-do" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The latent distribution is fixed to standard logistic. It is not learned.</li>
-<li>Every parent must enter through exactly one edge-owning term. The one
-  exception is a varying-coefficient modifier, which can also act
-  prognostically through another term.</li>
+<li>A <code>VC</code> treatment is continuous or a binary ordinal node; a multi-level
+  ordinal treatment is not supported. Propensity centering needs a binary
+  ordinal treatment.</li>
 <li>The DAG is an input. <code>tramdag</code> fits the mechanisms of a graph you supply, and
   does not discover the graph.</li>
 <li>Identification is the usual causal one. No hidden confounding, and the graph

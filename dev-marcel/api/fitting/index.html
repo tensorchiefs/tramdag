@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/api/fitting/">
       
       
-        <link rel="prev" href="../terms/">
+        <link rel="prev" href="../nodes/">
       
       
         <link rel="next" href="../readouts/">
@@ -597,34 +597,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../code-map/" class="md-nav__link">
         
   
@@ -1025,14 +997,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../terms/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1121,6 +1121,51 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="fitting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FitMixin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FitMixin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin.fit_classical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit_classical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1175,34 +1220,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1342,6 +1359,51 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="fitting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FitMixin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FitMixin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.fitting.FitMixin.fit_classical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit_classical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1379,11 +1441,10 @@
 
     <div class="doc doc-contents first">
 
-        <p>The two fitting paths: <code>_FitMixin</code>, composed into <code>CausalFlowDAG</code>.</p>
+        <p>The two fitting paths: <code>FitMixin</code>, composed into <code>CausalFlowDAG</code>.</p>
 <p><code>fit</code> is one minibatch Adam loop (validation, verbose printing and the
 callback hooks included); <code>fit_classical</code> is the float64 full-batch L-BFGS
-exact-MLE route for all-<code>ls</code> specs. Both are defined here once and are
-ordinary methods of the flow.</p>
+exact-MLE route for all-<code>ls</code> specs.</p>
 
 
 
@@ -1403,6 +1464,502 @@ ordinary methods of the flow.</p>
 
 
 
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="tramdag.fitting.FitMixin" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">FitMixin</span>
+
+
+<a href="#tramdag.fitting.FitMixin" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>The two fitting paths, mixed into <a class="autorefs autorefs-internal" title="CausalFlowDAG" href="../flow/#tramdag.flow.CausalFlowDAG"><code>CausalFlowDAG</code></a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.fitting.FitMixin.fit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fit</span>
+
+
+<a href="#tramdag.fitting.FitMixin.fit" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit</span><span class="p">(</span>
+    <span class="n">train_df</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</p>
+<p>The joint NLL decomposes per node, so one optimizer over all
+parameters fits every node at once. The loop keeps the <strong>final</strong>
+weights, and a second <code>fit</code> call continues the training. Validation
+monitoring, learning-rate schedules, early stopping, best-weight
+restoration and logging are the caller's, through <code>optimizer</code> and
+<code>callbacks</code>; <a class="autorefs autorefs-internal" title="tramdag.callbacks" href="../callbacks/#tramdag.callbacks"><code>callbacks</code></a> ships the common
+recipes. A <code>VC</code> term adds its penalty to the loss, never to
+<code>history["train"]</code>, and is re-centered after the loop.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>train_df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Training data, one column per node.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>epochs</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of passes over the data. Required; there is no default.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>learning_rate</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Adam step size of the default optimizer, by default 1e-2.
+Ignored when <code>optimizer</code> is given.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.01</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Rows per gradient step, by default 512. <code>len(train_df)</code> is one
+full-batch step per epoch.</p>
+              </div>
+            </td>
+            <td>
+                  <code>512</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>validation_data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Validation rows, one column per node. When given (or split off), the
+per-node validation NLL is appended to <code>flow.history["val"]</code> after
+every epoch; the shipped callbacks read it there. <code>history["lr"]</code>
+records the optimizer's rate per epoch (<code>{node: lr}</code> for tagged
+groups, a float for one group, a list for several).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>validation_split</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keras' rule: the LAST fraction of <code>train_df</code> becomes the
+validation set, without shuffling, and only the remaining rows
+train (and calibrate — no leakage into the frozen statistics).
+Mutually exclusive with <code>validation_data</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>0 (default) is silent. <code>N &gt;= 1</code> prints one line every <code>N</code>
+epochs and on the final epoch: epoch counter, summed train NLL,
+summed validation NLL when validation is configured. No
+progress bars.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Seeds torch's global RNG before the loop, for the minibatch
+shuffling. Weight initialization is seeded at construction
+(<code>CausalFlowDAG(spec, seed=...)</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>optimizer</code>
+            </td>
+            <td>
+                  <code><span title="torch.optim.Optimizer">Optimizer</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Any torch optimizer over <code>flow.parameters()</code>; the default is
+<code>Adam(lr=learning_rate)</code>. Build it yourself to attach a
+<code>torch.optim.lr_scheduler</code> or to continue with its state.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>callbacks</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Callback (tramdag.callbacks.Callback)" href="../callbacks/#tramdag.callbacks.Callback">Callback</a> | <span title="callable">callable</span> | <span title="list">list</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One entry or a list. A <a class="autorefs autorefs-internal" title="Callback" href="../callbacks/#tramdag.callbacks.Callback"><code>Callback</code></a>
+hooks all three points of the fit — its docstring is the
+contract (begin/epoch/end timing, the stop rule, the VC
+re-centering order). A bare callable is an <code>on_epoch_end</code>
+hook, <code>cb(flow, epoch, optimizer)</code> — use it for schedules and
+coefficient trajectories. <code>callbacks</code> ships
+<code>EarlyStopping</code> and <code>PerNodePlateau</code>, all
+reading <code>history["val"]</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="CausalFlowDAG (tramdag.flow.CausalFlowDAG)" href="../flow/#tramdag.flow.CausalFlowDAG">CausalFlowDAG</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>self</code>, fitted, in eval mode.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>epochs</code> or <code>batch_size</code> is below 1, <code>verbose</code> is
+negative, both validation arguments are given, the split leaves
+an empty side, or a centered VC term's propensity column is
+missing from the training frame or out of [0, 1].</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a <code>callbacks</code> entry is neither a <code>Callback</code> nor a callable,
+or is a <code>Callback</code> class instead of an instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="tramdag.fitting.FitMixin.fit_classical" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fit_classical</span>
+
+
+<a href="#tramdag.fitting.FitMixin.fit_classical" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">history_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Fit an all-<code>ls</code> model the classical way.</p>
+<p>The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
+line search. There are no minibatches, no schedule and no early
+stopping, so the fit is deterministic and lands on the maximum-
+likelihood estimate. It is valid only when every term is a simple
+intercept or an <code>LS</code>, because each node-conditional is then a
+classical transformation model; any other spec raises.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>train_df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Training data, one column per node.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_iter</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Upper limit on L-BFGS iterations, by default 400.</p>
+              </div>
+            </td>
+            <td>
+                  <code>400</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>history_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>L-BFGS memory, by default 50.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A convergence report: <code>converged</code>, <code>n_iter</code>, <code>final_nll</code>,
+<code>grad_norm</code>, <code>seconds</code>, and the fitted <code>coefficients</code>
+from <a class="autorefs autorefs-internal" title="ls_coefficients" href="../flow/#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a term is not classical: anything but the simple intercept and <code>LS</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>float64 is a transient compute mode. The model is upcast for the
+fit, and <code>self.double()</code> converts the parameters and the range
+buffers of the transforms in one call. Afterwards the model returns
+to float32, so the stored model and <code>save</code>/<code>load</code> stay float32.
+Double precision is what lets the line search resolve the optimum
+cleanly.</p>
+<p>Convergence is torch's own: L-BFGS stops when the NLL or the
+parameters move by less than 1e-9; <code>tolerance_grad</code> is 0, so the
+gradient never ends the run. <code>converged</code> says whether a tolerance
+ended the run rather than <code>max_iter</code>; <code>|grad|</code> and weakly
+identified coefficients do not settle to machine precision.</p>
+</details>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 

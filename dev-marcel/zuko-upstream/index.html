@@ -599,34 +599,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../code-map/" class="md-nav__link">
         
   
@@ -1138,14 +1110,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/terms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1230,34 +1230,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1504,7 +1476,7 @@ speedup and the <code>torch.compile</code> axis back.</p>
 identity outside <code>[-B, B]</code>. Therefore the tail slope stays fixed at 1 for
 every θ. This is the structural reason why <code>spline</code> consistently trails
 <code>bernstein</code> here, because ~10% of the data sits beyond the 5%/95% pre-scaling
-range. CLAUDE.md and <code>spec.py</code> also describe this.</p>
+range.</p>
 <p>Upstream, zuko can accept boundary derivatives of shape <code>(*, K+1)</code>, or it can
 take an opt-in <code>tails="linear"</code>. Identity tails are deliberate in the NSF
 design. The framing must therefore stay back-compatible. This change will
@@ -1526,8 +1498,7 @@ framing is "identity/linear initialization support", a standard flow trick.</p>
 <code>n</code> unconstrained coefficients become <code>n+2</code> control points, which is degree
 <code>n+1</code>. The correct claim is therefore <code>(*, M-1)</code>. This off-by-one is a real
 replication trap: order 21 against the paper's <code>len_theta=20</code>, which is order
-19. It costs tramdag prose in three documents. The PR is trivial and an accept
-is near-certain.</p>
+19. The PR is trivial and an accept is near-certain.</p>
 <h2 id="5-logistic-in-zukodistributions">5. <code>Logistic</code> in <code>zuko.distributions</code><a class="headerlink" href="#5-logistic-in-zukodistributions" title="Permanent link">&para;</a></h2>
 <p>Neither zuko nor torch ships a Logistic distribution. tramdag therefore
 hand-rolls <code>StandardLogistic</code> in ~50 lines, with <code>log_prob</code>, <code>sample</code> and

@@ -595,34 +595,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../code-map/" class="md-nav__link">
         
   
@@ -1023,14 +995,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../terms/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1115,34 +1115,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1458,11 +1430,6 @@
         <p>Figures of a TRAM-DAG: the labelled DAG, the marginals, the training curve.</p>
 <p>matplotlib is an optional dependency — <code>pip install "tramdag[plots]"</code>. It is
 imported on the first call, so importing tramdag never needs it.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_dag</span>
-<span class="n">plot_dag</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>            <span class="c1"># or plot_dag(flow): the spec is the DAG</span>
-<span class="n">plot_marginals</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>  <span class="c1"># observed vs sampled, one panel per node</span>
-<span class="n">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">plateau</span><span class="o">.</span><span class="n">frozen</span><span class="p">)</span>   <span class="c1"># NLL per epoch, freeze marks</span>
-</code></pre></div>
 
 
 
@@ -1493,12 +1460,7 @@ imported on the first call, so importing tramdag never needs it.</p>
 
 <a href="#tramdag.plots.plot_dag" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_dag</span><span class="p">(</span>
-    <span class="n">spec_or_flow</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">path</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">spec_or_flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -1538,22 +1500,6 @@ CS/CI is labelled <code>joint</code>.</p>
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ax</code>
-            </td>
-            <td>
-                  <code><span title="matplotlib.axes.Axes">Axes</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Draw into this axes; by default a new figure sized to the layout.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1623,7 +1569,7 @@ CS/CI is labelled <code>joint</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The axes drawn into.</p>
+                <p>The axes of the new figure, sized to the layout.</p>
               </div>
             </td>
           </tr>
@@ -1643,9 +1589,7 @@ CS/CI is labelled <code>joint</code>.</p>
 
 
 <a href="#tramdag.plots.plot_marginals" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_marginals</span><span class="p">(</span>
-    <span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_marginals</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1713,22 +1657,6 @@ The sample has as many rows as <code>df</code>.</p>
             </td>
             <td>
                   <code>3</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bins</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Histogram bins of a continuous node, by default 30.</p>
-              </div>
-            </td>
-            <td>
-                  <code>30</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1802,7 +1730,7 @@ The sample has as many rows as <code>df</code>.</p>
 
 
 <a href="#tramdag.plots.plot_training" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1846,30 +1774,13 @@ curves aligned when one <code>fit</code> validated and another did not.</p>
                 <code>frozen</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>] | <span title="PerNodePlateau">PerNodePlateau</span> | None</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>{node: epoch}</code> of the freezes, each a dashed mark. By default read
-off <code>flow.history["lr"]</code> (the first epoch a node's rate is 0, when
-the optimizer had per-node groups); pass a dict, or the
-<a class="autorefs autorefs-internal" title="PerNodePlateau" href="../callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a> whose <code>frozen</code> to use.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ax</code>
-            </td>
-            <td>
-                  <code><span title="matplotlib.axes.Axes">Axes</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Draw into this axes; by default a new figure.</p>
+                <p><code>{node: epoch}</code> of the freezes, each a dashed mark; a
+<a class="autorefs autorefs-internal" title="PerNodePlateau" href="../callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a> records that dict
+as its <code>frozen</code>. By default no marks.</p>
               </div>
             </td>
             <td>

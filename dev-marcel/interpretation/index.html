@@ -712,34 +712,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../code-map/" class="md-nav__link">
         
   
@@ -1138,14 +1110,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/terms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1230,34 +1230,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1496,11 +1468,10 @@ confirm that the model you wrote is the model you meant.
 only. A <code>CS</code> or <code>VC</code> shift is a network and has no single weight, so those are
 skipped.</p>
 <p>Two things decide how to read a weight.</p>
-<p><strong>The sign follows the latent-scale convention.</strong> A continuous node adds its
-shift, so a parent that raises the child gets a <em>negative</em> weight. An ordinal
-node subtracts its shift, so the sign is the one you expect there. This is
-not a quirk of the implementation. It is the convention of the original
-TRAM-DAG work, and the test suite pins it.</p>
+<p><strong>The sign follows the latent-scale convention</strong> of
+<a href="../notation/">notation.md</a>. A continuous node adds its shift, so a parent that
+raises the child gets a <em>negative</em> weight. An ordinal node subtracts its
+shift, so the sign is the one you expect there.</p>
 <p><strong>The scale is the latent scale, not the data scale.</strong> For a continuous node
 the weights carry the transform's scaling. A single weight is therefore not
 comparable to a regression coefficient. Their <em>ratio</em> is comparable, because
@@ -1513,21 +1484,15 @@ from the intercept, leaves the likelihood unchanged. Read them as
 differences.
 <code>w[k] - w[0]</code> is the level-k-against-level-0 log-odds ratio, and it is the
 column that <code>flow.design_matrix(df, node, drop_first=True)</code> drops.</p>
-<p>Checked in <a href="../notebooks/demo_tram_dag_colab/"><code>notebooks/demo_tram_dag_colab.py</code></a>,
-which recovers a coefficient ratio from a known process, and in
-<a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
-which compares the weights against <code>statsmodels</code> and R. The odds-ratio
-reading is pinned in continuous integration by
-<code>experiments/paper/triangle_mixed.py</code>.</p>
+<p>Checked in <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
+which compares the weights against <code>statsmodels</code> and R, and pinned in
+continuous integration by <code>experiments/paper/triangle_mixed.py</code>, whose
+odds-ratio check is in <a href="../paper-replication/">paper-replication.md</a>.</p>
 <h2 id="ordinal-nodes-cutpoints-and-the-interventional-pmf">Ordinal nodes: cutpoints and the interventional PMF<a class="headerlink" href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" title="Permanent link">&para;</a></h2>
-<p>An ordinal node's intercept is its cutpoint vector, not a transform. The model
-is</p>
-<div class="arithmatex">\[
-P(Y \le k \mid \mathrm{pa}) = \mathrm{sigmoid}(\theta_k - s(\mathrm{pa})),
-\]</div>
-<p>with increasing cutpoints <span class="arithmatex">\(\theta\)</span> and <span class="arithmatex">\(s\)</span> the total shift.
-<code>tramdag.transforms.ordinal_cutpoints</code> turns the unconstrained parameters into
-those increasing cutpoints, which is how you read a fitted baseline.</p>
+<p>An ordinal node's intercept is its cutpoint vector, not a transform
+(<a href="../model/#ordinal-nodes">model.md</a>). <code>tramdag.transforms.ordinal_cutpoints</code>
+turns the unconstrained parameters into the increasing cutpoints, which is how
+you read a fitted baseline.</p>
 <p><code>flow.pmf(df, node, do=...)</code> gives the class probabilities per row, in closed
 form. It needs no sampling, and <code>do=</code> makes it interventional by overriding
 columns before the parents are read. That combination is what lets a
@@ -1551,14 +1516,9 @@ after mean-centring both, not point by point.</p>
 <p><code>I(...)</code> with parents is the flexible end of the family. The parents control
 the transform parameters, so the node can bend in ways no additive shift can
 express. The cost is that there is no single coefficient to read.</p>
-<p>That is a real trade-off, and it is measurable. <code>experiments/paper/</code> fits the
-same process twice, once with an <code>LS</code> edge and once with a <code>CS</code> edge. It
-compares both against the known truth, and
-<a href="../paper-replication/">paper-replication.md</a> reports the result. The short
-version has two halves. Where the true edge is linear, the interpretable model
-gives up very little likelihood. Where the edge is curved, the flexible model
-wins, and the interpretable one absorbs the curvature into a biased single
-number.</p>
+<p><a href="../paper-replication/">paper-replication.md</a> measures that trade-off on the
+paper's triangle process, fitted once with an <code>LS</code> edge and once with a <code>CS</code>
+edge.</p>
 <p>A middle option exists. <code>I("a", "b", allow_interaction=False)</code> builds one
 network per parent and sums their parameter vectors, so the parents act
 additively on the transform. <code>flow.intercept_contributions(df, node)</code> then
@@ -1568,9 +1528,7 @@ and changes nothing about the fitted model.</p>
 <p>Worked through in the <a href="../notebooks/additive_vs_joint_ci/">intercept notebook</a>.</p>
 <h2 id="an-effect-that-varies-with-a-covariate">An effect that varies with a covariate<a class="headerlink" href="#an-effect-that-varies-with-a-covariate" title="Permanent link">&para;</a></h2>
 <p><code>VC(*modifiers, t=...)</code> fits <span class="arithmatex">\(\beta(\text{modifiers}) \cdot x_t\)</span>, and
-<code>flow.varying_coef(df, node)</code> reads the fitted <span class="arithmatex">\(\beta\)</span> back. It is
-deterministic, needs no abduction, and for a binary treatment it equals the
-abduction difference.</p>
+<code>flow.varying_coef(df, node)</code> reads the fitted <span class="arithmatex">\(\beta\)</span> back in closed form.</p>
 <p><code>flow.scores(df, node)</code> and <code>flow.effect_modifier_scan(df, node, t=...)</code> come
 before that decision rather than after it. They rank candidate modifiers by
 how much the treatment coefficient's per-observation scores drift when the

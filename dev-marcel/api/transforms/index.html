@@ -16,7 +16,7 @@
         <link rel="prev" href="../readouts/">
       
       
-        <link rel="next" href="../conditioners/">
+        <link rel="next" href="../scores/">
       
       
         
@@ -597,34 +597,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../code-map/" class="md-nav__link">
         
   
@@ -1025,14 +997,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../terms/" class="md-nav__link">
+      <a href="../modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1337,17 +1337,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tramdag.transforms.make_univariate_transform" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        make_univariate_transform
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#tramdag.transforms.ordinal_cutpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1413,6 +1402,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#tramdag.transforms.make_univariate_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_univariate_transform
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1422,34 +1422,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1741,17 +1713,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tramdag.transforms.make_univariate_transform" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        make_univariate_transform
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#tramdag.transforms.ordinal_cutpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1817,6 +1778,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#tramdag.transforms.make_univariate_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_univariate_transform
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1862,16 +1834,13 @@
 the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.</p>
-<p>Conventions follow the original TRAM-DAG implementation
-(Keras/TF, https://github.com/tensorchiefs/tram-dag):</p>
 <ul>
-<li>continuous: <code>u = h(x) + s(parents)</code> with <code>h</code> Bernstein / RQ-spline / affine,
-  fitted on the value range scaled from the train 5%/95% quantiles to <code>[-B, B]</code>
-  and linearly extrapolated outside.</li>
-<li>ordinal:    <code>P(y &lt;= k) = sigmoid(theta_k - s(parents))</code> with increasing
-  cutpoints <code>theta</code>. This is the parametrization of
-  <code>transform_intercepts_ordinal</code> in the original implementation.</li>
+<li>continuous: <code>u = h(x) + s(parents)</code> with <code>h</code> Bernstein / RQ-spline / affine
+  on the value range scaled from the train <code>range_q</code> quantiles to <code>[-B, B]</code>.</li>
+<li>ordinal: <code>P(y &lt;= k) = sigmoid(theta_k - s(parents))</code> with increasing
+  cutpoints <code>theta</code>.</li>
 </ul>
+<p><code>docs/model.md</code> is the guide to both.</p>
 
 
 
@@ -2323,7 +2292,7 @@ flow from the standard-logistic latent to the observed variables.</p>
 
 
 <a href="#tramdag.transforms.BernsteinUT.marginal_init_theta" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2364,7 +2333,7 @@ which needs no data.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -2421,20 +2390,10 @@ latent quantile target <code>logit(0)</code> is undefined — skip
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>After <code>set_range</code>, each node's <code>range_q</code>/<code>1 - range_q</code> data
-quantiles sit at the domain bounds -+B. The linear start therefore
-pins the domain ends exactly onto the latent's <code>range_q</code>
-quantiles, and the empirical one lands near them, at the empirical
-CDF of those same ends. Either way the <em>scale</em> is right from step 0,
-where zuko's default (zero) theta maps -+B onto about -6.93/+7.63,
-about 2.5x too steep. The empirical start additionally gets the
-<em>shape</em> right, which is what a skewed or multi-modal marginal costs
-early training.</p>
-<p>Both are pure initializations: the converged MLE is unchanged. The
-unconstrained coefficients come from inverting
+  <p>The unconstrained coefficients come from inverting zuko's
 <code>BernsteinTransform._constrain_theta</code> (a cumsum of softplus
-diffs, with the first two and the last two tied for its smooth
-bounds — hence the two averaged pairs below).</p>
+differences with the first two and the last two control points tied,
+hence the two averaged pairs below).</p>
 </details>
 
     </div>
@@ -2489,8 +2448,7 @@ bounds — hence the two averaged pairs below).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of spline bins, by default 8 — zuko's own NSF default, so a
-spline node reproduces upstream unless asked otherwise.</p>
+                <p>Number of spline bins, by default 8.</p>
               </div>
             </td>
             <td>
@@ -2656,28 +2614,7 @@ spline node reproduces upstream unless asked otherwise.</p>
     <div class="doc doc-contents ">
 
         <p>Give the shifted cutpoint interval of each observed level.</p>
-<p><code>scores.py</code> reads these bounds to form the latent-scale derivative, and
-the docs list the function as public.</p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="tramdag.transforms.make_univariate_transform" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">make_univariate_transform</span>
-
-
-<a href="#tramdag.transforms.make_univariate_transform" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_univariate_transform</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Build a scaled univariate transform by name — or from a class.</p>
+<p><code>scores.py</code> reads these bounds to form the latent-scale derivative.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2693,17 +2630,14 @@ the docs list the function as public.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>name</code>
+                <code>theta_tilde</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | <span title="type">type</span>[<span title="tramdag.transforms._ScaledUT">_ScaledUT</span>]</code>
+                  <code><span title="torch.Tensor">Tensor</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>One of the registered names — <code>"bernstein"</code>, <code>"spline"</code>,
-<code>"affine"</code> — or a <code>_ScaledUT</code> subclass itself, the custom-transform
-hatch (<code>I(transform=MyUT)</code>; note a class in a spec serializes
-through pickle only, like a callable <code>input_transform</code>).</p>
+                <p>Unconstrained cutpoint parameters, shape <code>(n, levels - 1)</code>.</p>
               </div>
             </td>
             <td>
@@ -2712,17 +2646,34 @@ through pickle only, like a callable <code>input_transform</code>).</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>**kwargs</code>
+                <code>shift</code>
             </td>
             <td>
+                  <code><span title="torch.Tensor">Tensor</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Passed to the transform class.</p>
+                <p>The node's shift, shape <code>(n,)</code>.</p>
               </div>
             </td>
             <td>
-                  <code>{}</code>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>y</code>
+            </td>
+            <td>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Observed levels <code>0..levels-1</code>, shape <code>(n,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -2740,34 +2691,11 @@ through pickle only, like a callable <code>input_transform</code>).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="tramdag.transforms._ScaledUT">_ScaledUT</span></code>
+                  <code><span title="tuple">tuple</span>[<span title="torch.Tensor">Tensor</span>, <span title="torch.Tensor">Tensor</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The transform.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If <code>name</code> is neither registered nor a <code>_ScaledUT</code> subclass.</p>
+                <p>The lower and upper shifted cutpoint of each row's level, <code>(n,)</code> each.</p>
               </div>
             </td>
           </tr>
@@ -2932,12 +2860,8 @@ the empirical class frequencies.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>This inverts <code>ordinal_cutpoints</code>. The finite cutpoints are
-<code>c_0 = tt[0]</code> and <code>c_i = c_0 + sum_{j&lt;=i} exp(tt[j])</code>. Given the
-target <code>c_k = logit(F(k))</code> (empirical CDF, clamped off 0/1),
-recover <code>tt[0] = c_0</code> and <code>tt[i] = log(c_i - c_{i-1})</code>. Like the
-Bernstein marginal-init, this is a pure initialization: the converged
-MLE is unchanged.</p>
+  <p>Inverts <code>ordinal_cutpoints</code>: the targets are <code>c_k = logit(F(k))</code> from
+the empirical CDF, clamped off 0 and 1.</p>
 </details>
 
     </div>
@@ -3049,18 +2973,11 @@ MLE is unchanged.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The computation stays in log-space. Both of these identities hold:</p>
-<div class="highlight"><pre><span></span><code>log(sigmoid(u) - sigmoid(l))
-    = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
-    = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
-</code></pre></div>
-<p>For each element the function takes the side whose logsigmoids are far from
-zero, because that side is better conditioned.</p>
-<p><strong>Do not replace this with the direct difference of two sigmoids.</strong> That
-form loses all gradient when the sigmoids saturate in float32, which happens
-for <code>|t| &gt; 17</code> or so. The gradient is then exactly zero and a badly
-initialised node freezes at its starting values forever. The log-space form
-keeps the gradient non-zero, so such a node recovers.</p>
+  <p>Computed in log-space as <code>logsigmoid(b) + log1mexp(logsigmoid(a) -
+logsigmoid(b))</code>, taking per element the better-conditioned side (the CDF
+or the survival side). Do not replace this with the difference of two
+sigmoids: that form has exactly zero gradient once the sigmoids saturate
+in float32, and a node stuck there never recovers.</p>
 </details>
 
     </div>
@@ -3377,6 +3294,118 @@ interval that is consistent with the observed level.</p>
             <td>
               <div class="doc-md-description">
                 <p>The latents, shape <code>(n,)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="tramdag.transforms.make_univariate_transform" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">make_univariate_transform</span>
+
+
+<a href="#tramdag.transforms.make_univariate_transform" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_univariate_transform</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build a scaled univariate transform by name.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One of <code>"bernstein"</code>, <code>"spline"</code>, <code>"affine"</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Passed to the transform class.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tramdag.transforms._ScaledUT">_ScaledUT</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The transform.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>name</code> is not one of the three.</p>
               </div>
             </td>
           </tr>

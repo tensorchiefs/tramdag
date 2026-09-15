@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#per-observation-scores-the-effect-modifier-scan" class="md-skip">
+        <a href="#per-observation-scores-and-the-effect-modifier-scan" class="md-skip">
           Skip to content
         </a>
       
@@ -547,10 +547,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#worked-example-where-does-x-need-to-bend" class="md-nav__link">
+  <a href="#the-effect-modifier-scan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Worked example: where does β(x) need to bend?
+        The effect-modifier scan
       
     </span>
   </a>
@@ -637,34 +637,6 @@
     
   
     Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../adr/001-term-owned-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR 001 (1.0 architecture)
   
 
     
@@ -1083,14 +1055,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/terms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    terms
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
   
 
     
@@ -1175,34 +1175,6 @@
     
   
     transforms
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
   
 
     
@@ -1334,10 +1306,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#worked-example-where-does-x-need-to-bend" class="md-nav__link">
+  <a href="#the-effect-modifier-scan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Worked example: where does β(x) need to bend?
+        The effect-modifier scan
       
     </span>
   </a>
@@ -1364,63 +1336,49 @@
   
 
 
-<h1 id="per-observation-scores-the-effect-modifier-scan">Per-observation scores &amp; the effect-modifier scan<a class="headerlink" href="#per-observation-scores-the-effect-modifier-scan" title="Permanent link">&para;</a></h1>
+<h1 id="per-observation-scores-and-the-effect-modifier-scan">Per-observation scores and the effect-modifier scan<a class="headerlink" href="#per-observation-scores-and-the-effect-modifier-scan" title="Permanent link">&para;</a></h1>
 <p><code>flow.scores(df, node)</code> returns the score
-<span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation, for the
-node's interpretable shift coefficients. These coefficients are every
-<code>LS</code> weight and every <code>VC</code> term's <code>beta0</code>. An <code>LS</code> weight gives one column per
-continuous parent and one column per one-hot level of an ordinal parent. The
-<code>beta0</code> column is named after the treatment.</p>
-<p>The computation is <strong>analytic and exact</strong>, with no autograd. Shifts enter the
-latent additively. Thus
-<span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i) \cdot x_i\)</span>,
-with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form (<code>src/tramdag/scores.py</code>).
-The function is a pure read-out. It does not touch the fitting or sampling
-code paths. At a fitted MLE, the sum of each column is
-≈ 0. Tests pin this behavior and include a float64 finite-difference check.</p>
-<h2 id="worked-example-where-does-x-need-to-bend">Worked example: where does β(x) need to bend?<a class="headerlink" href="#worked-example-where-does-x-need-to-bend" title="Permanent link">&para;</a></h2>
-<p>The score is the cheapest effect-modifier detector available. It uses the
-structural-change logic of model-based recursive partitioning (Zeileis and
-Hornik, Dandl et al. 2024). Before you fit an expensive model, fit the
-<strong>cheap all-<code>LS</code> model</strong>. This fit takes seconds and is deterministic. Then
-scan the treatment-coefficient scores:</p>
-<div class="highlight"><pre><span></span><code><span class="n">flow</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">all_ls_spec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>  <span class="c1"># seconds, exact MLE</span>
-
-<span class="n">scan</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">effect_modifier_scan</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s2">"Y"</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="s2">"T"</span><span class="p">)</span>
-<span class="c1">#         stat   p_value  crit_5pct   flag</span>
-<span class="c1"># X2      4.21    &lt;0.001     1.3581   True     &lt;- true modifier</span>
-<span class="c1"># X3      3.05    &lt;0.001     1.3581   True     &lt;- true modifier</span>
-<span class="c1"># X1      0.74     0.64      1.3581  False     &lt;- prognostic only</span>
-</code></pre></div>
-<p>For each candidate covariate, the scan orders the scores by that covariate
-and forms the scaled cumulative sum <code>B_j = Σ_{i≤j} ψ_(i) / (sd(ψ)·√n)</code>. Under
-a stable coefficient, <code>B</code> is a Brownian bridge. Thus <code>sup|B|</code> has the
-Kolmogorov distribution (5% critical value 1.358). A coefficient that truly
-varies with the covariate makes the ordered scores drift. The flagged
-covariates are the shortlist of <code>VC</code> modifiers to measure
-(<code>docs/varying-coefficients.md</code>):</p>
-<div class="highlight"><pre><span></span><code><span class="n">spec</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">ContinuousNode</span><span class="p">(</span>
-    <span class="n">td</span><span class="o">.</span><span class="n">CS</span><span class="p">(</span><span class="s2">"X1"</span><span class="p">,</span> <span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">)</span> <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">VC</span><span class="p">(</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"X3"</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="s2">"T"</span><span class="p">)</span>
-<span class="p">)</span>  <span class="c1"># scan-informed</span>
-</code></pre></div>
+<span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation for the
+node's interpretable shift coefficients: every <code>LS</code> weight and every <code>VC</code>
+term's <span class="arithmatex">\(\beta_0\)</span>. An <code>LS</code> weight gives one column per continuous parent and
+one per one-hot level of an ordinal parent; the <span class="arithmatex">\(\beta_0\)</span> column is named
+after the treatment.</p>
+<p>The computation is analytic, with no autograd. Shifts enter the latent
+additively, so <span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i /
+\partial s_i)\, x_i\)</span> with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form. The
+function is a pure read-out that touches neither fitting nor sampling. At a
+fitted MLE each column sums to about zero, which the tests pin together with
+a float64 finite-difference check.</p>
+<h2 id="the-effect-modifier-scan">The effect-modifier scan<a class="headerlink" href="#the-effect-modifier-scan" title="Permanent link">&para;</a></h2>
+<p><code>flow.effect_modifier_scan(df, node, t=)</code> is the cheapest effect-modifier
+detector available. It applies the structural-change logic of model-based
+recursive partitioning (Zeileis &amp; Hornik; Dandl et al. 2024) to the
+treatment-coefficient scores of a cheap all-<code>LS</code> fit, which <code>fit_classical</code>
+delivers in seconds.</p>
+<p>For each candidate covariate the scan orders the scores by that covariate and
+forms the scaled cumulative sum <span class="arithmatex">\(B_j = \sum_{i \le j} \psi_{(i)} /
+(\mathrm{sd}(\psi)\sqrt{n})\)</span>. Under a stable coefficient <span class="arithmatex">\(B\)</span> is a Brownian
+bridge, so <span class="arithmatex">\(\sup |B|\)</span> has the Kolmogorov distribution, with the 5 % critical
+value 1.358. A coefficient that varies with the covariate makes the ordered
+scores drift. The result is one row per candidate with the statistic, its
+p-value, the critical value and a flag; the flagged covariates are the
+shortlist of <code>VC</code> modifiers to measure
+(<a href="../varying-coefficients/">varying-coefficients.md</a>).</p>
 <p><strong>Read it as screening, not as a test of effect modification.</strong> The statistic
-measures how unstable the <em>cheap</em> model is along a covariate. Instability has
-two sources: a coefficient that genuinely varies, and a <strong>prognostic part the
-cheap model gets wrong</strong>. In the example above <code>X1</code> is unflagged, because its
-prognostic effect is linear. Make it quadratic and <code>X1</code> flags as strongly
-as the true modifiers (0.56 → 4.14 on the DGP of
-<a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>,
-which demonstrates both cases side by side). A flag therefore means "look
-here", and what you find can be a modifier or a misspecification — both worth
-knowing.</p>
-<p>Notes: For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
-level-1-vs-0 contrast. For a <code>VC</code> treatment, <code>t</code> resolves to <code>beta0</code>.
-Candidates default to every column of <code>df</code> except the node and <code>t</code>.
-Modifiers do not need to be parents. For few-level (heavily tied) candidates,
-the ordering is only partial. Then read the scan as a ranking diagnostic, not
-as an exact-size test. You can also use the scores later for
-influence-function analyses and robust standard errors.</p>
+measures how unstable the cheap model is along a covariate, and instability
+has two sources: a coefficient that genuinely varies, and a prognostic part
+the cheap model gets wrong. A prognostic-only covariate with a linear effect
+stays unflagged; give it a quadratic effect and it flags as strongly as the
+true modifiers. A flag therefore means "look here", and what you find is a
+modifier or a misspecification, both worth knowing.
+<a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>
+shows both cases side by side.</p>
+<p>Details: for a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
+level-1-against-0 contrast, and for a <code>VC</code> treatment to <span class="arithmatex">\(\beta_0\)</span>. Candidates
+default to every column of <code>df</code> except the node and <code>t</code>, and need not be
+parents. For few-level, heavily tied candidates the ordering is only partial,
+so read the scan as a ranking diagnostic rather than an exact-size test. The
+scores also serve influence-function analyses and robust standard errors.</p>
 
 
 

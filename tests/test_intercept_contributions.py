@@ -30,7 +30,7 @@ def _additive_ci_flow():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "x3": ContinuousNode([I("x1", "x2", allow_interaction=False)]),
+        "x3": ContinuousNode(I("x1", "x2", allow_interaction=False)),
     }  # additive CI
     return CausalFlowDAG(spec, seed=1)
 
@@ -81,7 +81,7 @@ def test_ordinal_additive_ci():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "y": OrdinalNode(4, [I("x1", "x2", allow_interaction=False)]),
+        "y": OrdinalNode(4, I("x1", "x2", allow_interaction=False)),
     }
     flow = CausalFlowDAG(spec, seed=2)
     df = _data()
@@ -100,7 +100,7 @@ def test_works_for_any_continuous_transform(transform, P):
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
         "x3": ContinuousNode(
-            [I("x1", "x2", allow_interaction=False, transform=transform)]
+            I("x1", "x2", allow_interaction=False, transform=transform)
         ),
     }
     flow = CausalFlowDAG(spec, seed=5)
@@ -125,7 +125,7 @@ def test_works_for_any_continuous_transform(transform, P):
 def test_raises_on_node_without_complex_intercept():
     spec = {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
+        "x2": ContinuousNode(LS("x1")),
     }  # shift only, no I-term
     flow = CausalFlowDAG(spec, seed=0)
     df = _data()
@@ -154,7 +154,7 @@ def test_joint_complex_intercept_single_component():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "x3": ContinuousNode([I("x1", "x2")]),
+        "x3": ContinuousNode(I("x1", "x2")),
     }
     flow = CausalFlowDAG(spec, seed=4)
     df = _data()

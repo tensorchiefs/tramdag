@@ -17,9 +17,9 @@ from tramdag.plots import plot_marginals, plot_training
 def _every_term_spec():
     return {
         "x1": ContinuousNode(),
-        "x2": OrdinalNode(3, [CI("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), CS("x2")]),
-        "y": ContinuousNode([CS("x1", "x2"), VC("x1", t="t")]),
+        "x2": OrdinalNode(3, CI("x1")),
+        "t": OrdinalNode(2, LS("x1") + CS("x2")),
+        "y": ContinuousNode(CS("x1", "x2") + VC("x1", t="t")),
     }
 
 
@@ -59,7 +59,7 @@ def test_plot_dag_layers_children_past_their_parents():
 def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     """Both figures read the flow after a short plateau fit; ``path`` saves."""
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
     plateau = PerNodePlateau(patience=2, freeze=4)
     flow.fit(
@@ -107,7 +107,7 @@ def test_the_validation_curve_keeps_its_own_epochs(ls_chain):
     curve it is read against.
     """
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=3, batch_size=100)
     flow.fit(df, epochs=2, batch_size=100, validation_split=0.2)

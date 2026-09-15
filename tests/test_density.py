@@ -11,7 +11,7 @@ from tramdag import LS, CausalFlowDAG, ContinuousNode, OrdinalNode
 # %% private functions -----------------------------------------------------------------
 def _flow(ls_chain):
     """An untrained two-node chain on the ls_chain draw: x2 <- x1."""
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     return CausalFlowDAG(spec, seed=0), ls_chain["draw"](64, 0)[["x1", "x2"]]
 
 
@@ -45,7 +45,7 @@ def test_do_overrides_the_parent_column(ls_chain):
 
 
 def test_density_rejects_an_ordinal_node():
-    spec = {"x": ContinuousNode(), "y": OrdinalNode(3, [LS("x")])}
+    spec = {"x": ContinuousNode(), "y": OrdinalNode(3, LS("x"))}
     flow = CausalFlowDAG(spec, seed=0)
     with pytest.raises(ValueError, match="requires a continuous node"):
         flow.density(pd.DataFrame({"x": [0.0]}), "y", [0, 1, 2])

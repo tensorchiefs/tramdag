@@ -302,9 +302,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         return list(dict.fromkeys(cols))
 
     def _recenter_vc(self, values: dict[str, Tensor]) -> None:
-        """Run every shift term's post-fit ``finalize`` (the VC re-centering).
+        r"""Run every shift term's post-fit ``finalize`` (the VC re-centering).
 
-        A VC term re-splits ``beta0``/``b_theta`` so the head sums to zero
+        A VC term re-splits $\beta_0$ and $b_\Theta$ so the head sums to zero
         over the train rows; the modelled function does not change.
         """
         feats = self._features(values)

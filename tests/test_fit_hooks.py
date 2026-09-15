@@ -20,15 +20,15 @@ from tramdag.callbacks import Callback, EarlyStopping, PerNodePlateau, per_node_
 
 # %% private functions -----------------------------------------------------------------
 def _two_node_spec():
-    return {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    return {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
 
 
 def _ls_spec():
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), LS("x2")]),
-        "y": OrdinalNode(4, [LS("x1"), LS("x2"), LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
     }
 
 
@@ -408,7 +408,7 @@ def test_a_diverged_fit_says_so_instead_of_blaming_the_callback(ls_chain):
 
 def test_a_frame_it_cannot_batch_raises_instead_of_training_on_nothing(ls_chain):
     """A single-row frame used to run its epochs and change no weight."""
-    flow = CausalFlowDAG({"a": OrdinalNode(2), "b": OrdinalNode(2, [LS("a")])}, seed=0)
+    flow = CausalFlowDAG({"a": OrdinalNode(2), "b": OrdinalNode(2, LS("a"))}, seed=0)
     one = pd.DataFrame({"a": [1], "b": [0]})
     with pytest.raises(ValueError, match="trained on no row"):
         flow.fit(one, epochs=5)

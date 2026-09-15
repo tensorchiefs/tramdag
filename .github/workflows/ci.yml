@@ -51,7 +51,7 @@ jobs:
         --python ${{ matrix.python-version }}
 
     # no path argument: testpaths in pyproject covers tests/ and the
-    # per-area experiment checks, and both are meant to run here
+    # experiment checks, and both are meant to run here
     - name: Tests
       shell: bash
       # torch opens as many intra-op threads as the box reports, and -n auto

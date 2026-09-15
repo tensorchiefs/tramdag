@@ -2,7 +2,7 @@
 
 A model is one dict ``{node_name: NodeSpec}`` of [`ContinuousNode`][] and
 [`OrdinalNode`][]. Each node declares its transformation as an additive
-formula of [`Term`][] subclasses — a list or a ``+`` sum — whose first entry
+formula of [`Term`][] subclasses — a ``+`` sum — whose first entry
 is the intercept ([`Intercept`][], written or prepended as ``I()``) followed
 by shifts ([`LinearShift`][], [`ComplexShift`][], [`VaryingCoefficient`][],
 [`FnShift`][]). The paper's symbols ``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are
@@ -122,7 +122,7 @@ def _check_term(value) -> Term:
     raise TypeError(
         "a transformation is built from terms (I/LS/CS/VC) — got "
         f"{type(value).__name__}. A '+' sum is already a flat list, so do "
-        "not nest one inside another list: write either a list or a sum."
+        "not nest one inside another list: write a sum."
     )
 
 
@@ -402,8 +402,8 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
 class Term:
     """One additive term of a node's transformation; each kind is a subclass.
 
-    Terms add: ``I("a") + CS("b")`` is the same transformation as
-    ``I("a") + CS("b")``. A term is plain data — comparable, hashable,
+    Terms add: ``I("a") + CS("b")`` is the plain list of the two terms, a
+    node's formula. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
     class in [`modules`][tramdag.modules] that trains it, constructed as
@@ -655,7 +655,7 @@ class LinearShift(Term):
 
     @property
     def classical(self) -> bool:
-        """Say yes — an LS is a classical transformation-model coefficient."""
+        """Say yes — an LS is a classical coefficient."""
         return True
 
 
@@ -896,8 +896,8 @@ class ContinuousNode:
     Parameters
     ----------
     terms : Term | list[Term] | None, optional
-        The additive formula for ``h``: a list of terms, a ``+`` sum or a
-        single term. ``None`` (default) is a source node. The
+        The additive formula for ``h``: a ``+`` sum of terms or a single
+        term. ``None`` (default) is a source node. The
         class of the monotone transform is chosen on the intercept term,
         ``I(..., transform="spline")``; the default is ``"bernstein"``.
     """

@@ -1,7 +1,7 @@
 # Notebook data
 
 Small datasets the notebooks read. Anything larger, or tied to an experiment
-rather than a notebook, belongs in `experiments/<area>/data/` instead.
+rather than a notebook, belongs in `experiments/data/` instead.
 
 ## `birthwt.csv`
 

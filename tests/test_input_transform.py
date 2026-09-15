@@ -54,7 +54,7 @@ def test_simple_intercept_rejects_the_option():
     from tramdag import SI
 
     with pytest.raises(ValueError, match="no network inputs"):
-        CausalFlowDAG({"a": ContinuousNode([SI(input_transform="minmax")])})
+        CausalFlowDAG({"a": ContinuousNode(SI(input_transform="minmax"))})
 
 
 def test_net_inputs_span_unit_interval_after_first_fit():

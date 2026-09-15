@@ -588,7 +588,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         _attach_input_transform(self, term, spec, mods)
 
     def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
-        """Give the effect values ``beta(x)``, shape ``(n,)``.
+        r"""Give the effect values $\beta(x)$, shape ``(n,)``.
 
         ``mod_feats`` is ``None`` if, and only if, the term has no modifiers;
         ``n`` is the batch size, used in that case.
@@ -629,7 +629,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         self.beta0 += delta
 
     def regressor(self, feats: dict) -> Tensor:
-        """Give the ``(n, 1)`` column ``beta`` multiplies — the treatment, raw.
+        r"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.
 
         The one-hot level-1 indicator for a binary ordinal treatment, the
         value itself for a continuous one; a centered term subtracts its

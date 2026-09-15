@@ -16,8 +16,8 @@ from tramdag import LS, CausalFlowDAG, ContinuousNode, OrdinalNode
 def _spec():
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "y": OrdinalNode(3, [LS("x1")]),
+        "x2": ContinuousNode(LS("x1")),
+        "y": OrdinalNode(3, LS("x1")),
     }
 
 
@@ -101,9 +101,9 @@ def test_ls_coefficients_skips_network_shifts():
 
     spec = {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1")]),
-        "x3": ContinuousNode([LS("x1"), CS("x2"), VC("x2", t="t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1")),
+        "x3": ContinuousNode(LS("x1") + CS("x2") + VC("x2", t="t")),
     }
     coefficients = CausalFlowDAG(spec, seed=0).ls_coefficients()
     assert set(coefficients["x3"]) == {"x1"}  # CS and VC carry no weight
@@ -114,7 +114,7 @@ def test_ls_coefficients_skips_network_shifts():
 def test_ls_coefficients_omits_a_node_without_linear_shifts():
     from tramdag import CS, CausalFlowDAG, ContinuousNode
 
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([CS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     assert CausalFlowDAG(spec, seed=0).ls_coefficients() == {}
 
 
@@ -180,7 +180,7 @@ def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "t": OrdinalNode(2, [I()]),
+        "t": OrdinalNode(2, I()),
         "y": ContinuousNode(
             [
                 CI("x1", units=[4], batch_norm=True),
@@ -194,7 +194,7 @@ def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
     assert len(norms) == 3  # one hidden layer each, in CI, CS and VC
     assert spec_from_dict(spec_to_dict(spec)) == spec
 
-    plain = CausalFlowDAG({**spec, "y": ContinuousNode([CS("x2", units=[4])])}, seed=0)
+    plain = CausalFlowDAG({**spec, "y": ContinuousNode(CS("x2", units=[4]))}, seed=0)
     assert not [m for m in plain.modules() if isinstance(m, nn.BatchNorm1d)]
 
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
@@ -208,7 +208,7 @@ def test_log_prob_takes_a_node_subset(ls_chain):
     """``nodes=`` sums a subset exactly: the parts add up to the joint."""
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(
-        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode([LS("x1")])}, seed=0
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
     )
     flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2)
     parts = [flow.log_prob(df, nodes=[name]) for name in ("x1", "x2")]
@@ -225,7 +225,7 @@ def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
     flow = CausalFlowDAG(
         {
             "x1": td.ContinuousNode(),
-            "x2": td.ContinuousNode([CS("x1", units=[4], batch_norm=True)]),
+            "x2": td.ContinuousNode(CS("x1", units=[4], batch_norm=True)),
         },
         seed=0,
     )
@@ -236,7 +236,7 @@ def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
 def test_log_prob_names_an_unknown_node_and_refuses_an_empty_list(ls_chain):
     df = ls_chain["draw"](50, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(
-        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode([LS("x1")])}, seed=0
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
     )
     flow.calibrate(df)
     with pytest.raises(KeyError, match="unknown node 'nope'"):

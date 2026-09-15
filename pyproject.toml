@@ -112,7 +112,7 @@ version_provider = "scm"
 version_scheme = "pep440"
 
 [tool.coverage.report]
-# the fast suite alone measures 97% (2026-08-24); 95 leaves room for noise
+# the fast suite alone measures 97%; 95 leaves room for noise
 # while still failing on an untested new code path
 fail_under = 95
 
@@ -146,7 +146,7 @@ markers = [
 # so `simulations` and `common` import the same way as when a script is
 # run with `python -m triangle` from experiments/
 pythonpath = ["experiments"]
-# The framework suite and the per-area experiment checks both run on a bare
+# The framework suite and the experiment checks both run on a bare
 # `pytest`. The experiment tests are cheap (numpy-only generator properties);
 # the training runs live in the experiments workflow, not here.
 testpaths = ["tests", "experiments"]
@@ -172,7 +172,7 @@ extend-select = [
   "PT",  # pytest style: composite asserts hide which clause failed
   "RUF",  # ruff-native checks (unused noqa, __all__ order)
   "SIM",  # simplifiable constructs
-  # the following are clean today (measured 2026-08-24) and bind new code only
+  # the following are clean and bind new code only
   "A",  # builtin shadowing
   "DTZ",  # naive datetimes
   "FURB",  # modernization (refurb)
@@ -209,7 +209,7 @@ max-complexity = 12
 # symlinked paths unignored and `ruff check .` reports them.
 "**/notebooks/*" = ["D100", "D103", "D205", "D401", "E501"]
 # D103: scripts and tests document themselves in prose and in tests/README.md.
-# A docstring per function adds noise, not clarity. (Measured 2026-08-27: these
+# A docstring per function adds noise, not clarity. (Measured: these
 # are the only rules the directories actually raise.)
 "experiments/*" = ["D103"]
 # Test docstrings state what a test guarantees, in prose. They are not API

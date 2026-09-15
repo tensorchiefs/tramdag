@@ -1,7 +1,7 @@
 """Replicate the paper's continuous-triangle experiments (Sec. 6.1, App. C.3).
 
-The DGP is ``x1 -> x2 -> x3 <- x1`` with every conditional a transformation
-model, ``h(x3|x1,x2) = 0.63 x3 - 0.2 x1 - f(x2)``. Two model families are
+The DGP is ``x1 -> x2 -> x3 <- x1`` with every conditional a logistic-latent
+flow, ``h(x3|x1,x2) = 0.63 x3 - 0.2 x1 - f(x2)``. Two model families are
 fitted, chosen by the variant:
 
 - ``ls`` — the x2 -> x3 edge is a linear shift. Correct only for the linear

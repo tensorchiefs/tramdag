@@ -19,7 +19,7 @@ replay, so every seed here is a repository choice.
 
 | item | reference | here |
 |---|---|---|
-| latent | standard logistic, shifts added on the continuous scale, subtracted for ordinal `P(Y<=k) = sigmoid(theta_k - shift)` | same ([notation.md](notation.md)) |
+| latent | standard logistic, shifts added on the continuous scale, subtracted for ordinal $P(Y \le k) = \sigma(\vartheta_k - s)$ | same ([notation.md](notation.md)) |
 | Bernstein basis | `len_theta` unconstrained coefficients, `to_theta` softplus-cumsum, domain → [0, 1] with tangent-linear extrapolation outside; the domain comes from the train 5 %/95 % quantiles in the triangle scripts (`quantile(..., c(0.05, 0.95))`) and from min/max in the comparison scripts (`scale_df`) | zuko Bernstein, `n_coeffs` unconstrained (zuko ties two control points on, so `n_coeffs=20` is order 21 against the reference's order 19; the free-parameter count is what matches), domain = train `range_q`/1−`range_q` quantiles → [−5, 5], linear extrapolation. Triangle: `range_q: 0.05`, a match up to the reparametrization. CAREFL: `range_q: 0`, the reference's min/max. VACA: quantiles kept, deviation D1, measured below |
 | networks | triangle scripts `create_param_net` with `hidden_features = c(2, 25, 25, 2)` continuous and `c(2, 2, 2, 2)` mixed, sigmoid (the ReLU line is commented out); the vector reads as in/out dims around the hidden stack, so the hidden layers are (25, 25) and (2, 2). Comparison scripts `make_model`: `dense(10, tanh) → dense(100, tanh) → dense(len_theta)`, one net per node | `units` and `activation` set per variant to exactly those stacks. The package defaults in [code-map.md](code-map.md) replicate the PyTorch reference `buehlpa/TramDag` instead and are not the paper's nets |
 | init | triangle scripts: `LinearMasked` layers with Keras `random_normal` (N(0, 0.05²)) on weights and biases, the LS `beta` layer included; comparison scripts: `layer_dense` default, glorot-uniform weights and zero biases | `init: normal` (triangle) and `init: glorot` (VACA/CAREFL) through `CausalFlowDAG(init=)`; torch's default init remains the framework default, and under the full-batch protocol the init decides the fit (see VACA) |
@@ -148,7 +148,7 @@ do(x2 = 0). The paper shows one run's densities. The committed bound is 2.5×
 the seed-7 measurement.
 
 The table below traces what each protocol ingredient is worth under the
-reference protocol, one change at a time, on the earlier do grid −3 / −2 / 0
+reference protocol, one change at a time, on the paper text's grid −3 / −2 / 0
 with min-max inputs unless the row says otherwise.
 
 | variant | error | reading |

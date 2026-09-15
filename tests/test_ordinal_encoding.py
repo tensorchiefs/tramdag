@@ -30,7 +30,7 @@ def _ordinal_parent_frame(n=3000, seed=0):
     df = pd.DataFrame(
         {"p": level.astype(float), "y": 0.7 * level + rng.logistic(size=n)}
     )
-    spec = {"p": OrdinalNode(4), "y": ContinuousNode([I(), LS("p")])}
+    spec = {"p": OrdinalNode(4), "y": ContinuousNode(I() + LS("p"))}
     return spec, df
 
 

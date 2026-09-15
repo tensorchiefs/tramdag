@@ -70,7 +70,7 @@ _U_EPS = 1e-7
 
 # %% private functions -----------------------------------------------------------------
 def _log1mexp(x: Tensor) -> Tensor:
-    """log(1 - exp(x)) for x <= 0, numerically stable on both sides of log 2."""
+    r"""Give $\log(1 - e^{x})$ for $x \le 0$, stable on both sides of $\log 2$."""
     branch = x > -math.log(2.0)
     # mask each branch's input so the unused branch cannot produce inf/NaN grads
     x_hi = x.clamp(min=-math.log(2.0))

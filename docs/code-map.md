@@ -16,9 +16,9 @@ the same object, so `LS is LinearShift`.
 | [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
 | [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
-| [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift `beta * x` — the interpretable log-odds coefficient. Exactly one parent. |
+| [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift $\beta x$ — the interpretable log-odds coefficient. Exactly one parent. |
 | [`ComplexShift`][tramdag.spec.ComplexShift] / `CS` | Complex shift: an NN `g(x)`, additive on the latent scale. Several parents form one joint network. |
-| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift `(beta0 + b_theta(mods)) * x_t` — the penalized treatment-effect head. `center=` adds propensity centering. |
+| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$ — the penalized treatment-effect head. `center=` adds propensity centering. |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] | Continuous variable: monotone 1-D transform plus shifts. `terms` is the first positional argument. |
 | [`OrdinalNode`][tramdag.spec.OrdinalNode] | Ordinal variable with `levels` classes: ordered logit (cutpoints) plus shifts. |
 | [`node_parents()`][tramdag.spec.node_parents] | Ordered de-duplicated parent names of a node (the canonical term list is `node.terms`). |
@@ -37,11 +37,11 @@ the same object, so `LS is LinearShift`.
 | [`AffineUT`][tramdag.transforms.AffineUT] | Monotone affine transform: the node-conditional is a logistic GLM. |
 | [`make_univariate_transform()`][tramdag.transforms.make_univariate_transform] | Transform registry: name → transform instance. |
 | [`ordinal_cutpoints()`][tramdag.transforms.ordinal_cutpoints] | Unconstrained `(n, K-1)` → increasing cutpoints with ±inf ends. |
-| [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] | `log P(Y=y)`, computed in log space ([model.md](model.md#ordinal-nodes)). |
+| [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] | $\log P(Y=y)$, computed in log space ([model.md](model.md#ordinal-nodes)). |
 | [`ordinal_pmf()`][tramdag.transforms.ordinal_pmf] / [`ordinal_sample()`][tramdag.transforms.ordinal_sample] / [`ordinal_abduct()`][tramdag.transforms.ordinal_abduct] | Class probabilities / latent → level / truncated-logistic latent recovery (Pearl step 1) for ordinal nodes. |
 | [`ordinal_marginal_init_theta()`][tramdag.transforms.ordinal_marginal_init_theta] | Cutpoint start that matches the empirical class frequencies (`init_marginals`). |
 | [`ordinal_bounds()`][tramdag.transforms.ordinal_bounds] | The shifted cutpoint interval of each observed level. `scores.py` reads it for the latent-scale derivative. |
-| (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable `log(1-exp(x))`. |
+| (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable $\log(1-e^{x})$. |
 
 ## `flow.py` — the model
 
@@ -58,7 +58,7 @@ the same object, so `LS is LinearShift`.
 | [`density()`][tramdag.flow.CausalFlowDAG.density] | Analytic conditional density of a continuous node on a grid, with `do=` overrides — the continuous counterpart of `pmf`. |
 | [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`node_negative_log_prob()`][tramdag.flow.CausalFlowDAG.node_negative_log_prob] (alias `nll`) | Joint per-row log-likelihood, or a `nodes=` subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic. |
 | [`node_log_prob()`][tramdag.flow.CausalFlowDAG.node_log_prob] | The per-node decomposition everything trains and evaluates through. |
-| [`varying_coef()`][tramdag.flow.CausalFlowDAG.varying_coef] | Closed-form read-out `beta(x)` of a fitted VC term. Deterministic, y-free. |
+| [`varying_coef()`][tramdag.flow.CausalFlowDAG.varying_coef] | Closed-form read-out $\beta(x)$ of a fitted VC term. Deterministic, y-free. |
 | [`scores()`][tramdag.flow.CausalFlowDAG.scores] / [`effect_modifier_scan()`][tramdag.flow.CausalFlowDAG.effect_modifier_scan] | Analytic per-observation scores and the CUSUM modifier scan (delegate to `scores.py`). |
 | [`intercept_contributions()`][tramdag.flow.CausalFlowDAG.intercept_contributions] | Post-hoc GAM-style decomposition of a complex intercept into mean-centered per-term parts. |
 | [`ls_coefficients()`][tramdag.flow.CausalFlowDAG.ls_coefficients] | The per-node linear-shift weights — the interpretable coefficients. |
@@ -87,7 +87,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `__init__(term, spec)` (builds the net, sets `key` and `parents`), `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: an NN to one shift value. |
-| [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: `beta0 + b_theta(mods)` with the L2 hook `l2()`; `beta()` evaluates the effect and `recenter()` re-splits `beta0`/`b_theta` after training ([varying-coefficients.md](varying-coefficients.md)). `regressor` is both the forward regressor and the `beta0` score. |
+| [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: $\beta_0 + b_\Theta(\text{mod})$ with the L2 hook `l2()`; `beta()` evaluates the effect and `recenter()` re-splits `beta0`/`b_theta` after training ([varying-coefficients.md](varying-coefficients.md)). `regressor` is both the forward regressor and the `beta0` score. |
 | [`FnShiftModule`][tramdag.modules.FnShiftModule] | `Fn`: a user-supplied shift function over the parent features. |
 | [`SimpleInterceptModule`][tramdag.modules.SimpleInterceptModule] / [`ComplexInterceptModule`][tramdag.modules.ComplexInterceptModule] / [`AdditiveInterceptModule`][tramdag.modules.AdditiveInterceptModule] | The intercept slot: free theta (`I()`), one joint net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
 | (`_nn`) | The one NN builder: a stack of the given `units` with the term's `activation` (optional `batch_norm` before it), then a bias-free output layer. |
@@ -119,7 +119,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 |----------------------------------|------------------------------------------------------------------------------|
 | [`node_scores()`][tramdag.scores.node_scores] | Per-observation scores of the interpretable shift coefficients ([scores.md](scores.md)). |
 | [`effect_modifier_scan()`][tramdag.scores.effect_modifier_scan] | The fluctuation scan over candidate modifiers ([scores.md](scores.md)). |
-| [`sup_bb_pvalue()`][tramdag.scores.sup_bb_pvalue] | `P(sup |Brownian bridge| > stat)`, the Kolmogorov series. |
+| [`sup_bb_pvalue()`][tramdag.scores.sup_bb_pvalue] | $P(\sup|B| > \text{stat})$ for a Brownian bridge $B$, the Kolmogorov series. |
 | (`_dl_ds`, `CRIT_5PCT`) | Closed-form latent-scale derivative and the 5 % critical value. The per-term columns come from each term's `score_columns` hook. |
 
 ## `callbacks.py` — the shipped `fit` callbacks

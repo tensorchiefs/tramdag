@@ -16,7 +16,7 @@
         <link rel="prev" href="../interpretation/">
       
       
-        <link rel="next" href="../training-speed/">
+        <link rel="next" href="../scores/">
       
       
         
@@ -566,34 +566,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1464,8 +1436,8 @@
 paths <code>fit</code> and <code>fit_classical</code>, and the hooks of the Adam path. Every recipe
 named here runs end to end in
 <a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>,
-which is the one place for the code; the measured time-to-target of each
-recipe is in <a href="../training-speed/">training-speed.md</a>.</p>
+which is the one place for the code and closes with a runtime comparison of
+the recipes on one workload.</p>
 <h2 id="one-module-one-sub-model-per-node">One module, one sub-model per node<a class="headerlink" href="#one-module-one-sub-model-per-node" title="Permanent link">&para;</a></h2>
 <p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code> holding one independent
 sub-model per variable: an intercept that produces the transform parameters
@@ -1504,8 +1476,8 @@ weights.</p>
   <code>per_node_adam</code> builds per-node parameter groups.</li>
 <li><strong>Minibatches.</strong> A fresh <code>torch.randperm</code> shuffle each epoch, seeded by
   <code>seed=</code>, which seeds the shuffle only and not the weight init.</li>
-<li><strong>Epochs.</strong> <code>epochs</code> has no default; <a href="../training-speed/">training-speed.md</a>
-  shows why a fixed budget cannot be right for every workload.</li>
+<li><strong>Epochs.</strong> <code>epochs</code> has no default: a fixed budget under-spends on one
+  workload and wastes on the next, so every caller states its own.</li>
 <li><strong>Calibration.</strong> The first <code>fit</code> calls <code>calibrate(train_df)</code>. Every term
   freezes its data-dependent state there, the intercept its <code>range_q</code>
   quantiles and each <code>input_transform=</code> its statistics. Calibration never
@@ -1585,8 +1557,7 @@ and need the best-validation weights to recover the causal effect.</p>
 </ul>
 <h2 id="path-b-classical-optimization-with-fit_classical">Path B: classical optimization with <code>fit_classical</code><a class="headerlink" href="#path-b-classical-optimization-with-fit_classical" title="Permanent link">&para;</a></h2>
 <p><code>fit_classical</code> is the optimizer for all-<code>LS</code> models, where every
-node-conditional is a classical transformation model, an ordered logit or a
-Colr model. It raises on any <code>CS</code>, <code>CI</code> or <code>VC</code> term.</p>
+node-conditional is an ordered logit or a Colr model. It raises on any <code>CS</code>, <code>CI</code> or <code>VC</code> term.</p>
 <ul>
 <li><strong>Full-batch, float64, L-BFGS</strong> with a strong-Wolfe line search; no
   minibatches, schedule or early stopping, so the same init gives
@@ -1603,8 +1574,7 @@ Colr model. It raises on any <code>CS</code>, <code>CI</code> or <code>VC</code>
   directions, rare one-hot levels or a flat treatment-effect ridge, drift
   along zero-curvature valleys after the likelihood is at its optimum.
   Correctness comes from the comparison with classical software in
-  <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>
-  and <code>experiments/misc/validate_ls.py</code>.</li>
+  <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>.</li>
 </ul>
 <p><code>fit_classical</code> leaves the model at the MLE, ready for any operation. A
 <code>fit</code> call from there stays put, which is both a check that the classical

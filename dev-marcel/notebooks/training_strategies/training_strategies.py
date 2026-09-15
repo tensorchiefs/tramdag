@@ -21,10 +21,9 @@
 #
 # This notebook runs every shipped strategy on one small workload, so the
 # comparison is like for like, and prints what each one leaves behind in
-# `flow.history`. It is about mechanics, not speed. For measured
-# time-to-target on real workloads see
-# [`docs/training-speed.md`](../docs/training-speed.md). For which strategy to
-# pick see the table in [`docs/fitting.md`](../docs/fitting.md).
+# `flow.history`, and closes with a runtime comparison of the recipes on this
+# one workload. For which strategy to pick see the table in
+# [`docs/fitting.md`](../docs/fitting.md).
 
 # %%
 import time
@@ -323,14 +322,35 @@ else:
     raise AssertionError("a one-argument callable should be refused")
 
 # %% [markdown]
-# ## 8. The scoreboard
+# ## 8. The scoreboard: a poor man's runtime comparison
 #
-# One workload, one seed, six recipes. The numbers show mechanics on 900 rows,
-# not a benchmark; `docs/training-speed.md` has the measured comparison.
+# One workload, one seed, one machine, every recipe: the wall-clock seconds
+# each one took, the epochs it spent, its validation NLL and the gap to the
+# best NLL on the board. A recipe that stops itself wins on seconds only if it
+# also stays near the best NLL, which is what the last two columns show side
+# by side. Absolute seconds are this machine's; the ranking is what travels.
 
 # %%
 board = pd.DataFrame(scoreboard).set_index("strategy")
+board["nll_gap"] = board["val_nll"] - board["val_nll"].min()
+board["s_per_epoch"] = board["seconds"] / board["epochs"]
 print(board.to_string(float_format=lambda v: f"{v:.4f}"))
+
+fig, ax = plt.subplots(figsize=(7, 3.4))
+ax.scatter(board["seconds"], board["nll_gap"])
+for name, row in board.iterrows():
+    ax.annotate(
+        name,
+        (row["seconds"], row["nll_gap"]),
+        xytext=(4, 4),
+        textcoords="offset points",
+        fontsize=8,
+    )
+ax.set_xlabel("wall-clock seconds")
+ax.set_ylabel("validation NLL above the best recipe")
+ax.set_title("cost against quality, one workload")
+fig.tight_layout()
+plt.show()
 
 # Keeping the best weights cannot score worse than keeping the last ones.
 assert nll_best <= nll_plain + 1e-6, (
@@ -352,6 +372,4 @@ plt.show()
 # %% [markdown]
 # ## Which one, when
 #
-# The decision table lives in [`docs/fitting.md`](../docs/fitting.md) and the
-# measured time-to-target in
-# [`docs/training-speed.md`](../docs/training-speed.md).
+# The decision table lives in [`docs/fitting.md`](../docs/fitting.md).

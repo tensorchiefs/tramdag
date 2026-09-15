@@ -457,34 +457,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../scores/" class="md-nav__link">
         
   
@@ -1835,10 +1807,10 @@ the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.</p>
 <ul>
-<li>continuous: <code>u = h(x) + s(parents)</code> with <code>h</code> Bernstein / RQ-spline / affine
-  on the value range scaled from the train <code>range_q</code> quantiles to <code>[-B, B]</code>.</li>
-<li>ordinal: <code>P(y &lt;= k) = sigmoid(theta_k - s(parents))</code> with increasing
-  cutpoints <code>theta</code>.</li>
+<li>continuous: <span class="arithmatex">\(u = h(x) + s(\mathrm{pa})\)</span> with <span class="arithmatex">\(h\)</span> Bernstein / RQ-spline / affine
+  on the value range scaled from the train <code>range_q</code> quantiles to <span class="arithmatex">\([-B, B]\)</span>.</li>
+<li>ordinal: <span class="arithmatex">\(P(Y \le k) = \sigma(\vartheta_k - s(\mathrm{pa}))\)</span> with increasing
+  cutpoints <span class="arithmatex">\(\vartheta\)</span>.</li>
 </ul>
 <p><code>docs/model.md</code> is the guide to both.</p>
 
@@ -1885,6 +1857,119 @@ flow from the standard-logistic latent to the observed variables.</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardLogistic</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Standard logistic base distribution (the TRAM latent)."""</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Give the log density at ``z``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        z : Tensor</span>
+<span class="sd">            Evaluation points.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            The log density, same shape as ``z``.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">z</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="n">z</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Draw samples of the given ``shape``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        shape : tuple[int, ...]</span>
+<span class="sd">            Shape of the sample tensor.</span>
+<span class="sd">        device : torch.device | str | None, optional</span>
+<span class="sd">            Target device, by default ``None``.</span>
+<span class="sd">        generator : torch.Generator | None, optional</span>
+<span class="sd">            Random source for a reproducible draw, by default ``None``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            The samples.</span>
+<span class="sd">        """</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StandardLogistic</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">icdf</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Give the quantile at probability ``u``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        u : Tensor</span>
+<span class="sd">            Probabilities in (0, 1). Clamped off 0 and 1 by ``_U_EPS``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            The quantiles, same shape as ``u``.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logit</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">_U_EPS</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -1973,6 +2058,39 @@ flow from the standard-logistic latent to the observed variables.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Give the log density at ``z``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    z : Tensor</span>
+<span class="sd">        Evaluation points.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The log density, same shape as ``z``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">z</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="n">z</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2083,6 +2201,49 @@ flow from the standard-logistic latent to the observed variables.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw samples of the given ``shape``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    shape : tuple[int, ...]</span>
+<span class="sd">        Shape of the sample tensor.</span>
+<span class="sd">    device : torch.device | str | None, optional</span>
+<span class="sd">        Target device, by default ``None``.</span>
+<span class="sd">    generator : torch.Generator | None, optional</span>
+<span class="sd">        Random source for a reproducible draw, by default ``None``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The samples.</span>
+<span class="sd">    """</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">StandardLogistic</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2161,6 +2322,39 @@ flow from the standard-logistic latent to the observed variables.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">icdf</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Give the quantile at probability ``u``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    u : Tensor</span>
+<span class="sd">        Probabilities in (0, 1). Clamped off 0 and 1 by ``_U_EPS``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The quantiles, same shape as ``u``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logit</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">_U_EPS</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2246,6 +2440,213 @@ flow from the standard-logistic latent to the observed variables.</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BernsteinUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""TRAM-style Bernstein polynomial transform (zuko ``BernsteinTransform``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_coeffs : int, optional</span>
+<span class="sd">        Number of Bernstein coefficients, by default 20.</span>
+<span class="sd">    range_q : float, optional</span>
+<span class="sd">        Domain quantile level, see ``_ScaledUT``.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_coeffs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">range_q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">RANGE_Q</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">range_q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">=</span> <span class="n">n_coeffs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""int: number of transform parameters this transform needs."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BernsteinTransform</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the unconstrained Bernstein coefficients of the marginal start.</span>
+
+<span class="sd">        With ``column`` the control points follow the node's **empirical</span>
+<span class="sd">        marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the</span>
+<span class="sd">        value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so</span>
+<span class="sd">        the polynomial starts as the Bernstein approximation of</span>
+<span class="sd">        $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal</span>
+<span class="sd">        cutpoints' class log-odds. Without it the control points are</span>
+<span class="sd">        equally spaced, the plain linear map from the pre-scaled domain</span>
+<span class="sd">        $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with</span>
+<span class="sd">        $q$ = ``range_q``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        column : numpy.ndarray | None, optional</span>
+<span class="sd">            The node's raw training column. ``None`` gives the linear map,</span>
+<span class="sd">            which needs no data.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            With ``range_q=0``: the domain ends are the data min/max, whose</span>
+<span class="sd">            latent quantile target $\operatorname{logit} 0$ is undefined — skip</span>
+<span class="sd">            ``init_marginals`` for a min-max-domain model.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tensor</span>
+<span class="sd">            The coefficients, shape ``(n_params,)``.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The unconstrained coefficients come from inverting zuko's</span>
+<span class="sd">        ``BernsteinTransform._constrain_theta`` (a cumsum of softplus</span>
+<span class="sd">        differences with the first two and the last two control points tied,</span>
+<span class="sd">        hence the two averaged pairs below).</span>
+<span class="sd">        """</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"the marginal start maps the domain ends onto the latent "</span>
+                <span class="s2">"range_q quantiles, and logit(0) is undefined — a "</span>
+                <span class="s2">"range_q=0 (min-max domain) model has no marginal start; "</span>
+                <span class="s2">"skip init_marginals for it"</span>
+            <span class="p">)</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># constrained control points: n+2</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_control_points</span><span class="p">(</span><span class="n">column</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+        <span class="n">diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="n">_CDF_EPS</span><span class="p">)</span>
+        <span class="c1"># zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);</span>
+        <span class="c1"># averaging each pair keeps every later control point where it was. The</span>
+        <span class="c1"># two pairs overlap below n=3, which is why such a transform takes the</span>
+        <span class="c1"># equally spaced start: with 4 control points and both ends tied there</span>
+        <span class="c1"># is no shape left to fit.</span>
+        <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">diffs</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">diffs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">diffs</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">diffs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">first</span><span class="p">,</span> <span class="n">last</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span> <span class="o">/</span> <span class="mf">2.0</span>  <span class="c1"># zuko's centering offset</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">shift</span>
+        <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">diffs</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">n</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_control_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the ``order + 1`` target control points of the marginal start.</span>
+
+<span class="sd">        $\operatorname{logit}$ of the empirical CDF at the equally spaced domain values</span>
+<span class="sd">        when a column is given, an equally spaced ramp from ``a`` to ``-a``</span>
+<span class="sd">        otherwise.</span>
+<span class="sd">        """</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_q</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">q</span><span class="p">)</span>  <span class="c1"># logit(q) = -2.9444 at q=.05</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">order</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hi</span> <span class="o">&lt;=</span> <span class="n">lo</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">),</span> <span class="n">side</span><span class="o">=</span><span class="s2">"right"</span><span class="p">)</span> <span class="o">/</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">cdf</span><span class="p">,</span> <span class="n">_CDF_EPS</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">_CDF_EPS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cdf</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">cdf</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -2299,13 +2700,14 @@ flow from the standard-logistic latent to the observed variables.</p>
 
         <p>Give the unconstrained Bernstein coefficients of the marginal start.</p>
 <p>With <code>column</code> the control points follow the node's <strong>empirical
-marginal</strong>: control point <code>k</code> is <code>logit(F_hat(y_k))</code> at the
-value <code>y_k</code> sitting at <code>k / order</code> of the pre-scaled domain, so
+marginal</strong>: control point <span class="arithmatex">\(k\)</span> is <span class="arithmatex">\(\operatorname{logit} \hat F(y_k)\)</span> at the
+value <span class="arithmatex">\(y_k\)</span> sitting at <span class="arithmatex">\(k/\text{order}\)</span> of the pre-scaled domain, so
 the polynomial starts as the Bernstein approximation of
-<code>logit(F_hat(y))</code> — the continuous counterpart of the ordinal
+<span class="arithmatex">\(\operatorname{logit} \hat F(y)\)</span> — the continuous counterpart of the ordinal
 cutpoints' class log-odds. Without it the control points are
 equally spaced, the plain linear map from the pre-scaled domain
-<code>[-B, B]</code> onto <code>[logit(range_q), logit(1-range_q)]</code>.</p>
+<span class="arithmatex">\([-B, B]\)</span> onto <span class="arithmatex">\([\operatorname{logit} q, \operatorname{logit}(1-q)]\)</span> with
+<span class="arithmatex">\(q\)</span> = <code>range_q</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2356,7 +2758,7 @@ which needs no data.</p>
             <td>
               <div class="doc-md-description">
                 <p>With <code>range_q=0</code>: the domain ends are the data min/max, whose
-latent quantile target <code>logit(0)</code> is undefined — skip
+latent quantile target <span class="arithmatex">\(\operatorname{logit} 0\)</span> is undefined — skip
 <code>init_marginals</code> for a min-max-domain model.</p>
               </div>
             </td>
@@ -2396,6 +2798,131 @@ differences with the first two and the last two control points tied,
 hence the two averaged pairs below).</p>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the unconstrained Bernstein coefficients of the marginal start.</span>
+
+<span class="sd">    With ``column`` the control points follow the node's **empirical</span>
+<span class="sd">    marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the</span>
+<span class="sd">    value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so</span>
+<span class="sd">    the polynomial starts as the Bernstein approximation of</span>
+<span class="sd">    $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal</span>
+<span class="sd">    cutpoints' class log-odds. Without it the control points are</span>
+<span class="sd">    equally spaced, the plain linear map from the pre-scaled domain</span>
+<span class="sd">    $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with</span>
+<span class="sd">    $q$ = ``range_q``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    column : numpy.ndarray | None, optional</span>
+<span class="sd">        The node's raw training column. ``None`` gives the linear map,</span>
+<span class="sd">        which needs no data.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        With ``range_q=0``: the domain ends are the data min/max, whose</span>
+<span class="sd">        latent quantile target $\operatorname{logit} 0$ is undefined — skip</span>
+<span class="sd">        ``init_marginals`` for a min-max-domain model.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The coefficients, shape ``(n_params,)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The unconstrained coefficients come from inverting zuko's</span>
+<span class="sd">    ``BernsteinTransform._constrain_theta`` (a cumsum of softplus</span>
+<span class="sd">    differences with the first two and the last two control points tied,</span>
+<span class="sd">    hence the two averaged pairs below).</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"the marginal start maps the domain ends onto the latent "</span>
+            <span class="s2">"range_q quantiles, and logit(0) is undefined — a "</span>
+            <span class="s2">"range_q=0 (min-max domain) model has no marginal start; "</span>
+            <span class="s2">"skip init_marginals for it"</span>
+        <span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># constrained control points: n+2</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_control_points</span><span class="p">(</span><span class="n">column</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="n">_CDF_EPS</span><span class="p">)</span>
+    <span class="c1"># zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);</span>
+    <span class="c1"># averaging each pair keeps every later control point where it was. The</span>
+    <span class="c1"># two pairs overlap below n=3, which is why such a transform takes the</span>
+    <span class="c1"># equally spaced start: with 4 control points and both ends tied there</span>
+    <span class="c1"># is no shape left to fit.</span>
+    <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">diffs</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">diffs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">diffs</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">diffs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">first</span><span class="p">,</span> <span class="n">last</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span> <span class="o">/</span> <span class="mf">2.0</span>  <span class="c1"># zuko's centering offset</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">shift</span>
+    <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">diffs</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">n</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2481,6 +3008,65 @@ hence the two averaged pairs below).</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SplineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Monotone rational-quadratic spline (zuko ``MonotonicRQSTransform``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bins : int, optional</span>
+<span class="sd">        Number of spline bins, by default 8.</span>
+<span class="sd">    range_q : float, optional</span>
+<span class="sd">        Domain quantile level, see ``_ScaledUT``.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">range_q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">RANGE_Q</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">range_q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""int: number of transform parameters this transform needs."""</span>
+        <span class="k">return</span> <span class="mi">3</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span>
+        <span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">K</span><span class="p">],</span>
+            <span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">K</span> <span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">K</span><span class="p">],</span>
+            <span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">K</span> <span class="p">:],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MonotonicRQSTransform</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -2553,6 +3139,29 @@ hence the two averaged pairs below).</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AffineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Monotone affine transform: the node-conditional is a logistic GLM."""</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""int: number of transform parameters this transform needs."""</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MonotonicAffineTransform</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -2703,6 +3312,59 @@ hence the two averaged pairs below).</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_bounds</span><span class="p">(</span>
+    <span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Give the shifted cutpoint interval of each observed level.</span>
+
+<span class="sd">    ``scores.py`` reads these bounds to form the latent-scale derivative.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, levels - 1)``.</span>
+<span class="sd">    shift : Tensor</span>
+<span class="sd">        The node's shift, shape ``(n,)``.</span>
+<span class="sd">    y : Tensor</span>
+<span class="sd">        Observed levels ``0..levels-1``, shape ``(n,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple[Tensor, Tensor]</span>
+<span class="sd">        The lower and upper shifted cutpoint of each row's level, ``(n,)`` each.</span>
+<span class="sd">    """</span>
+    <span class="n">cut</span> <span class="o">=</span> <span class="n">ordinal_cutpoints</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">)</span> <span class="o">-</span> <span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">cut</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="n">cut</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2721,9 +3383,9 @@ hence the two averaged pairs below).</p>
     <div class="doc doc-contents ">
 
         <p>Constrain unconstrained parameters to increasing cutpoints.</p>
-<p>Port of the original implementation's
-<code>transform_intercepts_ordinal</code>:
-<code>[-inf, t0, t0 + cumsum(exp(t1:)), +inf]</code>.</p>
+<p>The cutpoints are <span class="arithmatex">\(\tilde\vartheta_0\)</span> followed by
+<span class="arithmatex">\(\tilde\vartheta_0 + \mathrm{cumsum}(\exp \tilde\vartheta_{1:})\)</span>, with
+<span class="arithmatex">\(\pm\infty\)</span> at both ends.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2781,6 +3443,67 @@ hence the two averaged pairs below).</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_cutpoints</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrain unconstrained parameters to increasing cutpoints.</span>
+
+<span class="sd">    The cutpoints are $\tilde\vartheta_0$ followed by</span>
+<span class="sd">    $\tilde\vartheta_0 + \mathrm{cumsum}(\exp \tilde\vartheta_{1:})$, with</span>
+<span class="sd">    $\pm\infty$ at both ends.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, K-1)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        Increasing cutpoints with ``-inf``/``+inf`` ends, shape</span>
+<span class="sd">        ``(n, K+1)``.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">theta_tilde</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">neg_inf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="p">)</span>
+    <span class="n">pos_inf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta_tilde</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="p">)</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">theta_tilde</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># cumsum over the empty slice is (n, 0), so K == 2 needs no special case</span>
+    <span class="n">rest</span> <span class="o">=</span> <span class="n">first</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">neg_inf</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">pos_inf</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2799,7 +3522,7 @@ hence the two averaged pairs below).</p>
     <div class="doc doc-contents ">
 
         <p>Give the unconstrained cutpoint parameters that match class counts.</p>
-<p>The marginal <code>P(Y&lt;=k) = sigmoid(cutpoint_k)</code> of the result matches
+<p>The marginal <span class="arithmatex">\(P(Y \le k) = \sigma(\vartheta_k)\)</span> of the result matches
 the empirical class frequencies.</p>
 
 
@@ -2860,10 +3583,78 @@ the empirical class frequencies.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>Inverts <code>ordinal_cutpoints</code>: the targets are <code>c_k = logit(F(k))</code> from
-the empirical CDF, clamped off 0 and 1.</p>
+  <p>Inverts <code>ordinal_cutpoints</code>: the targets are
+<span class="arithmatex">\(c_k = \operatorname{logit} \hat F(k)\)</span> from the empirical CDF, clamped off 0
+and 1.</p>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_marginal_init_theta</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the unconstrained cutpoint parameters that match class counts.</span>
+
+<span class="sd">    The marginal $P(Y \le k) = \sigma(\vartheta_k)$ of the result matches</span>
+<span class="sd">    the empirical class frequencies.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    counts : array-like</span>
+<span class="sd">        Per-class count vector, length K. An empty class is handled by</span>
+<span class="sd">        ``_CDF_EPS``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The unconstrained parameters ``theta_tilde``, shape ``(K-1,)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Inverts ``ordinal_cutpoints``: the targets are</span>
+<span class="sd">    $c_k = \operatorname{logit} \hat F(k)$ from the empirical CDF, clamped off 0</span>
+<span class="sd">    and 1.</span>
+<span class="sd">    """</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">p</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">_CDF_EPS</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">_CDF_EPS</span><span class="p">)</span>  <span class="c1"># P(Y&lt;=k), k=0..K-2</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">F</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">F</span><span class="p">)</span>  <span class="c1"># logit -&gt; non-decreasing</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">_CDF_EPS</span><span class="p">)</span>  <span class="c1"># guard ties (empty classes)</span>
+    <span class="n">tt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">tt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">tt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">diffs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2881,8 +3672,8 @@ the empirical CDF, clamped off 0 and 1.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give <code>log P(Y = y | cutpoints, shift)</code>.</p>
-<p>The model is <code>P(Y &lt;= k) = sigmoid(theta_k - shift)</code>.</p>
+        <p>Give <span class="arithmatex">\(\log P(Y = y \mid \vartheta, s)\)</span>.</p>
+<p>The model is <span class="arithmatex">\(P(Y \le k) = \sigma(\vartheta_k - s)\)</span>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2980,6 +3771,79 @@ sigmoids: that form has exactly zero gradient once the sigmoids saturate
 in float32, and a node stuck there never recovers.</p>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_log_prob</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give $\log P(Y = y \mid \vartheta, s)$.</span>
+
+<span class="sd">    The model is $P(Y \le k) = \sigma(\vartheta_k - s)$.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, K-1)``.</span>
+<span class="sd">    shift : Tensor</span>
+<span class="sd">        Total shift, shape ``(n,)``.</span>
+<span class="sd">    y : Tensor</span>
+<span class="sd">        Observed levels in ``0..K-1``, shape ``(n,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The log probabilities, shape ``(n,)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Computed in log-space as ``logsigmoid(b) + log1mexp(logsigmoid(a) -</span>
+<span class="sd">    logsigmoid(b))``, taking per element the better-conditioned side (the CDF</span>
+<span class="sd">    or the survival side). Do not replace this with the difference of two</span>
+<span class="sd">    sigmoids: that form has exactly zero gradient once the sigmoids saturate</span>
+<span class="sd">    in float32, and a node stuck there never recovers.</span>
+<span class="sd">    """</span>
+    <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">ordinal_bounds</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">logsigmoid</span>
+    <span class="c1"># the survival side is the CDF side of the negated, swapped bounds, so one</span>
+    <span class="c1"># evaluation with flipped inputs replaces computing both and selecting</span>
+    <span class="n">flip</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">+</span> <span class="n">lower</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flip</span><span class="p">,</span> <span class="o">-</span><span class="n">upper</span><span class="p">,</span> <span class="n">lower</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flip</span><span class="p">,</span> <span class="o">-</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ls</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">_log1mexp</span><span class="p">((</span><span class="n">ls</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="n">ls</span><span class="p">(</span><span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">max</span><span class="o">=-</span><span class="mf">1e-7</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -3070,6 +3934,43 @@ in float32, and a node stuck there never recovers.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_pmf</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Give the class probabilities of every row.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, K-1)``.</span>
+<span class="sd">    shift : Tensor</span>
+<span class="sd">        Total shift, shape ``(n,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The class probabilities, shape ``(n, K)``.</span>
+<span class="sd">    """</span>
+    <span class="n">cdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">ordinal_cutpoints</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">)</span> <span class="o">-</span> <span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">cdf</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">cdf</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -3088,7 +3989,7 @@ in float32, and a node stuck there never recovers.</p>
     <div class="doc doc-contents ">
 
         <p>Map latents to ordinal levels.</p>
-<p>The rule is <code>x = #{finite cutpoints theta_j - shift &lt; z}</code>.</p>
+<p>The rule is <span class="arithmatex">\(x = \#\{j : \vartheta_j - s &lt; z\}\)</span> over the finite cutpoints.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3177,6 +4078,51 @@ in float32, and a node stuck there never recovers.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_sample</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Map latents to ordinal levels.</span>
+
+<span class="sd">    The rule is $x = \#\{j : \vartheta_j - s &lt; z\}$ over the finite cutpoints.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, K-1)``.</span>
+<span class="sd">    shift : Tensor</span>
+<span class="sd">        Total shift, shape ``(n,)``.</span>
+<span class="sd">    z : Tensor</span>
+<span class="sd">        Latent values, shape ``(n,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The levels as floats, shape ``(n,)``.</span>
+<span class="sd">    """</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">ordinal_cutpoints</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">finite</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -3301,6 +4247,75 @@ interval that is consistent with the observed level.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ordinal_abduct</span><span class="p">(</span>
+    <span class="n">theta_tilde</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">generator</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Abduct the latent of an ordinal node (Pearl step 1).</span>
+
+<span class="sd">    The latent is drawn from the standard logistic, truncated to the</span>
+<span class="sd">    interval that is consistent with the observed level.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    theta_tilde : Tensor</span>
+<span class="sd">        Unconstrained cutpoint parameters, shape ``(n, K-1)``.</span>
+<span class="sd">    shift : Tensor</span>
+<span class="sd">        Total shift, shape ``(n,)``.</span>
+<span class="sd">    y : Tensor</span>
+<span class="sd">        Observed levels in ``0..K-1``, shape ``(n,)``.</span>
+<span class="sd">    generator : torch.Generator | None, optional</span>
+<span class="sd">        Random source for the truncated draw, by default ``None``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tensor</span>
+<span class="sd">        The latents, shape ``(n,)``.</span>
+<span class="sd">    """</span>
+    <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">ordinal_bounds</span><span class="p">(</span><span class="n">theta_tilde</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">u_lo</span><span class="p">,</span> <span class="n">u_hi</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">lower</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">u_lo</span> <span class="o">+</span> <span class="p">(</span><span class="n">u_hi</span> <span class="o">-</span> <span class="n">u_lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+        <span class="n">lower</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">lower</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">StandardLogistic</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -3413,6 +4428,59 @@ interval that is consistent with the observed level.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_univariate_transform</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ScaledUT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a scaled univariate transform by name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        One of ``"bernstein"``, ``"spline"``, ``"affine"``.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Passed to the transform class.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    _ScaledUT</span>
+<span class="sd">        The transform.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``name`` is not one of the three.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TRANSFORMS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"unknown transform </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; choose one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_TRANSFORMS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_TRANSFORMS</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>

@@ -457,34 +457,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../scores/" class="md-nav__link">
         
   
@@ -1656,6 +1628,281 @@ only.</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Node</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One dimension of the flow: an intercept plus additive shift terms.</span>
+
+<span class="sd">    The intercept produces the transform parameters ``theta``. The shift</span>
+<span class="sd">    terms add up on the latent scale. The likelihood, sampling and encoding</span>
+<span class="sd">    branches on the node kind live in the five methods ``log_prob``,</span>
+<span class="sd">    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere</span>
+<span class="sd">    else; the rest of the package reads ``kind`` for dispatch and display</span>
+<span class="sd">    only.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    node : NodeSpec</span>
+<span class="sd">        Specification of the node.</span>
+<span class="sd">    spec : dict[str, NodeSpec]</span>
+<span class="sd">        The full DAG specification. Needed for the parent feature widths.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeSpec</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeSpec</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">kind</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parents</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node_parents</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ut</span> <span class="o">=</span> <span class="n">make_univariate_transform</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="o">**</span><span class="n">node</span><span class="o">.</span><span class="n">transform_kwargs</span><span class="p">)</span>
+            <span class="n">n_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">n_params</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ut</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">levels</span>
+            <span class="n">n_params</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">levels</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># the intercept slot: the free theta_0, one joint net, or one net per</span>
+        <span class="c1"># parent summed in coefficient space — `intercept_module` picks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intercept</span> <span class="o">=</span> <span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spec</span><span class="p">,</span> <span class="n">n_params</span><span class="p">)</span>
+        <span class="c1"># one module per shift term, built in formula order (the seeded RNG</span>
+        <span class="c1"># stream is pinned to it); each names its own key: the parent, "a+b"</span>
+        <span class="c1"># for a joint CS, the treatment for a VC</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shifts</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Encode this node's values for use as a parent feature.</span>
+
+<span class="sd">        A continuous parent stays raw, shape ``(n, 1)``; an ordinal parent is</span>
+<span class="sd">        one-hot encoded, shape ``(n, levels)``.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+            <span class="n">one_hot</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">long</span><span class="p">(),</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">one_hot</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``log p(x | pa)`` from the transform parameters and the shift."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+            <span class="n">u0</span><span class="p">,</span> <span class="n">ladj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">StandardLogistic</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">u0</span> <span class="o">+</span> <span class="n">shift</span><span class="p">)</span> <span class="o">+</span> <span class="n">ladj</span>
+        <span class="k">return</span> <span class="n">ordinal_log_prob</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Push the latent ``u`` forward to an observed value."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">u</span> <span class="o">-</span> <span class="n">shift</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ordinal_sample</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Recover the latent: exact (continuous) or truncated-sampled (ordinal)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+            <span class="n">u0</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">u0</span> <span class="o">+</span> <span class="n">shift</span>
+        <span class="k">return</span> <span class="n">ordinal_abduct</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">marginal_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Give the node's marginal-start theta, or ``None`` when there is none.</span>
+
+<span class="sd">        Ordinal: the empirical class log-odds. Continuous: the transform's own</span>
+<span class="sd">        marginal start over the same column (``None`` for spline/affine —</span>
+<span class="sd">        nothing to set). Only a free intercept applies it.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ordinal_marginal_init_theta</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">marginal_init_theta</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">net_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">parents</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenate parent features for one term's network.</span>
+
+<span class="sd">        ``key`` names the term ("@I" for the intercept, the shift key</span>
+<span class="sd">        otherwise); a term with an ``input_transform`` gets its continuous</span>
+<span class="sd">        parent columns transformed with the statistics frozen at</span>
+<span class="sd">        ``calibrate``. Every network input goes through here — training and</span>
+<span class="sd">        the read-outs (``varying_coef``, ``intercept_contributions``) alike —</span>
+<span class="sd">        so the model seen at inference is the model that was fitted. Linear</span>
+<span class="sd">        shifts and the VC treatment column are not network inputs and never</span>
+<span class="sd">        pass through.</span>
+<span class="sd">        """</span>
+        <span class="n">term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intercept</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"@I"</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">input_transform</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">tr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">cols</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">tr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+            <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">theta_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Compute the transform parameters and the total shift of the node.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        feats : dict[str, Tensor]</span>
+<span class="sd">            Encoded parent features keyed by parent name, plus the terms'</span>
+<span class="sd">            side columns (a centered VC's propensities — frozen from the</span>
+<span class="sd">            training frame, injected live by the flow at query time).</span>
+<span class="sd">        n : int</span>
+<span class="sd">            Batch size.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[Tensor, Tensor]</span>
+<span class="sd">            The transform parameters, shape ``(n, P)``, and the total</span>
+<span class="sd">            shift, shape ``(n,)``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        RuntimeError</span>
+<span class="sd">            If a centered VC term is evaluated without its propensity</span>
+<span class="sd">            column in ``feats``.</span>
+<span class="sd">        """</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">theta_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="c1"># plain shifts first, then VC (stable sort keeps the pinned order)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">order</span><span class="p">):</span>
+            <span class="n">shift</span> <span class="o">=</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">shift_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">shift</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -1688,6 +1935,29 @@ only.</p>
 one-hot encoded, shape <code>(n, levels)</code>.</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Encode this node's values for use as a parent feature.</span>
+
+<span class="sd">    A continuous parent stays raw, shape ``(n, 1)``; an ordinal parent is</span>
+<span class="sd">    one-hot encoded, shape ``(n, levels)``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+        <span class="n">one_hot</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">long</span><span class="p">(),</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">one_hot</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1708,6 +1978,21 @@ one-hot encoded, shape <code>(n, levels)</code>.</p>
         <p><code>log p(x | pa)</code> from the transform parameters and the shift.</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``log p(x | pa)`` from the transform parameters and the shift."""</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+        <span class="n">u0</span><span class="p">,</span> <span class="n">ladj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StandardLogistic</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">u0</span> <span class="o">+</span> <span class="n">shift</span><span class="p">)</span> <span class="o">+</span> <span class="n">ladj</span>
+    <span class="k">return</span> <span class="n">ordinal_log_prob</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1728,6 +2013,19 @@ one-hot encoded, shape <code>(n, levels)</code>.</p>
         <p>Push the latent <code>u</code> forward to an observed value.</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Push the latent ``u`` forward to an observed value."""</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">u</span> <span class="o">-</span> <span class="n">shift</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ordinal_sample</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1748,6 +2046,21 @@ one-hot encoded, shape <code>(n, levels)</code>.</p>
         <p>Recover the latent: exact (continuous) or truncated-sampled (ordinal).</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Recover the latent: exact (continuous) or truncated-sampled (ordinal)."""</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>
+        <span class="n">u0</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">u0</span> <span class="o">+</span> <span class="n">shift</span>
+    <span class="k">return</span> <span class="n">ordinal_abduct</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1771,6 +2084,31 @@ marginal start over the same column (<code>None</code> for spline/affine —
 nothing to set). Only a free intercept applies it.</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">marginal_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Give the node's marginal-start theta, or ``None`` when there is none.</span>
+
+<span class="sd">    Ordinal: the empirical class log-odds. Continuous: the transform's own</span>
+<span class="sd">    marginal start over the same column (``None`` for spline/affine —</span>
+<span class="sd">    nothing to set). Only a free intercept applies it.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ordinal_marginal_init_theta</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">marginal_init_theta</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1799,6 +2137,51 @@ shifts and the VC treatment column are not network inputs and never
 pass through.</p>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">net_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">parents</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Concatenate parent features for one term's network.</span>
+
+<span class="sd">    ``key`` names the term ("@I" for the intercept, the shift key</span>
+<span class="sd">    otherwise); a term with an ``input_transform`` gets its continuous</span>
+<span class="sd">    parent columns transformed with the statistics frozen at</span>
+<span class="sd">    ``calibrate``. Every network input goes through here — training and</span>
+<span class="sd">    the read-outs (``varying_coef``, ``intercept_contributions``) alike —</span>
+<span class="sd">    so the model seen at inference is the model that was fitted. Linear</span>
+<span class="sd">    shifts and the VC treatment column are not network inputs and never</span>
+<span class="sd">    pass through.</span>
+<span class="sd">    """</span>
+    <span class="n">term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intercept</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"@I"</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">tr</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">input_transform</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parents</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">tr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">cols</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">tr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1916,6 +2299,69 @@ column in <code>feats</code>.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/nodes.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">theta_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute the transform parameters and the total shift of the node.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    feats : dict[str, Tensor]</span>
+<span class="sd">        Encoded parent features keyed by parent name, plus the terms'</span>
+<span class="sd">        side columns (a centered VC's propensities — frozen from the</span>
+<span class="sd">        training frame, injected live by the flow at query time).</span>
+<span class="sd">    n : int</span>
+<span class="sd">        Batch size.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple[Tensor, Tensor]</span>
+<span class="sd">        The transform parameters, shape ``(n, P)``, and the total</span>
+<span class="sd">        shift, shape ``(n,)``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If a centered VC term is evaluated without its propensity</span>
+<span class="sd">        column in ``feats``.</span>
+<span class="sd">    """</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">theta_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1"># plain shifts first, then VC (stable sort keeps the pinned order)</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">order</span><span class="p">):</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">shift</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">shift_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">shift</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>

@@ -459,34 +459,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../scores/" class="md-nav__link">
         
   
@@ -1502,7 +1474,7 @@ replication trap: order 21 against the paper's <code>len_theta=20</code>, which 
 <h2 id="5-logistic-in-zukodistributions">5. <code>Logistic</code> in <code>zuko.distributions</code><a class="headerlink" href="#5-logistic-in-zukodistributions" title="Permanent link">&para;</a></h2>
 <p>Neither zuko nor torch ships a Logistic distribution. tramdag therefore
 hand-rolls <code>StandardLogistic</code> in ~50 lines, with <code>log_prob</code>, <code>sample</code> and
-<code>icdf</code>. Logistic latents are standard in transformation models and in discrete
+<code>icdf</code>. Logistic latents are standard in TRAM-DAGs and in discrete
 flows, and zuko has a precedent in <code>GeneralizedNormal</code>. But zuko can point at
 <code>TransformedUniform(SigmoidTransform().inv)</code> instead. tramdag keeps its
 <code>_U_EPS</code> clamp locally in both cases. This candidate has the lowest value of

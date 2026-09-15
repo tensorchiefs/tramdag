@@ -459,34 +459,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../scores/" class="md-nav__link">
         
   
@@ -1469,14 +1441,14 @@
 
 
 <h1 id="paper-replication-protocol-hyperparameters-and-results-per-experiment">Paper replication: protocol, hyperparameters and results, per experiment<a class="headerlink" href="#paper-replication-protocol-hyperparameters-and-results-per-experiment" title="Permanent link">&para;</a></h1>
-<p>The eight variants under <code>experiments/paper/</code> replicate the TRAM-DAG paper
+<p>The eight variants under <code>experiments/</code> replicate the TRAM-DAG paper
 (Sick &amp; Dürr, CLeaR 2025, arXiv:2503.16206) against its own R code
 (<code>tensorchiefs/tram-dag</code>). For each experiment this page lists the DGP, the
 model, every hyperparameter with its source, what deviates from the paper and
 why, and the numbers. The paper states four training numbers: n = 40000,
 500 epochs, Adam, and Bernstein order 20; it shows its results as figures, so
 where it gives no number the "paper" column names the figure and what it
-shows. The pinned ground truth is <code>experiments/paper/ground_truth/*.json</code>;
+shows. The pinned ground truth is <code>experiments/ground_truth/*.json</code>;
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md">experiments/README.md</a> explains the YAML variants,
 the frozen data and the check.</p>
 <p>Seeds are DGP 42, init 7 and shuffle 0. The triangle scripts of the reference
@@ -1530,7 +1502,7 @@ replay, so every seed here is a repository choice.</p>
 <tr>
 <td>plateau rule (VACA/CAREFL)</td>
 <td><code>update_learning_rate</code>: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict <code>&lt;</code>), factor 0.1, min 1e-7</td>
-<td>torch <code>ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)</code> on the summed <code>history["val"]</code>, the same rule, verified against torch's source; <code>experiments/paper/helpers.py::fit_paper</code> drives it</td>
+<td>torch <code>ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)</code> on the summed <code>history["val"]</code>, the same rule, verified against torch's source; <code>experiments/helpers.py::fit_paper</code> drives it</td>
 </tr>
 </tbody>
 </table>
@@ -1921,7 +1893,7 @@ committed 2500 rows (<code>X.csv</code>, x3/x4 sd-standardized by 6.0104/1.9114)
 <code>val = train</code>. CAREFL's repository also commits the observation <code>xObs.csv</code>,
 the analytic truth curves and its own predictions on the grid
 <code>seq(-3, 2.9, 0.1)</code>. This repository freezes all of it under
-<code>experiments/paper/data/carefl-cf</code>, external input with no generator, so the
+<code>experiments/data/carefl-cf</code>, external input with no generator, so the
 Fig. 6 curves are comparable point by point and every metric is in the
 reference's standardized units.</p>
 <p><strong>DGP</strong> (Khemakhem et al. 2021): x1, x2 ~ Laplace(0, 1/√2),
@@ -2118,10 +2090,6 @@ triangle job takes 7–11 min instead of 42–69.</p>
 <li><strong>VACA and CAREFL</strong> run their references 1:1; the rejected shortcuts are in
   their sections.</li>
 </ul>
-<p><code>experiments/misc/validate_ls.py</code> is not a paper experiment, but its Adam
-variant follows the same economy: phases 800/700/500 at 1e-2/1e-3/1e-4 and
-batch 256 land on the classical MLE with a named-coefficient gap to
-statsmodels of 1.6e-5.</p>
 <h2 id="repository-choices-the-paper-does-not-state">Repository choices the paper does not state<a class="headerlink" href="#repository-choices-the-paper-does-not-state" title="Permanent link">&para;</a></h2>
 <ul>
 <li>the seeds,</li>

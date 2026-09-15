@@ -568,34 +568,6 @@
   
   
     <li class="md-nav__item">
-      <a href="training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="scores/" class="md-nav__link">
         
   
@@ -1449,7 +1421,8 @@
 <a href="https://github.com/tensorchiefs/tramdag/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/tensorchiefs/tramdag/actions/workflows/ci.yml/badge.svg" /></a>
 <a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a></p>
 <p><strong>TRAM-DAGs</strong> model each variable of a structural causal model with a
-transformation-model flow. The flow is one triangular normalizing flow from
+monotone normalizing flow, the statistician's <em>transformation model</em>. The
+whole model is one triangular normalizing flow from
 iid standard-logistic latents to the observed variables, and its triangular
 structure is exactly your causal DAG. One fit on observational data answers
 all three rungs of Pearl's causal hierarchy: observational, interventional
@@ -1500,14 +1473,9 @@ one guide, and its worked example is one notebook.</p>
 <td><a href="notebooks/classical_fit_tram_dag/">classical fitting</a></td>
 </tr>
 <tr>
-<td>Fitting: the likelihood, the Adam loop and its callbacks, the classical fit</td>
+<td>Fitting: the likelihood, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes</td>
 <td><a href="fitting/"><code>docs/fitting.md</code></a></td>
 <td><a href="notebooks/training_strategies/">training strategies</a></td>
-</tr>
-<tr>
-<td>Training speed measurements</td>
-<td><a href="training-speed/"><code>docs/training-speed.md</code></a></td>
-<td></td>
 </tr>
 <tr>
 <td>Complex intercepts, joint versus additive</td>
@@ -1566,8 +1534,7 @@ the hyperparameters and the numbers, experiment by experiment.</p>
 <li><code>src/tramdag/</code> is the framework, and nothing else.</li>
 <li><code>tests/</code> measures it against three inline data-generating processes; it
   never imports research code.</li>
-<li><code>experiments/</code> holds the paper replications, the frozen data sets and the
-  benchmarks, one directory per area, each self-contained.</li>
+<li><code>experiments/</code> holds the paper replications and their frozen data sets.</li>
 <li><code>notebooks/</code> are jupytext <code>.py</code> files, executed by the docs workflow.</li>
 <li><code>docs/</code> are the guides; the API pages render from the docstrings.</li>
 </ul>

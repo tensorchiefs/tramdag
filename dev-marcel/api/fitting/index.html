@@ -457,34 +457,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../scores/" class="md-nav__link">
         
   
@@ -1489,6 +1461,523 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+        <span class="n">validation_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</span>
+
+<span class="sd">        The joint NLL decomposes per node, so one optimizer over all</span>
+<span class="sd">        parameters fits every node at once. The loop keeps the **final**</span>
+<span class="sd">        weights, and a second ``fit`` call continues the training. Validation</span>
+<span class="sd">        monitoring, learning-rate schedules, early stopping, best-weight</span>
+<span class="sd">        restoration and logging are the caller's, through ``optimizer`` and</span>
+<span class="sd">        ``callbacks``; [`callbacks`][tramdag.callbacks] ships the common</span>
+<span class="sd">        recipes. A ``VC`` term adds its penalty to the loss, never to</span>
+<span class="sd">        ``history["train"]``, and is re-centered after the loop.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        train_df : pd.DataFrame</span>
+<span class="sd">            Training data, one column per node.</span>
+<span class="sd">        epochs : int</span>
+<span class="sd">            Number of passes over the data. Required; there is no default.</span>
+<span class="sd">        learning_rate : float, optional</span>
+<span class="sd">            Adam step size of the default optimizer, by default 1e-2.</span>
+<span class="sd">            Ignored when ``optimizer`` is given.</span>
+<span class="sd">        batch_size : int, optional</span>
+<span class="sd">            Rows per gradient step, by default 512. ``len(train_df)`` is one</span>
+<span class="sd">            full-batch step per epoch.</span>
+<span class="sd">        validation_data : pd.DataFrame | None, optional</span>
+<span class="sd">            Validation rows, one column per node. When given (or split off), the</span>
+<span class="sd">            per-node validation NLL is appended to ``flow.history["val"]`` after</span>
+<span class="sd">            every epoch; the shipped callbacks read it there. ``history["lr"]``</span>
+<span class="sd">            records the optimizer's rate per epoch (``{node: lr}`` for tagged</span>
+<span class="sd">            groups, a float for one group, a list for several).</span>
+<span class="sd">        validation_split : float | None, optional</span>
+<span class="sd">            Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
+<span class="sd">            validation set, without shuffling, and only the remaining rows</span>
+<span class="sd">            train (and calibrate — no leakage into the frozen statistics).</span>
+<span class="sd">            Mutually exclusive with ``validation_data``.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            0 (default) is silent. ``N &gt;= 1`` prints one line every ``N``</span>
+<span class="sd">            epochs and on the final epoch: epoch counter, summed train NLL,</span>
+<span class="sd">            summed validation NLL when validation is configured. No</span>
+<span class="sd">            progress bars.</span>
+<span class="sd">        seed : int | None, optional</span>
+<span class="sd">            Seeds torch's global RNG before the loop, for the minibatch</span>
+<span class="sd">            shuffling. Weight initialization is seeded at construction</span>
+<span class="sd">            (``CausalFlowDAG(spec, seed=...)``).</span>
+<span class="sd">        optimizer : torch.optim.Optimizer | None, optional</span>
+<span class="sd">            Any torch optimizer over ``flow.parameters()``; the default is</span>
+<span class="sd">            ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
+<span class="sd">            ``torch.optim.lr_scheduler`` or to continue with its state.</span>
+<span class="sd">        callbacks : Callback | callable | list | None, optional</span>
+<span class="sd">            One entry or a list. A [`Callback`][tramdag.callbacks.Callback]</span>
+<span class="sd">            hooks all three points of the fit — its docstring is the</span>
+<span class="sd">            contract (begin/epoch/end timing, the stop rule, the VC</span>
+<span class="sd">            re-centering order). A bare callable is an ``on_epoch_end``</span>
+<span class="sd">            hook, ``cb(flow, epoch, optimizer)`` — use it for schedules and</span>
+<span class="sd">            coefficient trajectories. ``callbacks`` ships</span>
+<span class="sd">            ``EarlyStopping`` and ``PerNodePlateau``, all</span>
+<span class="sd">            reading ``history["val"]``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        CausalFlowDAG</span>
+<span class="sd">            ``self``, fitted, in eval mode.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``epochs`` or ``batch_size`` is below 1, ``verbose`` is</span>
+<span class="sd">            negative, both validation arguments are given, the split leaves</span>
+<span class="sd">            an empty side, or a centered VC term's propensity column is</span>
+<span class="sd">            missing from the training frame or out of [0, 1].</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If a ``callbacks`` entry is neither a ``Callback`` nor a callable,</span>
+<span class="sd">            or is a ``Callback`` class instead of an instance.</span>
+<span class="sd">        """</span>
+        <span class="n">_check_fit_sizes</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="n">cbs</span> <span class="o">=</span> <span class="n">_normalize_callbacks</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span> <span class="o">=</span> <span class="n">_split_validation</span><span class="p">(</span>
+            <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">validation_split</span>
+        <span class="p">)</span>
+        <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
+        <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
+        <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+        <span class="n">penalized</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span>
+            <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">regularizer</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">:</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="n">epoch_nll</span> <span class="o">=</span> <span class="n">_fit_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">penalized</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_nll</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">val_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"val"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mean_nll</span><span class="p">(</span><span class="n">val_values</span><span class="p">))</span>
+                <span class="c1"># which train epoch this entry belongs to: `history` accumulates</span>
+                <span class="c1"># across `fit` calls, so an unvalidated fit would shift every later</span>
+                <span class="c1"># validation entry away from its own epoch</span>
+                <span class="n">n_train_epochs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"val_epoch"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_train_epochs</span><span class="p">)</span>
+            <span class="c1"># every callback runs (a stop must not skip a monitoring one)</span>
+            <span class="n">stops</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">cb</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">opt</span><span class="p">))</span> <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">]</span>
+            <span class="c1"># after the callbacks, so a scheduler's decision for this epoch shows</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"lr"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_learning_rates</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span>
+            <span class="n">_log_epoch</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="n">epochs</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="p">,</span>
+                <span class="n">stopped</span><span class="o">=</span><span class="nb">any</span><span class="p">(</span><span class="n">stops</span><span class="p">),</span>
+                <span class="n">has_val</span><span class="o">=</span><span class="n">val_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">stops</span><span class="p">):</span>
+                <span class="k">break</span>
+        <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">:</span>
+            <span class="c1"># before the VC re-centering, so weights a callback restores</span>
+            <span class="c1"># (EarlyStopping) still take part in it</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recenter_vc</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+        <span class="n">history_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fit an all-``ls`` model the classical way.</span>
+
+<span class="sd">        The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
+<span class="sd">        line search. There are no minibatches, no schedule and no early</span>
+<span class="sd">        stopping, so the fit is deterministic and lands on the maximum-</span>
+<span class="sd">        likelihood estimate. It is valid only when every term is a simple</span>
+<span class="sd">        intercept or an ``LS``, because each node-conditional is then an</span>
+<span class="sd">        ordered logit or a Colr model; any other spec raises.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        train_df : pd.DataFrame</span>
+<span class="sd">            Training data, one column per node.</span>
+<span class="sd">        max_iter : int, optional</span>
+<span class="sd">            Upper limit on L-BFGS iterations, by default 400.</span>
+<span class="sd">        history_size : int, optional</span>
+<span class="sd">            L-BFGS memory, by default 50.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A convergence report: ``converged``, ``n_iter``, ``final_nll``,</span>
+<span class="sd">            ``grad_norm``, ``seconds``, and the fitted ``coefficients``</span>
+<span class="sd">            from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If a term is not classical: anything but the simple intercept and ``LS``.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        float64 is a transient compute mode. The model is upcast for the</span>
+<span class="sd">        fit, and ``self.double()`` converts the parameters and the range</span>
+<span class="sd">        buffers of the transforms in one call. Afterwards the model returns</span>
+<span class="sd">        to float32, so the stored model and ``save``/``load`` stay float32.</span>
+<span class="sd">        Double precision is what lets the line search resolve the optimum</span>
+<span class="sd">        cleanly.</span>
+
+<span class="sd">        Convergence is torch's own: L-BFGS stops when the NLL or the</span>
+<span class="sd">        parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the</span>
+<span class="sd">        gradient never ends the run. ``converged`` says whether a tolerance</span>
+<span class="sd">        ended the run rather than ``max_iter``; ``|grad|`` and weakly</span>
+<span class="sd">        identified coefficients do not settle to machine precision.</span>
+<span class="sd">        """</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">other</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"fit_classical requires an all-`ls` spec, that is a simple "</span>
+                <span class="sa">f</span><span class="s2">"intercept and LS terms only; this spec has </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2"> terms. Use "</span>
+                <span class="s2">"fit() for flexible models."</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>  <span class="c1"># parameters + buffers (xmin/xmax) -&gt; float64, one call</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="n">opt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">LBFGS</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+                <span class="n">lr</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span>
+                <span class="n">history_size</span><span class="o">=</span><span class="n">history_size</span><span class="p">,</span>
+                <span class="n">tolerance_grad</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># |grad| never settles on the flat ridges</span>
+                <span class="n">tolerance_change</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>
+                <span class="n">line_search_fn</span><span class="o">=</span><span class="s2">"strong_wolfe"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">total_nll</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+                <span class="n">per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_log_prob</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="o">-</span><span class="n">lp</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">lp</span> <span class="ow">in</span> <span class="n">per_node</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">closure</span><span class="p">():</span>
+                <span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">total_nll</span><span class="p">()</span>
+                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">loss</span>
+
+            <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
+            <span class="n">n_iter</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))[</span><span class="s2">"n_iter"</span><span class="p">]</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="n">n_iter</span> <span class="o">&lt;</span> <span class="n">max_iter</span>  <span class="c1"># torch stopped on a tolerance</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="n">final_nll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_nll</span><span class="p">())</span>
+            <span class="n">grad_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_total_norm</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">coefs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>  <span class="c1"># read while still float64</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
+            <span class="s2">"n_iter"</span><span class="p">:</span> <span class="n">n_iter</span><span class="p">,</span>
+            <span class="s2">"final_nll"</span><span class="p">:</span> <span class="n">final_nll</span><span class="p">,</span>
+            <span class="s2">"grad_norm"</span><span class="p">:</span> <span class="n">grad_norm</span><span class="p">,</span>
+            <span class="s2">"seconds"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span>
+            <span class="s2">"coefficients"</span><span class="p">:</span> <span class="n">coefs</span><span class="p">,</span>
+        <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -1797,6 +2286,295 @@ or is a <code>Callback</code> class instead of an instance.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">validation_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</span>
+
+<span class="sd">    The joint NLL decomposes per node, so one optimizer over all</span>
+<span class="sd">    parameters fits every node at once. The loop keeps the **final**</span>
+<span class="sd">    weights, and a second ``fit`` call continues the training. Validation</span>
+<span class="sd">    monitoring, learning-rate schedules, early stopping, best-weight</span>
+<span class="sd">    restoration and logging are the caller's, through ``optimizer`` and</span>
+<span class="sd">    ``callbacks``; [`callbacks`][tramdag.callbacks] ships the common</span>
+<span class="sd">    recipes. A ``VC`` term adds its penalty to the loss, never to</span>
+<span class="sd">    ``history["train"]``, and is re-centered after the loop.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    train_df : pd.DataFrame</span>
+<span class="sd">        Training data, one column per node.</span>
+<span class="sd">    epochs : int</span>
+<span class="sd">        Number of passes over the data. Required; there is no default.</span>
+<span class="sd">    learning_rate : float, optional</span>
+<span class="sd">        Adam step size of the default optimizer, by default 1e-2.</span>
+<span class="sd">        Ignored when ``optimizer`` is given.</span>
+<span class="sd">    batch_size : int, optional</span>
+<span class="sd">        Rows per gradient step, by default 512. ``len(train_df)`` is one</span>
+<span class="sd">        full-batch step per epoch.</span>
+<span class="sd">    validation_data : pd.DataFrame | None, optional</span>
+<span class="sd">        Validation rows, one column per node. When given (or split off), the</span>
+<span class="sd">        per-node validation NLL is appended to ``flow.history["val"]`` after</span>
+<span class="sd">        every epoch; the shipped callbacks read it there. ``history["lr"]``</span>
+<span class="sd">        records the optimizer's rate per epoch (``{node: lr}`` for tagged</span>
+<span class="sd">        groups, a float for one group, a list for several).</span>
+<span class="sd">    validation_split : float | None, optional</span>
+<span class="sd">        Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
+<span class="sd">        validation set, without shuffling, and only the remaining rows</span>
+<span class="sd">        train (and calibrate — no leakage into the frozen statistics).</span>
+<span class="sd">        Mutually exclusive with ``validation_data``.</span>
+<span class="sd">    verbose : int, optional</span>
+<span class="sd">        0 (default) is silent. ``N &gt;= 1`` prints one line every ``N``</span>
+<span class="sd">        epochs and on the final epoch: epoch counter, summed train NLL,</span>
+<span class="sd">        summed validation NLL when validation is configured. No</span>
+<span class="sd">        progress bars.</span>
+<span class="sd">    seed : int | None, optional</span>
+<span class="sd">        Seeds torch's global RNG before the loop, for the minibatch</span>
+<span class="sd">        shuffling. Weight initialization is seeded at construction</span>
+<span class="sd">        (``CausalFlowDAG(spec, seed=...)``).</span>
+<span class="sd">    optimizer : torch.optim.Optimizer | None, optional</span>
+<span class="sd">        Any torch optimizer over ``flow.parameters()``; the default is</span>
+<span class="sd">        ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
+<span class="sd">        ``torch.optim.lr_scheduler`` or to continue with its state.</span>
+<span class="sd">    callbacks : Callback | callable | list | None, optional</span>
+<span class="sd">        One entry or a list. A [`Callback`][tramdag.callbacks.Callback]</span>
+<span class="sd">        hooks all three points of the fit — its docstring is the</span>
+<span class="sd">        contract (begin/epoch/end timing, the stop rule, the VC</span>
+<span class="sd">        re-centering order). A bare callable is an ``on_epoch_end``</span>
+<span class="sd">        hook, ``cb(flow, epoch, optimizer)`` — use it for schedules and</span>
+<span class="sd">        coefficient trajectories. ``callbacks`` ships</span>
+<span class="sd">        ``EarlyStopping`` and ``PerNodePlateau``, all</span>
+<span class="sd">        reading ``history["val"]``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    CausalFlowDAG</span>
+<span class="sd">        ``self``, fitted, in eval mode.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``epochs`` or ``batch_size`` is below 1, ``verbose`` is</span>
+<span class="sd">        negative, both validation arguments are given, the split leaves</span>
+<span class="sd">        an empty side, or a centered VC term's propensity column is</span>
+<span class="sd">        missing from the training frame or out of [0, 1].</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If a ``callbacks`` entry is neither a ``Callback`` nor a callable,</span>
+<span class="sd">        or is a ``Callback`` class instead of an instance.</span>
+<span class="sd">    """</span>
+    <span class="n">_check_fit_sizes</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+    <span class="n">cbs</span> <span class="o">=</span> <span class="n">_normalize_callbacks</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span> <span class="o">=</span> <span class="n">_split_validation</span><span class="p">(</span>
+        <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">validation_split</span>
+    <span class="p">)</span>
+    <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
+    <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
+    <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+    <span class="n">penalized</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">m</span>
+        <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">regularizer</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">:</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">epoch_nll</span> <span class="o">=</span> <span class="n">_fit_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">penalized</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_nll</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">val_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"val"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mean_nll</span><span class="p">(</span><span class="n">val_values</span><span class="p">))</span>
+            <span class="c1"># which train epoch this entry belongs to: `history` accumulates</span>
+            <span class="c1"># across `fit` calls, so an unvalidated fit would shift every later</span>
+            <span class="c1"># validation entry away from its own epoch</span>
+            <span class="n">n_train_epochs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"val_epoch"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_train_epochs</span><span class="p">)</span>
+        <span class="c1"># every callback runs (a stop must not skip a monitoring one)</span>
+        <span class="n">stops</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">cb</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">opt</span><span class="p">))</span> <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">]</span>
+        <span class="c1"># after the callbacks, so a scheduler's decision for this epoch shows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"lr"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_learning_rates</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span>
+        <span class="n">_log_epoch</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">epoch</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="p">,</span>
+            <span class="n">stopped</span><span class="o">=</span><span class="nb">any</span><span class="p">(</span><span class="n">stops</span><span class="p">),</span>
+            <span class="n">has_val</span><span class="o">=</span><span class="n">val_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">stops</span><span class="p">):</span>
+            <span class="k">break</span>
+    <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">cbs</span><span class="p">:</span>
+        <span class="c1"># before the VC re-centering, so weights a callback restores</span>
+        <span class="c1"># (EarlyStopping) still take part in it</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_recenter_vc</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1819,8 +2597,8 @@ or is a <code>Callback</code> class instead of an instance.</p>
 line search. There are no minibatches, no schedule and no early
 stopping, so the fit is deterministic and lands on the maximum-
 likelihood estimate. It is valid only when every term is a simple
-intercept or an <code>LS</code>, because each node-conditional is then a
-classical transformation model; any other spec raises.</p>
+intercept or an <code>LS</code>, because each node-conditional is then an
+ordered logit or a Colr model; any other spec raises.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1949,6 +2727,229 @@ ended the run rather than <code>max_iter</code>; <code>|grad|</code> and weakly
 identified coefficients do not settle to machine precision.</p>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+    <span class="n">history_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fit an all-``ls`` model the classical way.</span>
+
+<span class="sd">    The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
+<span class="sd">    line search. There are no minibatches, no schedule and no early</span>
+<span class="sd">    stopping, so the fit is deterministic and lands on the maximum-</span>
+<span class="sd">    likelihood estimate. It is valid only when every term is a simple</span>
+<span class="sd">    intercept or an ``LS``, because each node-conditional is then an</span>
+<span class="sd">    ordered logit or a Colr model; any other spec raises.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    train_df : pd.DataFrame</span>
+<span class="sd">        Training data, one column per node.</span>
+<span class="sd">    max_iter : int, optional</span>
+<span class="sd">        Upper limit on L-BFGS iterations, by default 400.</span>
+<span class="sd">    history_size : int, optional</span>
+<span class="sd">        L-BFGS memory, by default 50.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A convergence report: ``converged``, ``n_iter``, ``final_nll``,</span>
+<span class="sd">        ``grad_norm``, ``seconds``, and the fitted ``coefficients``</span>
+<span class="sd">        from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If a term is not classical: anything but the simple intercept and ``LS``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    float64 is a transient compute mode. The model is upcast for the</span>
+<span class="sd">    fit, and ``self.double()`` converts the parameters and the range</span>
+<span class="sd">    buffers of the transforms in one call. Afterwards the model returns</span>
+<span class="sd">    to float32, so the stored model and ``save``/``load`` stay float32.</span>
+<span class="sd">    Double precision is what lets the line search resolve the optimum</span>
+<span class="sd">    cleanly.</span>
+
+<span class="sd">    Convergence is torch's own: L-BFGS stops when the NLL or the</span>
+<span class="sd">    parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the</span>
+<span class="sd">    gradient never ends the run. ``converged`` says whether a tolerance</span>
+<span class="sd">    ended the run rather than ``max_iter``; ``|grad|`` and weakly</span>
+<span class="sd">    identified coefficients do not settle to machine precision.</span>
+<span class="sd">    """</span>
+    <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">other</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"fit_classical requires an all-`ls` spec, that is a simple "</span>
+            <span class="sa">f</span><span class="s2">"intercept and LS terms only; this spec has </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2"> terms. Use "</span>
+            <span class="s2">"fit() for flexible models."</span>
+        <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>  <span class="c1"># parameters + buffers (xmin/xmax) -&gt; float64, one call</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">opt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">LBFGS</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="n">lr</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">max_iter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span>
+            <span class="n">history_size</span><span class="o">=</span><span class="n">history_size</span><span class="p">,</span>
+            <span class="n">tolerance_grad</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># |grad| never settles on the flat ridges</span>
+            <span class="n">tolerance_change</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>
+            <span class="n">line_search_fn</span><span class="o">=</span><span class="s2">"strong_wolfe"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">total_nll</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+            <span class="n">per_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_log_prob</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="o">-</span><span class="n">lp</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">lp</span> <span class="ow">in</span> <span class="n">per_node</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">closure</span><span class="p">():</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">total_nll</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">loss</span>
+
+        <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
+        <span class="n">n_iter</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))[</span><span class="s2">"n_iter"</span><span class="p">]</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">n_iter</span> <span class="o">&lt;</span> <span class="n">max_iter</span>  <span class="c1"># torch stopped on a tolerance</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">final_nll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_nll</span><span class="p">())</span>
+        <span class="n">grad_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_total_norm</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">coefs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>  <span class="c1"># read while still float64</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
+        <span class="s2">"n_iter"</span><span class="p">:</span> <span class="n">n_iter</span><span class="p">,</span>
+        <span class="s2">"final_nll"</span><span class="p">:</span> <span class="n">final_nll</span><span class="p">,</span>
+        <span class="s2">"grad_norm"</span><span class="p">:</span> <span class="n">grad_norm</span><span class="p">,</span>
+        <span class="s2">"seconds"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span>
+        <span class="s2">"coefficients"</span><span class="p">:</span> <span class="n">coefs</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>

@@ -572,34 +572,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../scores/" class="md-nav__link">
         
   
@@ -1486,7 +1458,7 @@ differences.
 column that <code>flow.design_matrix(df, node, drop_first=True)</code> drops.</p>
 <p>Checked in <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
 which compares the weights against <code>statsmodels</code> and R, and pinned in
-continuous integration by <code>experiments/paper/triangle_mixed.py</code>, whose
+continuous integration by <code>experiments/triangle_mixed.py</code>, whose
 odds-ratio check is in <a href="../paper-replication/">paper-replication.md</a>.</p>
 <h2 id="ordinal-nodes-cutpoints-and-the-interventional-pmf">Ordinal nodes: cutpoints and the interventional PMF<a class="headerlink" href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" title="Permanent link">&para;</a></h2>
 <p>An ordinal node's intercept is its cutpoint vector, not a transform
@@ -1498,7 +1470,7 @@ form. It needs no sampling, and <code>do=</code> makes it interventional by over
 columns before the parents are read. That combination is what lets a
 treatment-effect question be answered exactly rather than by Monte Carlo.</p>
 <p>Exercised in the <a href="../notebooks/classical_fit_tram_dag/">classical-fitting notebook</a>,
-and under <code>do=</code> in <code>experiments/misc/validate_ls.py</code>, which is checked against
+and under <code>do=</code> in <code>experiments/triangle_mixed.py</code>, which is checked against
 committed ground truth on every run.</p>
 <h2 id="continuous-nodes-density-and-one-fitted-shift">Continuous nodes: density and one fitted shift<a class="headerlink" href="#continuous-nodes-density-and-one-fitted-shift" title="Permanent link">&para;</a></h2>
 <p><code>flow.density(df, node, grid, do=...)</code> is the continuous counterpart of

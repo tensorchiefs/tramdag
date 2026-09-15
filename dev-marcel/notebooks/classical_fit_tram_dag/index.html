@@ -457,34 +457,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../scores/" class="md-nav__link">
         
   
@@ -992,15 +964,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-ordinal-case-treatment-effect" class="md-nav__link">
+  <a href="#2-ordinal-case" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Ordinal case (treatment effect)
+        2. Ordinal case
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Ordinal case (treatment effect)">
+    <nav class="md-nav" aria-label="2. Ordinal case">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1015,10 +987,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#standard-errors-and-what-is-actually-weakly-identified" class="md-nav__link">
+  <a href="#standard-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standard errors, and what is actually weakly identified
+        Standard errors
       
     </span>
   </a>
@@ -1557,15 +1529,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-ordinal-case-treatment-effect" class="md-nav__link">
+  <a href="#2-ordinal-case" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Ordinal case (treatment effect)
+        2. Ordinal case
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Ordinal case (treatment effect)">
+    <nav class="md-nav" aria-label="2. Ordinal case">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1580,10 +1552,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#standard-errors-and-what-is-actually-weakly-identified" class="md-nav__link">
+  <a href="#standard-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standard errors, and what is actually weakly identified
+        Standard errors
       
     </span>
   </a>
@@ -2347,18 +2319,18 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b03ed93">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d2a73d4c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h1 id="classical-fitting-of-all-ls-tram-dags-fit_classical">Classical fitting of all-<code>ls</code> TRAM-DAGs (<code>fit_classical</code>)<a class="anchor-link" href="#classical-fitting-of-all-ls-tram-dags-fit_classical">¶</a></h1><p>When <strong>every edge of a TRAM-DAG is a linear shift (<code>LS</code>)</strong>, each
-node-conditional is a <em>classical transformation model</em></p>
+node-conditional is a classical model</p>
 <ul>
 <li><p>an ordered-logit / proportional-odds model for ordinal nodes</p>
 </li>
-<li><p>a continuous-outcome logistic transformation model (R's <code>tram::Colr</code>) for continuous ones.</p>
+<li><p>a Colr model (R's <code>tram::Colr</code>) for continuous ones.</p>
 </li>
 </ul>
 <p>For such a model <code>flow.fit_classical()</code> is the optimizer: deterministic
@@ -2373,7 +2345,7 @@ them; it needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9b064524">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fa3c9421">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2405,7 +2377,7 @@ them; it needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 <span class="c1"># repo-relative data, whether the notebook runs from the repo root or notebooks/</span>
 <span class="n">HERE</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
 <span class="n">REPO</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">HERE</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">"pyproject.toml"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span>
-<span class="n">DATA</span> <span class="o">=</span> <span class="n">REPO</span> <span class="o">/</span> <span class="s2">"experiments"</span> <span class="o">/</span> <span class="s2">"misc"</span> <span class="o">/</span> <span class="s2">"data"</span>
+<span class="n">DATA</span> <span class="o">=</span> <span class="n">REPO</span> <span class="o">/</span> <span class="s2">"experiments"</span> <span class="o">/</span> <span class="s2">"data"</span>
 <span class="n">NB_DATA</span> <span class="o">=</span> <span class="n">REPO</span> <span class="o">/</span> <span class="s2">"notebooks"</span> <span class="o">/</span> <span class="s2">"data"</span>
 
 
@@ -2439,7 +2411,7 @@ from tramdag.callbacks import PerNodePlateau, per_node_adam
 # repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
 REPO = next(p for p in HERE if (p / "pyproject.toml").exists())
-DATA = REPO / "experiments" / "misc" / "data"
+DATA = REPO / "experiments" / "data"
 NB_DATA = REPO / "notebooks" / "data"
 
 
@@ -2464,7 +2436,7 @@ def claim(text, value, bound, fmt="{:.2e}"):
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=80aa1683">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c3bea839">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2490,7 +2462,7 @@ exported verbatim from MASS. Please note that this is not a <strong>causal</stro
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7c1a8aaf">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=678ede63">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2514,7 +2486,7 @@ so the notebook can show the three-way comparison without an R installation.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dd47f35b">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fdf1be95">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2583,7 +2555,7 @@ print(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=776147f1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e4d34952">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2599,7 +2571,7 @@ node, so the <code>low</code> node's gradient never sees the covariate marginals
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fc2dc82d">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b17d0e84">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2650,8 +2622,8 @@ flow_bw.fit_classical(bw)</div>
 <pre>{'converged': True,
  'n_iter': 64,
  'final_nll': 9.137612929338468,
- 'grad_norm': 0.00015174226148570872,
- 'seconds': 1.355024866000008,
+ 'grad_norm': 0.00015174226143355472,
+ 'seconds': 1.0132858210000677,
  'coefficients': {'low': {'age': array([-0.03899488]),
    'lwt': array([-0.01213841]),
    'smoke': array([-0.13497242,  0.53579548])}}}</pre>
@@ -2661,7 +2633,7 @@ flow_bw.fit_classical(bw)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6547db47">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c52eae13">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2688,7 +2660,7 @@ $-\theta_0$ — and the last is R's <code>smoke</code>.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ceb7c2fb">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d4b3c317">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2798,13 +2770,13 @@ smoke              0.6708    0.6708    0.6708   4.16e-06
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ae4dbeb0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6d41fd6b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Three optimizers — L-BFGS on a transformation model, <code>statsmodels</code>' Newton
+<p>Three optimizers — L-BFGS on the flow, <code>statsmodels</code>' Newton
 solver, R's IRLS — land on the same maximum likelihood, because there is only
 one. The agreement is not only in the parameters: the log-likelihood of the
 <code>low</code> node and R's <code>logLik(m)</code> are the same number, and <code>flow.pmf</code> reproduces
@@ -2813,7 +2785,7 @@ one. The agreement is not only in the parameters: the log-likelihood of the
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=04c56e50">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1b61ac22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2870,7 +2842,7 @@ max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 3.32e-06
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9a12385c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d4228d06">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2879,14 +2851,14 @@ max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 3.32e-06
 <h2 id="1-continuous-case">1. Continuous case<a class="anchor-link" href="#1-continuous-case">¶</a></h2><p>Section 0 modelled <code>low</code>, the <em>dichotomized</em> birth weight. <code>birthwt</code> also
 carries the number it was cut from — <code>bwt</code>, the weight in grams — so the same
 three predictors can be fitted against a continuous outcome. That is a
-continuous outcome logistic transformation model, R's <code>tram::Colr</code>
+Colr model, R's <code>tram::Colr</code>
 bwt ~ age + lwt + smoke
 No way to model this with glm.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=71b8e40b">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=97ca2e35">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2993,9 +2965,9 @@ print(
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>               age      lwt    smoke     logLik
-flow       -0.0223  -0.0103   0.6637   -1500.55
+flow       -0.0224  -0.0103   0.6641   -1500.55
 R Colr     -0.0220  -0.0102   0.6687   -1499.67
-|diff|      0.0004   0.0000   0.0050       0.88
+|diff|      0.0004   0.0000   0.0046       0.88
 </pre>
 </div>
 </div>
@@ -3003,7 +2975,7 @@ R Colr     -0.0220  -0.0102   0.6687   -1499.67
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=86f22fc1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a3a99839">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3019,7 +2991,7 @@ yet.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=09d55793">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2a71de8f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3056,7 +3028,7 @@ it.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7cc0135c">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=83a6e5f6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3249,7 +3221,7 @@ def ls_conf_int(flow, node, data, level=0.95):
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1c2e5d56">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a8036ac0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3323,14 +3295,14 @@ claim("max |SE_flow - SE_Colr|, continuous parents", se_gap, 1e-3)</div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>                estimate        se     lower     upper  leak
 term                                                        
-age            -0.022349  0.025265 -0.071867  0.027168   0.0
-lwt            -0.010274  0.004113 -0.018334 -0.002213   0.0
-smoke (1 vs 0)  0.663712  0.259578  0.154949  1.172476   0.0
+age            -0.022359  0.025265 -0.071878  0.027159   0.0
+lwt            -0.010277  0.004113 -0.018338 -0.002217   0.0
+smoke (1 vs 0)  0.664098  0.259581  0.155329  1.172867   0.0
 
-24 parameters, 13 of them without curvature   |grad| = 1.5e-01
+24 parameters, 13 of them without curvature   |grad| = 3.9e-01
 
-ok  flat_max / curved_min, so smaller is a wider gap: 2.61e-05 &lt;= 1.00e-04
-ok  max |SE_flow - SE_Colr|, continuous parents: 4.04e-05 &lt;= 1.00e-03
+ok  flat_max / curved_min, so smaller is a wider gap: 3.21e-05 &lt;= 1.00e-04
+ok  max |SE_flow - SE_Colr|, continuous parents: 4.01e-05 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -3338,7 +3310,7 @@ ok  max |SE_flow - SE_Colr|, continuous parents: 4.04e-05 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6d8fd2ac">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=42ac5e0d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3350,7 +3322,7 @@ R's <code>confint()</code> on a <code>Colr</code> fit is Wald as well.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4d5247cb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b1f1e3f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3358,8 +3330,7 @@ R's <code>confint()</code> on a <code>Colr</code> fit is Wald as well.</p>
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="1b-a-bimodal-dag-the-demo-data">1b. A bimodal DAG — the demo data<a class="anchor-link" href="#1b-a-bimodal-dag-the-demo-data">¶</a></h2><p>The VACA benchmark triangle <code>x1 → x2 → x3 ← x1</code>, the bimodal SCM of the
 <a href="../demo_tram_dag_colab/">demo notebook</a>. We fit an <strong>all-<code>ls</code></strong> model: each
-node is a continuous logistic transformation model with a Bernstein baseline
-and linear shifts.</p>
+node is a Colr model: a Bernstein baseline with linear shifts.</p>
 <p>Note this is an <em>honest misspecification</em>: the DGP noise is Gaussian while the
 TRAM latent is logistic, so the all-<code>ls</code> model is not the true generator — but
 <code>fit_classical</code> still finds its exact MLE, which is the point here.</p>
@@ -3367,7 +3338,7 @@ TRAM latent is logistic, so the all-<code>ls</code> model is not the true genera
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=76635734">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b86b5446">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3418,14 +3389,14 @@ TRAM latent is logistic, so the all-<code>ls</code> model is not the true genera
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9e94e469">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=88ed2545">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model family — a continuous outcome logistic
-transformation model with a Bernstein baseline. The cell above is what wrote
+<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model: a Bernstein baseline with linear shifts.
+The cell above is what wrote
 <code>notebooks/data/vaca.csv</code>, which is committed, so R reads the identical rows
 the flow is fitted on.</p>
 <p>The two libraries <strong>count the basis differently</strong>, and the comparison is only
@@ -3449,7 +3420,7 @@ side as the flow.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=5741da07">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6a6ebbab">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3482,7 +3453,7 @@ side as the flow.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=464ee599">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=79ca2b50">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3556,11 +3527,11 @@ for node, parents in flow_c.ls_coefficients().items():
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
              fit_classical      R Colr    |diff|
-x1 -&gt; x2            1.7997      1.8000    0.0003
-logLik x2       -1401.8729  -1401.2135    0.6593
-x1 -&gt; x3           -1.7805     -1.7773    0.0032
-x2 -&gt; x3           -0.4557     -0.4553    0.0004
-logLik x3       -1410.9676  -1411.9020    0.9344
+x1 -&gt; x2            1.7987      1.8000    0.0014
+logLik x2       -1401.8712  -1401.2135    0.6577
+x1 -&gt; x3           -1.7797     -1.7773    0.0025
+x2 -&gt; x3           -0.4549     -0.4553    0.0004
+logLik x3       -1410.9702  -1411.9020    0.9317
 </pre>
 </div>
 </div>
@@ -3568,7 +3539,7 @@ logLik x3       -1410.9676  -1411.9020    0.9344
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2385ed93">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eb8f5300">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3586,7 +3557,7 @@ at all.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cb684fda">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6da4917b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3630,8 +3601,8 @@ claim("max relative coefficient gap", max(g / r for g, r in gaps), 0.02)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>ok  max |coef_flow - coef_Colr|: 3.18e-03 &lt;= 1.00e-02
-ok  max relative coefficient gap: 1.79e-03 &lt;= 2.00e-02
+<pre>ok  max |coef_flow - coef_Colr|: 2.45e-03 &lt;= 1.00e-02
+ok  max relative coefficient gap: 1.38e-03 &lt;= 2.00e-02
 </pre>
 </div>
 </div>
@@ -3639,7 +3610,7 @@ ok  max relative coefficient gap: 1.79e-03 &lt;= 2.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ca1887b8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3ae8908d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3657,7 +3628,7 @@ rather than only its location.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cf339eb4">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=53376e07">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3728,7 +3699,7 @@ corr(mode of the fitted density, the linear predictor) = 0.9951
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=be86c77f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=847467b4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3746,7 +3717,7 @@ property of the machine.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9aabcccd">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e09cc2f9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3815,11 +3786,11 @@ print(f"\nclassical {rep['seconds']:.2f}s  vs  adam {t_adam:.1f}s")</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coef         classical        adam    |diff|
-x1-&gt;x2          1.7997      1.7946    0.0051
-x1-&gt;x3         -1.7805     -1.7663    0.0142
-x2-&gt;x3         -0.4557     -0.4474    0.0083
+x1-&gt;x2          1.7987      1.7944    0.0043
+x1-&gt;x3         -1.7797     -1.7663    0.0135
+x2-&gt;x3         -0.4549     -0.4474    0.0075
 
-classical 5.78s  vs  adam 4.5s
+classical 3.66s  vs  adam 3.0s
 </pre>
 </div>
 </div>
@@ -3827,20 +3798,23 @@ classical 5.78s  vs  adam 4.5s
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5459acfc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3dd9911e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="2-ordinal-case-treatment-effect">2. Ordinal case (treatment effect)<a class="anchor-link" href="#2-ordinal-case-treatment-effect">¶</a></h2><p>For an <strong>ordinal</strong> outcome the classical model is the ordered-logit, which
-<code>statsmodels.OrderedModel</code> fits — so here the equivalence is checkable in
-Python. The all-<code>ls</code> stroke DAG (the synthetic <code>magic-mrclean/ls</code> cohort):</p>
+<h2 id="2-ordinal-case">2. Ordinal case<a class="anchor-link" href="#2-ordinal-case">¶</a></h2><p>For an <strong>ordinal</strong> outcome the classical model is the ordered logit, which
+<code>statsmodels.OrderedModel</code> fits, so here the equivalence is checkable in
+Python. The data is the paper's mixed triangle
+(<code>experiments/data/triangle-mixed/linear</code>): <code>x3</code> has four levels and the two
+continuous parents <code>x1</code> and <code>x2</code>;
+<a href="../../paper-replication/"><code>docs/paper-replication.md</code></a> states the DGP.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=64f6ed88">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e23664db">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3858,31 +3832,27 @@ Python. The all-<code>ls</code> stroke DAG (the synthetic <code>magic-mrclean/ls
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA</span> <span class="o">/</span> <span class="s2">"magic-mrclean"</span> <span class="o">/</span> <span class="s2">"ls"</span> <span class="o">/</span> <span class="s2">"obs.csv"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tm</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">DATA</span> <span class="o">/</span> <span class="s2">"triangle-mixed"</span> <span class="o">/</span> <span class="s2">"linear"</span> <span class="o">/</span> <span class="s2">"obs.csv"</span><span class="p">)</span>
 
-<span class="n">spec_stroke</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"Age"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(),</span>
-    <span class="s2">"mRS_pre"</span><span class="p">:</span> <span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"Age"</span><span class="p">)),</span>
-    <span class="s2">"NIHSSa"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">LS</span><span class="p">(</span><span class="s2">"Age"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"mRS_pre"</span><span class="p">)),</span>
-    <span class="s2">"T"</span><span class="p">:</span> <span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"Age"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"mRS_pre"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">)),</span>
-    <span class="s2">"mRS_3m"</span><span class="p">:</span> <span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"Age"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"mRS_pre"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)),</span>
+<span class="n">spec_tm</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"x1"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(),</span>
+    <span class="s2">"x2"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)),</span>
+    <span class="s2">"x3"</span><span class="p">:</span> <span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x2"</span><span class="p">)),</span>
 <span class="p">}</span>
 
-<span class="n">flow_s</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec_stroke</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># the seed validate_ls.py checks</span>
-<span class="n">flow_s</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<span class="n">flow_o</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec_tm</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">flow_o</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">tm</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15">obs = pd.read_csv(DATA / "magic-mrclean" / "ls" / "obs.csv")
+<div class="clipboard-copy-txt" id="cell-15">tm = pd.read_csv(DATA / "triangle-mixed" / "linear" / "obs.csv")
 
-spec_stroke = {
-    "Age": ContinuousNode(),
-    "mRS_pre": OrdinalNode(6, LS("Age")),
-    "NIHSSa": ContinuousNode(LS("Age") + LS("mRS_pre")),
-    "T": OrdinalNode(2, LS("Age") + LS("mRS_pre") + LS("NIHSSa")),
-    "mRS_3m": OrdinalNode(7, LS("Age") + LS("mRS_pre") + LS("NIHSSa") + LS("T")),
+spec_tm = {
+    "x1": ContinuousNode(),
+    "x2": ContinuousNode(LS("x1")),
+    "x3": OrdinalNode(4, LS("x1") + LS("x2")),
 }
 
-flow_s = CausalFlowDAG(spec_stroke, seed=0)  # the seed validate_ls.py checks
-flow_s.fit_classical(obs)</div>
+flow_o = CausalFlowDAG(spec_tm, seed=0)
+flow_o.fit_classical(tm)</div>
 </div>
 </div>
 </div>
@@ -3894,31 +3864,20 @@ flow_s.fit_classical(obs)</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'converged': False,
- 'n_iter': 400,
- 'final_nll': 10.306326051984435,
- 'grad_norm': 0.02157181882728708,
- 'seconds': 5.867023967000023,
- 'coefficients': {'mRS_pre': {'Age': array([0.05656829])},
-  'NIHSSa': {'Age': array([-0.05678469]),
-   'mRS_pre': array([ 1.75016683,  1.35914739,  1.17283501,  1.37407605,  0.32035687,
-          -0.2437478 ])},
-  'T': {'Age': array([-0.03846955]),
-   'mRS_pre': array([0.63206531, 0.73061032, 0.42514592, 0.73216728, 0.06720937,
-          0.52997451]),
-   'NIHSSa': array([-0.01385679])},
-  'mRS_3m': {'Age': array([0.05378304]),
-   'mRS_pre': array([-1.39119876, -0.96593738, -0.78721175, -0.59823507,  1.12076307,
-           0.53399335]),
-   'NIHSSa': array([0.1636567]),
-   'T': array([-0.68821804, -1.63244317])}}}</pre>
+<pre>{'converged': True,
+ 'n_iter': 371,
+ 'final_nll': 1.0638615487870524,
+ 'grad_norm': 1.1110481036316356e-05,
+ 'seconds': 6.865651674999981,
+ 'coefficients': {'x2': {'x1': array([2.02992064])},
+  'x3': {'x1': array([0.00960108]), 'x2': array([0.3832743])}}}</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3aa68b51">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dcbcd3eb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3931,7 +3890,7 @@ one design rather than two different designs.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8d38c80b">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=723a0c41">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3949,35 +3908,26 @@ one design rather than two different designs.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">design</span> <span class="o">=</span> <span class="n">flow_s</span><span class="o">.</span><span class="n">design_matrix</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="s2">"mRS_3m"</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">OrderedModel</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="s2">"mRS_3m"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">design</span><span class="p">,</span> <span class="n">distr</span><span class="o">=</span><span class="s2">"logit"</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">design</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">design_matrix</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">OrderedModel</span><span class="p">(</span><span class="n">tm</span><span class="p">[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">design</span><span class="p">,</span> <span class="n">distr</span><span class="o">=</span><span class="s2">"logit"</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
     <span class="n">method</span><span class="o">=</span><span class="s2">"bfgs"</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
 
-<span class="n">fitted</span> <span class="o">=</span> <span class="n">flow_s</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"mRS_3m"</span><span class="p">]</span>
-<span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">(</span><span class="s2">"Age"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">fitted</span><span class="p">[</span><span class="s2">"Age"</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">"Age"</span><span class="p">]),</span>
-    <span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">fitted</span><span class="p">[</span><span class="s2">"NIHSSa"</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">"NIHSSa"</span><span class="p">]),</span>
-    <span class="p">(</span><span class="s2">"T (1 vs 0)"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">fitted</span><span class="p">[</span><span class="s2">"T"</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">fitted</span><span class="p">[</span><span class="s2">"T"</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">"T[1]"</span><span class="p">]),</span>
-<span class="p">]</span>
+<span class="n">fitted</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'coefficient'</span><span class="si">:</span><span class="s2">&lt;14</span><span class="si">}{</span><span class="s1">'fit_classical'</span><span class="si">:</span><span class="s2">&gt;14</span><span class="si">}{</span><span class="s1">'statsmodels'</span><span class="si">:</span><span class="s2">&gt;13</span><span class="si">}{</span><span class="s1">'|diff|'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a_</span><span class="p">,</span> <span class="n">b_</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">):</span>
+    <span class="n">a_</span><span class="p">,</span> <span class="n">b_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fitted</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;14</span><span class="si">}{</span><span class="n">a_</span><span class="si">:</span><span class="s2">&gt;14.4f</span><span class="si">}{</span><span class="n">b_</span><span class="si">:</span><span class="s2">&gt;13.4f</span><span class="si">}{</span><span class="nb">abs</span><span class="p">(</span><span class="n">a_</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">b_</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;9.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16">
-design = flow_s.design_matrix(obs, "mRS_3m", drop_first=True)
-res = OrderedModel(obs["mRS_3m"].astype(int), design, distr="logit").fit(
+<div class="clipboard-copy-txt" id="cell-16">design = flow_o.design_matrix(tm, "x3", drop_first=True)
+res = OrderedModel(tm["x3"].astype(int), design, distr="logit").fit(
     method="bfgs", disp=False
 )
 
-fitted = flow_s.ls_coefficients()["mRS_3m"]
-rows = [
-    ("Age", float(fitted["Age"][0]), res.params["Age"]),
-    ("NIHSSa", float(fitted["NIHSSa"][0]), res.params["NIHSSa"]),
-    ("T (1 vs 0)", float(fitted["T"][1] - fitted["T"][0]), res.params["T[1]"]),
-]
+fitted = flow_o.ls_coefficients()["x3"]
 print(f"{'coefficient':&lt;14}{'fit_classical':&gt;14}{'statsmodels':&gt;13}{'|diff|':&gt;9}")
-for name, a_, b_ in rows:
+for name in ("x1", "x2"):
+    a_, b_ = float(fitted[name][0]), res.params[name]
     print(f"{name:&lt;14}{a_:&gt;14.4f}{b_:&gt;13.4f}{abs(a_ - b_):&gt;9.4f}")</div>
 </div>
 </div>
@@ -3991,9 +3941,8 @@ for name, a_, b_ in rows:
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient    fit_classical  statsmodels   |diff|
-Age                   0.0538       0.0526   0.0012
-NIHSSa                0.1637       0.1630   0.0007
-T (1 vs 0)           -0.9442      -0.9424   0.0018
+x1                    0.0096       0.0097   0.0001
+x2                    0.3833       0.3832   0.0000
 </pre>
 </div>
 </div>
@@ -4001,20 +3950,20 @@ T (1 vs 0)           -0.9442      -0.9424   0.0018
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=73c2aed2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=45675418">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="standard-errors-and-what-is-actually-weakly-identified">Standard errors, and what is actually weakly identified<a class="anchor-link" href="#standard-errors-and-what-is-actually-weakly-identified">¶</a></h3><p>The helper from Section 1 needs no change: give it the node, and it builds the
-contrast for each ordinal parent. <code>statsmodels</code> reports the same quantities,
-so every number below has an external check.</p>
+<h3 id="standard-errors">Standard errors<a class="anchor-link" href="#standard-errors">¶</a></h3><p>The helper from Section 1 needs no change: give it the node, and
+<code>statsmodels</code> reports the same quantities, so every number below has an
+external check.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a89ff052">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=42eed79e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4032,43 +3981,45 @@ so every number below has an external check.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">table_s</span><span class="p">,</span> <span class="n">diag_s</span> <span class="o">=</span> <span class="n">ls_conf_int</span><span class="p">(</span><span class="n">flow_s</span><span class="p">,</span> <span class="s2">"mRS_3m"</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">table_o</span><span class="p">,</span> <span class="n">diag_o</span> <span class="o">=</span> <span class="n">ls_conf_int</span><span class="p">(</span><span class="n">flow_o</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">,</span> <span class="n">tm</span><span class="p">)</span>
 <span class="n">ci_sm</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">conf_int</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">''</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}{</span><span class="s1">'flow SE'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}{</span><span class="s1">'sm SE'</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}{</span><span class="s1">'|est|/SE'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">   "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">''</span><span class="si">:</span><span class="s2">&lt;6</span><span class="si">}{</span><span class="s1">'flow SE'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}{</span><span class="s1">'sm SE'</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}{</span><span class="s1">'|est|/SE'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">   "</span>
     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'flow 95%'</span><span class="si">:</span><span class="s2">&gt;18</span><span class="si">}{</span><span class="s1">'statsmodels 95%'</span><span class="si">:</span><span class="s2">&gt;20</span><span class="si">}</span><span class="s2">"</span>
 <span class="p">)</span>
-<span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"Age"</span><span class="p">,</span> <span class="s2">"Age"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="s2">"NIHSSa"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"T (1 vs 0)"</span><span class="p">,</span> <span class="s2">"T[1]"</span><span class="p">)]:</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}{</span><span class="n">r</span><span class="p">[</span><span class="s1">'se'</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;9.4f</span><span class="si">}{</span><span class="n">res</span><span class="o">.</span><span class="n">bse</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;8.4f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;6</span><span class="si">}{</span><span class="n">r</span><span class="p">[</span><span class="s1">'se'</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;9.4f</span><span class="si">}{</span><span class="n">res</span><span class="o">.</span><span class="n">bse</span><span class="p">[</span><span class="n">term</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;8.4f</span><span class="si">}</span><span class="s2">"</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'estimate'</span><span class="p">])</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="s1">'se'</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;10.2f</span><span class="si">}</span><span class="s2">   "</span>
         <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'lower'</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'upper'</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">]  "</span>
-        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">ci_sm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ci_sm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">ci_sm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ci_sm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">]"</span>
     <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">diag_s</span><span class="p">[</span><span class="s1">'n_params'</span><span class="p">]</span><span class="si">}</span><span class="s2"> parameters, </span><span class="si">{</span><span class="n">diag_s</span><span class="p">[</span><span class="s1">'n_flat'</span><span class="p">]</span><span class="si">}</span><span class="s2"> without curvature"</span>
-    <span class="s2">" — one per one-hot parent, mRS_pre and T"</span>
+
+<span class="n">se_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+    <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">])</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">bse</span><span class="p">[</span><span class="n">term</span><span class="p">]))</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">)</span>
 <span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span><span class="s2">"max |SE_flow - SE_statsmodels|"</span><span class="p">,</span> <span class="n">se_gap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17">table_s, diag_s = ls_conf_int(flow_s, "mRS_3m", obs)
+<div class="clipboard-copy-txt" id="cell-17">table_o, diag_o = ls_conf_int(flow_o, "x3", tm)
 ci_sm = res.conf_int()
 print(
-    f"{'':&lt;12}{'flow SE':&gt;9}{'sm SE':&gt;8}{'|est|/SE':&gt;10}   "
+    f"{'':&lt;6}{'flow SE':&gt;9}{'sm SE':&gt;8}{'|est|/SE':&gt;10}   "
     f"{'flow 95%':&gt;18}{'statsmodels 95%':&gt;20}"
 )
-for term, key in [("Age", "Age"), ("NIHSSa", "NIHSSa"), ("T (1 vs 0)", "T[1]")]:
-    r = table_s.loc[term]
+for term in ("x1", "x2"):
+    r = table_o.loc[term]
     print(
-        f"{term:&lt;12}{r['se']:&gt;9.4f}{res.bse[key]:&gt;8.4f}"
+        f"{term:&lt;6}{r['se']:&gt;9.4f}{res.bse[term]:&gt;8.4f}"
         f"{abs(r['estimate']) / r['se']:&gt;10.2f}   "
         f"[{r['lower']:+.3f}, {r['upper']:+.3f}]  "
-        f"[{ci_sm.loc[key, 0]:+.3f}, {ci_sm.loc[key, 1]:+.3f}]"
+        f"[{ci_sm.loc[term, 0]:+.3f}, {ci_sm.loc[term, 1]:+.3f}]"
     )
-print(
-    f"\n{diag_s['n_params']} parameters, {diag_s['n_flat']} without curvature"
-    " — one per one-hot parent, mRS_pre and T"
-)</div>
+
+se_gap = max(
+    abs(float(table_o.loc[term, "se"]) - float(res.bse[term])) for term in ("x1", "x2")
+)
+claim("max |SE_flow - SE_statsmodels|", se_gap, 1e-3)</div>
 </div>
 </div>
 </div>
@@ -4080,20 +4031,32 @@ print(
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>              flow SE   sm SE  |est|/SE             flow 95%     statsmodels 95%
-Age            0.0050  0.0050     10.83   [+0.044, +0.064]  [+0.043, +0.062]
-NIHSSa         0.0090  0.0090     18.10   [+0.146, +0.181]  [+0.145, +0.181]
-T (1 vs 0)     0.1410  0.1407      6.70   [-1.220, -0.668]  [-1.218, -0.667]
-
-16 parameters, 2 without curvature — one per one-hot parent, mRS_pre and T
+<pre>        flow SE   sm SE  |est|/SE             flow 95%     statsmodels 95%
+x1       0.1080  0.1080      0.09   [-0.202, +0.221]  [-0.202, +0.221]
+x2       0.0735  0.0735      5.21   [+0.239, +0.527]  [+0.239, +0.527]
+ok  max |SE_flow - SE_statsmodels|: 1.38e-06 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a71249ca">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>The standard errors agree with <code>statsmodels</code>. The <code>|diff|</code> column above is
+not evidence about identification: it is the optimizer stopping while the
+likelihood is still flat, and the cell below checks that the gap stays a
+small fraction of one standard error.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bf879213">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4db42118">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4111,294 +4074,23 @@ T (1 vs 0)     0.1410  0.1407      6.70   [-1.220, -0.668]  [-1.218, -0.667]
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">se_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">])</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">bse</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
-    <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"Age"</span><span class="p">,</span> <span class="s2">"Age"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="s2">"NIHSSa"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"T (1 vs 0)"</span><span class="p">,</span> <span class="s2">"T[1]"</span><span class="p">)]</span>
-<span class="p">)</span>
-<span class="n">claim</span><span class="p">(</span><span class="s2">"max |SE_flow - SE_statsmodels|"</span><span class="p">,</span> <span class="n">se_gap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
-
-<span class="c1"># the ranking is the claim, not the ratio: the treatment is the best determined</span>
-<span class="c1"># coefficient of the three, and which one that is must not depend on a seed</span>
-<span class="n">ratios</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">term</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"estimate"</span><span class="p">])</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">]))</span>
-    <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Age"</span><span class="p">,</span> <span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="s2">"T (1 vs 0)"</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"|estimate| / SE:"</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ratios</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
-<span class="c1"># The claim the next section rests on: none of these three is the weak one, so</span>
-<span class="c1"># the weak coefficient has to be found elsewhere. Two standard errors from zero</span>
-<span class="c1"># is the conventional line.</span>
-<span class="k">assert</span> <span class="nb">min</span><span class="p">(</span><span class="n">ratios</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"one of these is not well determined: </span><span class="si">{</span><span class="n">ratios</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-18">se_gap = max(
-    abs(float(table_s.loc[term, "se"]) - float(res.bse[key]))
-    for term, key in [("Age", "Age"), ("NIHSSa", "NIHSSa"), ("T (1 vs 0)", "T[1]")]
-)
-claim("max |SE_flow - SE_statsmodels|", se_gap, 1e-3)
-
-# the ranking is the claim, not the ratio: the treatment is the best determined
-# coefficient of the three, and which one that is must not depend on a seed
-ratios = {
-    term: abs(float(table_s.loc[term, "estimate"]) / float(table_s.loc[term, "se"]))
-    for term in ("Age", "NIHSSa", "T (1 vs 0)")
-}
-print("|estimate| / SE:", {k: round(v, 2) for k, v in ratios.items()})
-# The claim the next section rests on: none of these three is the weak one, so
-# the weak coefficient has to be found elsewhere. Two standard errors from zero
-# is the conventional line.
-assert min(ratios.values()) &gt; 2.0, f"one of these is not well determined: {ratios}"</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>ok  max |SE_flow - SE_statsmodels|: 2.14e-04 &lt;= 1.00e-03
-|estimate| / SE: {'Age': 10.83, 'NIHSSa': 18.1, 'T (1 vs 0)': 6.7}
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=93ce5e36">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The standard errors agree with <code>statsmodels</code>, and all three coefficients sit
-well clear of zero. The treatment effect is therefore not the uncertain one
-here, whatever the ordering of the three happens to be.</p>
-<p>To find the weak one, look at every <code>mRS_pre</code> level instead of only the
-first, and print how many rows carry it.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1c153755">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">hess_s</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">offsets_s</span> <span class="o">=</span> <span class="n">observed_information</span><span class="p">(</span><span class="n">flow_s</span><span class="p">,</span> <span class="s2">"mRS_3m"</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
-<span class="n">cov_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">hess_s</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">)</span>
-<span class="n">at</span> <span class="o">=</span> <span class="n">offsets_s</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">offsets_s</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"shifts.mRS_pre"</span><span class="p">))]</span>
-<span class="n">w_pre</span> <span class="o">=</span> <span class="n">flow_s</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"mRS_3m"</span><span class="p">][</span><span class="s2">"mRS_pre"</span><span class="p">]</span>
-<span class="n">counts</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="s2">"mRS_pre"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'level'</span><span class="si">:</span><span class="s2">&gt;6</span><span class="si">}{</span><span class="s1">'rows'</span><span class="si">:</span><span class="s2">&gt;7</span><span class="si">}{</span><span class="s1">'estimate'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}{</span><span class="s1">'SE'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}{</span><span class="s1">'|est|/SE'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">   95% CI"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">hess_s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">c</span><span class="p">[</span><span class="n">at</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">at</span> <span class="o">+</span> <span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>  <span class="c1"># w[level] - w[0]</span>
-    <span class="n">est</span> <span class="o">=</span> <span class="n">w_pre</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">-</span> <span class="n">w_pre</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">se</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">@</span> <span class="n">cov_s</span> <span class="o">@</span> <span class="n">c</span><span class="p">))</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"|grad| at the classical optimum: </span><span class="si">{</span><span class="n">diag_o</span><span class="p">[</span><span class="s1">'grad_norm'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">):</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"estimate"</span><span class="p">])</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">term</span><span class="p">]))</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">level</span><span class="si">:</span><span class="s2">&gt;6</span><span class="si">}{</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">level</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;7</span><span class="si">}{</span><span class="n">est</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}{</span><span class="n">se</span><span class="si">:</span><span class="s2">&gt;9.4f</span><span class="si">}</span><span class="s2">"</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">est</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">se</span><span class="si">:</span><span class="s2">&gt;10.2f</span><span class="si">}</span><span class="s2">   [</span><span class="si">{</span><span class="n">est</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.96</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">se</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">est</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.96</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">se</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">]"</span>
-    <span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-19">hess_s, _, offsets_s = observed_information(flow_s, "mRS_3m", obs)
-cov_s = np.linalg.pinv(hess_s, rcond=1e-7)
-at = offsets_s[next(n for n in offsets_s if n.startswith("shifts.mRS_pre"))]
-w_pre = flow_s.ls_coefficients()["mRS_3m"]["mRS_pre"]
-counts = obs["mRS_pre"].value_counts()
-
-print(f"{'level':&gt;6}{'rows':&gt;7}{'estimate':&gt;10}{'SE':&gt;9}{'|est|/SE':&gt;10}   95% CI")
-for level in range(1, 6):
-    c = np.zeros(hess_s.shape[0])
-    c[at], c[at + level] = -1.0, 1.0  # w[level] - w[0]
-    est = w_pre[level] - w_pre[0]
-    se = float(np.sqrt(c @ cov_s @ c))
-    print(
-        f"{level:&gt;6}{counts.get(level, 0):&gt;7}{est:&gt;10.4f}{se:&gt;9.4f}"
-        f"{abs(est) / se:&gt;10.2f}   [{est - 1.96 * se:+.3f}, {est + 1.96 * se:+.3f}]"
-    )</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre> level   rows  estimate       SE  |est|/SE   95% CI
-     1    273    0.4253   0.1341      3.17   [+0.162, +0.688]
-     2    166    0.6040   0.1633      3.70   [+0.284, +0.924]
-     3    107    0.7930   0.1923      4.12   [+0.416, +1.170]
-     4     41    2.5120   0.4154      6.05   [+1.698, +3.326]
-     5      7    1.9252   0.8986      2.14   [+0.164, +3.687]
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8c2de73b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The rarest level has the widest interval. That is what a weakly identified
-coefficient looks like, and the second column shows the cause: too few rows
-carry it. The relationship is the claim, so the cell below checks it rather
-than quoting one run's numbers.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b1961075">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">by_level</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">hess_s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">c</span><span class="p">[</span><span class="n">at</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">at</span> <span class="o">+</span> <span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>
-    <span class="n">by_level</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
-        <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">@</span> <span class="n">cov_s</span> <span class="o">@</span> <span class="n">c</span><span class="p">)),</span>
-    <span class="p">)</span>
-<span class="n">rarest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">by_level</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">by_level</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">widest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">by_level</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">by_level</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rarest level: </span><span class="si">{</span><span class="n">rarest</span><span class="si">}</span><span class="s2">   widest standard error: level </span><span class="si">{</span><span class="n">widest</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">rarest</span> <span class="o">==</span> <span class="n">widest</span><span class="p">,</span> <span class="p">(</span>
-    <span class="sa">f</span><span class="s2">"level </span><span class="si">{</span><span class="n">rarest</span><span class="si">}</span><span class="s2"> has the fewest rows but level </span><span class="si">{</span><span class="n">widest</span><span class="si">}</span><span class="s2"> has the widest "</span>
-    <span class="s2">"interval, so row count is no longer what drives the uncertainty"</span>
-<span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-20">by_level = {}
-for level in range(1, 6):
-    c = np.zeros(hess_s.shape[0])
-    c[at], c[at + level] = -1.0, 1.0
-    by_level[level] = (
-        int(counts.get(level, 0)),
-        float(np.sqrt(c @ cov_s @ c)),
-    )
-rarest = min(by_level, key=lambda k: by_level[k][0])
-widest = max(by_level, key=lambda k: by_level[k][1])
-print(f"rarest level: {rarest}   widest standard error: level {widest}")
-assert rarest == widest, (
-    f"level {rarest} has the fewest rows but level {widest} has the widest "
-    "interval, so row count is no longer what drives the uncertainty"
-)</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>rarest level: 5   widest standard error: level 5
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8c412690">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The same slack explains the <code>|diff|</code> column above. The gap between the flow
-and <code>statsmodels</code> is not evidence about identification. It is the optimizer
-stopping while the likelihood is still flat, and the displacement that
-causes is $c^\top I^{+}\nabla\ell$. The cell below computes that
-displacement and checks it against the observed difference, which turns a
-hand-checked coincidence into a pinned identity. <code>Age</code> looks worse than <code>T</code>
-only because its standard error is smaller, so the same numerical slack is a
-larger fraction of it.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4c5e4e73">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-21">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"|grad| at the classical optimum: </span><span class="si">{</span><span class="n">diag_s</span><span class="p">[</span><span class="s1">'grad_norm'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"Age"</span><span class="p">,</span> <span class="s2">"Age"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="s2">"NIHSSa"</span><span class="p">)]:</span>
-    <span class="n">observed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"estimate"</span><span class="p">])</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2"> |flow - statsmodels| = </span><span class="si">{</span><span class="n">observed</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span>
-        <span class="sa">f</span><span class="s2">"   = </span><span class="si">{</span><span class="n">observed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">table_s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span><span class="w"> </span><span class="s1">'se'</span><span class="p">])</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> of one SE"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;4</span><span class="si">}</span><span class="s2"> |flow - statsmodels| = </span><span class="si">{</span><span class="n">observed</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"   = </span><span class="si">{</span><span class="n">observed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span><span class="w"> </span><span class="s1">'se'</span><span class="p">])</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> of one SE"</span>
     <span class="p">)</span>
     <span class="n">claim</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">: gap against statsmodels"</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="mf">5e-2</span><span class="p">)</span>
-<span class="c1">#</span>
-<span class="c1"># `experiments/misc/validate_ls.py` runs this comparison as a checked</span>
-<span class="c1"># experiment, and adds R (`MASS::polr` / `tram`) and the treatment effect. Its</span>
-<span class="c1"># docstring records the same finding about `mRS_pre` level 5.</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-21">print(f"|grad| at the classical optimum: {diag_s['grad_norm']:.1e}")
-for term, key in [("Age", "Age"), ("NIHSSa", "NIHSSa")]:
-    observed = abs(float(table_s.loc[term, "estimate"]) - float(res.params[key]))
+<div class="clipboard-copy-txt" id="cell-18">print(f"|grad| at the classical optimum: {diag_o['grad_norm']:.1e}")
+for term in ("x1", "x2"):
+    observed = abs(float(table_o.loc[term, "estimate"]) - float(res.params[term]))
     print(
-        f"{term:&lt;8} |flow - statsmodels| = {observed:.2e}"
-        f"   = {observed / float(table_s.loc[term, 'se']):.0%} of one SE"
+        f"{term:&lt;4} |flow - statsmodels| = {observed:.2e}"
+        f"   = {observed / float(table_o.loc[term, 'se']):.0%} of one SE"
     )
-    claim(f"{term}: gap against statsmodels", observed, 5e-2)
-#
-# `experiments/misc/validate_ls.py` runs this comparison as a checked
-# experiment, and adds R (`MASS::polr` / `tram`) and the treatment effect. Its
-# docstring records the same finding about `mRS_pre` level 5.</div>
+    claim(f"{term}: gap against statsmodels", observed, 5e-2)</div>
 </div>
 </div>
 </div>
@@ -4410,11 +4102,11 @@ for term, key in [("Age", "Age"), ("NIHSSa", "NIHSSa")]:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>|grad| at the classical optimum: 9.7e+00
-Age      |flow - statsmodels| = 1.23e-03   = 25% of one SE
-ok  Age: gap against statsmodels: 1.23e-03 &lt;= 5.00e-02
-NIHSSa   |flow - statsmodels| = 6.68e-04   = 7% of one SE
-ok  NIHSSa: gap against statsmodels: 6.68e-04 &lt;= 5.00e-02
+<pre>|grad| at the classical optimum: 1.7e-02
+x1   |flow - statsmodels| = 5.58e-05   = 0% of one SE
+ok  x1: gap against statsmodels: 5.58e-05 &lt;= 5.00e-02
+x2   |flow - statsmodels| = 2.51e-05   = 0% of one SE
+ok  x2: gap against statsmodels: 2.51e-05 &lt;= 5.00e-02
 </pre>
 </div>
 </div>
@@ -4422,7 +4114,7 @@ ok  NIHSSa: gap against statsmodels: 6.68e-04 &lt;= 5.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=91218c27">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4c97c1d9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4440,15 +4132,15 @@ initialization for further or richer training).</li>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1423c6e1">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=80cfeb52">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-22">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4458,27 +4150,27 @@ initialization for further or richer training).</li>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_s</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"mRS_3m"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 <span class="c1"># continue training from the classical solution with a gentle Adam phase</span>
-<span class="n">flow_s</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
-<span class="n">after</span> <span class="o">=</span> <span class="n">flow_s</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"mRS_3m"</span><span class="p">]</span>
+<span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="n">after</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"coefficient drift after 300 more Adam epochs from the classical MLE:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"Age"</span><span class="p">,</span> <span class="s2">"NIHSSa"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">]:</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">]:</span>
     <span class="n">d</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">-</span> <span class="n">before</span><span class="p">[</span><span class="n">p</span><span class="p">])</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2"> max|Δ| = </span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">-&gt; small drift = the classical fit was already at the optimum;"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"   fit_classical is a valid warm start for continued / flexible training."</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-22">before = {k: v.copy() for k, v in flow_s.ls_coefficients()["mRS_3m"].items()}
+<div class="clipboard-copy-txt" id="cell-19">before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
 # continue training from the classical solution with a gentle Adam phase
-flow_s.fit(obs, epochs=300, learning_rate=1e-3, batch_size=256)
-after = flow_s.ls_coefficients()["mRS_3m"]
+flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
+after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")
-for p in ["Age", "NIHSSa", "T"]:
+for p in ["x1", "x2"]:
     d = float(np.abs(after[p] - before[p]).max())
     print(f"  {p:&lt;8} max|Δ| = {d:.4f}")
 print("\n-&gt; small drift = the classical fit was already at the optimum;")
@@ -4495,9 +4187,8 @@ print("   fit_classical is a valid warm start for continued / flexible training.
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient drift after 300 more Adam epochs from the classical MLE:
-  Age      max|Δ| = 0.0002
-  NIHSSa   max|Δ| = 0.0000
-  T        max|Δ| = 0.0157
+  x1       max|Δ| = 0.0028
+  x2       max|Δ| = 0.0013
 
 -&gt; small drift = the classical fit was already at the optimum;
    fit_classical is a valid warm start for continued / flexible training.

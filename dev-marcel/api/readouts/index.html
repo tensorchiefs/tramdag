@@ -457,34 +457,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../scores/" class="md-nav__link">
         
   
@@ -1578,6 +1550,555 @@ the meta-adjacency view (<code>to_matrix</code>) and the classical design matrix
 
 
 
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutsMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The stateless read-outs, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shift_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Evaluate one fitted shift term on a 1-D grid of parent values.</span>
+
+<span class="sd">        The parent runs over ``grid`` with the term's other inputs absent, so the</span>
+<span class="sd">        term must read exactly this one parent (an ``LS`` or one-parent ``CS``).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        node : str</span>
+<span class="sd">            Name of the node that carries the term.</span>
+<span class="sd">        parent : str</span>
+<span class="sd">            The term's key in the node's shifts: the parent's name.</span>
+<span class="sd">        grid : array-like</span>
+<span class="sd">            Parent values at which to evaluate the term, shape ``(m,)``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The shift values, shape ``(m,)`` — the curve a replication plots</span>
+<span class="sd">            against the data-generating truth.</span>
+<span class="sd">        """</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no shift term keyed </span><span class="si">{</span><span class="n">parent</span><span class="si">!r}</span><span class="s2">; "</span>
+                <span class="sa">f</span><span class="s2">"available: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+            <span class="c1"># a domain error (wrong parent kind), not a Python type error</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">parent</span><span class="si">!r}</span><span class="s2"> is an ordinal parent, so it enters the term "</span>
+                <span class="s2">"one-hot over all its levels and a 1-D grid of level indices "</span>
+                <span class="s2">"is not its input. Read its effect with ls_coefficients() "</span>
+                <span class="s2">"instead, whose weights are the level contrasts."</span>
+            <span class="p">)</span>
+        <span class="c1"># copy, like `_tensorize`: torch warns on a non-writable numpy array,</span>
+        <span class="c1"># which a broadcast or read-only grid is</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grid</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># through the term's own evaluation, so Fn and custom terms work too</span>
+        <span class="n">curve</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">shift_value</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="p">{</span><span class="n">parent</span><span class="p">:</span> <span class="n">x</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">curve</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">varying_coef</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.</span>
+
+<span class="sd">        The value is ``beta0 + b_theta(modifiers)``, in closed form from the</span>
+<span class="sd">        fitted term; only the modifier columns of ``df`` are read. It lives on</span>
+<span class="sd">        the node's latent scale.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Rows at which to evaluate ``beta``. Must contain every modifier</span>
+<span class="sd">            column of the term.</span>
+<span class="sd">        node : str</span>
+<span class="sd">            Name of the node that carries the VC term.</span>
+<span class="sd">        t : str | None, optional</span>
+<span class="sd">            Treatment name of the VC term. Optional when the node has</span>
+<span class="sd">            exactly one VC term.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The ``beta`` values, shape ``(n,)``. Constant when the term has</span>
+<span class="sd">            no modifiers.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``node`` is unknown, if the node has no VC term on ``t``, or</span>
+<span class="sd">            if a modifier column is missing from ``df``.</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the node has no VC term, or if ``t`` is omitted while the</span>
+<span class="sd">            node has several VC terms.</span>
+<span class="sd">        """</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">vcs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">mods</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">VaryingCoefficientModule</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vcs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no VC term."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has several VC terms (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span><span class="si">}</span><span class="s2">); "</span>
+                    <span class="s2">"pass t=&lt;treatment name&gt;"</span>
+                <span class="p">)</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">vcs</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vcs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no VC term on </span><span class="si">{</span><span class="n">t</span><span class="si">!r}</span><span class="s2"> (has </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="n">mods</span> <span class="o">=</span> <span class="n">vcs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">mod_feat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">mods</span><span class="p">:</span>
+            <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">mods</span><span class="p">))</span>
+            <span class="n">mod_feat</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">net_input</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">mods</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">mod_feat</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ls_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Give the per-node linear-shift weights.</span>
+
+<span class="sd">        A continuous parent has one weight. An ordinal parent has one weight</span>
+<span class="sd">        per level (its one-hot encoding), identified only up to a common</span>
+<span class="sd">        constant, so read them as differences ``w[k] - w[0]``. Only ``LS``</span>
+<span class="sd">        terms have a weight; ``CS`` and ``VC`` shifts are skipped.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict[str, dict[str, np.ndarray]]</span>
+<span class="sd">            The weights, as ``{node: {parent: array}}``. A node without</span>
+<span class="sd">            linear-shift terms is absent.</span>
+<span class="sd">        """</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
+            <span class="n">linear</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">parent</span><span class="p">:</span> <span class="n">module</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">LinearShiftModule</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">linear</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">linear</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Give the labeled adjacency matrix of term effects.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            Rows are parents and columns are children. A cell holds the</span>
+<span class="sd">            term tag: ``"LS"``, ``"CS"``, ``"CI"``, ``"VC"`` for a VC</span>
+<span class="sd">            treatment, or ``"VCm"`` for a VC modifier. An empty cell means</span>
+<span class="sd">            there is no edge. A multi-parent term carries its parent group</span>
+<span class="sd">            as a suffix. When several terms share a cell, their tags join</span>
+<span class="sd">            with ``"+"``.</span>
+<span class="sd">        """</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">child</span><span class="p">]</span><span class="o">.</span><span class="n">terms</span><span class="p">:</span>
+                <span class="c1"># a VC modifier may share its cell with an edge-owning term</span>
+                <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">joint</span> <span class="ow">in</span> <span class="n">term</span><span class="o">.</span><span class="n">cells</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">joint</span><span class="p">:</span>
+                        <span class="n">tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag</span><span class="si">}{</span><span class="nb">list</span><span class="p">(</span><span class="n">term</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="n">cur</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">child</span><span class="p">]</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cur</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">cur</span> <span class="k">else</span> <span class="n">tag</span>
+        <span class="k">return</span> <span class="n">m</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">intercept_contributions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Decompose a complex intercept into mean-centered per-parent parts.</span>
+
+<span class="sd">        Each network's output over the rows of ``df`` is centered to mean zero</span>
+<span class="sd">        per parameter; the removed means collect into ``baseline``, so</span>
+<span class="sd">        $\vartheta(\mathrm{pa}) = \text{baseline} + \sum \text{contributions}$ exactly.</span>
+<span class="sd">        Post-hoc only: it reads the fitted weights and changes nothing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Rows over which to center and at which to evaluate the</span>
+<span class="sd">            contributions. Must contain every intercept-parent column.</span>
+<span class="sd">        node : str</span>
+<span class="sd">            Name of a node with at least one complex-intercept (``I``) term</span>
+<span class="sd">            that has parents.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Three keys. ``"baseline"`` is the absorbed constant, a ``(P,)``</span>
+<span class="sd">            array — the sum of the per-term means. ``P`` is the node's</span>
+<span class="sd">            transform-parameter count: ``ut.n_params`` for a continuous</span>
+<span class="sd">            node, ``levels - 1`` cutpoint parameters for an ordinal node.</span>
+<span class="sd">            ``"contributions"`` is ``{term_label: (n, P) array}`` — each</span>
+<span class="sd">            term's mean-centered contribution at each row, columns summing</span>
+<span class="sd">            to about zero over the rows. ``term_label`` is the term's</span>
+<span class="sd">            parents joined by ``"+"``. ``"parents"`` is</span>
+<span class="sd">            ``{term_label: tuple(parent_names)}``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``node`` is unknown, or if an intercept-parent column is</span>
+<span class="sd">            missing from ``df``.</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the node has no complex-intercept term with parents.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        An additive intercept holds one network per parent group in its</span>
+<span class="sd">        ``nets``; a single intercept term, joint or not, is itself the one</span>
+<span class="sd">        network. The contributions live in the transform's unconstrained</span>
+<span class="sd">        parameter space, before the monotonicity constraint.</span>
+<span class="sd">        """</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">groups</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no complex-intercept (I) terms with parents. "</span>
+                <span class="s2">"Its intercept is unconditional, so there is nothing to decompose."</span>
+            <span class="p">)</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">ci_parents</span><span class="p">))</span>
+        <span class="c1"># one net per group: the additive intercept holds them in `nets`, every</span>
+        <span class="c1"># other intercept is itself the one network</span>
+        <span class="n">nets</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="p">,</span> <span class="s2">"nets"</span><span class="p">,</span> <span class="p">[</span><span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="p">])</span>
+
+        <span class="n">contributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">parents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">baseline</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">grp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nets</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">net_input</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">grp</span><span class="p">,</span> <span class="s2">"@I"</span><span class="p">))</span>  <span class="c1"># (n, P)</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># (1, P)</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="s2">"+"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+            <span class="n">contributions</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">parents</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">grp</span>
+            <span class="n">baseline</span> <span class="o">=</span> <span class="n">mean</span> <span class="k">if</span> <span class="n">baseline</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">baseline</span> <span class="o">+</span> <span class="n">mean</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"baseline"</span><span class="p">:</span> <span class="n">baseline</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+            <span class="s2">"contributions"</span><span class="p">:</span> <span class="n">contributions</span><span class="p">,</span>
+            <span class="s2">"parents"</span><span class="p">:</span> <span class="n">parents</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">design_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">drop_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Encode a node's parents the way the flow feeds them to its shifts.</span>
+
+<span class="sd">        A continuous parent stays raw in one column named after it. An</span>
+<span class="sd">        ordinal parent becomes one column per level, named</span>
+<span class="sd">        ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.</span>
+
+<span class="sd">        Use ``drop_first=True`` to get the design a classical reference</span>
+<span class="sd">        expects (``statsmodels`` ``OrderedModel``, R ``polr``): with</span>
+<span class="sd">        cutpoints the full one-hot is unidentified, so each ordinal parent's</span>
+<span class="sd">        level-0 column drops out and its remaining coefficients read as</span>
+<span class="sd">        differences against level 0 — exactly what ``w[k] - w[0]`` gives on</span>
+<span class="sd">        the flow side.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Rows to encode. Must contain every parent column of ``node``.</span>
+<span class="sd">        node : str</span>
+<span class="sd">            Name of the node whose parents are encoded.</span>
+<span class="sd">        drop_first : bool, optional</span>
+<span class="sd">            Drop each ordinal parent's level-0 column, by default ``False``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            One column per encoded feature, indexed like ``df``.</span>
+<span class="sd">        """</span>
+        <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nd</span><span class="o">.</span><span class="n">parents</span><span class="p">))</span>
+        <span class="n">cols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>  <span class="c1"># raw</span>
+                <span class="n">cols</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">drop_first</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
 
 
 
@@ -1697,6 +2218,95 @@ against the data-generating truth.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shift_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Evaluate one fitted shift term on a 1-D grid of parent values.</span>
+
+<span class="sd">    The parent runs over ``grid`` with the term's other inputs absent, so the</span>
+<span class="sd">    term must read exactly this one parent (an ``LS`` or one-parent ``CS``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    node : str</span>
+<span class="sd">        Name of the node that carries the term.</span>
+<span class="sd">    parent : str</span>
+<span class="sd">        The term's key in the node's shifts: the parent's name.</span>
+<span class="sd">    grid : array-like</span>
+<span class="sd">        Parent values at which to evaluate the term, shape ``(m,)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        The shift values, shape ``(m,)`` — the curve a replication plots</span>
+<span class="sd">        against the data-generating truth.</span>
+<span class="sd">    """</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no shift term keyed </span><span class="si">{</span><span class="n">parent</span><span class="si">!r}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"available: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
+        <span class="c1"># a domain error (wrong parent kind), not a Python type error</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">parent</span><span class="si">!r}</span><span class="s2"> is an ordinal parent, so it enters the term "</span>
+            <span class="s2">"one-hot over all its levels and a 1-D grid of level indices "</span>
+            <span class="s2">"is not its input. Read its effect with ls_coefficients() "</span>
+            <span class="s2">"instead, whose weights are the level contrasts."</span>
+        <span class="p">)</span>
+    <span class="c1"># copy, like `_tensorize`: torch warns on a non-writable numpy array,</span>
+    <span class="c1"># which a broadcast or read-only grid is</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grid</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># through the term's own evaluation, so Fn and custom terms work too</span>
+    <span class="n">curve</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span><span class="o">.</span><span class="n">shift_value</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="p">{</span><span class="n">parent</span><span class="p">:</span> <span class="n">x</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">curve</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1844,6 +2454,127 @@ node has several VC terms.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">varying_coef</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.</span>
+
+<span class="sd">    The value is ``beta0 + b_theta(modifiers)``, in closed form from the</span>
+<span class="sd">    fitted term; only the modifier columns of ``df`` are read. It lives on</span>
+<span class="sd">    the node's latent scale.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Rows at which to evaluate ``beta``. Must contain every modifier</span>
+<span class="sd">        column of the term.</span>
+<span class="sd">    node : str</span>
+<span class="sd">        Name of the node that carries the VC term.</span>
+<span class="sd">    t : str | None, optional</span>
+<span class="sd">        Treatment name of the VC term. Optional when the node has</span>
+<span class="sd">        exactly one VC term.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        The ``beta`` values, shape ``(n,)``. Constant when the term has</span>
+<span class="sd">        no modifiers.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If ``node`` is unknown, if the node has no VC term on ``t``, or</span>
+<span class="sd">        if a modifier column is missing from ``df``.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the node has no VC term, or if ``t`` is omitted while the</span>
+<span class="sd">        node has several VC terms.</span>
+<span class="sd">    """</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">vcs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">mods</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">VaryingCoefficientModule</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">vcs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no VC term."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has several VC terms (</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span><span class="si">}</span><span class="s2">); "</span>
+                <span class="s2">"pass t=&lt;treatment name&gt;"</span>
+            <span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">vcs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vcs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no VC term on </span><span class="si">{</span><span class="n">t</span><span class="si">!r}</span><span class="s2"> (has </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vcs</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="n">mods</span> <span class="o">=</span> <span class="n">vcs</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+    <span class="n">mod_feat</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">mods</span><span class="p">:</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">mods</span><span class="p">))</span>
+        <span class="n">mod_feat</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">net_input</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">mods</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nd</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">mod_feat</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1892,6 +2623,59 @@ linear-shift terms is absent.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ls_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Give the per-node linear-shift weights.</span>
+
+<span class="sd">    A continuous parent has one weight. An ordinal parent has one weight</span>
+<span class="sd">    per level (its one-hot encoding), identified only up to a common</span>
+<span class="sd">    constant, so read them as differences ``w[k] - w[0]``. Only ``LS``</span>
+<span class="sd">    terms have a weight; ``CS`` and ``VC`` shifts are skipped.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict[str, dict[str, np.ndarray]]</span>
+<span class="sd">        The weights, as ``{node: {parent: array}}``. A node without</span>
+<span class="sd">        linear-shift terms is absent.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">parent</span><span class="p">:</span> <span class="n">module</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">shifts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">LinearShiftModule</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">linear</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">linear</span>
+    <span class="k">return</span> <span class="n">out</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1940,6 +2724,55 @@ with <code>"+"</code>.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Give the labeled adjacency matrix of term effects.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        Rows are parents and columns are children. A cell holds the</span>
+<span class="sd">        term tag: ``"LS"``, ``"CS"``, ``"CI"``, ``"VC"`` for a VC</span>
+<span class="sd">        treatment, or ``"VCm"`` for a VC modifier. An empty cell means</span>
+<span class="sd">        there is no edge. A multi-parent term carries its parent group</span>
+<span class="sd">        as a suffix. When several terms share a cell, their tags join</span>
+<span class="sd">        with ``"+"``.</span>
+<span class="sd">    """</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">child</span><span class="p">]</span><span class="o">.</span><span class="n">terms</span><span class="p">:</span>
+            <span class="c1"># a VC modifier may share its cell with an edge-owning term</span>
+            <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">joint</span> <span class="ow">in</span> <span class="n">term</span><span class="o">.</span><span class="n">cells</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">joint</span><span class="p">:</span>
+                    <span class="n">tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag</span><span class="si">}{</span><span class="nb">list</span><span class="p">(</span><span class="n">term</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">cur</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">child</span><span class="p">]</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cur</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">cur</span> <span class="k">else</span> <span class="n">tag</span>
+    <span class="k">return</span> <span class="n">m</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -1960,8 +2793,8 @@ with <code>"+"</code>.</p>
         <p>Decompose a complex intercept into mean-centered per-parent parts.</p>
 <p>Each network's output over the rows of <code>df</code> is centered to mean zero
 per parameter; the removed means collect into <code>baseline</code>, so
-<code>theta(pa) = baseline + sum of the contributions</code> exactly. Post-hoc
-only: it reads the fitted weights and changes nothing.</p>
+<span class="arithmatex">\(\vartheta(\mathrm{pa}) = \text{baseline} + \sum \text{contributions}\)</span> exactly.
+Post-hoc only: it reads the fitted weights and changes nothing.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2086,6 +2919,155 @@ network. The contributions live in the transform's unconstrained
 parameter space, before the monotonicity constraint.</p>
 </details>
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">intercept_contributions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Decompose a complex intercept into mean-centered per-parent parts.</span>
+
+<span class="sd">    Each network's output over the rows of ``df`` is centered to mean zero</span>
+<span class="sd">    per parameter; the removed means collect into ``baseline``, so</span>
+<span class="sd">    $\vartheta(\mathrm{pa}) = \text{baseline} + \sum \text{contributions}$ exactly.</span>
+<span class="sd">    Post-hoc only: it reads the fitted weights and changes nothing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Rows over which to center and at which to evaluate the</span>
+<span class="sd">        contributions. Must contain every intercept-parent column.</span>
+<span class="sd">    node : str</span>
+<span class="sd">        Name of a node with at least one complex-intercept (``I``) term</span>
+<span class="sd">        that has parents.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Three keys. ``"baseline"`` is the absorbed constant, a ``(P,)``</span>
+<span class="sd">        array — the sum of the per-term means. ``P`` is the node's</span>
+<span class="sd">        transform-parameter count: ``ut.n_params`` for a continuous</span>
+<span class="sd">        node, ``levels - 1`` cutpoint parameters for an ordinal node.</span>
+<span class="sd">        ``"contributions"`` is ``{term_label: (n, P) array}`` — each</span>
+<span class="sd">        term's mean-centered contribution at each row, columns summing</span>
+<span class="sd">        to about zero over the rows. ``term_label`` is the term's</span>
+<span class="sd">        parents joined by ``"+"``. ``"parents"`` is</span>
+<span class="sd">        ``{term_label: tuple(parent_names)}``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If ``node`` is unknown, or if an intercept-parent column is</span>
+<span class="sd">        missing from ``df``.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the node has no complex-intercept term with parents.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    An additive intercept holds one network per parent group in its</span>
+<span class="sd">    ``nets``; a single intercept term, joint or not, is itself the one</span>
+<span class="sd">    network. The contributions live in the transform's unconstrained</span>
+<span class="sd">    parameter space, before the monotonicity constraint.</span>
+<span class="sd">    """</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">groups</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">groups</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> has no complex-intercept (I) terms with parents. "</span>
+            <span class="s2">"Its intercept is unconditional, so there is nothing to decompose."</span>
+        <span class="p">)</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">ci_parents</span><span class="p">))</span>
+    <span class="c1"># one net per group: the additive intercept holds them in `nets`, every</span>
+    <span class="c1"># other intercept is itself the one network</span>
+    <span class="n">nets</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="p">,</span> <span class="s2">"nets"</span><span class="p">,</span> <span class="p">[</span><span class="n">nd</span><span class="o">.</span><span class="n">intercept</span><span class="p">])</span>
+
+    <span class="n">contributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">parents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">baseline</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">grp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nets</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">net_input</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">grp</span><span class="p">,</span> <span class="s2">"@I"</span><span class="p">))</span>  <span class="c1"># (n, P)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># (1, P)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s2">"+"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+        <span class="n">contributions</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">parents</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">grp</span>
+        <span class="n">baseline</span> <span class="o">=</span> <span class="n">mean</span> <span class="k">if</span> <span class="n">baseline</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">baseline</span> <span class="o">+</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"baseline"</span><span class="p">:</span> <span class="n">baseline</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+        <span class="s2">"contributions"</span><span class="p">:</span> <span class="n">contributions</span><span class="p">,</span>
+        <span class="s2">"parents"</span><span class="p">:</span> <span class="n">parents</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>
@@ -2201,6 +3183,93 @@ the flow side.</p>
     </table>
 
 
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/readouts.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">design_matrix</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">drop_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Encode a node's parents the way the flow feeds them to its shifts.</span>
+
+<span class="sd">    A continuous parent stays raw in one column named after it. An</span>
+<span class="sd">    ordinal parent becomes one column per level, named</span>
+<span class="sd">    ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.</span>
+
+<span class="sd">    Use ``drop_first=True`` to get the design a classical reference</span>
+<span class="sd">    expects (``statsmodels`` ``OrderedModel``, R ``polr``): with</span>
+<span class="sd">    cutpoints the full one-hot is unidentified, so each ordinal parent's</span>
+<span class="sd">    level-0 column drops out and its remaining coefficients read as</span>
+<span class="sd">    differences against level 0 — exactly what ``w[k] - w[0]`` gives on</span>
+<span class="sd">    the flow side.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Rows to encode. Must contain every parent column of ``node``.</span>
+<span class="sd">    node : str</span>
+<span class="sd">        Name of the node whose parents are encoded.</span>
+<span class="sd">    drop_first : bool, optional</span>
+<span class="sd">        Drop each ordinal parent's level-0 column, by default ``False``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        One column per encoded feature, indexed like ``df``.</span>
+<span class="sd">    """</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nd</span><span class="o">.</span><span class="n">parents</span><span class="p">))</span>
+    <span class="n">cols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"continuous"</span><span class="p">:</span>  <span class="c1"># raw</span>
+            <span class="n">cols</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">drop_first</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">]"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div>

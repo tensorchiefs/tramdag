@@ -179,12 +179,12 @@ class ReadoutsMixin:
 
     @torch.no_grad()
     def intercept_contributions(self, df: pd.DataFrame, node: str) -> dict:
-        """Decompose a complex intercept into mean-centered per-parent parts.
+        r"""Decompose a complex intercept into mean-centered per-parent parts.
 
         Each network's output over the rows of ``df`` is centered to mean zero
         per parameter; the removed means collect into ``baseline``, so
-        ``theta(pa) = baseline + sum of the contributions`` exactly. Post-hoc
-        only: it reads the fitted weights and changes nothing.
+        $\vartheta(\mathrm{pa}) = \text{baseline} + \sum \text{contributions}$ exactly.
+        Post-hoc only: it reads the fitted weights and changes nothing.
 
         Parameters
         ----------

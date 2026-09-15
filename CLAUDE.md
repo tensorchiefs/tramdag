@@ -13,8 +13,8 @@ uv run pytest -q                               # full suite (nightly)
 uvx ruff check . && pre-commit run --all-files # the 18 hooks CI enforces
 uv run mkdocs build --strict                   # docs; README.md becomes index.md
 MPLBACKEND=Agg uv run python notebooks/<name>.py   # a notebook, headless
-cd experiments && uv run python -m paper.triangle atan-cs   # one replication
-cd experiments && uv run python -m check paper triangle-atan-cs  # vs ground truth
+cd experiments && uv run python -m triangle atan-cs   # one replication
+cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
 ```
 
 ## Layout
@@ -25,10 +25,10 @@ cd experiments && uv run python -m check paper triangle-atan-cs  # vs ground tru
   implementation documentation; keep them current.
 - `tests/` measures against three inline DGPs in `conftest.py` and never
   imports `experiments/`.
-- `experiments/` holds the paper replications, frozen data and benchmarks;
-  each variant's YAML carries the whole model and recipe, the code has no
-  defaults. `experiments/<area>/data/` is a contract: new seed or equations
-  means a new folder.
+- `experiments/` holds the paper replications and their frozen data; each
+  variant's YAML carries the whole model and recipe, the code has no
+  defaults. `experiments/data/` is a contract: new seed or equations means a
+  new folder.
 - `notebooks/*.py` are jupytext sources; only `demo_tram_dag_colab.ipynb` is
   tracked and is regenerated from its `.py`.
 - `docs/` are the guides. Each subject has one home (`README.md` lists them);

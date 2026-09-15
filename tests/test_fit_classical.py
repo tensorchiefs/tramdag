@@ -131,8 +131,8 @@ def test_agrees_with_adam_mle(ls_chain):
 
     Only the CONTINUOUS edge is unique here — the ordinal outcome's
     Adam==statsmodels and classical==statsmodels equivalences are pinned
-    fast elsewhere — so the spec is the two-node chain. Tolerance 0.03:
-    re-pinned with the inline ls_chain DGP (was 0.02 on the mrclean data).
+    fast elsewhere — so the spec is the two-node chain. Tolerance 0.03 on
+    the inline ls_chain DGP.
     """
     obs = ls_chain["draw"](2000, 5)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}

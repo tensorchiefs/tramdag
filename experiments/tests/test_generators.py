@@ -7,17 +7,17 @@ and take seconds, which is why they run in the ordinary ``pytest`` alongside
 the framework suite rather than only in the experiments workflow.
 
 What the flow *does* with these DGPs is measured by the experiment scripts and
-their committed ground truth (see ``paper/ground_truth/``), not here.
+their committed ground truth (see ``ground_truth/``), not here.
 """
 
 # %% imports ---------------------------------------------------------------------------
 import numpy as np
 import pytest
-from paper.check_data import ATOL, DATASETS, worst_deviation
-from paper.simulations.carefl import X_OBS, Carefl4
-from paper.simulations.triangle import TriangleContinuous, TriangleMixed
-from paper.simulations.vaca import VacaTriangle
+from check_data import ATOL, DATASETS, worst_deviation
 from scipy import stats
+from simulations.carefl import X_OBS, Carefl4
+from simulations.triangle import TriangleContinuous, TriangleMixed
+from simulations.vaca import VacaTriangle
 
 
 # %% public functions ------------------------------------------------------------------
@@ -42,7 +42,7 @@ def test_do_clamps_and_propagates(factory):
 
 @pytest.mark.parametrize("f", ["linear", "atan", "sin"])
 def test_triangle_continuous_is_a_tram(f):
-    """The DGP is a transformation model: h(x) on samples is standard logistic.
+    """The DGP is a logistic-latent flow: h(x) on samples is standard logistic.
 
     This is the identity the whole replication rests on — if it fails, the
     "true" coefficients the experiments compare against are not the truth.
@@ -95,7 +95,7 @@ def test_frozen_csv_regenerates(subdir):
     """Each committed CSV still comes out of its generator, to 1e-9.
 
     Not bit equality: numpy's transcendental functions move their last bits
-    between releases. ``worst_deviation`` is the function ``paper.check_data``
+    between releases. ``worst_deviation`` is the function ``check_data``
     runs from the command line, so the two cannot drift apart.
     """
     assert worst_deviation(subdir) <= ATOL

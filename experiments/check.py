@@ -1,7 +1,7 @@
 """Compare an experiment's metrics against the committed ground truth.
 
 The experiments workflow calls this after each run. Ground truth lives in
-``<area>/ground_truth/<result-dir>.json`` as one entry per metric:
+``ground_truth/<result-dir>.json`` as one entry per metric:
 
 ```
 {"_note": "what these numbers mean",
@@ -47,7 +47,7 @@ ground truth claims to check.
 Usage (from ``experiments/``):
 
 ```
-uv run python -m check paper triangle-atan-cs
+uv run python -m check triangle-atan-cs
 ```
 """
 
@@ -61,21 +61,18 @@ from pathlib import Path
 
 # %% global variables ------------------------------------------------------------------
 HERE = Path(__file__).resolve().parent
-# only areas that commit ground truth; the benchmarks are measured and
-# written up in docs/, not checked against a recorded value
-AREAS = ("paper", "misc")
 
 
 # %% private functions -----------------------------------------------------------------
-def _load_json_pair(area: str, name: str) -> tuple[dict, dict]:
+def _load_json_pair(name: str) -> tuple[dict, dict]:
     """Load the run's metrics and its ground truth, or raise."""
-    metrics_path = HERE / area / "results" / name / "metrics.json"
-    truth_path = HERE / area / "ground_truth" / f"{name}.json"
+    metrics_path = HERE / "results" / name / "metrics.json"
+    truth_path = HERE / "ground_truth" / f"{name}.json"
     if not metrics_path.exists():
         raise FileNotFoundError(f"no metrics to check: {metrics_path}")
     if not truth_path.exists():
         raise FileNotFoundError(
-            f"no ground truth for '{area}/{name}': {truth_path}. Write one from "
+            f"no ground truth for {name!r}: {truth_path}. Write one from "
             "a reviewed run before wiring the experiment into CI."
         )
     return json.loads(metrics_path.read_text()), json.loads(truth_path.read_text())
@@ -174,14 +171,11 @@ def _check_center(metric: str, measured: float, expected: dict) -> list:
 
 
 # %% public functions ------------------------------------------------------------------
-def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list[str]]:
+def compare(name: str) -> tuple[list[str], list[str], list[str], list[str]]:
     """Compare one result directory against its ground truth.
 
     Parameters
     ----------
-    area : str
-        Experiment area: ``paper`` or ``misc`` — the two that commit ground
-        truth (see ``AREAS``).
     name : str
         Name of the results directory, for example ``"triangle-atan-cs"``.
 
@@ -199,7 +193,7 @@ def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list
     ValueError
         If the ground-truth file has no metric entry, so nothing was checked.
     """
-    metrics, truth = _load_json_pair(area, name)
+    metrics, truth = _load_json_pair(name)
 
     results = [
         pair
@@ -219,9 +213,9 @@ def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list
     return failures, passed, unchecked, notes
 
 
-def main(area: str, name: str) -> int:
+def main(name: str) -> int:
     """Print the comparison and give the process exit code."""
-    failures, passed, unchecked, notes = compare(area, name)
+    failures, passed, unchecked, notes = compare(name)
     for item in passed:
         print(f"  ok   {item}")
     for item in unchecked:
@@ -231,16 +225,14 @@ def main(area: str, name: str) -> int:
     for failure in failures:
         print(f"  FAIL {failure}")
     if failures:
-        print(f"\n{area}/{name}: {len(failures)} metric(s) outside tolerance")
+        print(f"\n{name}: {len(failures)} metric(s) outside tolerance")
         return 1
-    print(f"\n{area}/{name}: all checked metrics within tolerance")
+    print(f"\n{name}: all checked metrics within tolerance")
     return 0
 
 
 # %% main ------------------------------------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("area", choices=AREAS, help="experiment area")
     parser.add_argument("name", help="results directory name, e.g. triangle-atan-cs")
-    args = parser.parse_args()
-    sys.exit(main(args.area, args.name))
+    sys.exit(main(parser.parse_args().name))

@@ -326,8 +326,8 @@ class FitMixin:
         line search. There are no minibatches, no schedule and no early
         stopping, so the fit is deterministic and lands on the maximum-
         likelihood estimate. It is valid only when every term is a simple
-        intercept or an ``LS``, because each node-conditional is then a
-        classical transformation model; any other spec raises.
+        intercept or an ``LS``, because each node-conditional is then an
+        ordered logit or a Colr model; any other spec raises.
 
         Parameters
         ----------

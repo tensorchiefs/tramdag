@@ -1,13 +1,13 @@
 # Paper replication: protocol, hyperparameters and results, per experiment
 
-The eight variants under `experiments/paper/` replicate the TRAM-DAG paper
+The eight variants under `experiments/` replicate the TRAM-DAG paper
 (Sick & Dürr, CLeaR 2025, arXiv:2503.16206) against its own R code
 (`tensorchiefs/tram-dag`). For each experiment this page lists the DGP, the
 model, every hyperparameter with its source, what deviates from the paper and
 why, and the numbers. The paper states four training numbers: n = 40000,
 500 epochs, Adam, and Bernstein order 20; it shows its results as figures, so
 where it gives no number the "paper" column names the figure and what it
-shows. The pinned ground truth is `experiments/paper/ground_truth/*.json`;
+shows. The pinned ground truth is `experiments/ground_truth/*.json`;
 [experiments/README.md](../experiments/README.md) explains the YAML variants,
 the frozen data and the check.
 
@@ -26,7 +26,7 @@ replay, so every seed here is a repository choice.
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
 | calibrated start | none | none; `calibrate` never touches the weights and no paper script calls `init_marginals` |
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
-| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)` on the summed `history["val"]`, the same rule, verified against torch's source; `experiments/paper/helpers.py::fit_paper` drives it |
+| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)` on the summed `history["val"]`, the same rule, verified against torch's source; `experiments/helpers.py::fit_paper` drives it |
 
 ## Triangle, continuous (`triangle.py`): paper Sec. 6.1, App. C.3
 
@@ -179,7 +179,7 @@ committed 2500 rows (`X.csv`, x3/x4 sd-standardized by 6.0104/1.9114) with
 `val = train`. CAREFL's repository also commits the observation `xObs.csv`,
 the analytic truth curves and its own predictions on the grid
 `seq(-3, 2.9, 0.1)`. This repository freezes all of it under
-`experiments/paper/data/carefl-cf`, external input with no generator, so the
+`experiments/data/carefl-cf`, external input with no generator, so the
 Fig. 6 curves are comparable point by point and every metric is in the
 reference's standardized units.
 
@@ -272,11 +272,6 @@ The epoch floors, measured at that batch and rate:
   (cs err 0.859, β13 −0.055).
 - **VACA and CAREFL** run their references 1:1; the rejected shortcuts are in
   their sections.
-
-`experiments/misc/validate_ls.py` is not a paper experiment, but its Adam
-variant follows the same economy: phases 800/700/500 at 1e-2/1e-3/1e-4 and
-batch 256 land on the classical MLE with a named-coefficient gap to
-statsmodels of 1.6e-5.
 
 ## Repository choices the paper does not state
 

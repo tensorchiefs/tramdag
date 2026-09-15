@@ -58,7 +58,7 @@ A change to `n` or to the seed changes those numbers. Re-run
 `Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
 change either.
 
-Not to be confused with `experiments/paper/data/vaca/`, the frozen 5000-row
+Not to be confused with `experiments/data/vaca/`, the frozen 5000-row
 benchmark of the paper replications under the data contract of
 [`experiments/README.md`](../../experiments/README.md). This file is neither
 frozen nor a contract.

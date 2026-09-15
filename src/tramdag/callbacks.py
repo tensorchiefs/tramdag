@@ -187,8 +187,6 @@ class PerNodePlateau(Callback):
     ----------
     patience, freeze : int
         Flat epochs before a decay, and before a decayed node freezes.
-        ``docs/training-speed.md`` measures the settings of the benchmark
-        workloads.
     min_delta : float, optional
         Improvement below this is flat, by default 1e-4.
 

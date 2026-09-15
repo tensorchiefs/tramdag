@@ -166,7 +166,7 @@ default you can read at the call site. Nothing numeric is buried.
 | VC stage-1 propensities | the training-frame column `VC(center=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, center=)` | 1.0 / False (`center="col"` names the propensity column) |
 | L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks |
-| training budget | `fit(epochs=)` | **required** ([training-speed.md](training-speed.md)) |
+| training budget | `fit(epochs=)` | **required** ([fitting.md](fitting.md)) |
 | network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64) — parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |
 | activation | `activation=` on `I`/`CS`/`VC` | `"relu"` (the reference default classes); `"sigmoid"` and `"tanh"` are the paper's |
 | batch norm | `batch_norm=` on `I`/`CS`/`VC` | `False` — neither reference uses it. `True` puts a `BatchNorm1d` between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs `eval()` mode (`fit` and `load` leave the flow there) |

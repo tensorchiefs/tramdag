@@ -27,7 +27,7 @@ alpha in [-3, 3]:
 CLI:
 
 ```
-uv run python -m paper.simulations.carefl --out paper/data/carefl --seed 42
+uv run python -m simulations.carefl --out data/carefl --seed 42
 ```
 """
 
@@ -56,7 +56,7 @@ _SCALE = 1.0 / np.sqrt(2.0)
 def main(argv: list[str] | None = None) -> None:
     """Regenerate the frozen CSV files of this data-generating process."""
     p = argparse.ArgumentParser(description="Generate the CAREFL benchmark data.")
-    p.add_argument("--out", type=Path, default=Path("paper/data/carefl"))
+    p.add_argument("--out", type=Path, default=Path("data/carefl"))
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--n-obs", type=int, default=5000)
     p.add_argument("--force", action="store_true", help="overwrite an existing folder")

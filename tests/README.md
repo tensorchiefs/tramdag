@@ -38,7 +38,7 @@ Four kinds of test, in rough order of how much trust they carry:
      (`test_counterfactual_only_changes_descendants`).
 
 2. **Equivalence to independent implementations** — the strongest external
-   check. An all-`ls` model *is* a classical transformation model. It must
+   check. An all-`ls` model *is* an ordered logit or a Colr model. It must
    therefore match software that other people wrote in other languages.
    - vs. **`statsmodels`** `OrderedModel` (computed at test time):
      `test_ls_node_equals_proportional_odds`, `test_matches_statsmodels_mle`,
@@ -75,7 +75,7 @@ Four kinds of test, in rough order of how much trust they carry:
 
 The reference values that the tests compare against come from two sources:
 
-- **By construction.** The inline DGPs are *built as* transformation models with fixed coefficients, cutpoints and effect
+- **By construction.** The inline DGPs are *built as* logistic-latent flows with fixed coefficients, cutpoints and effect
   functions. The true parameters are therefore the numbers that generate the
   data. The DGPs are numpy-only and deliberately independent of the flow.
 - **Independent software.** The classical-equivalence tests fit `statsmodels`

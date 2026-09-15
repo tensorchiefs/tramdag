@@ -33,7 +33,6 @@ nav:
   - Varying coefficients: varying-coefficients.md
   - Paper replication: paper-replication.md
   - Architecture: architecture.md
-  - ADR 001 (1.0 architecture): adr/001-term-owned-architecture.md
   - Code map: code-map.md
   - Zuko upstream: zuko-upstream.md
 - Notebooks:

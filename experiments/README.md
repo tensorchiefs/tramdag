@@ -81,8 +81,8 @@ for 300 epochs. Three variants differ:
 - mixed `exp-cs` runs 350 epochs,
 - mixed `linear-ls` runs 200 epochs @ lr 0.002.
 
-The paper runs 500 epochs at batch 32 / lr 0.001. The tuning round of
-2026-09-01 set the values above, and every ground-truth metric kept its value.
+The paper runs 500 epochs at batch 32 / lr 0.001; every ground-truth metric
+keeps its value under the values above.
 VACA and CAREFL run their references 1:1. VACA runs 10000 full-batch epochs @
 lr 0.001 with the plateau rule, and CAREFL runs 7000. CAREFL runs on the
 reference's own committed rows (`paper/data/carefl-cf`).
@@ -123,7 +123,7 @@ ships no config helper.
 A value that several variants share appears once under a YAML anchor. The
 variants merge it with `<<`, which keeps the merge visible in the file.
 
-Since 2026-09 every variant carries the **whole model and training recipe**.
+Every variant carries the **whole model and training recipe**.
 This form is deliberately verbose. It prefers duplication over indirection, so
 one variant reads top to bottom. A variant holds these keys:
 
@@ -215,7 +215,5 @@ their last bits between releases. `paper/tests/` runs the same comparison in
 the ordinary test run. A new seed or a changed equation means a **new folder**,
 never an edit in place.
 
-`misc/data/magic-mrclean/ls/` is the exception with no generator here. It came
-from the stroke simulator. That simulator left the repository with the clinical
-storyline. `misc/tests/` pins the schema and the size of this dataset instead.
-You can recover the generator from the `pre-experiments-cut` tag.
+`misc/data/magic-mrclean/ls/` is the exception with no generator here: it is
+frozen input data, and `misc/tests/` pins its schema and size instead.

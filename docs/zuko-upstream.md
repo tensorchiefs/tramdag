@@ -35,7 +35,7 @@ zuko pads the knot derivatives with `exp(0)=1`. It extrapolates as the
 identity outside `[-B, B]`. Therefore the tail slope stays fixed at 1 for
 every θ. This is the structural reason why `spline` consistently trails
 `bernstein` here, because ~10% of the data sits beyond the 5%/95% pre-scaling
-range. CLAUDE.md and `spec.py` also describe this.
+range.
 
 Upstream, zuko can accept boundary derivatives of shape `(*, K+1)`, or it can
 take an opt-in `tails="linear"`. Identity tails are deliberate in the NSF
@@ -62,8 +62,7 @@ zuko's docstring says that θ has shape `(*, M-2)` for a degree-M polynomial.
 `n` unconstrained coefficients become `n+2` control points, which is degree
 `n+1`. The correct claim is therefore `(*, M-1)`. This off-by-one is a real
 replication trap: order 21 against the paper's `len_theta=20`, which is order
-19. It costs tramdag prose in three documents. The PR is trivial and an accept
-is near-certain.
+19. The PR is trivial and an accept is near-certain.
 
 ## 5. `Logistic` in `zuko.distributions`
 

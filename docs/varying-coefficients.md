@@ -1,165 +1,103 @@
-# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=)`
+# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=, center=)`
 
-A `VC` term gives a node a **treatment-effect head with its own bias–variance
-budget**. The term contributes
+A `VC` term gives a node a treatment-effect head with its own bias-variance
+budget. It contributes $\beta(x)\, x_t$ with
+$\beta(x) = \beta_0 + b_\Theta(x)$ to the node's shift, where $b_\Theta$ is a
+deliberately small, penalized network of the modifiers. The point is not
+expressiveness. The point is that the flow estimates the effect function with
+care, not as a by-product. Every claim here runs in
+[`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py),
+which is the one place for the code.
 
-```
-beta(modifiers) * x_on        with    beta(x) = beta0 + b_theta(x)
-```
+Modifiers may appear twice in a node, as prognostic parents through `CS` or
+`LS` and as effect modifiers through `VC`. That pattern is intended. Only the
+treatment named by `t=` owns its edge, and a second term that declares it
+raises an error.
 
-to the node's shift. Here `b_theta` is a deliberately small (one 16-unit
-hidden layer), **penalized** network. The point is not expressiveness. The
-point is that the flow estimates the effect function *with care*, not as a
-by-product:
+## Why not a joint `CS` over treatment and modifiers
 
-```python
-import tramdag as td
-
-spec = {
-    "X1": td.ContinuousNode(),
-    "X2": td.ContinuousNode(),
-    "X3": td.ContinuousNode(),
-    "T": td.OrdinalNode(2, td.LS("X1") + td.LS("X2")),
-    "Y": td.ContinuousNode(
-        td.CS("X1", "X2", "X3")  # prognostic part g(x): as flexible as you like
-        + td.VC("X2", "X3", t="T", penalty=1.0)  # effect beta(X2, X3) * T
-    ),
-}
-flow = td.CausalFlowDAG(spec, seed=0).fit(
-    train, epochs=500, learning_rate=1e-2, batch_size=512
-)  # best-validation weights: callbacks.EarlyStopping, see fitting.md
-
-beta = flow.varying_coef(df_new, "Y")  # (n,) array beta(x) — deterministic, y-free
-beta0 = float(flow.nodes["Y"].shifts["T"].beta0.detach())  # interpretable main effect
-```
-
-`X2` and `X3` appear **twice**: as prognostic parents through `CS` and as
-effect modifiers through `VC`. This pattern is intended. Only the treatment
-node named by `t=` owns its edge, and a second term that declares it raises
-an error. Modifiers can repeat.
-
-## Why not `CS("T", "X2", "X3")`? (anti-pattern)
-
-For a binary treatment, the multi-parent `CS` is equivalent in
-*expressiveness*. Any shift decomposes exactly as
-`s(x,t) = s(x,0) + [s(x,1) − s(x,0)]·t`. But the `CS` form has **no
-effect-specific regularization**. The likelihood rewards a good average fit
-of `s(x,t)`, and nothing rewards a smooth difference between the arms. The
-read-out is thus the difference of two jointly fitted, unregularized
-networks, which amplifies noise.
-
-On the heterogeneous-effect validation DGP (see below), the `CS` reduced form reaches
-corr ≈ 0.5 against the true effect function (`tests/test_vc_term.py` measures it). This
-holds **even when the model is exactly in-class**. The `VC` term reaches
-corr ≈ 0.99 on the same protocol (`tests/test_vc_term.py`, acceptance bar
-0.9). Causal forests and R-learners work not because they *target* the
-effect, but because they **regularize** it (Nie & Wager 2021,
-Athey–Tibshirani–Wager 2019). `VC` brings that ingredient into the TRAM
-framework.
+For a binary treatment the multi-parent `CS` is equivalent in expressiveness,
+since any shift decomposes as $s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t$. But
+the `CS` form has no effect-specific regularization. The likelihood rewards a
+good average fit of $s(x,t)$, and nothing rewards a smooth difference between
+the arms, so the read-out is the difference of two jointly fitted,
+unregularized networks and amplifies noise. On the `vc_hetero` process the
+`CS` reduced form reaches a correlation of about 0.5 with the true effect
+function even though the model is in-class; the `VC` term reaches about 0.99
+on the same protocol, and `tests/test_vc_term.py` pins the bar at 0.9. Causal
+forests and R-learners work not because they target the effect but because
+they regularize it (Nie & Wager 2021; Athey, Tibshirani & Wager 2019). `VC`
+brings that ingredient into the TRAM framework.
 
 ## Semantics
 
-- **Scale**: `beta(x)` lives on the node's latent (log-odds) scale. The flow
-  adds it for a continuous node (`u = h(y) + …`) and subtracts it from the
-  cutpoints for an ordinal node, exactly like an `LS` weight. With no
-  modifiers, `VC(t="T")` *is* `LS("T")` (identical model, testably
-  bit-exact). Thus `VC` versus `LS` is a nested question.
-- **Penalty**: the fitting objective is the penalized likelihood
-  $\sum_i \mathrm{NLL}_i + \lambda \lVert b_\Theta \rVert^2$ (`penalty=` is
-  $\lambda$) on the total-NLL scale. This is a
-  fixed Gaussian prior whose shrinkage vanishes as n grows. The penalty
-  never applies to `beta0`. `penalty → ∞` shrinks `b_theta` to the zero
-  function and recovers the classical `LS` fit. The default is
-  `penalty=1.0`. If the modifiers are many or n is small, raise the penalty.
-- **Identification / centering**: a constant moves freely between `beta0`
-  and `b_theta`. The head's output layer is zero-initialized
-  (`beta(x) = beta0` at step 0). After `fit`, the flow re-centers the head
-  to mean zero over the training data, which preserves the function. Thus
-  `beta0` is the main effect in the training population, the `Colr` reading
-  when `beta` is constant.
-- **Warm start** (optional, two lines): fit the all-`ls` version of the
-  node classically and copy the treatment weight into
-  `flow.nodes[node].shifts[t].beta0` before `fit`, so training starts at the
-  classical answer and only learns deviations. Measured on the `vc_hetero`
-  DGP: `beta0` lands within 0.15 of the truth with it, and 0.16 from the zero
-  start. The recovery correlation is 0.99 either way.
-- **Treatments**: the treatment `x_on` can be continuous or binary (2-level)
-  ordinal. The term is linear in `x_on`. A binary ordinal enters as its 0/1
-  level, so `beta` is the identified level-1-vs-0 contrast. Multi-level
-  ordinal treatments are a planned follow-up.
-- **Read-out**: `flow.varying_coef(df, node, t=...)` evaluates
-  `beta0 + b_theta(modifiers)` in closed form. The result is deterministic
-  and y-free, and it needs no abduction. For a binary treatment, it equals
-  the abduct-difference `u(x, t=1, y) − u(x, t=0, y)` identically (pinned by
-  a test).
+- **Scale.** $\beta(x)$ lives on the node's latent scale, added for a
+  continuous node and subtracted from the cutpoints for an ordinal one,
+  exactly like an `LS` weight. With no modifiers, `VC(t="T")` is `LS("T")`
+  bit-exactly, so `VC` against `LS` is a nested question.
+- **Penalty.** The objective is $\sum_i \mathrm{NLL}_i + \lambda \lVert
+  b_\Theta \rVert^2$ on the total-NLL scale, with `penalty=` as $\lambda$.
+  It is a fixed Gaussian prior whose shrinkage vanishes as $n$ grows, it never
+  applies to $\beta_0$, and $\lambda \to \infty$ recovers the `LS` fit. Raise
+  it when the modifiers are many or $n$ is small.
+- **Identification.** A constant moves freely between $\beta_0$ and
+  $b_\Theta$. The head's output layer is zero-initialized, so
+  $\beta(x) = \beta_0$ at step 0, and after `fit` the flow re-centers the head
+  to mean zero over the training data, which preserves the function. $\beta_0$
+  is therefore the main effect in the training population, the Colr reading
+  when $\beta$ is constant.
+- **Warm start.** Fit the all-`LS` version classically and copy the treatment
+  weight into `beta0` before `fit`, so training starts at the classical answer
+  and learns only deviations.
+- **Treatments.** Continuous or binary ordinal, entering as its 0/1 level so
+  that $\beta$ is the identified level-1-against-0 contrast. The term is
+  linear in the treatment.
+- **Read-out.** `flow.varying_coef(df, node)` evaluates $\beta(x)$ in closed
+  form, deterministic and free of the outcome. For a binary treatment it
+  equals the abduction difference $u(x,1,y) - u(x,0,y)$ identically, which a
+  test pins.
 
-## Propensity-centered VC: `center="col"` (R-learner orthogonalization)
+## Propensity centering: `center="col"`
 
-```python
-td.VC("X2", "X3", t="T", penalty=1.0, center="ps")
-# contributes  beta(x) * (t - e_hat(x))  to the shift; e_hat comes from you,
-# out of fold, as the training-frame column named by center=
-```
+With `center=` the term contributes $\beta(x)\,(t - \hat e(x))$ instead of
+$\beta(x)\, t$. This is Robinson's R-learner orthogonalization inside the
+likelihood, the ingredient Dandl et al. (2024) found decisive for effect
+estimation under confounding in model-based forests. The finding reproduces
+here on the `confounded` process, where the model deliberately
+under-specifies its prognostic part: the uncentered $\hat\beta$ absorbs the
+confounded misfit, and centering brings it back near the truth. The notebook
+reports the measured reduction and `tests/test_vc_centered.py` requires at
+least a factor of two. If the prognostic part is correctly specified,
+centering changes little. It is insurance against the misspecification you do
+not know you have.
 
-This is Robinson/R-learner centering inside the likelihood. Dandl et al.
-(2024) found treatment-centering to be *the* decisive ingredient for effect
-estimation under confounding in model-based forests. That finding reproduces
-here. The test DGP is strongly confounded, and the model deliberately
-under-specifies its prognostic part (true g(x) quadratic, model linear). On
-that DGP, the uncentered β̂ absorbs the confounded misfit. The mean
-|β̂ − τ| is ≈ 1.1–1.2, which effectively destroys the effect estimate. The
-centered β̂ stays near truth (≈ 0.1–0.3), a **5–10× bias reduction**
-(`tests/test_vc_centered.py`). If the prognostic part is correctly
-specified, centering changes little. Centering is insurance against the
-misspecification that you do not know you have.
+The design is two-stage and frozen, because the naive versions are wrong.
 
-The naive implementations are wrong. Thus this is a **two-stage frozen**
-design:
-
-- **Training** uses **out-of-fold** ê that *you* compute. Pass it as the
-  frame column `VC(center=)` names (`df.assign(ps=e_oof)`), one value per
-  training row. Any propensity model works, with each fold predicted by a fit
-  that never saw it. This is the DML cross-fitting requirement. In-sample ê
-  reintroduces the own-observation bias and can be *worse* than no centering.
-  Six lines with the flow's own classical fit:
-
-  ```python
-  fold_id = np.random.default_rng(0).permutation(len(train)) % 5
-  e_oof = np.empty(len(train))
-  for j in range(5):
-      proxy = td.CausalFlowDAG(t_spec, seed=0)  # the treatment node's spec
-      proxy.fit_classical(train.iloc[fold_id != j][["X", "T"]])
-      e_oof[fold_id == j] = proxy.pmf(train.iloc[fold_id == j], "T")[:, 1]
-  ```
-
-  The OOF values enter the outcome loss as frozen data. Thus **no gradient
-  reaches the treatment node** from the outcome node, and the per-node
-  factorization stays intact (pinned by a gradient-isolation test). `fit`
-  refuses a centered spec whose frame lacks the column, and one that does not
-  match the spec.
-- **Inference** (`log_prob` / `sample` / `abduct` / `pmf` / `scores`)
-  recomputes ê from the flow's **own fitted treatment node**, the full-data
-  fit (the standard DML train/predict split). The computation is detached
-  and uses the current parent values. Under `do(T=t)`, the flow re-derives
-  the regressor as `t − ê(x)`. The flow caches nothing.
-- **Interpretation**: with centering, `beta0` is the effect at the treatment
-  margin (the observed propensities). `varying_coef` is unchanged, because
-  centering moves the regressor, not β. The LS-nesting reading applies to
-  the uncentered term only. Centering requires a binary ordinal treatment.
-  Continuous-treatment centering with E[T|x] is a follow-up. `center=None`
-  (the default) is bit-identical to the uncentered term.
+- **Training** uses out-of-fold propensities that you compute and pass as the
+  training-frame column `center=` names, one value per row. Any propensity
+  model works as long as each fold is predicted by a fit that never saw it,
+  the cross-fitting requirement of double machine learning. In-sample
+  propensities reintroduce the own-observation bias and can be worse than no
+  centering. The values enter the loss as frozen data, so no gradient reaches
+  the treatment node and the per-node factorization stays intact. `fit`
+  refuses a centered spec whose frame lacks the column.
+- **Inference**, in `log_prob`, `sample`, `abduct`, `pmf` and `scores`,
+  recomputes $\hat e$ from the flow's own fitted treatment node on the current
+  parent values, detached. Under `do(T=t)` the regressor becomes
+  $t - \hat e(x)$. Nothing is cached.
+- **Interpretation.** With centering, $\beta_0$ is the effect at the
+  treatment margin. `varying_coef` is unchanged, because centering moves the
+  regressor and not $\beta$. Centering requires a binary ordinal treatment.
 
 ## Validation
 
-The `vc_hetero` DGP in [`tests/conftest.py`](../tests/conftest.py) is a
-logistic-shift SCM with known `beta_true(x) = −1 + 0.8·X2 − 0.6·X3`. It has a
-nonlinear prognostic part and confounded assignment (X2 is confounder *and*
-modifier), which is the configuration where the `CS` reduced form fails
-hardest. Acceptance (`tests/test_vc_term.py`) requires three results:
-recovery corr ≥ 0.9 at n = 5000 (measured ≈ 0.99, min over 3 seeds 0.986), a
-fitted `beta0` that matches `fit_classical` under a large penalty, and the
-read-out identities. The centering claims are measured against the
-`confounded` DGP in the same file. Both former follow-ups have since
-shipped: propensity centering is `center="col"`, documented above, and the
-per-observation scores for effect-modifier scans are `flow.scores` and
-`flow.effect_modifier_scan` — see [scores.md](scores.md).
+The `vc_hetero` process in [`tests/conftest.py`](../tests/conftest.py) is a
+logistic-shift SCM with a known $\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3$, a
+nonlinear prognostic part and confounded assignment, where $X_2$ is
+confounder and modifier at once. That is the configuration in which the `CS`
+reduced form fails hardest. `tests/test_vc_term.py` requires a recovery
+correlation of at least 0.9 at $n = 5000$, a fitted $\beta_0$ that matches
+`fit_classical` under a large penalty, and the read-out identities. The
+centering claims are measured on the `confounded` process in the same file.
+[scores.md](scores.md) covers the scan that shortlists modifiers before a `VC`
+term is declared.

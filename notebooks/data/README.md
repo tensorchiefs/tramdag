@@ -57,13 +57,13 @@ fitted on.
 The notebook pins R's reference coefficients for this file in its `R_COLR`
 constant, and `classical_fit_tram_dag.R` is the script that produces them.
 Use `order = 21`, not 19: the notebook's `n_coeffs = 20` counts
-unconstrained coefficients, and `tram` counts one more. The notebook
-explains that difference where it makes the comparison.
+unconstrained coefficients, and `tram` counts one more.
 
 A change to `n` or to the seed changes those numbers. Re-run
 `Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
 change either.
 
-Not to be confused with `experiments/paper/data/vaca/` — that is the frozen
-5000-row benchmark of the TRAM-DAG paper replications, under the testing
-contract described in CLAUDE.md. This file is neither frozen nor a contract.
+Not to be confused with `experiments/paper/data/vaca/`, the frozen 5000-row
+benchmark of the paper replications under the data contract of
+[`experiments/README.md`](../../experiments/README.md). This file is neither
+frozen nor a contract.

@@ -1,10 +1,11 @@
 # The model
 
 A TRAM-DAG is one triangular normalizing flow whose sparsity is a causal DAG.
-This page states the model in the notation of the paper, and maps each part of
-it onto the constructors in `tramdag.spec`. For the symbols themselves see
-[notation.md](notation.md). To read a model after it is fitted see
-[interpretation.md](interpretation.md).
+This page states the model in the notation of the paper and maps each part of
+it onto the constructors in `tramdag.spec`. For the symbols see
+[notation.md](notation.md); to read a model after it is fitted see
+[interpretation.md](interpretation.md); for a worked fit see the
+[demo notebook](../notebooks/demo_tram_dag_colab.py).
 
 ## The transformation function
 
@@ -38,7 +39,7 @@ The latents $u_1,\dots,u_p$ are standard logistic. That choice is what makes
 the fitted parameters interpretable, because a shift on the latent scale is
 then a log-odds ratio.
 
-## The four components
+## The components
 
 The transformation decomposes additively on the latent scale, which is what
 keeps the interpretation valid. Each node's $h$ is
@@ -47,7 +48,8 @@ $$
 u_i \;=\; h(x_i \mid \mathrm{pa}(x_i)) \;=\;
 \underbrace{h_{\boldsymbol{\vartheta}}(x_i)}_{\text{intercept}}
 \;+\; \underbrace{\textstyle\sum_j \beta_{ij}\, x_j}_{\text{linear shifts}}
-\;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}} ,
+\;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}}
+\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}_{\text{varying coefficient}} ,
 $$
 
 and every causal parent enters through exactly one term. Take $x_5$ with
@@ -63,6 +65,12 @@ parents $\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}$ as the example.
   number per parent.
 - **Complex shift, CS.** $g(x_4)$, an unrestricted network of the parent. It
   stays additive on the latent scale.
+- **Varying coefficient, VC.** $(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t$:
+  a treatment $x_t$ whose effect $\beta$ varies with modifier covariates
+  through a small penalized network. [varying-coefficients.md](varying-coefficients.md)
+  is its guide.
+- **Function shift, Fn.** $f(x_{\text{pa}})$ for a user-supplied function or
+  `nn.Module`, for a one-off term.
 
 Sampling has to invert only the intercept, because the shifts move to the
 other side:
@@ -76,36 +84,93 @@ $$
 ## The components in code
 
 Each node declares its transformation as an additive formula of terms. The
-formula is the node's first argument, written as a list or as a `+` sum. Each
-constructor names the parents its term depends on.
+formula is the node's first argument, written as a list or as a `+` sum; the
+two spellings are the same model. Each constructor names the parents its term
+depends on. The paper's symbols `I`, `LS`, `CS`, `VC`, `Fn` are the classes
+`Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`, `FnShift`.
 
-| paper component | `tramdag` |
+| formula for a continuous node $x_3$ | $u_3 = h(x_3 \mid \mathrm{pa})$ |
 |---|---|
-| SI, baseline $h_{\boldsymbol{\vartheta}}(x_i)$ with constant $\boldsymbol{\vartheta}$ | automatic: every node owns a monotone transform. Without an intercept term its $\boldsymbol{\vartheta}$ is a free parameter vector |
-| CI, $\boldsymbol{\vartheta}$ depends on parents | `I("X1")`. Several parents in one `I(...)` feed one joint network, which is how interactions arise |
-| LS, $\beta_{ij} x_j$ | `LS("X1")`, a single weight and no bias |
-| CS, $g_{ik}(x_k)$ | `CS("X1")`, an additive network |
+| `[]` or `[I()]` | $h_{\vartheta}(x_3)$, the simple intercept |
+| `[LS("X1")]` | $h_{\vartheta}(x_3) + \beta x_1$ |
+| `[I("X1")]` | $h_{\vartheta(x_1)}(x_3)$, the complex intercept |
+| `[CS("X1")]` | $h_{\vartheta}(x_3) + g_1(x_1)$ |
+| `[LS("X1"), CS("X2")]` | $h_{\vartheta}(x_3) + \beta x_1 + g_2(x_2)$ |
+| `[CS("X1", "X2")]` | $h_{\vartheta}(x_3) + g_{12}(x_1, x_2)$, one joint network |
+| `[CS("X1"), CS("X2")]` | $h_{\vartheta}(x_3) + g_1(x_1) + g_2(x_2)$, two additive networks |
+| `[I("X1", "X2")]` | $h_{\vartheta(x_1, x_2)}(x_3)$, one joint network |
+| `[I("X1", "X2", allow_interaction=False)]` | $h_{\vartheta(x_1) + \vartheta(x_2)}(x_3)$, one network per parent, summed in coefficient space |
+| `[CS("X1"), VC("X2", t="T")]` | $h_{\vartheta}(x_3) + g_1(x_1) + \beta(x_2)\, x_T$ |
 
-`I(...)` dispatches on its arguments. Without parents it is a simple
-intercept, with parents a complex one. `SI()` and `CI(...)` spell that out and
-check the arity.
+Three rules follow from the model.
 
-The formulas for each combination of terms, and the difference between a joint
-and an additive grouping, are tabulated in the
-[README](https://github.com/tensorchiefs/tramdag#the-model-in-detail-spec--math--networks).
+- **Exactly one intercept, first.** A formula written without one gets `I()`
+  prepended. `I()` without parents is the simple intercept, `I(...)` with
+  parents the complex one; `SI()` and `CI(...)` spell that out with the arity
+  checked.
+- **Joint versus additive is argument grouping.** Several parents in one term
+  form one network over all of them, an interaction; the same parents in
+  separate terms act additively. For the intercept the grouping is said with
+  `allow_interaction`, because a node takes at most one intercept with
+  parents.
+- **Every parent enters through exactly one edge-owning term.** The VC
+  modifiers are the one exception: `CS("X2") + VC("X2", t="T")` is the
+  intended pattern, where $x_2$ acts prognostically through the shift and
+  modifies the treatment effect.
+
+### The three knobs on a term
+
+**`transform=` on `I`** picks the class of $h_{\boldsymbol{\vartheta}}$ for a
+continuous node:
+
+- `"bernstein"`, the default: a Bernstein polynomial with `n_coeffs=20`
+  unconstrained coefficients whose tails extrapolate along the boundary
+  slope;
+- `"spline"`: a monotone rational-quadratic spline with `bins=8`, whose tail
+  slope is fixed ([zuko-upstream.md](zuko-upstream.md) explains the
+  consequence);
+- `"affine"`: location and scale only, so the node-conditional is a logistic
+  GLM.
+
+Extra keyword arguments of `I` pass straight to the transform class,
+`I(transform="spline", bins=16)`. Each transform pre-scales the data from the
+training `range_q` and $1 - $`range_q` quantiles onto a fixed domain;
+`range_q` is an intercept option, default 0.05, and `range_q=0` uses the
+minimum and maximum. Ordinal nodes have no transform to pick.
+
+**`input_transform=` on `I`, `CS`, `VC`** transforms that term's continuous
+network inputs, with statistics frozen at the first fit: `"minmax"`,
+`"standardize"`, or a callable `fn(x, train)`. `LS` and the `VC` treatment
+stay raw, so their coefficients keep their units.
+
+**`units=`, `activation=`, `batch_norm=` on `I`, `CS`, `VC`** size the
+term's network. [code-map.md](code-map.md) lists every default.
 
 ## Ordinal nodes
 
 An ordinal node has no monotone transform to choose. Its intercept is the
-cutpoint vector of an ordered logit. The model is
-$P(Y \le k) = \mathrm{sigmoid}(\theta_k - s)$, where $\theta$ holds the
-increasing cutpoints and $s$ is the total shift.
+cutpoint vector of an ordered logit,
 
-Note the sign. A continuous node adds its shift on the latent scale, and an
-ordinal node subtracts it. Both follow the original TRAM-DAG conventions, and
-the test suite pins them. A parent that raises a continuous child therefore
-gets a negative weight, which
-[interpretation.md](interpretation.md) works through.
+$$
+P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
+$$
+
+with increasing cutpoints $\vartheta$ and $s$ the total shift. The shift is
+subtracted where a continuous node adds it; [notation.md](notation.md) states
+the convention and [interpretation.md](interpretation.md) works through what
+it does to the sign of a coefficient.
+
+The log-probability of an observed level is the difference of two sigmoids,
+computed in log space with `logsigmoid` and a stable `log(1 - exp(x))` and
+taking per element the better-conditioned side. The direct difference of two
+sigmoids has exactly zero gradient once they saturate in float32, and a node
+that starts there never recovers.
+
+Parents enter every network as features: a continuous parent raw, in one
+column; an ordinal parent one-hot, in one column per level. Abduction is exact
+for continuous nodes and truncated-logistic for ordinal ones, so
+`flow.sample(u=flow.abduct(df))` reproduces `df` exactly, level-exactly for
+ordinal nodes.
 
 ## What the model cannot do
 
@@ -113,6 +178,9 @@ gets a negative weight, which
 - Every parent must enter through exactly one edge-owning term. The one
   exception is a varying-coefficient modifier, which can also act
   prognostically through another term.
+- A `VC` treatment is continuous or a binary ordinal node; a multi-level
+  ordinal treatment is not supported. Propensity centering needs a binary
+  ordinal treatment.
 - The DAG is an input. `tramdag` fits the mechanisms of a graph you supply, and
   does not discover the graph.
 - Identification is the usual causal one. No hidden confounding, and the graph

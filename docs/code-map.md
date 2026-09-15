@@ -69,7 +69,7 @@ the same object, so `LS is LinearShift`.
 | (`_check_side_columns`, `_propensity`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
 
 
-## `modules.py` — the term modules (the 1.0 architecture's core)
+## `modules.py` — the term modules
 
 There is one module class per term, and the term class holds it as `module`
 (`ComplexShift.module is ComplexShiftModule`); the module holds the term's

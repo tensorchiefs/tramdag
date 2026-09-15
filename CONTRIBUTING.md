@@ -11,8 +11,8 @@ With [direnv](https://direnv.net/), `.envrc` activates `.venv` on `cd`.
 ## Tests
 
 ```bash
-uv run pytest -q -m "not slow"          # the fast subset
-uv run pytest -q                        # everything, incl. the long fits
+uv run pytest -q -m "not slow"          # the fast subset, 2-3 min
+uv run pytest -q                        # everything, incl. the long fits (25-40 min on 2-core CI)
 uv run pytest tests/test_flow.py -q     # one file
 ```
 
@@ -21,12 +21,17 @@ Run `pytest` with no path: `testpaths` in `pyproject.toml` then picks up both
 
 What the suite guarantees, what `slow` marks, how CI splits the runs, and
 where each reference number comes from is documented in
-[`tests/README.md`](tests/README.md). Two rules matter most:
+[`tests/README.md`](tests/README.md). The policy:
 
-- `data/` is a **contract**. A new seed or changed equations means a new
-  folder, never an edit in place.
-- Validate a new causal feature against a simulator's known truth, not
-  just "it runs".
+- Validate a new causal feature against the known truth of an inline DGP in
+  `tests/conftest.py`, never against "runs without error". If no DGP fits,
+  add one.
+- Mark a long fit `@pytest.mark.slow` so PR CI stays fast, but never the fit
+  that *is* a feature's acceptance measurement.
+- A framework test never imports `experiments/`. The research generators and
+  their frozen CSVs live there, and the experiments workflow checks them.
+- `experiments/<area>/data/` is a contract. A new seed or changed equations
+  means a new folder, never an edit in place.
 
 ## Linting
 
@@ -85,12 +90,17 @@ Regenerate it from the `.py`. See
 
 ## Conventions worth knowing
 
-Four implementation conventions are easy to get wrong:
+Four implementation conventions are easy to get wrong, and tests pin each:
+the latent-scale signs ([`docs/notation.md`](docs/notation.md)), the raw
+continuous against one-hot ordinal parent encoding and the log-space ordinal
+likelihood ([`docs/model.md`](docs/model.md)), and the seeding
+([`docs/code-map.md`](docs/code-map.md)). Read [`docs/architecture.md`](docs/architecture.md)
+before you change anything in `src/tramdag/`.
 
-- the latent-scale signs,
-- the raw parent encoding against the one-hot parent encoding,
-- the log-space ordinal likelihood,
-- the seeding.
+## Releasing
 
-[`CLAUDE.md`](CLAUDE.md) documents all four, and tests pin them. Read that
-document before you change anything in `src/tramdag/`.
+The version is the git tag, through hatch-vcs. `cz bump` derives the next tag
+from the conventional commits since the last one and `cz changelog` writes
+`CHANGELOG.md` from the same commits; a push of the tag runs
+`.github/workflows/release.yaml`, which builds with uv, uploads to PyPI through
+trusted publishing and creates a sigstore-signed GitHub release.

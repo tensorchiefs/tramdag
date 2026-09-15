@@ -5,9 +5,6 @@ term's two classes: its `Term` subclass (the spec) and its module in
 `modules.py`. Node-kind behavior lives in four `Node` methods. Everything else
 is framework code.
 
-[ADR 001](adr/001-term-owned-architecture.md) records these decisions and the
-alternatives that the project refused; its class names are those of its date.
-
 ## Module map
 ```mermaid
 graph TD
@@ -126,9 +123,7 @@ For a one-off term, the cheap path is `Fn`.
 
 The two node kinds are continuous and ordinal. They stay an if/else in ONE
 place: the four `Node` methods `log_prob`, `sample`, `abduct` and
-`marginal_theta` in nodes.py, plus `encode` for the parent encoding. A third
-node kind is the trigger for a protocol. Until a third kind arrives, the
-if/else stays.
+`marginal_theta` in nodes.py, plus `encode` for the parent encoding.
 
 ## Guards that pin all of this
 

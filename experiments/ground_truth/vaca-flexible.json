@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 (see the YAML header): measured 2026-08-26 on the refactor/lean-fit branch. Paper Sec. 5.1-5.2. The interventional means are analytic (E[x3|do(x2=a)] = -0.25 + 0.25a), so what is checked is the flow's error against them, not a pinned flow value: a center plus an error bound on the same number gave two windows that could disagree. do(x2=-3) is off-manifold extrapolation, which is why its error is the largest of the three. Exact reference protocol since 2026-08-26 (global ReduceLROnPlateau, glorot init): the do(x2=-3) error is seed-sensitive \u2014 0.098 at the config's init seed 7, 0.268 / 0.217 at seeds 8 / 9 \u2014 so the bound is 2.5x the seed-7 value and docs/paper-replication.md holds the spread. Re-pinned 2026-09-02 at the reference's own 10000 epochs @ lr 0.001 WITH the plateau rule (the CI-runtime compression to 4800 @ 0.002 without a schedule was reverted after the visual pass against paper Fig. 5: under the full reference protocol every bound holds and do(x2=0) improves 0.025->0.018; the interventional plot is now the paper's KDE style). Bounds are 2.5x the new measurement where that is tighter.",
+  "_note": "Protocol = the paper's R code 1:1 (see the YAML header): Paper Sec. 5.1-5.2. The interventional means are analytic (E[x3|do(x2=a)] = -0.25 + 0.25a), so what is checked is the flow's error against them, not a pinned flow value: a center plus an error bound on the same number gave two windows that could disagree. do(x2=-3) is off-manifold extrapolation, which is why its error is the largest of the three. Under the reference protocol (global ReduceLROnPlateau, glorot init) the do(x2=-3) error is seed-sensitive \u2014 0.098 at the config's init seed 7, 0.268 / 0.217 at seeds 8 / 9 \u2014 so the bound is 2.5x the seed-7 value and docs/paper-replication.md holds the spread. Pinned at the reference's own 10000 epochs @ lr 0.001 with the plateau rule; bounds are 2.5x the measurement.",
   "val_nll_x3": {
     "value": 1.449499249458313,
     "atol": 0.05
@@ -22,6 +22,6 @@
   },
   "fit_seconds": {
     "max": 1310,
-    "why": "3x the 2-core CI runner measurement (436.8 s, run 33722643387, 2026-09-03, the reference 10000-epoch plateau protocol): shared-runner wall clock is noisy, so this is a gross-regression tripwire, not a benchmark"
+    "why": "3x the 2-core CI runner measurement (436.8 s, the reference 10000-epoch plateau protocol): shared-runner wall clock is noisy, so this is a gross-regression tripwire, not a benchmark"
   }
 }

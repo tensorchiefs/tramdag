@@ -22,15 +22,15 @@ def _ls_spec() -> dict:
     """The in-class spec of the all-``ls`` chain: every edge a linear shift."""
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), LS("x2")]),
-        "y": OrdinalNode(4, [LS("x1"), LS("x2"), LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
     }
 
 
 # %% public functions ------------------------------------------------------------------
 def test_rejects_non_all_ls():
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([CS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     flow = CausalFlowDAG(spec)
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"x1": rng.standard_normal(50), "x2": rng.standard_normal(50)})
@@ -39,7 +39,7 @@ def test_rejects_non_all_ls():
 
 
 def test_rejects_ci_too():
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([I("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(I("x1"))}
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"x1": rng.standard_normal(50), "x2": rng.standard_normal(50)})
     with pytest.raises(ValueError, match="requires an all-`ls` spec"):
@@ -74,7 +74,7 @@ def test_dtype_round_trip_and_usable(ls_chain):
 def test_continuous_only_all_ls_recovers_the_true_shift(ls_chain):
     """An all-continuous all-ls spec fits and lands on the DGP coefficient."""
     df = ls_chain["draw"](4000, 2)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
     rep = flow.fit_classical(df, max_iter=200)
@@ -135,7 +135,7 @@ def test_agrees_with_adam_mle(ls_chain):
     the inline ls_chain DGP.
     """
     obs = ls_chain["draw"](2000, 5)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     torch.manual_seed(0)
     fa = CausalFlowDAG(spec)
     for ep, lr in [(1500, 1e-2), (800, 1e-3)]:

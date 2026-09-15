@@ -35,8 +35,8 @@ def fitted_flow():
     df = pd.DataFrame({"X": x, "Y": y, "W": w})
     spec = {
         "X": ContinuousNode(),
-        "Y": OrdinalNode(4, [LS("X")]),
-        "W": ContinuousNode([LS("X"), LS("Y")]),
+        "Y": OrdinalNode(4, LS("X")),
+        "W": ContinuousNode(LS("X") + LS("Y")),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(
@@ -49,7 +49,7 @@ def fitted_flow():
     return flow, df
 
 
-@pytest.mark.parametrize("ut", [BernsteinUT(n_coeffs=12), SplineUT(bins=6), AffineUT()])
+@pytest.mark.parametrize("ut", BernsteinUT(n_coeffs=12) + SplineUT(bins=6) + AffineUT())
 def test_univariate_roundtrip(ut):
     ut.set_range(-3.0, 7.0)
     n = 200
@@ -106,8 +106,8 @@ def test_ordinal_cutpoints_increasing_and_pmf_sums_to_one():
 
 def test_topological_order():
     spec = {
-        "C": OrdinalNode(3, [LS("A"), LS("B")]),
-        "B": ContinuousNode([CS("A")]),
+        "C": OrdinalNode(3, LS("A") + LS("B")),
+        "B": ContinuousNode(CS("A")),
         "A": ContinuousNode(),
     }
     order = validate_and_sort(spec)
@@ -185,9 +185,9 @@ def test_ls_node_equals_proportional_odds():
     df = pd.DataFrame({"X1": x1, "X2": x2, "Y": y})
 
     spec = {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "Y": OrdinalNode(4, [LS("X1"), LS("X2")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "Y": OrdinalNode(4, LS("X1") + LS("X2")),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(df, epochs=400, learning_rate=0.05, batch_size=1000, seed=1)
@@ -255,7 +255,7 @@ def test_shift_curve_matches_the_manual_composition(ls_chain):
     from tramdag import CS, ContinuousNode
 
     df = ls_chain["draw"](400, 0)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([CS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=5, batch_size=200)
     grid = np.linspace(-2, 2, 41)
@@ -279,9 +279,9 @@ def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain)
     df = ls_chain["draw"](200, 0)[["x1", "x2", "t"]]
     spec = {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1")]),
-        "y": ContinuousNode([LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1")),
+        "y": ContinuousNode(LS("t")),
     }
     df = df.assign(y=df["x2"] - 0.8 * df["t"])
     flow = CausalFlowDAG(spec, seed=0)

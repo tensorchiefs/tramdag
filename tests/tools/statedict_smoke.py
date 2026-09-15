@@ -23,24 +23,24 @@ BASELINE = Path(__file__).with_name("statedict_baseline.pt")
 SPECS = {
     "ls_chain": lambda: {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), LS("x2")]),
-        "y": OrdinalNode(4, [LS("x1"), LS("x2"), LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
     },
     "flexible": lambda: {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([CI("x1")]),
-        "x3": ContinuousNode([SI(transform="spline"), CS("x1", "x2")]),
+        "x2": ContinuousNode(CI("x1")),
+        "x3": ContinuousNode(SI(transform="spline") + CS("x1", "x2")),
     },
     "vc": lambda: {
         "X1": ContinuousNode(),
-        "T": OrdinalNode(2, [LS("X1")]),
-        "Y": ContinuousNode([CS("X1"), VC("X1", t="T")]),
+        "T": OrdinalNode(2, LS("X1")),
+        "Y": ContinuousNode(CS("X1") + VC("X1", t="T")),
     },
     "additive_ci": lambda: {
         "a": ContinuousNode(),
         "b": ContinuousNode(),
-        "y": ContinuousNode([CI("a", "b", allow_interaction=False)]),
+        "y": ContinuousNode(CI("a", "b", allow_interaction=False)),
     },
 }
 

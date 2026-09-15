@@ -129,7 +129,7 @@ place: the four `Node` methods `log_prob`, `sample`, `abduct` and
 
 - `tests/tools/statedict_smoke.py` — seeded per-DGP state dicts, bit-compared.
 - The inline DGP truths (`tests/conftest.py`) and 45+ regex-pinned refusals.
-- `experiments/*/ground_truth/*.json` — ten CI-checked replications with
+- `experiments/ground_truth/*.json` — eight CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.
 
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->

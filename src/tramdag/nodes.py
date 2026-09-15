@@ -30,9 +30,9 @@ from .transforms import (
 
 # %% public classes --------------------------------------------------------------------
 class Node(nn.Module):
-    """One dimension of the flow: an intercept plus additive shift terms.
+    r"""One dimension of the flow: an intercept plus additive shift terms.
 
-    The intercept produces the transform parameters ``theta``. The shift
+    The intercept produces the transform parameters $\vartheta$. The shift
     terms add up on the latent scale. The likelihood, sampling and encoding
     branches on the node kind live in the five methods ``log_prob``,
     ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere
@@ -102,7 +102,7 @@ class Node(nn.Module):
         return ordinal_abduct(theta, shift, x, generator=generator)
 
     def marginal_theta(self, column: np.ndarray):
-        """Give the node's marginal-start theta, or ``None`` when there is none.
+        r"""Give the node's marginal-start $\vartheta$, or ``None`` when there is none.
 
         Ordinal: the empirical class log-odds. Continuous: the transform's own
         marginal start over the same column (``None`` for spline/affine —

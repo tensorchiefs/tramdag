@@ -17,7 +17,7 @@ uv run pytest tests/test_flow.py -q     # one file
 ```
 
 Run `pytest` with no path: `testpaths` in `pyproject.toml` then picks up both
-`tests/` and the per-area `experiments/*/tests/`.
+`tests/` and `experiments/tests/`.
 
 What the suite guarantees, what `slow` marks, how CI splits the runs, and
 where each reference number comes from is documented in
@@ -30,7 +30,7 @@ where each reference number comes from is documented in
   that *is* a feature's acceptance measurement.
 - A framework test never imports `experiments/`. The research generators and
   their frozen CSVs live there, and the experiments workflow checks them.
-- `experiments/<area>/data/` is a contract. A new seed or changed equations
+- `experiments/data/` is a contract. A new seed or changed equations
   means a new folder, never an edit in place.
 
 ## Linting

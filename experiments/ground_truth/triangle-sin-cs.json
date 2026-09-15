@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): measured 2026-08-26 on the refactor/lean-fit branch. As triangle-atan-cs with a second nonlinear f. sin has two turning points on the grid, and the reference shift net (hidden_features_CS = c(2, 25, 25, 2), sigmoid) has a 2-unit input bottleneck: it tracks -f(x2) through the middle and saturates at both ends, so cs_curve_max_abs_err sits where the plateaus start (|x2| > 0.75) rather than near zero. That is the reference architecture's capacity, not a fit failure -- the paper's own claim is made with atan, which is monotone on the grid, and triangle-atan-cs recovers it. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. Re-pinned 2026-09-01 from the tuned protocol (fewer epochs; see the YAML header). ARCHITECTURE CORRECTED 2026-09-02: hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25) \u2014 under the earlier literal [2,25,25,2] reading a 2-sigmoid input bottleneck flattened every CS curve (sin could not reproduce paper Fig. 18 at ANY protocol; (25,25) lands on it). Centers re-pinned from the corrected runs; {max} bounds 2.5x the new measurement where tighter. The old note's 'reference capacity, not a fit failure' claim was an artifact of the misread net and is retracted; the grid now follows paper Fig. 18 (x2 in [-1, 0]).",
+  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): As triangle-atan-cs with a second nonlinear f. sin has two turning points; cs_curve_max_abs_err is scored on paper Fig. 18's window, x2 in [-1, 0]. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds are 2.5x the measurement.",
   "beta12": {
     "value": 1.9808403253555298,
     "atol": 0.05
@@ -26,6 +26,6 @@
   },
   "fit_seconds": {
     "max": 957,
-    "why": "3x the 2-core CI runner measurement (319 s, 2026-09-01, tuned protocol): shared-runner wall clock is noisy, so this is a gross-regression tripwire, not a benchmark"
+    "why": "3x the 2-core CI runner measurement (319 s, tuned protocol): shared-runner wall clock is noisy, so this is a gross-regression tripwire, not a benchmark"
   }
 }

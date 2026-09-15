@@ -25,12 +25,12 @@ def _vc_spec(penalty: float = 1.0) -> dict:
     irrelevant to Y's conditional because the joint NLL decomposes per node).
     """
     return {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "X3": ContinuousNode([I(transform="affine")]),
-        "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "X3": ContinuousNode(I(transform="affine")),
+        "T": OrdinalNode(2, LS("X1") + LS("X2")),
         "Y": ContinuousNode(
-            [CS("X1", "X2", "X3"), VC("X2", "X3", penalty=penalty, t="T")]
+            CS("X1", "X2", "X3") + VC("X2", "X3", penalty=penalty, t="T")
         ),
     }
 
@@ -73,21 +73,21 @@ def test_vc_modifier_may_repeat_but_on_owns_its_edge():
     ok = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([CS("X2"), VC("X2", t="T")]),
+        "Y": ContinuousNode(CS("X2") + VC("X2", t="T")),
     }
     assert validate_and_sort(ok)[-1] == "Y"
     # a second edge-owning term for T -> invalid (beta0 vs main effect unidentified)
     bad = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([LS("T"), VC("X2", t="T")]),
+        "Y": ContinuousNode(LS("T") + VC("X2", t="T")),
     }
     with pytest.raises(ValueError, match="more than one"):
         validate_and_sort(bad)
 
 
 def test_vc_rejects_multilevel_ordinal_treatment():
-    spec = {"T": OrdinalNode(levels=4), "Y": ContinuousNode([VC(t="T")])}
+    spec = {"T": OrdinalNode(levels=4), "Y": ContinuousNode(VC(t="T"))}
     with pytest.raises(ValueError, match="2-level"):
         validate_and_sort(spec)
 
@@ -96,7 +96,7 @@ def test_vc_modifiers_are_real_dag_edges():
     """Modifiers must topologically precede the node (they are parents)."""
     spec = {
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([VC("M", t="T")]),
+        "Y": ContinuousNode(VC("M", t="T")),
         "M": ContinuousNode(),
     }
     order = validate_and_sort(spec)
@@ -118,8 +118,8 @@ def test_vc_without_modifiers_equals_ls_exactly():
     t = rng.integers(0, 2, 200).astype(float)
     y = 0.7 * t + rng.logistic(size=200)
     df = pd.DataFrame({"T": t, "Y": y})
-    spec_vc = {"T": OrdinalNode(levels=2), "Y": ContinuousNode([VC(t="T")])}
-    spec_ls = {"T": OrdinalNode(levels=2), "Y": ContinuousNode([LS("T")])}
+    spec_vc = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(VC(t="T"))}
+    spec_ls = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(LS("T"))}
     fv, fl = CausalFlowDAG(spec_vc, seed=0), CausalFlowDAG(spec_ls, seed=0)
     with torch.no_grad():
         # LS enters via the 2-column one-hot; only w[1]-w[0] is identified.
@@ -193,10 +193,10 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
     """
     df = vc_hetero["draw"](4000, 100)
     spec = {
-        **{k: ContinuousNode([I(transform="affine")]) for k in ("X1", "X2", "X3")},
-        "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
+        **{k: ContinuousNode(I(transform="affine")) for k in ("X1", "X2", "X3")},
+        "T": OrdinalNode(2, LS("X1") + LS("X2")),
         "Y": ContinuousNode(
-            [LS("X1"), LS("X2"), LS("X3"), VC("X2", "X3", penalty=1e7, t="T")]
+            LS("X1") + LS("X2") + LS("X3") + VC("X2", "X3", penalty=1e7, t="T")
         ),
     }
     flow = CausalFlowDAG(spec, seed=0)
@@ -213,7 +213,7 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
 
     ls_spec = {
         **spec,
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("X3"), LS("T")]),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("X3") + LS("T")),
     }
     ref = CausalFlowDAG(ls_spec, seed=0)
     ref.fit_classical(df)
@@ -257,9 +257,9 @@ def test_vc_continuous_treatment():
     y = 0.5 * m + (0.3 + 0.2 * m) * d + rng.logistic(size=n)
     df = pd.DataFrame({"M": m, "D": d, "Y": y})
     spec = {
-        "M": ContinuousNode([I(transform="affine")]),
-        "D": ContinuousNode([I(transform="affine")]),
-        "Y": ContinuousNode([CS("M"), VC("M", t="D")]),
+        "M": ContinuousNode(I(transform="affine")),
+        "D": ContinuousNode(I(transform="affine")),
+        "Y": ContinuousNode(CS("M") + VC("M", t="D")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=30, seed=0)

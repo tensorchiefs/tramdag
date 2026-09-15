@@ -1,4 +1,4 @@
-"""Every YAML key is read by its script; the loader no longer checks key sets.
+"""Every YAML key is read by its script.
 
 A misspelled or leftover key would otherwise be silent, so this test keeps the
 config files and the code that reads them from drifting apart.

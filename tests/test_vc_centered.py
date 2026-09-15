@@ -21,7 +21,7 @@ from tramdag import CS, LS, VC, CausalFlowDAG, ContinuousNode, I, OrdinalNode
 from tramdag.spec import spec_from_dict, spec_to_dict, validate_and_sort
 
 # %% global variables ------------------------------------------------------------------
-T_SPEC = {"X": ContinuousNode([I(transform="affine")]), "T": OrdinalNode(2, [LS("X")])}
+T_SPEC = {"X": ContinuousNode(I(transform="affine")), "T": OrdinalNode(2, LS("X"))}
 
 
 # %% private functions -----------------------------------------------------------------
@@ -29,7 +29,7 @@ def _misspecified_spec(center) -> dict:
     return {
         **T_SPEC,
         # prognostic part deliberately under-specified (linear vs true x^2)
-        "Y": ContinuousNode([LS("X"), VC("X", center="ps" if center else None, t="T")]),
+        "Y": ContinuousNode(LS("X") + VC("X", center="ps" if center else None, t="T")),
     }
 
 
@@ -59,29 +59,29 @@ def _fit(spec, df, epochs=250):
 
 # %% public functions ------------------------------------------------------------------
 def test_center_validation():
-    spec = {"D": ContinuousNode(), "Y": ContinuousNode([VC(center="ps", t="D")])}
+    spec = {"D": ContinuousNode(), "Y": ContinuousNode(VC(center="ps", t="D"))}
     with pytest.raises(ValueError, match="binary ordinal"):
         validate_and_sort(spec)  # continuous treatment cannot center
     chained = {
         "X": ContinuousNode(),
-        "A": OrdinalNode(2, [LS("X")]),
-        "T": OrdinalNode(2, [VC("X", center="ps_a", t="A")]),
-        "Y": ContinuousNode([VC("X", center="ps_t", t="T")]),
+        "A": OrdinalNode(2, LS("X")),
+        "T": OrdinalNode(2, VC("X", center="ps_a", t="A")),
+        "Y": ContinuousNode(VC("X", center="ps_t", t="T")),
     }
     with pytest.raises(ValueError, match="chained"):
         validate_and_sort(chained)
     # center names a COLUMN now: the pre-column spelling refuses loudly
     legacy = {
         "X": ContinuousNode(),
-        "T": OrdinalNode(2, [LS("X")]),
-        "Y": ContinuousNode([VC("X", center=True, t="T")]),
+        "T": OrdinalNode(2, LS("X")),
+        "Y": ContinuousNode(VC("X", center=True, t="T")),
     }
     with pytest.raises(ValueError, match="COLUMN"):
         validate_and_sort(legacy)
     collides = {
         "X": ContinuousNode(),
-        "T": OrdinalNode(2, [LS("X")]),
-        "Y": ContinuousNode([VC("X", center="X", t="T")]),
+        "T": OrdinalNode(2, LS("X")),
+        "Y": ContinuousNode(VC("X", center="X", t="T")),
     }
     with pytest.raises(ValueError, match="collides"):
         validate_and_sort(collides)
@@ -90,8 +90,8 @@ def test_center_validation():
 def test_center_serialization_roundtrip():
     spec = {
         "X": ContinuousNode(),
-        "T": OrdinalNode(2, [LS("X")]),
-        "Y": ContinuousNode([VC("X", center="ps", t="T")]),
+        "T": OrdinalNode(2, LS("X")),
+        "Y": ContinuousNode(VC("X", center="ps", t="T")),
     }
     round_tripped = spec_from_dict(spec_to_dict(spec))
     t = next(t for t in round_tripped["Y"].terms if t.name == "VC")
@@ -106,11 +106,11 @@ def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
 
     def fit_with(term):
         spec = {
-            "X1": ContinuousNode([I(transform="affine")]),
-            "X2": ContinuousNode([I(transform="affine")]),
-            "X3": ContinuousNode([I(transform="affine")]),
-            "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
-            "Y": ContinuousNode([CS("X1", "X2", "X3"), term]),
+            "X1": ContinuousNode(I(transform="affine")),
+            "X2": ContinuousNode(I(transform="affine")),
+            "X3": ContinuousNode(I(transform="affine")),
+            "T": OrdinalNode(2, LS("X1") + LS("X2")),
+            "Y": ContinuousNode(CS("X1", "X2", "X3") + term),
         }
         flow = CausalFlowDAG(spec, seed=3)
         flow.fit(df.iloc[:1000], epochs=15, seed=3)

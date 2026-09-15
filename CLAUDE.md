@@ -57,7 +57,7 @@ cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
 
 ## Hard rules
 
-- Never edit `experiments/*/data/`, test assertion values, or model maths and
+- Never edit `experiments/data/`, test assertion values, or model maths and
   defaults without an explicit request. Numerics stay bit-identical.
 - Before adding a mechanism for a rare edge case, discuss it first. The
   simplest solution without special treatment wins.

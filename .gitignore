@@ -24,8 +24,6 @@ notebooks/*.ipynb
 # build artifacts
 dist/
 
-# machine-benchmark outputs (collected manually per machine)
-perf_*.json
 
 # jupyter runtime litter
 .ipynb_checkpoints/
@@ -38,8 +36,6 @@ build/
 texfrag/
 docs/*.html
 
-# working ledger of the 2026-08 review — local only
-REVIEW.md
 
 # emacs lock files
 .#*
@@ -50,3 +46,6 @@ scratch/
 site/
 .cache/
 architecture-overview.html
+
+# local review ledger
+REVIEW.md

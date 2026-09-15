@@ -60,7 +60,7 @@ def claim(text, value, bound, fmt="{:.2e}"):
     bound is the only number in the source.
 
     A bound sits at roughly 1.5 to 4 times the measured value, which is the
-    band that ``experiments/*/ground_truth/*.json`` already uses. Tighter than
+    band that ``experiments/ground_truth/*.json`` already uses. Tighter than
     that and another machine trips it; wider and it stops meaning anything.
     """
     ok = "ok  " if value <= bound else "FAIL"

@@ -1,7 +1,7 @@
 """Helpers shared by the paper replications.
 
 One fit call with a per-epoch read-out, the triangle spec pieces and the
-figure styles below are specific to these experiments; what every area
+figure styles below are specific to these experiments; what every script
 shares (config loading, output directories, reports) lives in
 ``experiments/common.py``.
 """

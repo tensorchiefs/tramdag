@@ -14,7 +14,7 @@ Run an experiment as a module, from ``experiments/``:
 
 ```
 uv run python -m triangle atan-cs
-uv run python -m check paper triangle-atan-cs
+uv run python -m check triangle-atan-cs
 ```
 """
 

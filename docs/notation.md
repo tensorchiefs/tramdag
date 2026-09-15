@@ -53,10 +53,3 @@ $$
 For a continuous node the shifts are added, as written. For an ordinal node
 the shift is subtracted inside the sigmoid:
 $P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - \text{shift})$.
-
-## Plain-text fallback
-
-Docstrings and terminal output cannot render Greek subscripts. There,
-`theta` stands for $\boldsymbol{\vartheta}$, `h_theta` for
-$h_{\boldsymbol{\vartheta}}$, `b_theta` for $b_{\boldsymbol{\Theta}}$ and
-`beta0` for $\beta_0$.

@@ -71,16 +71,16 @@ class ReadoutsMixin:
     def varying_coef(
         self, df: pd.DataFrame, node: str, *, t: str | None = None
     ) -> np.ndarray:
-        """Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.
+        r"""Evaluate the fitted effect function $\beta(x)$ of a ``VC`` term.
 
-        The value is ``beta0 + b_theta(modifiers)``, in closed form from the
+        The value is $\beta_0 + b_\Theta(\text{modifiers})$, in closed form from the
         fitted term; only the modifier columns of ``df`` are read. It lives on
         the node's latent scale.
 
         Parameters
         ----------
         df : pd.DataFrame
-            Rows at which to evaluate ``beta``. Must contain every modifier
+            Rows at which to evaluate $\beta$. Must contain every modifier
             column of the term.
         node : str
             Name of the node that carries the VC term.
@@ -91,7 +91,7 @@ class ReadoutsMixin:
         Returns
         -------
         np.ndarray
-            The ``beta`` values, shape ``(n,)``. Constant when the term has
+            The $\beta$ values, shape ``(n,)``. Constant when the term has
             no modifiers.
 
         Raises

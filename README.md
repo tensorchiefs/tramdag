@@ -7,7 +7,7 @@
 
 > ⚠️ **Status: 1.0 release candidate.** This README documents the
 > **unreleased 1.0** API (term classes, `callbacks=`, `flow.shift_curve`,
-> `VC(center="col")`). `0.3.0` on PyPI predates all of it. Until 1.0 ships,
+> `VC(center="col")`). The PyPI release predates all of it. Until 1.0 ships,
 > only a git install matches the docs below.
 
 **TRAM-DAGs** model each variable of a structural causal model with a

@@ -1,4 +1,4 @@
-"""R3b validation: additive complex intercept.
+"""The additive complex intercept.
 
 Separate `I` terms reshape the transform *additively* (one network per parent,
 summed in unconstrained coefficient space) — distinct from a single joint

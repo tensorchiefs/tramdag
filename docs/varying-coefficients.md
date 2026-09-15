@@ -1,7 +1,7 @@
 # Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=)`
 
 A `VC` term gives a node a **treatment-effect head with its own bias–variance
-budget** (issue #28). The term contributes
+budget**. The term contributes
 
 ```
 beta(modifiers) * x_on        with    beta(x) = beta0 + b_theta(x)
@@ -49,7 +49,7 @@ read-out is thus the difference of two jointly fitted, unregularized
 networks, which amplifies noise.
 
 On the heterogeneous-effect validation DGP (see below), the `CS` reduced form reaches
-corr ≈ 0.5 against the true effect function (tramdag-simu#18 / PR #21). This
+corr ≈ 0.5 against the true effect function (`tests/test_vc_term.py` measures it). This
 holds **even when the model is exactly in-class**. The `VC` term reaches
 corr ≈ 0.99 on the same protocol (`tests/test_vc_term.py`, acceptance bar
 0.9). Causal forests and R-learners work not because they *target* the
@@ -160,6 +160,6 @@ recovery corr ≥ 0.9 at n = 5000 (measured ≈ 0.99, min over 3 seeds 0.986), a
 fitted `beta0` that matches `fit_classical` under a large penalty, and the
 read-out identities. The centering claims are measured against the
 `confounded` DGP in the same file. Both former follow-ups have since
-shipped: propensity centering (#30) is `center="col"`, documented above, and the
-per-observation scores for effect-modifier scans (#29) are `flow.scores` and
+shipped: propensity centering is `center="col"`, documented above, and the
+per-observation scores for effect-modifier scans are `flow.scores` and
 `flow.effect_modifier_scan` — see [scores.md](scores.md).

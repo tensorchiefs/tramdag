@@ -1,10 +1,10 @@
-"""Tests for the propensity-centered VC term (issue #30):
+"""Tests for the propensity-centered VC term:
 beta(x) * (t - e_hat(x)) with cross-fitted (out-of-fold) e_hat.
 
 The stage-1 propensities are the caller's: ``VC(center="col")`` names a
 column of the training frame holding one out-of-fold value per row, and fit
 refuses a centered spec whose frame lacks it.
-Acceptance: center=None is bit-identical to #28's VC (regression guard);
+Acceptance: center=None is bit-identical to the plain VC (regression guard);
 gradient isolation (no gradient reaches the treatment node from the outcome
 loss); the Dandl reproduction (confounded DGP + deliberately under-specified
 prognostic part: centering must materially reduce the bias of beta_hat —
@@ -99,7 +99,7 @@ def test_center_serialization_roundtrip():
 
 
 def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
-    """The default must preserve #28's behavior exactly: a VC term written
+    """The default must preserve the plain VC's behavior exactly: a VC term written
     without the kwarg and one with center=None produce bit-identical fits.
     """
     df = vc_hetero["draw"](1200, 100)
@@ -216,7 +216,7 @@ def test_do_recomputes_centered_regressor(confounded):
 
 
 def test_dandl_centering_reduces_bias(confounded):
-    """THE reason the feature exists (issue #30, Dandl et al. 2024): under
+    """THE reason the feature exists (Dandl et al. 2024): under
     strong confounding + a deliberately under-specified prognostic part, the
     centered VC must show materially lower bias in beta_hat than the uncentered
     one. Measured on this protocol (seeds 0/1/2): uncentered mean|beta_hat-tau|

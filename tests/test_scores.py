@@ -1,4 +1,4 @@
-"""Tests for per-observation scores + the effect-modifier scan (issue #29).
+"""Tests for per-observation scores + the effect-modifier scan.
 
 Acceptance: (1) per-parameter score sums ~ 0 at the fitted MLE; (2) exact
 finite-difference agreement (float64, any parameter point); (3) the end-to-end
@@ -129,7 +129,7 @@ def test_scores_match_finite_differences():
 
 def test_effect_modifier_scan_flags_true_modifiers(mle_flow):
     """The point of the feature: on the heterogeneous SCM the scan must flag
-    the true modifiers X2 and X3 and NOT the inert X1 (issue #29).
+    the true modifiers X2 and X3 and NOT the inert X1.
     """
     flow, df = mle_flow
     scan = flow.effect_modifier_scan(df, node="Y", t="T")

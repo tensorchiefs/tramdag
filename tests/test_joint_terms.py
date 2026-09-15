@@ -1,4 +1,4 @@
-"""R3 validation: joint (multi-parent) terms capture interactions that the
+"""Joint (multi-parent) terms capture interactions that the
 additive decomposition cannot. We build a DGP whose latent shift is a *pure
 interaction* x1*x2 (no main effects); a joint CS(x1,x2) can fit it, an additive
 CS(x1)+CS(x2) cannot, and the joint model must reach a clearly lower NLL.

@@ -12,19 +12,19 @@ the same object, so `LS is LinearShift`.
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, plain data; each term is a subclass that sets `name` as a class attribute (checked at class definition) and whose options are the keyword arguments of its `__init__`, with their defaults, assigned to `self`. A term is exactly its `__dict__`, so `options()` is `dict(vars(term))` — parents included — and `__eq__`, `__repr__` and serialization are one line each. `+` on terms builds plain lists. Carries the spec-level rules: `check`, `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new term; its module goes in `terms.py` and its options read as attributes (`term.penalty`, `term.units`, ...). |
+| [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, plain data; each term is a subclass that sets `name` as a class attribute (checked at class definition) and whose options are the keyword arguments of its `__init__`, with their defaults, assigned to `self`. A term is exactly its `__dict__`, so `options()` is `dict(vars(term))` — parents included — and `__eq__`, `__repr__` and serialization are one line each. `+` on terms builds plain lists. Carries the spec-level rules: `check`, `edge_parents`, `cells`, `classical`, `options()`, `from_serialized`. Subclass `Term` for a new term: set `name` and `module` (its `modules.py` class) as class attributes; its options read as attributes (`term.penalty`, `term.units`, ...). |
 | [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
 | [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
 | [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift `beta * x` — the interpretable log-odds coefficient. Exactly one parent. |
 | [`ComplexShift`][tramdag.spec.ComplexShift] / `CS` | Complex shift: an NN `g(x)`, additive on the latent scale. Several parents form one joint network. |
-| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift `(beta0 + b_theta(mods)) * x_t` — the penalized treatment-effect head (issue #28). `center=` adds propensity centering (issue #30). |
+| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift `(beta0 + b_theta(mods)) * x_t` — the penalized treatment-effect head. `center=` adds propensity centering. |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] | Continuous variable: monotone 1-D transform plus shifts. `terms` is the first positional argument. |
 | [`OrdinalNode`][tramdag.spec.OrdinalNode] | Ordinal variable with `levels` classes: ordered logit (cutpoints) plus shifts. |
 | [`node_parents()`][tramdag.spec.node_parents] | Ordered de-duplicated parent names of a node (the canonical term list is `node.terms`). |
 | [`validate_and_sort()`][tramdag.spec.validate_and_sort] | Edge-ownership validation plus Kahn topological sort. The returned order makes the flow triangular. |
-| [`spec_to_dict()`][tramdag.spec.spec_to_dict] / [`spec_from_dict()`][tramdag.spec.spec_from_dict] | Checkpoint (de)serialization. A term serializes as `{term, parents, options}` and nothing else; `options` is every option the term carries, so the entry describes the model in full. A hand-written spec may name only some of them — the constructor fills the rest. No compatibility shims: `spec_from_dict` rejects a term without `options`, the node constructors normalize the formula, and `validate_and_sort` checks the DAG. |
-| (`_normalize_terms`, `_as_term`, `_term_class`, `_checked_input_transform`, `_serialized`) | Formula flattening and per-entry validation (a `+` sum nested in a list is rejected), the one-parented-`I` rule plus transform hoisting in one pass. An option another term takes is refused by Python's own argument binding, as a `TypeError`. |
+| [`spec_to_dict()`][tramdag.spec.spec_to_dict] / [`spec_from_dict()`][tramdag.spec.spec_from_dict] | Checkpoint (de)serialization. A term serializes as `{term, parents, options}` and nothing else; `options` is every option the term carries, so the entry describes the model in full. A hand-written spec may name only some of them — the constructor fills the rest. A built-in term's `term` key is its `name`; a custom term writes its `module.ClassName` import path, which `import_object` resolves on the way back. No compatibility shims: `spec_from_dict` rejects a term without `options`, the node constructors normalize the formula, and `validate_and_sort` checks the DAG. |
+| (`_normalize_terms`, `_check_term`, `_term_class`, `import_object`, `_checked_input_transform`, `_serialized`) | Formula flattening and per-entry validation (a `+` sum nested in a list is rejected), the one-parented-`I` rule plus transform hoisting in one pass. An option another term takes is refused by Python's own argument binding, as a `TypeError`. |
 | (`_check_node`, `_kahn_sort`) | The stages behind `validate_and_sort`: parents exist, then each term's `check` (the VC treatment and centering rules), then edge ownership through `edge_parents`; a term's own shape (arity, option values) and a node's own (ordinal levels, the transform) are checked when they are built. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic. |
 
 ## `transforms.py` — the monotone map h and the ordinal transform
@@ -47,7 +47,7 @@ the same object, so `LS is LinearShift`.
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one `_Node` per variable in topological order. Construction seeds the weights (`seed=` is the reproducibility knob). |
+| [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one [`Node`][tramdag.nodes.Node] per variable in topological order. Construction seeds the weights (`seed=` is the reproducibility knob). |
 | [`calibrate()`][tramdag.flow.CausalFlowDAG.calibrate] | Once, from the training rows, each term for itself: transform ranges (train `range_q` quantiles onto the domain), input-transform statistics. Never touches the weights. Called by the first fit; a checkpoint carries the flag. |
 | [`init_marginals()`][tramdag.flow.CausalFlowDAG.init_marginals] | The calibrated start as an explicit step, callable any time: resets every simple intercept to its column's marginal (Bernstein map / ordinal class log-odds; spline and affine have no calibrated start). Not once-guarded — on a trained flow it restarts those intercepts. Calibrates a fresh flow's ranges itself. |
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Joint maximum likelihood: one minibatch Adam loop over all parameters (exact per node, because the NLL decomposes), final weights kept. Keras-shaped validation (`validation_data=`/`validation_split=` fill `history["val"]` per epoch), the optimizer's rate after every epoch in `history["lr"]` (`{node: lr}` with `per_node_adam`), and progress (`verbose=`). Hooks: `optimizer=` (any torch optimizer, for schedulers) and `callbacks=` (one entry or a list; a `Callback` hooks `on_fit_begin`/`on_epoch_end`/`on_fit_end`, a bare callable is an `on_epoch_end` hook `cb(flow, epoch, opt)` — any `True` stops); the recipes in `callbacks.py` read `history["val"]`. A centered VC's out-of-fold propensities ride the training frame as the column its `center=` names. A second call continues training. |
@@ -66,8 +66,7 @@ the same object, so `LS is LinearShift`.
 | [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
 | [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with history and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
 | (`_node`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_init_linear`) | Node lookup with one shared error; parent encoding through `Node.encode` (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing. |
-| (`_check_side_columns`, `_binary_p1`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftTerm` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
-| (`_is_classical`) | Guard for `fit_classical`: every term's `classical` — `LS`, or a parentless `I()` transform carrier. |
+| (`_check_side_columns`, `_binary_p1`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
 
 
 ## `modules.py` — the term modules (the 1.0 architecture's core)
@@ -117,7 +116,7 @@ tanh net for its CAREFL and VACA comparisons. Therefore each config in
 | [`shift_curve()`][tramdag.flow.CausalFlowDAG.shift_curve] | One fitted shift term on a 1-D grid, through the term's own `shift_value` — the public replacement for reaching into `nd.shifts[..]`. |
 | the read-out methods | `varying_coef`, `ls_coefficients`, `to_matrix`, `intercept_contributions`, `design_matrix` — defined here once, methods of the flow via the mixin. |
 
-## `scores.py` — effect-modifier detection (issue #29)
+## `scores.py` — effect-modifier detection
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|

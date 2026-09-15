@@ -47,6 +47,7 @@ nav:
   - spec: api/spec.md
   - flow: api/flow.md
   - modules: api/modules.md
+  - nodes: api/nodes.md
   - fitting: api/fitting.md
   - readouts: api/readouts.md
   - transforms: api/transforms.md

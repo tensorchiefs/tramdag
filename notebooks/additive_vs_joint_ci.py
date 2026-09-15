@@ -30,7 +30,7 @@
 # error. That keeps a term list purely additive on the latent scale.
 #
 # The additive form is the interpretable one: you can ask "what does `x1`
-# *alone* do?". The catch (issue #20) is that the additive sum is identified only
+# *alone* do?". The catch is that the additive sum is identified only
 # up to a constant moving between the nets, so the **raw** per-parent outputs are
 # not comparable. `flow.intercept_contributions(data, node)` resolves this with a
 # sum-to-zero (mean-centering) constraint and returns each parent's centered

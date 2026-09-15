@@ -7,7 +7,7 @@ What it guarantees:
   quantiles (±2.944) — not zuko's ~2.5×-too-steep zero θ. Without a column the
   start is the plain linear map between those ends.
 - Ordinal roots start with cutpoints reproducing the empirical class frequencies.
-- It only touches unconditional `SimpleIntercept` roots — `ci` intercepts are
+- It only touches unconditional `SimpleInterceptModule` roots — parented `I` terms are
   left alone.
 - It is a *pure init*: a marginal-init fit and a default fit converge to the same
   optimum (so the exact-MLE property is preserved).
@@ -29,12 +29,13 @@ from tramdag.transforms import BernsteinUT, ordinal_marginal_init_theta, ordinal
 # %% private functions -----------------------------------------------------------------
 def _mixed_flow_and_df():
     """Flow with a Bernstein root, an ordinal root, and a continuous node whose
-    parent enters as `ci` (so its intercept is a ComplexIntercept, not a root).
+    parent enters as `I("x1")`, so its intercept is a ComplexInterceptModule and
+    not a root.
     """
     spec = {
         "x1": ContinuousNode(),  # Bernstein root
         "y": OrdinalNode(levels=4),  # ordinal root
-        "x2": ContinuousNode([I("x1")]),  # ci -> ComplexIntercept
+        "x2": ContinuousNode([I("x1")]),  # -> ComplexInterceptModule
     }
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
@@ -71,7 +72,7 @@ def test_ordinal_marginal_init_reproduces_class_frequencies():
 
 def test_marginal_init_only_touches_unconditional_roots():
     flow, df = _mixed_flow_and_df()
-    # sanity: the ci node really has a ComplexIntercept
+    # sanity: the parented node really has a ComplexInterceptModule
     assert isinstance(flow.nodes["x2"].intercept, ComplexInterceptModule)
     assert isinstance(flow.nodes["x1"].intercept, SimpleInterceptModule)
 
@@ -92,7 +93,7 @@ def test_marginal_init_only_touches_unconditional_roots():
         flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
         atol=1e-6,
     )
-    # ...while the ci node's ComplexIntercept is untouched
+    # ...while the parented node's ComplexInterceptModule is untouched
     for k, v in flow.nodes["x2"].intercept.state_dict().items():
         assert torch.equal(v.detach(), ci_before[k]), f"ci param {k} changed"
 

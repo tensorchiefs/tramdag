@@ -1,26 +1,19 @@
-"""The output plumbing every experiment area shares.
+"""The output plumbing the experiment scripts share.
 
-Experiments live in one directory per area — ``paper/`` (the replications of
-arXiv:2503.16206), ``benchmarks/`` (training and machine speed) and ``misc/``
-(everything else, currently the classical-MLE validation). ``paper`` and
-``misc`` each own their ``data/``, ``ground_truth/``, ``results/``, ``tests/``
-and whatever helpers only they need. ``benchmarks`` measures speed on the other
-two's data, so it reads theirs and pins no ground truth of its own.
-
-What is left here is the output layout the experiments workflow reads:
-``results/<name>/`` with ``metrics.json``, ``report.md`` and ``plots/``.
+The experiments workflow reads ``results/<name>/`` with ``metrics.json``,
+``report.md`` and ``plots/``, which the functions here write.
 
 Reading a script's YAML file is here. Checking the section it yields is not.
 ``load_variant`` parses the file and gives the variant's section.
-``paper/tests/test_configs.py`` checks that the script reads every key in it.
+``tests/test_configs.py`` checks that the script reads every key in it.
 
-Every function takes the calling script's ``__file__``, so paths resolve
-inside that script's own area with no directory names written in the code.
+Every function takes the calling script's ``__file__``, so paths resolve next
+to that script with no directory names written in the code.
 
 Run an experiment as a module, from ``experiments/``:
 
 ```
-uv run python -m paper.triangle atan-cs
+uv run python -m triangle atan-cs
 uv run python -m check paper triangle-atan-cs
 ```
 """
@@ -109,7 +102,7 @@ def cli(script: str, doc: str) -> str:
 
 
 def make_output_dir(script: str, name: str) -> Path:
-    """Create ``<area>/results/<name>/plots/`` and give the results directory."""
+    """Create ``results/<name>/plots/`` and give the results directory."""
     out = Path(script).resolve().parent / "results" / name
     (out / "plots").mkdir(parents=True, exist_ok=True)
     return out

@@ -21,7 +21,7 @@ code use {-3, -1, 0} — the grid this repo follows (docs/paper-replication.md).
 CLI:
 
 ```
-uv run python -m paper.simulations.vaca --out paper/data/vaca --seed 42
+uv run python -m simulations.vaca --out data/vaca --seed 42
 ```
 """
 
@@ -48,7 +48,7 @@ DO_X2_VALUES = (-3.0, -1.0, 0.0)
 def main(argv: list[str] | None = None) -> None:
     """Regenerate the frozen CSV files of this data-generating process."""
     p = argparse.ArgumentParser(description="Generate the VACA benchmark data.")
-    p.add_argument("--out", type=Path, default=Path("paper/data/vaca"))
+    p.add_argument("--out", type=Path, default=Path("data/vaca"))
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--n-obs", type=int, default=5000)
     p.add_argument("--mc-n", type=int, default=1_000_000)

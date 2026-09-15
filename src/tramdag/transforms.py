@@ -1,14 +1,14 @@
-"""Univariate transforms for CausalFlowDAG nodes.
+r"""Univariate transforms for CausalFlowDAG nodes.
 
 Each continuous node carries a monotone 1-D transform ``h`` (zuko-backed) that maps
 the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.
 
-- continuous: ``u = h(x) + s(parents)`` with ``h`` Bernstein / RQ-spline / affine
-  on the value range scaled from the train ``range_q`` quantiles to ``[-B, B]``.
-- ordinal: ``P(y <= k) = sigmoid(theta_k - s(parents))`` with increasing
-  cutpoints ``theta``.
+- continuous: $u = h(x) + s(\mathrm{pa})$ with $h$ Bernstein / RQ-spline / affine
+  on the value range scaled from the train ``range_q`` quantiles to $[-B, B]$.
+- ordinal: $P(Y \le k) = \sigma(\vartheta_k - s(\mathrm{pa}))$ with increasing
+  cutpoints $\vartheta$.
 
 ``docs/model.md`` is the guide to both.
 """
@@ -109,11 +109,11 @@ def ordinal_bounds(
 
 
 def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
-    """Constrain unconstrained parameters to increasing cutpoints.
+    r"""Constrain unconstrained parameters to increasing cutpoints.
 
-    Port of the original implementation's
-    ``transform_intercepts_ordinal``:
-    ``[-inf, t0, t0 + cumsum(exp(t1:)), +inf]``.
+    The cutpoints are $\tilde\vartheta_0$ followed by
+    $\tilde\vartheta_0 + \mathrm{cumsum}(\exp \tilde\vartheta_{1:})$, with
+    $\pm\infty$ at both ends.
 
     Parameters
     ----------
@@ -140,9 +140,9 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
 
 
 def ordinal_marginal_init_theta(counts) -> Tensor:
-    """Give the unconstrained cutpoint parameters that match class counts.
+    r"""Give the unconstrained cutpoint parameters that match class counts.
 
-    The marginal ``P(Y<=k) = sigmoid(cutpoint_k)`` of the result matches
+    The marginal $P(Y \le k) = \sigma(\vartheta_k)$ of the result matches
     the empirical class frequencies.
 
     Parameters
@@ -158,8 +158,9 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
 
     Notes
     -----
-    Inverts ``ordinal_cutpoints``: the targets are ``c_k = logit(F(k))`` from
-    the empirical CDF, clamped off 0 and 1.
+    Inverts ``ordinal_cutpoints``: the targets are
+    $c_k = \operatorname{logit} \hat F(k)$ from the empirical CDF, clamped off 0
+    and 1.
     """
     counts = np.asarray(counts, dtype=np.float64)
     p = counts / counts.sum()
@@ -173,9 +174,9 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
 
 
 def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
-    """Give ``log P(Y = y | cutpoints, shift)``.
+    r"""Give $\log P(Y = y \mid \vartheta, s)$.
 
-    The model is ``P(Y <= k) = sigmoid(theta_k - shift)``.
+    The model is $P(Y \le k) = \sigma(\vartheta_k - s)$.
 
     Parameters
     ----------
@@ -229,9 +230,9 @@ def ordinal_pmf(theta_tilde: Tensor, shift: Tensor) -> Tensor:
 
 
 def ordinal_sample(theta_tilde: Tensor, shift: Tensor, z: Tensor) -> Tensor:
-    """Map latents to ordinal levels.
+    r"""Map latents to ordinal levels.
 
-    The rule is ``x = #{finite cutpoints theta_j - shift < z}``.
+    The rule is $x = \#\{j : \vartheta_j - s < z\}$ over the finite cutpoints.
 
     Parameters
     ----------
@@ -315,10 +316,10 @@ def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
 
 # %% private classes -------------------------------------------------------------------
 class _ScaledUT(torch.nn.Module, ABC):
-    """Base class for the scaled univariate transforms.
+    r"""Base class for the scaled univariate transforms.
 
-    An affine pre-map takes ``[xmin, xmax]`` to ``[-B, B]`` with
-    ``B = BOUND``, then a zuko transform maps to the latent scale.
+    An affine pre-map takes $[x_{\min}, x_{\max}]$ to $[-B, B]$ with
+    $B$ = ``BOUND``, then a zuko transform maps to the latent scale.
     Subclasses define ``n_params`` and ``_build(theta) -> zuko Transform``.
 
     Parameters
@@ -521,16 +522,17 @@ class BernsteinUT(_ScaledUT):
         return BernsteinTransform(theta, bound=self.bound)
 
     def marginal_init_theta(self, column: np.ndarray | None) -> Tensor:
-        """Give the unconstrained Bernstein coefficients of the marginal start.
+        r"""Give the unconstrained Bernstein coefficients of the marginal start.
 
         With ``column`` the control points follow the node's **empirical
-        marginal**: control point ``k`` is ``logit(F_hat(y_k))`` at the
-        value ``y_k`` sitting at ``k / order`` of the pre-scaled domain, so
+        marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the
+        value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so
         the polynomial starts as the Bernstein approximation of
-        ``logit(F_hat(y))`` — the continuous counterpart of the ordinal
+        $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal
         cutpoints' class log-odds. Without it the control points are
         equally spaced, the plain linear map from the pre-scaled domain
-        ``[-B, B]`` onto ``[logit(range_q), logit(1-range_q)]``.
+        $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with
+        $q$ = ``range_q``.
 
         Parameters
         ----------
@@ -542,7 +544,7 @@ class BernsteinUT(_ScaledUT):
         ------
         ValueError
             With ``range_q=0``: the domain ends are the data min/max, whose
-            latent quantile target ``logit(0)`` is undefined — skip
+            latent quantile target $\operatorname{logit} 0$ is undefined — skip
             ``init_marginals`` for a min-max-domain model.
 
         Returns
@@ -582,9 +584,9 @@ class BernsteinUT(_ScaledUT):
         return torch.as_tensor(theta, dtype=self.xmin.dtype, device=self.xmin.device)
 
     def _init_control_points(self, column: np.ndarray | None, order: int) -> np.ndarray:
-        """Give the ``order + 1`` target control points of the marginal start.
+        r"""Give the ``order + 1`` target control points of the marginal start.
 
-        ``logit`` of the empirical CDF at the equally spaced domain values
+        $\operatorname{logit}$ of the empirical CDF at the equally spaced domain values
         when a column is given, an equally spaced ramp from ``a`` to ``-a``
         otherwise.
         """

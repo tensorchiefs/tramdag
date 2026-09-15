@@ -14,7 +14,7 @@ compare the flow against exact values, not against a second sample.
 Usage (from experiments/):
 
 ```
-uv run python -m paper.vaca flexible
+uv run python -m vaca flexible
 ```
 """
 
@@ -23,9 +23,8 @@ from __future__ import annotations
 
 import matplotlib.pyplot as plt
 from common import cli, load_variant, make_output_dir, save_metrics, write_report
-
-from paper.helpers import continuous_density, continuous_hist, finish, fit_paper
-from paper.simulations.vaca import DO_X2_VALUES, VacaTriangle
+from helpers import continuous_density, continuous_hist, finish, fit_paper
+from simulations.vaca import DO_X2_VALUES, VacaTriangle
 
 
 # %% private functions -----------------------------------------------------------------

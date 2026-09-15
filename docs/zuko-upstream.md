@@ -68,7 +68,7 @@ replication trap: order 21 against the paper's `len_theta=20`, which is order
 
 Neither zuko nor torch ships a Logistic distribution. tramdag therefore
 hand-rolls `StandardLogistic` in ~50 lines, with `log_prob`, `sample` and
-`icdf`. Logistic latents are standard in transformation models and in discrete
+`icdf`. Logistic latents are standard in TRAM-DAGs and in discrete
 flows, and zuko has a precedent in `GeneralizedNormal`. But zuko can point at
 `TransformedUniform(SigmoidTransform().inv)` instead. tramdag keeps its
 `_U_EPS` clamp locally in both cases. This candidate has the lowest value of

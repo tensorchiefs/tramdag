@@ -11,5 +11,5 @@
   "alphas": "seq(-3, 2.9, 0.1) - 60 points, the grid of all four curve files",
   "sd_x3": 6.01039440669,
   "sd_x4": 1.91141558279,
-  "note": "External frozen input with no generator in this repository (like misc/data/magic-mrclean): x3 and x4 are divided by the sds above, carefl_fig5.r's hardcoded SDX3/SDX4. paper.check_data cannot regenerate this folder and does not list it."
+  "note": "External frozen input with no generator in this repository: x3 and x4 are divided by the sds above, carefl_fig5.r's hardcoded SDX3/SDX4. check_data cannot regenerate this folder and does not list it."
 }

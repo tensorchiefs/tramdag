@@ -631,7 +631,7 @@ class Intercept(Term):
 
 
 class LinearShift(Term):
-    """The linear shift ``LS``: ``beta * x``, one interpretable raw-unit coefficient.
+    r"""The linear shift ``LS``: $\beta x$, one interpretable raw-unit coefficient.
 
     Parameters
     ----------
@@ -707,9 +707,9 @@ class ComplexShift(Term):
 
 
 class VaryingCoefficient(Term):
-    """The varying-coefficient shift ``VC``: ``(beta0 + b_theta(modifiers)) * x_t``.
+    r"""The varying-coefficient shift ``VC``: $(\beta_0 + b_\Theta(\text{mod}))\, x_t$.
 
-    ``b_theta`` is a small network whose weights carry the L2 ``penalty``;
+    $b_\Theta$ is a small network whose weights carry the L2 ``penalty``;
     ``beta0`` is not penalized. The network's output is zero-initialized and
     re-centered to mean zero over the training rows after the fit, so
     ``beta0`` is the main effect. Read the fitted effect out with
@@ -734,9 +734,9 @@ class VaryingCoefficient(Term):
     center : str | None, optional
         Propensity centering, by default ``None`` (none). A string names the
         training-frame column holding the out-of-fold propensities
-        ``P(t = 1 | pa_t)`` per row; the regressor becomes
-        ``beta(x) * (x_t - e_hat(pa_t))``. Training reads the column as
-        frozen data; every query after the fit recomputes ``e_hat`` from the
+        $P(t = 1 \mid \mathrm{pa}_t)$ per row; the regressor becomes
+        $\beta(x)\,(x_t - \hat e(\mathrm{pa}_t))$. Training reads the column as
+        frozen data; every query after the fit recomputes $\hat e$ from the
         flow's own treatment node. Requires a binary ordinal ``t``.
     units : list[int] | tuple[int, ...], optional
         Hidden layers of ``b_theta``, by default ``(16,)``.

@@ -17,7 +17,7 @@ overlay (Fig. 7 right / 17 left / 18 right) and the observational plus
 Usage (from experiments/):
 
 ```
-uv run python -m paper.triangle atan-cs
+uv run python -m triangle atan-cs
 ```
 """
 
@@ -27,8 +27,7 @@ from __future__ import annotations
 from functools import partial
 
 from common import cli, load_variant, make_output_dir, save_metrics, write_report
-
-from paper.helpers import (
+from helpers import (
     compare_do_x1,
     cs_curve_error,
     fit_paper,
@@ -36,7 +35,7 @@ from paper.helpers import (
     snapshot,
     true_coefficients,
 )
-from paper.simulations.triangle import TriangleContinuous
+from simulations.triangle import TriangleContinuous
 
 
 # %% public functions ------------------------------------------------------------------

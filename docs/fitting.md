@@ -5,8 +5,8 @@ This page is the reference for training a
 paths `fit` and `fit_classical`, and the hooks of the Adam path. Every recipe
 named here runs end to end in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py),
-which is the one place for the code; the measured time-to-target of each
-recipe is in [training-speed.md](training-speed.md).
+which is the one place for the code and closes with a runtime comparison of
+the recipes on one workload.
 
 ## One module, one sub-model per node
 
@@ -52,8 +52,8 @@ weights.
   `per_node_adam` builds per-node parameter groups.
 - **Minibatches.** A fresh `torch.randperm` shuffle each epoch, seeded by
   `seed=`, which seeds the shuffle only and not the weight init.
-- **Epochs.** `epochs` has no default; [training-speed.md](training-speed.md)
-  shows why a fixed budget cannot be right for every workload.
+- **Epochs.** `epochs` has no default: a fixed budget under-spends on one
+  workload and wastes on the next, so every caller states its own.
 - **Calibration.** The first `fit` calls `calibrate(train_df)`. Every term
   freezes its data-dependent state there, the intercept its `range_q`
   quantiles and each `input_transform=` its statistics. Calibration never
@@ -108,8 +108,7 @@ Two details are easy to get wrong.
 ## Path B: classical optimization with `fit_classical`
 
 `fit_classical` is the optimizer for all-`LS` models, where every
-node-conditional is a classical transformation model, an ordered logit or a
-Colr model. It raises on any `CS`, `CI` or `VC` term.
+node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI` or `VC` term.
 
 - **Full-batch, float64, L-BFGS** with a strong-Wolfe line search; no
   minibatches, schedule or early stopping, so the same init gives
@@ -126,8 +125,7 @@ Colr model. It raises on any `CS`, `CI` or `VC` term.
   directions, rare one-hot levels or a flat treatment-effect ridge, drift
   along zero-curvature valleys after the likelihood is at its optimum.
   Correctness comes from the comparison with classical software in
-  [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
-  and `experiments/misc/validate_ls.py`.
+  [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py).
 
 `fit_classical` leaves the model at the MLE, ready for any operation. A
 `fit` call from there stays put, which is both a check that the classical

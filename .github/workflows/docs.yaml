@@ -55,7 +55,7 @@ jobs:
         stage README.md build/pdf/README.md
         # architecture.md and adr/001 are deliberately absent: both are mostly
         # mermaid fences, which the site renders and pandoc prints as raw code
-        for d in model notation interpretation fitting training-speed scores \
+        for d in model notation interpretation fitting scores \
                  varying-coefficients paper-replication code-map zuko-upstream; do
           stage "docs/$d.md" "build/pdf/$d.md"
         done
@@ -72,7 +72,7 @@ jobs:
           --resource-path=.:docs:build/pdf:build/pdf/nb -V mainfont="DejaVu Serif" -V monofont="DejaVu Sans Mono" \
           -V geometry:margin=2.2cm --toc --toc-depth=2 --metadata title="tramdag documentation" \
           build/pdf/README.md build/pdf/model.md build/pdf/notation.md build/pdf/interpretation.md \
-          build/pdf/fitting.md build/pdf/training-speed.md build/pdf/scores.md \
+          build/pdf/fitting.md build/pdf/scores.md \
           build/pdf/varying-coefficients.md build/pdf/paper-replication.md \
           build/pdf/code-map.md build/pdf/zuko-upstream.md build/pdf/nb/*.md \
           -o docs/tramdag-docs.pdf

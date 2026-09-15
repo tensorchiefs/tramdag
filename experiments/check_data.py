@@ -10,17 +10,13 @@ The tolerance is 1e-9, not bit equality: numpy's transcendental functions
 and CPU dispatch paths, which moves values by ~1e-16 while the data stays
 the same data. Anything larger means the generator changed.
 
-``magic-mrclean/ls`` is not listed: its generator left with the stroke
-storyline, so that cohort is frozen input data with no generator to check
-it against. Recover the generator from the ``pre-experiments-cut`` tag if
-it ever needs regenerating. ``carefl-cf`` is not listed either: it is
-CAREFL's own committed data (see its ``truth.json``), external frozen
-input with no generator here.
+``carefl-cf`` is not listed: it is CAREFL's own committed data (see its
+``truth.json``), external frozen input with no generator here.
 
 Usage (from experiments/):
 
 ```
-uv run python -m paper.check_data
+uv run python -m check_data
 ```
 """
 
@@ -34,10 +30,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-from paper.simulations.carefl import Carefl4
-from paper.simulations.triangle import TriangleContinuous, TriangleMixed
-from paper.simulations.vaca import VacaTriangle
+from simulations.carefl import Carefl4
+from simulations.triangle import TriangleContinuous, TriangleMixed
+from simulations.vaca import VacaTriangle
 
 # %% global variables ------------------------------------------------------------------
 DATA = Path(__file__).resolve().parent / "data"
@@ -59,7 +54,7 @@ DATASETS = {
 def worst_deviation(subdir: str) -> float:
     """Regenerate one frozen dataset and give its largest absolute deviation.
 
-    ``experiments/paper/tests/test_generators.py`` asserts on this same
+    ``experiments/tests/test_generators.py`` asserts on this same
     function, so the CLI and the test cannot drift apart.
 
     Raises

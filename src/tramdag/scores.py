@@ -1,8 +1,9 @@
-"""Per-observation scores of the shift coefficients, and the effect-modifier scan.
+r"""Per-observation scores of the shift coefficients, and the effect-modifier scan.
 
-The scores ``psi_i = d l_i / d beta`` are analytic: every shift coefficient
-enters the latent additively, so ``d l_i / d beta = (d l_i / d s_i) * x_i``
-with the latent-scale derivative in closed form (``_dl_ds``). The scan orders
+The scores $\psi_i = \partial \ell_i / \partial \beta$ are analytic: every shift
+coefficient enters the latent additively, so
+$\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$ with the
+latent-scale derivative in closed form (``_dl_ds``). The scan orders
 one coefficient's scores by a candidate covariate and reports a CUSUM
 statistic with its p-value. The ``CausalFlowDAG`` methods [`scores`][] and
 [`effect_modifier_scan`][] delegate here; ``docs/scores.md`` is the guide.
@@ -28,7 +29,7 @@ CRIT_5PCT = 1.3581
 
 # %% private functions -----------------------------------------------------------------
 def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
-    """Give ``d l_i / d s_i``, shape ``(n,)``.
+    r"""Give $\partial \ell_i / \partial s_i$, shape ``(n,)``.
 
     This is the closed-form derivative of the per-row log-likelihood with
     respect to the total shift of the node.
@@ -137,12 +138,12 @@ def effect_modifier_scan(
     candidates: list[str] | None = None,
     column: str | None = None,
 ) -> pd.DataFrame:
-    """Scan the ``t``-coefficient scores for effect-modifier drift.
+    r"""Scan the ``t``-coefficient scores for effect-modifier drift.
 
     For each candidate covariate the scan orders the treatment coefficient's
     scores by it, forms the scaled cumulative sum
-    ``B_j = sum_{i<=j} psi_(i) / (sd(psi) * sqrt(n))`` and reports
-    ``sup_j |B_j|`` with its Kolmogorov p-value and the 5% critical value.
+    $B_j = \sum_{i \le j} \psi_{(i)} / (\mathrm{sd}(\psi)\sqrt{n})$ and reports
+    $\sup_j |B_j|$ with its Kolmogorov p-value and the 5% critical value.
 
     Parameters
     ----------

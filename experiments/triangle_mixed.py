@@ -16,7 +16,7 @@ for ``cs`` variants, the observational plus ``do(x1)`` distributions
 Usage (from experiments/):
 
 ```
-uv run python -m paper.triangle_mixed linear-ls
+uv run python -m triangle_mixed linear-ls
 ```
 """
 
@@ -29,8 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from common import cli, load_variant, make_output_dir, save_metrics, write_report
-
-from paper.helpers import (
+from helpers import (
     compare_do_x1,
     cs_curve_error,
     finish,
@@ -40,7 +39,7 @@ from paper.helpers import (
     snapshot,
     true_coefficients,
 )
-from paper.simulations.triangle import TriangleMixed
+from simulations.triangle import TriangleMixed
 
 
 # %% public functions ------------------------------------------------------------------

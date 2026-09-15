@@ -455,9 +455,9 @@ class AdditiveInterceptModule(InterceptModule, nn.Module):
 
 
 class LinearShiftModule(ShiftModule, nn.Module):
-    """``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
+    r"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
 
-    For an ordinal child, ``exp(beta)`` is an odds ratio. Keyed by the parent's
+    For an ordinal child, $\exp(\beta)$ is an odds ratio. Keyed by the parent's
     name.
 
     Parameters
@@ -490,9 +490,10 @@ class LinearShiftModule(ShiftModule, nn.Module):
         return self(torch.cat([feats[p] for p in self.parents], dim=1))
 
     def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
-        """One column per weight: the parent (continuous) or its one-hot levels.
+        r"""One column per weight: the parent (continuous) or its one-hot levels.
 
-        ``d l_i / d beta = (d l_i / d s_i) * x_i`` — analytic and exact.
+        $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$,
+        analytic and exact.
         """
         (parent,) = self.parents  # an LS term has exactly one parent
         psi = (dlds.unsqueeze(1) * feats[parent]).cpu().numpy()
@@ -538,11 +539,11 @@ class ComplexShiftModule(ShiftModule, nn.Module):
 
 
 class VaryingCoefficientModule(ShiftModule, nn.Module):
-    """``VC`` — ``beta(modifiers) * x_t`` with ``beta(x) = beta0 + b_theta(x)``.
+    r"""``VC``: $\beta(\text{mod})\, x_t$ with $\beta(x) = \beta_0 + b_\Theta(x)$.
 
-    ``b_theta``'s weights carry the L2 ``penalty`` (``l2``; ``fit`` adds
-    ``penalty * l2()`` to the summed NLL); ``beta0`` is not penalized. The
-    output layer starts at zero, so ``beta(x) == beta0`` at construction. With
+    The weights of $b_\Theta$ carry the L2 ``penalty`` (``l2``; ``fit`` adds
+    ``penalty * l2()`` to the summed NLL); $\beta_0$ is not penalized. The
+    output layer starts at zero, so $\beta(x) = \beta_0$ at construction. With
     ``n_features == 0`` there is no network and the term is ``LS(t)``. After
     the fit, ``recenter`` moves the training-mean of ``b_theta`` into
     ``beta0`` through the ``center`` buffer, a reparameterization that leaves
@@ -597,7 +598,7 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         return self.beta0 + self.net(mod_feats).squeeze(-1) - self.center
 
     def forward(self, t: Tensor, mod_feats: Tensor | None) -> Tensor:
-        """Give the shift ``beta(mod_feats) * t``, shape ``(n,)``.
+        r"""Give the shift $\beta(\text{modifiers})\, t$, shape ``(n,)``.
 
         ``t`` is the raw treatment column ``(n, 1)``, ``mod_feats`` the encoded
         modifier features or ``None`` without modifiers.
@@ -647,18 +648,18 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
         return t
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
-        """``beta(modifiers) * regressor``, with the centered-term guard."""
+        r"""$\beta(\text{modifiers})$ times the regressor, guarding a centered term."""
         t = self.regressor(feats)
         mod_feat = node.net_input(feats, self.mods, self.key) if self.mods else None
         return self(t, mod_feat)
 
     def post_init(self) -> None:
-        """Re-zero the head's output layer: ``beta(x) == beta0`` at start."""
+        r"""Re-zero the head's output layer: $\beta(x) = \beta_0$ at start."""
         if self.net is not None:
             nn.init.zeros_(self.net[-1].weight)
 
     def regularizer(self) -> Tensor | None:
-        """``penalty * ||b_theta weights||^2`` on the total-likelihood scale.
+        r"""Give the penalty $\lambda \lVert b_\Theta \rVert^2$ on the NLL scale.
 
         ``None`` without a head to shrink (no modifiers, or penalty 0).
         """
@@ -672,9 +673,9 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
             self.recenter(node.net_input(feats, self.mods, self.key))
 
     def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
-        """One column, keyed by the treatment: the ``beta0`` score.
+        r"""One column, keyed by the treatment: the ``beta0`` score.
 
-        ``d s / d beta0`` is the term's own ``regressor``, so forward
+        $\partial s / \partial \beta_0$ is the term's own ``regressor``, so forward
         and score share one definition by construction.
         """
         t = self.regressor(feats)

@@ -51,7 +51,7 @@ column that `flow.design_matrix(df, node, drop_first=True)` drops.
 
 Checked in [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
 which compares the weights against `statsmodels` and R, and pinned in
-continuous integration by `experiments/paper/triangle_mixed.py`, whose
+continuous integration by `experiments/triangle_mixed.py`, whose
 odds-ratio check is in [paper-replication.md](paper-replication.md).
 
 ## Ordinal nodes: cutpoints and the interventional PMF
@@ -67,7 +67,7 @@ columns before the parents are read. That combination is what lets a
 treatment-effect question be answered exactly rather than by Monte Carlo.
 
 Exercised in the [classical-fitting notebook](../notebooks/classical_fit_tram_dag.py),
-and under `do=` in `experiments/misc/validate_ls.py`, which is checked against
+and under `do=` in `experiments/triangle_mixed.py`, which is checked against
 committed ground truth on every run.
 
 ## Continuous nodes: density and one fitted shift

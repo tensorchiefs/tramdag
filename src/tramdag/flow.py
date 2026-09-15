@@ -265,19 +265,19 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @torch.no_grad()
     def _propensity(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
-        """Give ``P(node = 1 | parents)`` for a binary ordinal treatment node.
+        r"""Give $P(\text{node} = 1 \mid \mathrm{pa})$ for a binary ordinal treatment.
 
-        ``P(x <= 0) = sigmoid(theta_0 - s)``, so the answer is
-        ``sigmoid(s - theta_0)``. No side columns: chained centering is refused
+        $P(x \le 0) = \sigma(\vartheta_0 - s)$, so the answer is
+        $\sigma(s - \vartheta_0)$. No side columns: chained centering is refused
         by the spec, so a treatment node never carries a centered term itself.
         """
         theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
         return torch.sigmoid(shift - theta[:, 0])
 
     def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
-        """Check the terms' side columns in the frame; give their names.
+        r"""Check the terms' side columns in the frame; give their names.
 
-        A centered ``VC`` needs its propensity column: ``P(t = 1 | pa_t)``
+        A centered ``VC`` needs its propensity column: $P(t = 1 \mid \mathrm{pa}_t)$
         per training row, computed **out of fold** (the cross-fitting
         requirement of the DML design; in-sample values reintroduce the
         own-observation bias). How it is computed is the caller's choice —
@@ -374,11 +374,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         return self
 
     def init_marginals(self, train_df: pd.DataFrame) -> CausalFlowDAG:
-        """Set every simple intercept to the marginal of its column — any time.
+        r"""Set every simple intercept to the marginal of its column — any time.
 
         Always explicit; nothing runs it for you. A Bernstein simple intercept
         starts at the Bernstein approximation of its column's
-        ``logit(F_hat(y))``, an ordinal simple intercept at the marginal class
+        $\operatorname{logit} \hat F(y)$, an ordinal simple intercept at the marginal
+        class
         log-odds; spline/affine intercepts and intercepts with parents are
         untouched. It is NOT guarded by the calibrated flag, so calling it on
         a loaded or already-trained flow **discards those intercepts'
@@ -550,7 +551,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def abduct(self, df: pd.DataFrame, *, seed: int | None = None) -> pd.DataFrame:
         """Recover the latent variables ``u`` from observations (Pearl step 1).
 
-        A continuous node inverts exactly: ``u = h(x) + shift``. For an
+        A continuous node inverts exactly: $u = h(x) + s$. For an
         ordinal node the latent is only interval-identified, so it is
         sampled from the standard logistic truncated to the observed
         level's interval.
@@ -620,10 +621,10 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         *,
         do: dict[str, float] | None = None,
     ) -> np.ndarray:
-        """Give the analytic conditional density of a continuous node on a grid.
+        r"""Give the analytic conditional density of a continuous node on a grid.
 
         The continuous counterpart of [`pmf`][]: for every row of ``df``
-        the density ``p(node = g | parents)`` at each grid value ``g``, in
+        the density $p(\text{node} = g \mid \mathrm{pa})$ at each grid value $g$, in
         closed form from the transform — no sampling.
 
         Parameters
@@ -661,7 +662,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @torch.no_grad()
     def scores(self, df: pd.DataFrame, node: str) -> pd.DataFrame:
-        """Give the per-observation scores ``psi_i = d l_i / d theta``.
+        r"""Give the scores $\psi_i = \partial \ell_i / \partial \theta$.
 
         The method form of [`node_scores`][tramdag.scores.node_scores], which
         documents the arguments and the column naming.

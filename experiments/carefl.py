@@ -17,7 +17,7 @@ units) is measured next to it — the number to watch for regressions.
 Usage (from experiments/):
 
 ```
-uv run python -m paper.carefl flexible
+uv run python -m carefl flexible
 ```
 """
 
@@ -31,9 +31,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from common import cli, load_variant, make_output_dir, save_metrics, write_report
-
-from paper.helpers import finish, fit_paper
-from paper.simulations.carefl import Carefl4
+from helpers import finish, fit_paper
+from simulations.carefl import Carefl4
 
 # %% global variables ------------------------------------------------------------------
 DATA = Path(__file__).resolve().parent / "data" / "carefl-cf"

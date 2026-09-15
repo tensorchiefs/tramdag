@@ -6,10 +6,8 @@ __pycache__/
 .coverage
 *.egg-info/
 
-# Experiment outputs — regenerable, and (for the clinical 'magic' source) derived
-# from patient data, so never committed. The synthetic data lives per area
-# under experiments/<area>/data/ and IS tracked.
-# run outputs of any experiment area, at any depth
+# Experiment outputs are regenerable and never committed. The frozen input
+# data under experiments/data/ IS tracked.
 results/
 
 # R

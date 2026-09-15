@@ -45,7 +45,7 @@ plt.rcParams["figure.dpi"] = 110
 # ## 1. A DGP with a known effect function
 #
 # Three covariates, a **confounded** treatment (`X1` and `X2` push assignment),
-# and an outcome whose conditional is exactly a transformation model:
+# and an outcome whose conditional is exactly a logistic-latent flow:
 #
 # $$h(y) + g(x) + \beta(x)\,t = U,\qquad U\sim\text{Logistic}(0,1)$$
 #

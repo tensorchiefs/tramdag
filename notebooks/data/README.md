@@ -40,13 +40,8 @@ CSV therefore means you re-run the R snippet and update `R_GLM` and
 ## `vaca.csv`
 
 The bimodal VACA triangle of Section 1 of `classical_fit_tram_dag.py`: 1000 rows
-of `x1`, `x2`, `x3` from
-
-```
-x1 ~ 0.5 N(-2, 1.5) + 0.5 N(1.5, 1)
-x2 = -x1 + N(0, 1)
-x3 =  x1 + 0.25 x2 + N(0, 1)
-```
+of `x1`, `x2`, `x3` from the SCM stated in
+[`docs/paper-replication.md`](../../docs/paper-replication.md).
 
 The notebook carries its generator in an `if False:` block, so a normal run
 reads this file and does not rewrite it. Run that block by hand to regenerate
@@ -56,8 +51,8 @@ fitted on.
 
 The notebook pins R's reference coefficients for this file in its `R_COLR`
 constant, and `classical_fit_tram_dag.R` is the script that produces them.
-Use `order = 21`, not 19: the notebook's `n_coeffs = 20` counts
-unconstrained coefficients, and `tram` counts one more.
+Use `order = 21`, not 19 ([`docs/zuko-upstream.md`](../../docs/zuko-upstream.md)
+on the count).
 
 A change to `n` or to the seed changes those numbers. Re-run
 `Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you

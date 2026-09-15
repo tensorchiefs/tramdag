@@ -48,8 +48,8 @@ cd experiments && uv run python -m check paper triangle-atan-cs  # vs ground tru
   (`docs/notation.md`). The ordinal likelihood stays in log space
   (`docs/model.md`). Parents enter raw or one-hot; seeding happens at
   construction (`docs/code-map.md`).
-- Modules keep the eight `# %%` section markers of `CONTRIBUTING.md`; NumPy
-  docstrings; complexipy 15 in `src/` and `tools/`, 10 elsewhere.
+- Modules keep the `# %%` section markers, the NumPy docstrings and the
+  complexipy limits of `CONTRIBUTING.md`.
 - Error messages: lowercase, values as `{name!r}`, no trailing period unless
   several sentences.
 - Commits follow conventional commits; `cz bump` tags the release and

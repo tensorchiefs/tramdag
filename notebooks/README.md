@@ -23,8 +23,7 @@ hand:
 The docs workflow executes every notebook here, on pushes to `main` and to
 `dev-*` branches. That execution is what keeps them working against the
 current API. A notebook that is not in that workflow's loop does not belong in
-this directory. On a feature branch, run one by hand:
-`MPLBACKEND=Agg uv run python notebooks/<name>.py`.
+this directory.
 
 Data a notebook reads lives in `notebooks/data/` — see its README for
 provenance.
@@ -34,8 +33,8 @@ provenance.
 - **Do not edit `.ipynb` files directly** — edit the `.py` and regenerate.
 - **Do not commit `.ipynb` files.** They are git-ignored (embedded base64
   outputs ruin diffs). The single exception is `demo_tram_dag_colab.ipynb`,
-  tracked output-stripped, only so that the Open-in-Colab badge works. If you
-  change `demo_tram_dag_colab.py`, regenerate the `.ipynb` before you commit.
+  tracked output-stripped, only so that the Open-in-Colab badge works;
+  regenerate it as described below whenever its `.py` changes.
 
 ## Working with the notebooks
 

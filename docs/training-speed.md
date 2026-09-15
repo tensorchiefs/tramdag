@@ -16,11 +16,8 @@ To reproduce the benchmark, run
 The command is `cd experiments && uv run python -m benchmarks.bench_training`.
 For one seed on cpu, add `--quick`. The full grid takes ≈ 35 min.
 
-For a quick **cross-machine** comparison, use the self-contained
+For a quick cross-machine comparison there is
 [`experiments/benchmarks/perf_machine.py`](../experiments/benchmarks/perf_machine.py).
-It runs fixed 200-epoch workloads on all available devices. It writes a machine
-fingerprint to JSON. It needs nothing but `pip install tramdag`. The raw CSV is
-a local run artifact, and it stays out of the repository.
 
 ## The recipes
 
@@ -29,20 +26,11 @@ the model. [fitting.md](fitting.md#which-recipe) says what each one is, and
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
 runs each of them. This page is only the measurement.
 
-One behaviour matters here, because the numbers below turn on it.
-`PerNodePlateau` watches each node's own validation score. When that score
-does not improve by `min_delta` for `patience` epochs, the callback
-multiplies the node's rate by 0.3, down to a floor of 1e-3 of the start rate.
-After the rate has decayed 100x and then stays flat for `freeze` epochs, the
-node leaves training at rate 0. The stroke run here uses `min_delta=1e-5`.
-This is valid because the per-node losses have independent gradients, so the
-fit deletes whole epochs rather than shortening them.
-
-The global plateau rule is one shared rate, torch's `ReduceLROnPlateau` on
-the summed validation NLL; `experiments/paper/helpers.py::fit_paper` drives
-it. The exact-MLE path is `fit_classical`; the L-BFGS rows below are its
-float32 full-batch ancestor, whose seed fragility (finding 2) the float64
-upcast of `fit_classical` removes.
+The plateau-and-freeze rows are `PerNodePlateau`, with `min_delta=1e-5` on
+the stroke workload; the global plateau rule is torch's `ReduceLROnPlateau`
+on the summed validation NLL. The L-BFGS rows are a float32 full-batch
+variant; `fit_classical` runs in float64, which removes the seed fragility of
+finding 2.
 
 ## Method: time-to-target, not loss-go-down
 

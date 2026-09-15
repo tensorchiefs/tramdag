@@ -146,14 +146,11 @@ plt.show()
 # [`notebooks/classical_fit_tram_dag.py`](classical_fit_tram_dag.py) writes the
 # same DAG with interpretable terms.
 #
-# The joint negative log-likelihood decomposes per node, so one Adam fits
-# every node at once. `fit` is a plain loop. `validation_data=` adds a
-# per-epoch validation score in `flow.history["val"]`, and `verbose=` prints
-# progress. The strategy attaches through `callbacks=`. Here `per_node_adam`
-# gives each node its own parameter group, and `PerNodePlateau` lowers that
-# node's rate when its own validation score stops improving. It freezes the
-# node once the rate is low and flat. The fit ends when the last node freezes,
-# so `epochs=200` is a ceiling and not a budget.
+# One Adam fits every node at once ([`docs/fitting.md`](../docs/fitting.md)).
+# `validation_data=` scores the validation rows per epoch, `verbose=` prints
+# progress, and the strategy attaches through `callbacks=`: `per_node_adam`
+# with `PerNodePlateau` freezes each node once its own validation score has
+# plateaued, so `epochs=200` is a ceiling and not a budget.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.

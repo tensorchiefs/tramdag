@@ -32,7 +32,7 @@ or locally.
 
 The package is on PyPI as `tramdag`; `uv add tramdag` or `pip install tramdag`
 installs it, and the `plots` extra (`tramdag[plots]`) adds matplotlib for the
-figures. The PyPI release is behind `main`: until 1.0 ships, install from git
+figures. The PyPI release lags `main`; for the current state install from git
 (`tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main`, pinned to a
 commit for reproducibility). A clone with `uv sync` gives the development
 setup with tests and experiments.

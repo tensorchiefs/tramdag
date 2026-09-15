@@ -22,9 +22,8 @@
 # $$\text{shift} \;\mathrel{+}=\; \beta(\text{modifiers})\cdot x_t,
 #   \qquad \beta(x) = \beta_0 + b_\Theta(x)$$
 #
-# `beta0` is the constant part — an interpretable log-odds ratio, exactly as a
-# linear shift would give — and `b_Theta` is a deliberately small, **penalized**
-# network that bends it per individual.
+# [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) states the
+# model, its penalty and its centering; this notebook runs it.
 #
 # This notebook builds a DGP whose effect function we know exactly, fits the
 # model, and scores the recovered `beta(x)` against the truth. It then shows
@@ -99,8 +98,8 @@ def cheap_all_ls():
         "X1": ContinuousNode(),
         "X2": ContinuousNode(),
         "X3": ContinuousNode(),
-        "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("X3"), LS("T")]),
+        "T": OrdinalNode(2, LS("X1") + LS("X2")),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("X3") + LS("T")),
     }
 
 
@@ -110,12 +109,10 @@ print(screen.effect_modifier_scan(train, "Y", t="T"))
 
 # %% [markdown]
 # `X2` and `X3` are the true modifiers and both flag — but so does `X1`, which
-# does **not** enter $\beta(x)$ at all. That is not a bug, and it is worth
-# understanding before you trust the shortlist: the statistic measures how
-# unstable the *cheap model* is along a covariate, and instability has two
-# sources — a coefficient that truly varies, and a **prognostic part the cheap
-# model gets wrong**. Here $g$ contains $\tfrac12 X_1^2$, which a linear term
-# cannot represent.
+# does **not** enter $\beta(x)$ at all. Here $g$ contains $\tfrac12 X_1^2$,
+# which the cheap linear model cannot represent, and
+# [`docs/scores.md`](../docs/scores.md) explains why a misspecified prognostic
+# part flags too.
 #
 # The demonstration: re-generate with a *linear* prognostic $X_1$, change
 # nothing else, and `X1` drops out of the shortlist.
@@ -137,11 +134,6 @@ screen2.fit_classical(well_specified)
 print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
 
 # %% [markdown]
-# Read the scan as a **screening** step, then: it shortlists covariates worth
-# giving to the effect head, and a flag can also mean "your prognostic part is
-# wrong here". Both are things you want to know.
-
-# %% [markdown]
 # ## 3. The spec: prognostic part and effect head are separate
 #
 # `CS("X1", "X2", "X3")` absorbs the prognostic signal — as flexible as you
@@ -154,8 +146,8 @@ spec = {
     "X1": ContinuousNode(),
     "X2": ContinuousNode(),
     "X3": ContinuousNode(),
-    "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
-    "Y": ContinuousNode([CS("X1", "X2", "X3"), VC("X2", "X3", t="T")]),
+    "T": OrdinalNode(2, LS("X1") + LS("X2")),
+    "Y": ContinuousNode(CS("X1", "X2", "X3") + VC("X2", "X3", t="T")),
 }
 flow = CausalFlowDAG(spec, seed=0)
 flow.fit(
@@ -170,9 +162,8 @@ flow.fit(
 print(flow.to_matrix())
 
 # %% [markdown]
-# The adjacency view above is the paper's *meta-adjacency matrix*: every edge
-# labelled with the term that carries it. `VC` marks the treatment edge and
-# `VCm` the modifiers, which is how you can see at a glance that `X2` enters
+# In the meta-adjacency view ([`docs/interpretation.md`](../docs/interpretation.md))
+# `VC` marks the treatment edge and `VCm` the modifiers, so `X2` visibly enters
 # `Y` twice.
 
 # %% [markdown]
@@ -236,11 +227,10 @@ print(f"max |beta(x) - (u(T=1) - u(T=0))| = {np.abs(beta_hat - (u1 - u0)).max():
 # The configuration where this bites hardest is deliberately simple: one
 # covariate, a strong propensity $e(x)=\sigma(2x)$, a constant true effect
 # $\tau = -1$, and a quadratic prognostic part fitted with a linear term.
-# `center="ps"` replaces $t$ by $t - \hat e(x)$ using **cross-fitted**
-# (out-of-fold) propensities from the training-frame column `ps`, so the head
-# sees the part of the treatment that the covariates do not explain. Stage 1 —
-# the propensities — is yours: any classifier, predicted out of fold, merged
-# into the frame as a column. Here, five classical fits of the treatment spec.
+# `center="ps"` replaces $t$ by $t - \hat e(x)$ with out-of-fold propensities
+# from the training-frame column `ps`; the guide says why they must be out of
+# fold. Stage 1, the propensities, is yours. Here, five classical fits of the
+# treatment spec.
 
 # %%
 TAU = -1.0
@@ -262,19 +252,20 @@ fold_id = np.random.default_rng(0).permutation(len(c_train)) % 5
 e_oof = np.empty(len(c_train))
 for j in range(5):
     t_spec = {
-        "X": ContinuousNode([I(transform="affine")]),
-        "T": OrdinalNode(2, [LS("X")]),
+        "X": ContinuousNode(I(transform="affine")),
+        "T": OrdinalNode(2, LS("X")),
     }
     proxy = CausalFlowDAG(t_spec, seed=0)
     proxy.fit_classical(c_train.iloc[fold_id != j][["X", "T"]])
     e_oof[fold_id == j] = proxy.pmf(c_train.iloc[fold_id == j], "T")[:, 1]
 
+mae = {}
 for center in (None, "ps"):
     spec_c = {
-        "X": ContinuousNode([I(transform="affine")]),
-        "T": OrdinalNode(2, [LS("X")]),
+        "X": ContinuousNode(I(transform="affine")),
+        "T": OrdinalNode(2, LS("X")),
         # linear prognostic term, though the truth is quadratic
-        "Y": ContinuousNode([LS("X"), VC("X", center=center, t="T")]),
+        "Y": ContinuousNode(LS("X") + VC("X", center=center, t="T")),
     }
     fc = CausalFlowDAG(spec_c, seed=0)
     fc.fit(
@@ -288,17 +279,19 @@ for center in (None, "ps"):
         callbacks=EarlyStopping(),  # keep the best-validation weights
     )
     b = fc.varying_coef(c_test, "Y")
+    mae[bool(center)] = float(np.abs(b - TAU).mean())
     print(
-        f"center={bool(center)!s:5s}  mean |beta - tau| = {np.abs(b - TAU).mean():.3f}"
+        f"center={bool(center)!s:5s}  mean |beta - tau| = {mae[bool(center)]:.3f}"
         f"   mean beta = {b.mean():+.3f}  (true tau {TAU:+.1f})"
     )
+ratio = mae[False] / mae[True]
+print(f"centering cuts the bias by a factor of {ratio:.1f}")
+assert ratio >= 2, f"centering should at least halve the bias: {ratio:.2f}"
 
 # %% [markdown]
-# Without centering the confounding swallows the effect almost entirely — the
-# average estimate lands near zero when the truth is $-1$. With centering it
-# recovers most of it, and the mean absolute error falls by roughly a factor of
-# four. Centering costs nothing when the prognostic part is adequate, which is
-# why it is worth reaching for whenever assignment is not random.
+# Without centering the confounding swallows most of the effect; with centering
+# the estimate returns near the truth. The printed factor is the measured bias
+# reduction, and `tests/test_vc_centered.py` requires at least two.
 
 # %% [markdown]
 # ## What to take away
@@ -310,11 +303,6 @@ for center in (None, "ps"):
 # | the same under confounding + a misspecified prognostic part | `VC(..., center="ps")` | the same read-out |
 # | a shortlist of modifiers before you commit | `effect_modifier_scan` on a cheap all-`ls` fit | its `flag` column, read as screening |
 #
-# The alternative of writing `CS("T", "X2", "X3")` is equally *expressive* —
-# any shift decomposes into arms — but nothing in the likelihood rewards a
-# smooth difference between them, so the implied effect is the difference of
-# two unregularized networks. On this task class that reduced form measures
-# corr ≈ 0.5 against the truth. The `VC` term exists to put the
-# regularization where the question is. See
-# [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) for the
-# semantics and [`docs/scores.md`](../docs/scores.md) for the scan.
+# Why not a joint `CS` over treatment and modifiers, and what the penalty and
+# the centering mean: [`docs/varying-coefficients.md`](../docs/varying-coefficients.md).
+# The scan: [`docs/scores.md`](../docs/scores.md).

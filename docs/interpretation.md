@@ -56,16 +56,10 @@ odds-ratio check is in [paper-replication.md](paper-replication.md).
 
 ## Ordinal nodes: cutpoints and the interventional PMF
 
-An ordinal node's intercept is its cutpoint vector, not a transform. The model
-is
-
-$$
-P(Y \le k \mid \mathrm{pa}) = \mathrm{sigmoid}(\theta_k - s(\mathrm{pa})),
-$$
-
-with increasing cutpoints $\theta$ and $s$ the total shift.
-`tramdag.transforms.ordinal_cutpoints` turns the unconstrained parameters into
-those increasing cutpoints, which is how you read a fitted baseline.
+An ordinal node's intercept is its cutpoint vector, not a transform
+([model.md](model.md#ordinal-nodes)). `tramdag.transforms.ordinal_cutpoints`
+turns the unconstrained parameters into the increasing cutpoints, which is how
+you read a fitted baseline.
 
 `flow.pmf(df, node, do=...)` gives the class probabilities per row, in closed
 form. It needs no sampling, and `do=` makes it interventional by overriding

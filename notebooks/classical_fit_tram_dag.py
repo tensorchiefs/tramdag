@@ -21,12 +21,10 @@
 #
 #  * a continuous-outcome logistic transformation model (R's `tram::Colr`) for continuous ones.
 #
-# For such a model, the classical optimizer `flow.fit_classical()` is best suited:
-# - **full-batch, float64, L-BFGS** with a strong-Wolfe line search,
-# - **deterministic** — no minibatching, so the same start gives bit-identical
-#   results,
-# - lands on the **exact maximum-likelihood estimate**, matching `statsmodels`
-#   and R to ~1e-3 on the well-identified coefficients.
+# For such a model `flow.fit_classical()` is the optimizer: deterministic
+# full-batch L-BFGS that lands on the exact maximum-likelihood estimate
+# ([`docs/fitting.md`](../docs/fitting.md)). This notebook checks that
+# against `statsmodels` and R.
 #
 # Every R reference printed below is hard-coded from a real fit, and every one
 # of those fits lives in `notebooks/classical_fit_tram_dag.R`. Run
@@ -85,9 +83,9 @@ def claim(text, value, bound, fmt="{:.2e}"):
 # $$\operatorname{logit} P(Y = 1 \mid x) = -\theta_0 + \textstyle\sum_p w_p x_p .$$
 #
 # The shift weights **are** the logistic-regression coefficients; the intercept
-# is **minus** the cutpoint, because an ordinal node *subtracts* its shift. That
-# sign convention is the one thing worth internalizing here — Section 2 is this
-# same picture with $K-1$ cutpoints instead of one.
+# is **minus** the cutpoint, because an ordinal node *subtracts* its shift
+# ([`docs/notation.md`](../docs/notation.md)). Section 2 is this same picture
+# with $K-1$ cutpoints instead of one.
 #
 # The data is `birthwt` from **MASS**, the low-birth-weight study of Hosmer &
 # Lemeshow: 189 births, outcome `low` (birth weight under 2.5 kg), predictors
@@ -144,10 +142,10 @@ print(
 
 # %%
 spec_bw = {
-    "age": ContinuousNode([SI(transform="affine")]),
-    "lwt": ContinuousNode([SI(transform="affine")]),
+    "age": ContinuousNode(SI(transform="affine")),
+    "lwt": ContinuousNode(SI(transform="affine")),
     "smoke": OrdinalNode(2),
-    "low": OrdinalNode(2, [LS("age"), LS("lwt"), LS("smoke")]),
+    "low": OrdinalNode(2, LS("age") + LS("lwt") + LS("smoke")),
 }
 
 flow_bw = CausalFlowDAG(spec_bw, seed=0)
@@ -159,11 +157,10 @@ flow_bw.fit_classical(bw)
 # enters **one-hot over both levels**.
 #
 # > **Careful — different coding from R.** R gives a binary predictor one
-# > column; we give it two, $w_0$ and $w_1$. Only the difference $w_1 - w_0$ is
-# > determined by the data, and it is what R's single `smoke` coefficient means.
-# > Each level alone is fixed by the weight initialization: a different `seed`
-# > shifts both by the same constant and moves $\theta_0$ to compensate, leaving
-# > every fitted probability unchanged. Section 2 uses the same rule for `T`.
+# > column; the flow gives it two, $w_0$ and $w_1$, identified only through
+# > their difference ([`docs/interpretation.md`](../docs/interpretation.md)),
+# > and that difference is what R's single `smoke` coefficient means. Section 2
+# > uses the same rule for `T`.
 #
 # The second column also moves the intercept. With $s \in \{0, 1\}$ we have
 # $\mathbf{1}[s = 0] = 1 - s$, so the one-hot pair collapses to
@@ -250,11 +247,11 @@ R_COLR_BWT = {  # Colr(bwt ~ age + lwt + smoke, order = 21); R 4.2.3 / tram 1.0.
 }
 
 spec_bwt = {
-    "age": ContinuousNode([SI(transform="affine")]),  # nuisance marginals
-    "lwt": ContinuousNode([SI(transform="affine")]),
+    "age": ContinuousNode(SI(transform="affine")),  # nuisance marginals
+    "lwt": ContinuousNode(SI(transform="affine")),
     "smoke": OrdinalNode(2),
     "bwt": ContinuousNode(
-        [SI(n_coeffs=20), LS("age"), LS("lwt"), LS("smoke")]  # degree 21
+        SI(n_coeffs=20) + LS("age") + LS("lwt") + LS("smoke")  # degree 21
     ),
 }
 
@@ -443,25 +440,14 @@ claim("max |SE_flow - SE_Colr|, continuous parents", se_gap, 1e-3)
 # %% [markdown]
 # The standard errors of the two continuous parents reproduce `Colr`'s, and
 # R's `confint()` on a `Colr` fit is Wald as well.
-#
-# Two things stand in the way of putting confidence intervals into the package
-# itself:
-#
-# 1. The gradient norm printed above is not zero. `fit_classical` stops on
-#    flatness of the likelihood rather than on the gradient norm, so the
-#    Hessian is taken a little off the exact stationary point.
-# 2. An interval only means something for an estimable parameter. A
-#    `conf_int` that returned one row per parameter would be mostly
-#    meaningless, because most rows sit in the flat subspace.
 
 # %% [markdown]
 # ## 1b. A bimodal DAG — the demo data
 #
-# The VACA benchmark triangle (`x1 → x2 → x3 ← x1`, the demo notebook's bimodal
-# SCM): `x1` is a two-component Gaussian mixture, `x2 = -x1 + N(0,1)`,
-# `x3 = x1 + 0.25 x2 + N(0,1)`. We fit an **all-`ls`** model: each node is a
-# continuous logistic transformation model with a Bernstein baseline and linear
-# shifts.
+# The VACA benchmark triangle `x1 → x2 → x3 ← x1`, the bimodal SCM of the
+# [demo notebook](demo_tram_dag_colab.py). We fit an **all-`ls`** model: each
+# node is a continuous logistic transformation model with a Bernstein baseline
+# and linear shifts.
 #
 # Note this is an *honest misspecification*: the DGP noise is Gaussian while the
 # TRAM latent is logistic, so the all-`ls` model is not the true generator — but
@@ -492,10 +478,9 @@ if False:
 # the flow is fitted on.
 #
 # The two libraries **count the basis differently**, and the comparison is only
-# meaningful at the same polynomial degree. The flow's `n_coeffs` unconstrained
-# coefficients become `n_coeffs + 2` control points, that is a Bernstein
-# polynomial of degree `n_coeffs + 1` (`order = n + 1` in `transforms.py`). So
-# `N_COEFFS = 20` below is tram's `order = 21`, **not** `order = 19`.
+# meaningful at the same polynomial degree: `N_COEFFS = 20` below is tram's
+# `order = 21`, because `n_coeffs` counts unconstrained coefficients and zuko
+# ties two control points on ([`docs/zuko-upstream.md`](../docs/zuko-upstream.md)).
 #
 # ```r
 # library(tram)
@@ -526,9 +511,9 @@ df = pd.read_csv(NB_DATA / "vaca.csv")
 N_COEFFS = 20  # -> Bernstein degree 21, which is tram's `order = 21`
 
 spec_vaca = {
-    "x1": ContinuousNode([SI(n_coeffs=N_COEFFS)]),
-    "x2": ContinuousNode([SI(n_coeffs=N_COEFFS), LS("x1")]),
-    "x3": ContinuousNode([SI(n_coeffs=N_COEFFS), LS("x1"), LS("x2")]),
+    "x1": ContinuousNode(SI(n_coeffs=N_COEFFS)),
+    "x2": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1")),
+    "x3": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1") + LS("x2")),
 }
 
 flow_c = CausalFlowDAG(spec_vaca, seed=0)
@@ -547,9 +532,9 @@ for node, parents in flow_c.ls_coefficients().items():
 #
 # The coefficients here agree far less closely than in Sections 0 and 2, and
 # neither result is the more correct one. The two libraries place the
-# Bernstein basis differently: the flow puts it on the 5%/95% quantiles and
-# continues as a straight line outside them, which leaves a tenth of the rows
-# in the tails, while `Colr` uses the full range of the data. The shift
+# Bernstein basis differently: the flow puts it on the `range_q` quantiles with
+# linear tails ([`docs/model.md`](../docs/model.md)), while `Colr` uses the
+# full range of the data. The shift
 # coefficients survive that difference in relative terms, which is why the
 # ordered logit above finds the same two numbers without any Bernstein basis
 # at all.
@@ -637,10 +622,10 @@ obs = pd.read_csv(DATA / "magic-mrclean" / "ls" / "obs.csv")
 
 spec_stroke = {
     "Age": ContinuousNode(),
-    "mRS_pre": OrdinalNode(6, [LS("Age")]),
-    "NIHSSa": ContinuousNode([LS("Age"), LS("mRS_pre")]),
-    "T": OrdinalNode(2, [LS("Age"), LS("mRS_pre"), LS("NIHSSa")]),
-    "mRS_3m": OrdinalNode(7, [LS("Age"), LS("mRS_pre"), LS("NIHSSa"), LS("T")]),
+    "mRS_pre": OrdinalNode(6, LS("Age")),
+    "NIHSSa": ContinuousNode(LS("Age") + LS("mRS_pre")),
+    "T": OrdinalNode(2, LS("Age") + LS("mRS_pre") + LS("NIHSSa")),
+    "mRS_3m": OrdinalNode(7, LS("Age") + LS("mRS_pre") + LS("NIHSSa") + LS("T")),
 }
 
 flow_s = CausalFlowDAG(spec_stroke, seed=0)  # the seed validate_ls.py checks

@@ -20,8 +20,8 @@ The commands are in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
   This file gives no test count; `pytest --collect-only -q | tail -1` is
   always right.
-- **Determinism** — tests seed `torch` before they construct the flow. Weight
-  init happens at construction. Fits are therefore reproducible.
+- **Determinism** — tests seed `torch` before they construct the flow, so the
+  fits are reproducible.
 
 ## Testing principles
 
@@ -52,7 +52,7 @@ Four kinds of test, in rough order of how much trust they carry:
      (`test_continuous_only_all_ls_recovers_the_true_shift`,
      `test_matches_statsmodels_mle`).
    - the pointwise effect function `beta(x)` of the heterogeneous-effect DGP
-     (`test_recovery_bar_on_hetero_dgp`, the corr >= 0.9 acceptance bar).
+     (`test_recovery_bar_on_hetero_dgp`).
    - the bias reduction from propensity centering
      (`test_dandl_centering_reduces_bias`).
 
@@ -60,11 +60,9 @@ Four kinds of test, in rough order of how much trust they carry:
    tested here. They live in [`experiments/`](../experiments/). The experiments
    workflow checks them against its committed ground truth.
 
-4. **Numerical-stability & invariant guards** — regressions that hit this
-   project before:
+4. **Numerical-stability & invariant guards**:
    - the ordinal log-likelihood keeps non-zero gradients under float32
-     saturation (`test_ordinal_log_prob_gradient_survives_saturation`). The
-     naive sigmoid difference can freeze a node at init.
+     saturation (`test_ordinal_log_prob_gradient_survives_saturation`).
    - cutpoints stay in increasing order and PMFs sum to one
      (`test_ordinal_cutpoints_increasing_and_pmf_sums_to_one`).
    - `save`/`load` round-trips a fitted model (`test_save_load_roundtrip`).
@@ -77,8 +75,7 @@ Four kinds of test, in rough order of how much trust they carry:
 
 The reference values that the tests compare against come from two sources:
 
-- **By construction.** The three inline DGPs in `conftest.py` are *built as*
-  transformation models with fixed coefficients, cutpoints and effect
+- **By construction.** The inline DGPs are *built as* transformation models with fixed coefficients, cutpoints and effect
   functions. The true parameters are therefore the numbers that generate the
   data. The DGPs are numpy-only and deliberately independent of the flow.
 - **Independent software.** The classical-equivalence tests fit `statsmodels`
@@ -89,8 +86,8 @@ The reference values that the tests compare against come from two sources:
 
 ## The test files
 
-`conftest.py` holds the three **inline DGPs** (all-`ls` chain, heterogeneous
-effect, confounded-with-misfit). It also holds the helpers that are provably
+`conftest.py` holds the **inline DGPs** (all-`ls` chain, heterogeneous effect,
+confounded-with-misfit). It also holds the helpers that are provably
 identical across modules. Specs stay per-module. Each module pins the one
 syntax variant that its property needs. A shared spec can couple unrelated
 acceptance bars.

@@ -28,13 +28,10 @@
 # The weights start from Keras' Dense default, glorot_uniform / zero bias
 # (`init: glorot`, make_model's layer_dense).
 #
-# Remaining known deviations, documented in CLAUDE.md: the intercept net's
-# output layer has no bias (Keras dense has one); Adam eps 1e-8 vs Keras
-# 1e-7 (measured: no effect); the reference seeds R's RNG with 42, which
-# torch cannot replay, so every seed below is a repo choice. The earlier
-# protocol era — a fresh SCM draw instead of X.csv, 3000 epochs at lr
-# 0.002, the quantile domain — and its measurements live in
-# docs/paper-replication.md.
+# Remaining known deviations, documented in docs/paper-replication.md: the
+# intercept net's output layer has no bias (Keras dense has one); Adam eps
+# 1e-8 vs Keras 1e-7 (measured: no effect); the reference seeds R's RNG with
+# 42, which torch cannot replay, so every seed below is a repo choice.
 
 variants:
   # all conditionals complex intercepts

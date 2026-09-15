@@ -19,9 +19,8 @@ cohort_and_model: &cohort_and_model
   good_outcome_levels: 3     # a "good" outcome is level 0, 1 or 2
   # the Adam route trains to tight convergence in decreasing steps;
   # the classical route ignores these and uses L-BFGS instead
-  # (cut from 4000/2000/1000 for CI speed, 2026-09: 2000 epochs land on the
-  # same MLE — named-coef gap to statsmodels 1.6e-5 vs the old 1.8e-5 — so
-  # the extra 5000 epochs bought nothing; ~3.5x less fit wall clock)
+  # (2000 epochs land on the classical MLE: named-coef gap to statsmodels
+  # 1.6e-5; a 7000-epoch budget measured 1.8e-5 at ~3.5x the wall clock)
   phases:
   - [800, 0.01]
   - [700, 0.001]

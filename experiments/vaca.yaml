@@ -46,6 +46,7 @@ variants:
     flow_kwargs:
       seed: 7                 # weight init (repo choice)
       init: glorot            # Keras Dense default: glorot_uniform, zero bias
+    init_marginals: false     # measured: the start shifts the anneal, do(x2=0) error 0.019 -> 0.101 (D4)
     fit_kwargs:
       epochs: 10000           # the reference protocol, 1:1
       batch_size: 2500        # = n_train: one full-batch step per epoch

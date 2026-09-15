@@ -40,6 +40,7 @@ variants:
     flow_kwargs:
       seed: 7                 # weight init (repo choice)
       init: glorot            # Keras Dense default: glorot_uniform, zero bias
+    init_marginals: false     # no marginal start exists for a range_q 0 Bernstein domain
     fit_kwargs:
       epochs: 7000            # EPOCHS
       batch_size: 2500        # = the row count: one full-batch step per epoch

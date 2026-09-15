@@ -30,8 +30,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from common import cli, load_variant, make_output_dir, save_metrics, write_report
-from helpers import finish, fit_paper
+from common import (
+    cli,
+    figure_specs,
+    load_variant,
+    make_output_dir,
+    save_metrics,
+    write_report,
+)
+from helpers import finish, fit_paper, framework_figures
 from simulations.carefl import Carefl4
 
 # %% global variables ------------------------------------------------------------------
@@ -70,7 +77,7 @@ def counterfactual_curve(flow, latents, do_variable, target, alphas) -> list[flo
     ]
 
 
-def plot_curves(flow_x3, flow_x4, ref, path) -> dict:
+def plot_curves(flow_x3, flow_x4, ref, path, title) -> dict:
     """Plot both counterfactual queries against the truth and CAREFL (Fig. 6)."""
     panels = [
         (flow_x3, "x3", "carefl_x3", "would $x_2$ have been $\\alpha$"),
@@ -84,11 +91,7 @@ def plot_curves(flow_x3, flow_x4, ref, path) -> dict:
         ax.set_xlabel(xlabel)
         ax.set_ylabel(f"${target[0]}_{target[1]}$")
         ax.legend()
-    x_obs = ", ".join(f"{value:.2f}" for value in ref["x_obs"].iloc[0])
-    fig.suptitle(
-        f"CAREFL counterfactual queries at $x_{{obs}}$ = ({x_obs})\n"
-        "(Fig. 6; x3/x4 in CAREFL's sd-standardized units)"
-    )
+    fig.suptitle(title)
     finish(fig, path)
     return {
         "fig6_max_abs_err_x3": float(
@@ -153,6 +156,9 @@ def run(variant: str) -> dict:
     )
     # val = train, as in carefl_fig5.r: the plateau rule watches the train NLL
     flow, _, fit_seconds = fit_paper(ref["train"], ref["train"], config, out)
+    x_obs = ", ".join(f"{value:.2f}" for value in ref["x_obs"].iloc[0])
+    figs = figure_specs(config, x_obs=x_obs)
+    figures = framework_figures(flow, ref["train"], out, figs, config["dgp_seed"])
 
     paper_latents = flow.abduct(ref["x_obs"])
     metrics = plot_curves(
@@ -160,7 +166,9 @@ def run(variant: str) -> dict:
         counterfactual_curve(flow, paper_latents, "x1", "x4", ALPHAS),
         ref,
         out / "plots" / "cf_curves.png",
+        figs["cf_curves.png"]["title"],
     )
+    figures.append("cf_curves.png")
     generator = Carefl4(seed=config["dgp_seed"])
     metrics.update(heldout_errors(generator, flow, ref["sds"], config))
     # the reference holds nothing out; a fresh standardized draw scores the fit
@@ -175,11 +183,12 @@ def run(variant: str) -> dict:
     save_metrics(out, metrics)
     write_report(
         out,
-        "CAREFL counterfactual benchmark (paper Sec. 5.3; trained on CAREFL's "
-        "own 2500 rows, so Fig. 6 is comparable point by point — every error "
-        "metric is an exact deviation from the DGP truth)",
+        "CAREFL counterfactual benchmark",
+        "Paper Sec. 5.3 and App. C.2: the Laplace SCM of Khemakhem et al., "
+        "trained on CAREFL's own 2500 rows so that Fig. 6 is comparable point "
+        "by point. Every error metric is an exact deviation from the DGP truth.",
         metrics,
-        ["cf_curves.png"],
+        {name: figs[name] for name in figures},
     )
     print(f"-> {out}")
     return metrics

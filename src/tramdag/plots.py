@@ -187,7 +187,9 @@ def _finish(fig, path) -> None:
 
 
 # %% public functions ------------------------------------------------------------------
-def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=None):
+def plot_dag(
+    spec_or_flow, *, labels: bool = True, legend: bool = True, path=None, title=None
+):
     """Draw the labelled DAG of a spec (or of a fitted flow).
 
     Layers run left to right, a node one layer past its parents. Continuous
@@ -207,6 +209,8 @@ def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=Non
         Add a legend of the terms used, by default True.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
+    title : str | None, optional
+        Figure title, by default none.
 
     Returns
     -------
@@ -249,11 +253,15 @@ def plot_dag(spec_or_flow, *, labels: bool = True, legend: bool = True, path=Non
     ax.set_ylim(y_lo, y_hi)
     ax.set_aspect("equal")
     ax.set_axis_off()
+    if title:
+        ax.set_title(title)
     _finish(ax.figure, path)
     return ax
 
 
-def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=None):
+def plot_marginals(
+    flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=None, title=None
+):
     """Observed vs sampled marginal of every node, one panel each.
 
     Ordinal nodes compare level proportions side by side; continuous nodes a
@@ -272,6 +280,8 @@ def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=No
         Seed of the flow's sample.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
+    title : str | None, optional
+        Figure title, by default ``"observed vs sampled marginals"``.
 
     Returns
     -------
@@ -309,12 +319,12 @@ def plot_marginals(flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=No
             ax.set_ylabel("density")
         ax.set_title(name)
         ax.legend(fontsize=8, frameon=False)
-    fig.suptitle("observed vs sampled marginals")
+    fig.suptitle(title or "observed vs sampled marginals")
     _finish(fig, path)
     return axes
 
 
-def plot_training(flow, *, frozen=None, path=None):
+def plot_training(flow, *, frozen=None, path=None, title=None):
     """Draw the summed train and validation NLL per epoch.
 
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
@@ -332,6 +342,8 @@ def plot_training(flow, *, frozen=None, path=None):
         as its ``frozen``. By default no marks.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
+    title : str | None, optional
+        Figure title, by default ``"training"``.
 
     Returns
     -------
@@ -371,6 +383,6 @@ def plot_training(flow, *, frozen=None, path=None):
     ax.set_xlabel("epoch")
     ax.set_ylabel("NLL")
     ax.legend(frameon=False)
-    ax.set_title("training")
+    ax.set_title(title or "training")
     _finish(ax.figure, path)
     return ax

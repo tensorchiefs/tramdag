@@ -70,6 +70,28 @@ paper_protocol: &paper_protocol
   cf_n: 2000                   # rows scored for ordinal counterfactuals, App. B
   cf_draws: 200                # abduction draws averaged into a per-row PMF
   cf_seed: 1000
+  figures:                # titles and report captions; {f} and {shift} fill from the variant
+    dag.png:
+      title: 'triangle-mixed/{f}: the DAG, {shift} shift on x2 -> x3'
+      caption: The model as declared, one edge per term, labelled by the term that owns it.
+    training.png:
+      title: 'triangle-mixed/{f}, {shift} model: training'
+      caption: Summed train and validation NLL per epoch; the fit keeps the final weights.
+    marginals.png:
+      title: 'triangle-mixed/{f}, {shift} model: observed vs sampled marginals'
+      caption: The validation rows against a sample of the fitted flow, one panel per node.
+    coefficients.png:
+      title: 'triangle-mixed/{f}, {shift} model: linear-shift coefficients (Fig. 19)'
+      caption: The linear-shift weights after every epoch, dashed at the DGP truth.
+    cs_curve.png:
+      title: complex shift on the ordinal node, DGP f = {f}
+      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at x2 = 0; cs_curve_max_abs_err is the largest gap.
+    distributions.png:
+      title: 'triangle-mixed/{f}, {shift} model: L1/L2 (Fig. 9/20)'
+      caption: Observational and do(x1) samples per variable, DGP filled and flow stepped; the do(x1) mean of x3 is the metric.
+    counterfactual_pmf.png:
+      title: 'ordinal counterfactuals under do(x1={do_x1:+.0f}): only a distribution is identified (App. B)'
+      caption: The counterfactual PMF of x3 averaged over the scored rows, the flow's abduction draws against the analytic law.
 
 # shared node specs
 x1: &x1

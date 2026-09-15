@@ -26,11 +26,19 @@ from __future__ import annotations
 
 from functools import partial
 
-from common import cli, load_variant, make_output_dir, save_metrics, write_report
+from common import (
+    cli,
+    figure_specs,
+    load_variant,
+    make_output_dir,
+    save_metrics,
+    write_report,
+)
 from helpers import (
     compare_do_x1,
     cs_curve_error,
     fit_paper,
+    framework_figures,
     plot_trajectories,
     snapshot,
     true_coefficients,
@@ -43,7 +51,7 @@ def run(variant: str) -> dict:
     """Run one variant end to end and give its metrics."""
     config = load_variant(__file__, variant)
     out = make_output_dir(__file__, f"triangle-{variant}")
-    figures = ["coefficients.png"]
+    figs = figure_specs(config)
 
     generator = TriangleContinuous(f=config["f"], seed=config["dgp_seed"])
     print(
@@ -61,14 +69,15 @@ def run(variant: str) -> dict:
         record=partial(snapshot, shift=config["shift"]),
     )
 
+    figures = framework_figures(flow, val, out, figs, config["sample_seed"])
     truths = true_coefficients(config)
     plot_trajectories(
         trajectory,
         truths,
         out / "plots" / "coefficients.png",
-        f"triangle/{config['f']}, {config['shift']} model — "
-        "linear-shift coefficients (Fig. 14/15)",
+        figs["coefficients.png"]["title"],
     )
+    figures.append("coefficients.png")
 
     metrics = {key: value for key, value in trajectory[-1].items() if key != "epoch"}
     metrics["val_nll_x3"] = float(flow.nll(val)["x3"])
@@ -82,7 +91,7 @@ def run(variant: str) -> dict:
             generator,
             config,
             out,
-            f"complex shift, DGP f = {config['f']}: fitted vs $-f(x_2)$",
+            figs["cs_curve.png"]["title"],
         )
         figures.append("cs_curve.png")
 
@@ -94,8 +103,7 @@ def run(variant: str) -> dict:
             config,
             out,
             ordinal_levels={},
-            title=f"triangle/{config['f']}, {config['shift']} model — "
-            "L1/L2 (Fig. 16/17)",
+            title=figs["distributions.png"]["title"],
         )
     )
     figures.append("distributions.png")
@@ -103,11 +111,13 @@ def run(variant: str) -> dict:
     save_metrics(out, metrics)
     write_report(
         out,
-        f"triangle — f = {config['f']}, {config['shift']} shift "
-        f"(paper Sec. 6.1, true beta12 = {truths['beta12']:+.1f}, "
-        f"beta13 = {truths['beta13']:+.1f})",
+        f"triangle: f = {config['f']}, {config['shift']} shift",
+        f"Paper Sec. 6.1 and App. C.3: the continuous triangle x1 -> x2 -> x3 <- x1 "
+        f"with f = {config['f']} on the x2 -> x3 edge, fitted with a "
+        f"{config['shift']} shift. True beta12 = {truths['beta12']:+.1f}, "
+        f"beta13 = {truths['beta13']:+.1f}.",
         metrics,
-        figures,
+        {name: figs[name] for name in figures},
         # the do(x1) DGP mean is this run's Monte-Carlo truth for the flow's
         truths={**truths, "mean_x3_flow_do_x1": metrics["mean_x3_dgp_do_x1"]},
     )

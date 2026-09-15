@@ -54,6 +54,19 @@ variants:
     n_heldout: 300            # typical rows scored next to the single x_obs
     heldout_seed_offset: 999  # seed offset of the held-out draw
     alphas_scored: [-1.5, 0.0, 1.5]
+    figures:                  # titles and report captions; {x_obs} is the observation
+      dag.png:
+        title: 'CAREFL: the DAG, complex intercepts on x3 and x4'
+        caption: The model as declared, one edge per term, labelled by the term that owns it.
+      training.png:
+        title: 'CAREFL: training (val = train, as in the reference)'
+        caption: Summed NLL per epoch under the reference's plateau rule.
+      marginals.png:
+        title: 'CAREFL: observed vs sampled marginals'
+        caption: CAREFL's committed rows against a sample of the fitted flow, in sd-standardized units.
+      cf_curves.png:
+        title: "CAREFL counterfactual queries at $x_{{obs}}$ = ({x_obs})\n(Fig. 6; x3/x4 in CAREFL's sd-standardized units)"
+        caption: Both counterfactual curves at the committed observation against the analytic truth and CAREFL's own predictions; the fig6_* metrics are the largest gaps.
     spec:
       x1:
         kind: continuous

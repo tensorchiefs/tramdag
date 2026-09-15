@@ -63,6 +63,25 @@ paper_protocol: &paper_protocol
   grid_low: -1.0          # x2 grid of the complex-shift overlay (Fig. 7 right)
   grid_high: 1.0
   grid_points: 81
+  figures:                # titles and report captions; {f} and {shift} fill from the variant
+    dag.png:
+      title: 'triangle/{f}: the DAG, {shift} shift on x2 -> x3'
+      caption: The model as declared, one edge per term, labelled by the term that owns it.
+    training.png:
+      title: 'triangle/{f}, {shift} model: training'
+      caption: Summed train and validation NLL per epoch; the fit keeps the final weights.
+    marginals.png:
+      title: 'triangle/{f}, {shift} model: observed vs sampled marginals'
+      caption: The validation rows against a sample of the fitted flow, one panel per node.
+    coefficients.png:
+      title: 'triangle/{f}, {shift} model: linear-shift coefficients (Fig. 14/15)'
+      caption: The linear-shift weights after every epoch, dashed at the DGP truth.
+    cs_curve.png:
+      title: 'complex shift, DGP f = {f}: fitted vs $-f(x_2)$'
+      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at x2 = 0; cs_curve_max_abs_err is the largest gap.
+    distributions.png:
+      title: 'triangle/{f}, {shift} model: L1/L2 (Fig. 16/17)'
+      caption: Observational and do(x1) samples per variable, DGP filled and flow stepped; the do(x1) mean of x3 is the metric.
 
 # shared node specs — one place to change if the intercept or LS edge varies
 x1: &x1

@@ -22,8 +22,21 @@ uv run python -m vaca flexible
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-from common import cli, load_variant, make_output_dir, save_metrics, write_report
-from helpers import continuous_density, continuous_hist, finish, fit_paper
+from common import (
+    cli,
+    figure_specs,
+    load_variant,
+    make_output_dir,
+    save_metrics,
+    write_report,
+)
+from helpers import (
+    continuous_density,
+    continuous_hist,
+    finish,
+    fit_paper,
+    framework_figures,
+)
 from simulations.vaca import DO_X2_VALUES, VacaTriangle
 
 
@@ -48,7 +61,7 @@ def _scatter_panel(ax, observed, sampled, x: str, y: str, n_scatter: int) -> Non
 
 
 # %% public functions ------------------------------------------------------------------
-def plot_pairs(observed, sampled, columns, bins, n_scatter, path):
+def plot_pairs(observed, sampled, columns, bins, n_scatter, path, title):
     """Pairs plot: marginals on the diagonal, scatters off it (Fig. 4)."""
     k = len(columns)
     fig, axes = plt.subplots(k, k, figsize=(3 * k, 3 * k), squeeze=False)
@@ -64,11 +77,11 @@ def plot_pairs(observed, sampled, columns, bins, n_scatter, path):
     for ax_row, column in zip(axes, columns, strict=True):
         ax_row[0].set_ylabel(column)
     axes[0][0].legend(fontsize=8)
-    fig.suptitle("VACA triangle — observational joint, DGP vs flow (Fig. 4)")
+    fig.suptitle(title)
     finish(fig, path)
 
 
-def plot_interventional(generator, flow, config, truth, path) -> dict:
+def plot_interventional(generator, flow, config, truth, path, title) -> dict:
     """Interventional densities per do(x2) value (Fig. 5); give the mean errors."""
     fig, axes = plt.subplots(1, len(DO_X2_VALUES), figsize=(11, 3.2), sharey=True)
     errors = {}
@@ -91,7 +104,7 @@ def plot_interventional(generator, flow, config, truth, path) -> dict:
         )
     axes[0].legend()
     axes[0].set_ylabel("$p(x_3\\,|\\,do(x_2))$")
-    fig.suptitle("VACA triangle — interventional distributions (Fig. 5)")
+    fig.suptitle(title)
     finish(fig, path)
     return errors
 
@@ -111,6 +124,8 @@ def run(variant: str) -> dict:
     train = generator.observational(config["n_train"])
     val = generator.observational(config["n_val"], seed_offset=1)
     flow, _, fit_seconds = fit_paper(train, val, config, out)
+    figs = figure_specs(config)
+    figures = framework_figures(flow, val, out, figs, config["sample_seed"])
 
     sampled = flow.sample(len(train), seed=config["sample_seed"])
     plot_pairs(
@@ -120,14 +135,22 @@ def run(variant: str) -> dict:
         config["hist_bins"],
         config["n_scatter"],
         out / "plots" / "pairs.png",
+        figs["pairs.png"]["title"],
     )
+    figures.append("pairs.png")
 
     metrics = {"val_nll_x3": float(flow.nll(val)["x3"])}
     metrics.update(
         plot_interventional(
-            generator, flow, config, truth, out / "plots" / "interventional.png"
+            generator,
+            flow,
+            config,
+            truth,
+            out / "plots" / "interventional.png",
+            figs["interventional.png"]["title"],
         )
     )
+    figures.append("interventional.png")
     # L1: does the flow reproduce the bimodal source marginal?
     metrics["std_x1_flow"] = float(sampled["x1"].std())
     metrics["std_x1_abs_err"] = abs(metrics["std_x1_flow"] - truth["std_x1_analytic"])
@@ -136,10 +159,13 @@ def run(variant: str) -> dict:
     save_metrics(out, metrics)
     write_report(
         out,
-        "VACA / CNF benchmark (paper Sec. 5.1-5.2; bimodal source, Gaussian noise; "
-        "interventional means are analytic)",
+        "VACA / CNF benchmark",
+        "Paper Sec. 5.1-5.2 and App. C.1: the bimodal triangle with Gaussian "
+        "noise, fitted with complex intercepts on the reference protocol. The "
+        "interventional means are analytic, so the checked numbers are the "
+        "flow's errors against them.",
         metrics,
-        ["pairs.png", "interventional.png"],
+        {name: figs[name] for name in figures},
         truths={
             "std_x1_flow": truth["std_x1_analytic"],
             **{

@@ -3,17 +3,9 @@
 The flow maps iid standard-logistic latents ``U`` to the observed variables ``X``
 in topological order; its Jacobian sparsity is exactly the DAG adjacency. The
 joint log-likelihood decomposes per node, so one optimizer fits all nodes at once.
-
-Causal queries:
-    flow.sample(n)                    observational sampling
-    flow.sample(n, do={"T": 1})       interventional sampling (graph mutilation)
-    u = flow.abduct(df)               Pearl step 1 (latents from observations)
-    flow.sample(do={"T": 1}, u=u)     Pearl steps 2+3 (counterfactuals)
-    flow.pmf(df, node, do=...)        analytic per-row interventional PMF
-
-The read-outs that need the flow's likelihood machinery (``pmf``, ``density``,
-``scores``, ``effect_modifier_scan``) are methods here; those that only read
-fitted weights and features live in ``readouts.py``.
+``sample``, ``abduct``, ``pmf`` and ``density`` answer the observational,
+interventional (``do=``) and counterfactual queries; the read-outs that only
+read fitted weights live in ``readouts.py``.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -80,13 +72,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     init : str, optional
         Weight initialization of every linear layer (the LS weights and the
         CI/CS/VC networks): ``"torch"`` (default, ``nn.Linear``'s
-        Kaiming-uniform), ``"glorot"`` — Keras' ``Dense`` default,
-        glorot-uniform weights and zero biases, the paper's VACA/CAREFL
-        scripts — or ``"normal"`` — Keras' ``RandomNormal``, N(0, 0.05^2)
-        on weights and biases, the paper's triangle scripts. A VC head's
-        output layer stays zero either way. Under the reference's full-batch
-        protocol the choice decides the fit; ``docs/paper-replication.md``
-        carries the measurements. Stored in the checkpoint.
+        Kaiming-uniform), ``"glorot"`` (glorot-uniform weights, zero biases)
+        or ``"normal"`` (N(0, 0.05^2) weights and biases). A VC head's
+        output layer stays zero either way. Stored in the checkpoint.
     """
 
     def __init__(
@@ -120,14 +108,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.to(self.device)
 
     def _apply_init(self, init: str) -> None:
-        """Re-initialize every linear layer the Keras way, if asked.
-
-        ``"glorot"`` is Keras' ``Dense`` default (glorot-uniform weights, zero
-        biases); ``"normal"`` is Keras' ``RandomNormal`` (N(0, 0.05^2)) on
-        weights and biases, the initializer of the paper's triangle scripts.
-        A VC head's output layer stays zero: ``beta(x) = beta0`` at the start
-        is part of that term's design.
-        """
+        """Re-initialize every linear layer, if asked; VC heads re-zero their output."""
         if init == "torch":
             return
         for m in self.modules():
@@ -358,9 +339,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         Every term calibrates itself: the intercept term maps its node's
         train ``range_q``/``1 - range_q`` quantiles (an intercept option,
-        default 5%/95%) onto the transform's pre-scaled domain — ``0.0`` is
-        the min-max scaling of the reference comparison scripts' ``scale_df``
-        — and every term with an ``input_transform=`` freezes its statistics
+        default 5%/95%; ``0.0`` is the min/max) onto the transform's pre-scaled
+        domain, and every term with an ``input_transform=`` freezes its statistics
         (minmax lo/hi, standardize mean/std, a callable's frozen train
         columns).
 
@@ -396,18 +376,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def init_marginals(self, train_df: pd.DataFrame) -> CausalFlowDAG:
         """Set every simple intercept to the marginal of its column — any time.
 
-        The calibrated start, always explicit — nothing runs it for you: a
-        Bernstein simple intercept starts at the Bernstein approximation of
-        its column's ``logit(F_hat(y))`` instead of zuko's default (about
-        2.5x too steep), an ordinal simple intercept at the marginal class
+        Always explicit; nothing runs it for you. A Bernstein simple intercept
+        starts at the Bernstein approximation of its column's
+        ``logit(F_hat(y))``, an ordinal simple intercept at the marginal class
         log-odds; spline/affine intercepts and intercepts with parents are
-        untouched. The optimum is unchanged, the path to it is shorter
-        (docs/training-speed.md). It is NOT guarded by the calibrated flag,
-        so calling it on a loaded or already-trained flow **discards those
-        intercepts' weights** and restarts them at the marginal. An
-        uncalibrated flow takes its ranges from the same rows first. Every
-        start reads the rows: the Bernstein one takes the domain from the
-        stored range and the shape from the column.
+        untouched. It is NOT guarded by the calibrated flag, so calling it on
+        a loaded or already-trained flow **discards those intercepts'
+        weights**. An uncalibrated flow takes its ranges from the same rows
+        first.
 
         Parameters
         ----------

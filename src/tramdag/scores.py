@@ -1,28 +1,11 @@
-"""Per-observation scores and the effect-modifier scan.
+"""Per-observation scores of the shift coefficients, and the effect-modifier scan.
 
-The score psi_i = d l_i / d theta of a fitted model is a cheap
-effect-modifier detector (model-based recursive partitioning /
-structural-change logic; Zeileis & Hornik 2007; Zeileis, Hothorn & Hornik 2008;
-Dandl et al. 2024): at the MLE the scores sum to zero, but if the true effect
-of a treatment *varies* with a covariate, the scores of the treatment
-coefficient drift systematically when ordered by that covariate. Fitting the
-cheap all-``ls`` model (seconds, ``fit_classical``) and scanning the scores
-turns "which VC modifiers should I declare?" from a modeling guess into a
-measured decision — *before* fitting anything expensive.
-
-Because every shift coefficient enters the latent additively, the scores are
-**analytic and exact** (no autograd): ``d l_i / d beta = (d l_i / d s_i) * x_i``
-with the latent-scale derivative in closed form —
-
-- continuous node (``u = h(x) + s``, standard-logistic latent):
-  ``d l / d s = 1 - 2 sigmoid(u)``;
-- ordinal node (``P(Y<=k) = sigmoid(theta_k - s)``):
-  ``d l / d s = (sig'(l) - sig'(u)) / (sig(u) - sig(l))`` with ``l``/``u`` the
-  observed level's shifted cutpoint bounds.
-
-The public entry points are the ``CausalFlowDAG`` methods
-[`scores`][] and
-[`effect_modifier_scan`][]. Both delegate here.
+The scores ``psi_i = d l_i / d beta`` are analytic: every shift coefficient
+enters the latent additively, so ``d l_i / d beta = (d l_i / d s_i) * x_i``
+with the latent-scale derivative in closed form (``_dl_ds``). The scan orders
+one coefficient's scores by a candidate covariate and reports a CUSUM
+statistic with its p-value. The ``CausalFlowDAG`` methods [`scores`][] and
+[`effect_modifier_scan`][] delegate here; ``docs/scores.md`` is the guide.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -156,18 +139,10 @@ def effect_modifier_scan(
 ) -> pd.DataFrame:
     """Scan the ``t``-coefficient scores for effect-modifier drift.
 
-    For each candidate covariate ``c``, the scan orders the
-    per-observation scores of the treatment coefficient by ``c`` and forms
-    the scaled cumulative-sum process
-    ``B_j = sum_{i<=j} psi_(i) / (sd(psi) * sqrt(n))``. Under parameter
-    stability ``B`` converges to a Brownian bridge, so ``sup_j |B_j|`` has
-    the Kolmogorov distribution (5% critical value 1.3581). A systematic
-    drift — the true effect varying with ``c`` — inflates it. Covariates
-    flagged here are the measured candidates for ``VC`` modifiers
-    (Zeileis-Hornik fluctuation test).
-
-    For heavily tied (few-level) candidates the ordering is only partial.
-    Read the scan as a ranking diagnostic, not as an exact-size test.
+    For each candidate covariate the scan orders the treatment coefficient's
+    scores by it, forms the scaled cumulative sum
+    ``B_j = sum_{i<=j} psi_(i) / (sd(psi) * sqrt(n))`` and reports
+    ``sup_j |B_j|`` with its Kolmogorov p-value and the 5% critical value.
 
     Parameters
     ----------

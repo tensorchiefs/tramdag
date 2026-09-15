@@ -2,15 +2,9 @@
 
 `Node` bundles a variable's intercept (transform parameters), monotone
 transform and shift modules; `CausalFlowDAG` holds one per node and the DAG
-lives in which parents each node reads.
-
-Internal-but-stable surface
----------------------------
-scores.py, callbacks recipes, the read-outs and the test suite read these
-names by design; renaming any of them is an API change, not a cleanup:
-``kind``, ``parents``, ``shifts`` (term modules with ``key``/``parents``/
-``mods``…), ``intercept`` (+ ``.groups``/``.ci_parents``/``.nets``), ``ut``,
-``net_input``, ``theta_shift``.
+lives in which parents each node reads. ``scores.py``, the read-outs and the
+tests read ``kind``, ``parents``, ``shifts``, ``intercept``, ``ut``,
+``net_input`` and ``theta_shift`` by name.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -43,8 +37,7 @@ class Node(nn.Module):
     branches on the node kind live in the five methods ``log_prob``,
     ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere
     else; the rest of the package reads ``kind`` for dispatch and display
-    only. A third node kind earns a protocol; two stay an if/else in one
-    place.
+    only.
 
     Parameters
     ----------
@@ -80,8 +73,8 @@ class Node(nn.Module):
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.
 
-        The original TRAM-DAG convention: a continuous parent stays raw, shape
-        ``(n, 1)``; an ordinal parent is one-hot encoded, shape ``(n, levels)``.
+        A continuous parent stays raw, shape ``(n, 1)``; an ordinal parent is
+        one-hot encoded, shape ``(n, levels)``.
         """
         if self.kind == "ordinal":
             one_hot = nn.functional.one_hot(values.long(), num_classes=self.levels)

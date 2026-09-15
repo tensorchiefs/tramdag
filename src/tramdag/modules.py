@@ -15,36 +15,23 @@ A custom term is two classes: a [`ShiftModule`][tramdag.modules.ShiftModule]
 subclass with ``__init__(term, spec)`` and ``shift_value``, and a ``Term``
 subclass for the options and checks whose ``module`` is that class.
 
-The networks copy the defaults of the PyTorch reference this package grew out
-of, ``tramdag/models/tram_models.py`` in https://github.com/buehlpa/TramDag:
-``ComplexShiftDefaultTabular`` is 64-128-64 ReLU into a bias-free
-``Linear(64, 1)``, ``ComplexInterceptDefaultTabular`` is 8-8 ReLU into a
-bias-free ``Linear(8, n_thetas)`` with ``n_thetas=20``. A fitted model is
-therefore directly comparable with that implementation. Those defaults are
-**not** the TRAM-DAG paper's own nets: the paper's R implementation
-(https://github.com/tensorchiefs/tram-dag) uses
-``hidden_features_I = hidden_features_CS = c(2, 25, 25, 2)`` with sigmoid
-activations for the triangle experiments, and a 10-100 tanh net for the
-CAREFL/VACA comparisons, so every replication in ``experiments/paper/`` sets
-``units=`` and ``activation=`` from its own reference script. The widths and
-the activation are defaults of the term classes, written once in the
-signatures in [`spec`][tramdag.spec]; the modules here take what they are
-given.
+The widths and the activation of every network are options of the term
+classes, written once in the signatures in [`spec`][tramdag.spec]; the modules
+here take what they are given.
 
 | Module | Network | Term |
 |--------------------------|-------------------------------------------|------|
 | `LinearShiftModule` | `Linear(n, 1, bias=False)` | `LS` |
-| `ComplexShiftModule` | 64-128-64 ReLU NN to 1, no bias | `CS` |
-| `ComplexInterceptModule` | 8-8 ReLU NN to `n_params`, bias-free out | `I` |
+| `ComplexShiftModule` | hidden stack to 1 output, no bias | `CS` |
+| `ComplexInterceptModule` | hidden stack to `n_params` outputs, no bias | `I(...)` |
+| `AdditiveInterceptModule` | one stack per parent, outputs summed | additive `I` |
 | `SimpleInterceptModule` | free parameter vector, no parent | `I()` |
-| `VaryingCoefficientModule` | `beta0` + penalized 16-unit NN | `VC` |
+| `VaryingCoefficientModule` | `beta0` + penalized hidden stack to 1 | `VC` |
+| `FnShiftModule` | a user callable or `nn.Module` | `Fn` |
 
-Parent features use the encoding of the original implementation: a continuous
-parent enters raw, in one column; an ordinal parent one-hot, in ``levels``
-columns. ``ACTIVATIONS`` holds the three activations the reference
-implementations use: ``relu`` in the PyTorch reference's default classes,
-``sigmoid`` in the paper's ``create_param_net``, and ``tanh`` in the paper's
-``make_model`` for the CAREFL and VACA comparisons.
+Parent features: a continuous parent enters raw, in one column; an ordinal
+parent one-hot, in ``levels`` columns. ``ACTIVATIONS`` maps the activation
+names a term may name to their ``torch.nn`` classes.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -92,16 +79,11 @@ def _nn(
     n_out : int
         Output width.
     activation : str
-        Key of ``ACTIVATIONS``: ``"relu"`` (what the PyTorch reference's
-        default classes use), ``"sigmoid"`` (the paper's ``create_param_net``)
-        or ``"tanh"`` (the paper's ``make_model``, used for its CAREFL/VACA
-        comparisons).
+        Key of ``ACTIVATIONS``.
     batch_norm : bool
-        Normalize each hidden layer before its activation — neither reference
-        implementation uses it. It needs more than one row per batch and makes
-        the fitted function depend on the training batch statistics, so ``fit``
-        must leave the flow in ``eval()`` mode for inference to be reproducible
-        (it does).
+        Normalize each hidden layer before its activation. It needs more than
+        one row per batch, and the fitted function depends on the training
+        batch statistics, so inference runs in ``eval()`` mode.
     zero_init_last : bool, optional
         Zero the output layer, by default ``False``.
 
@@ -395,9 +377,7 @@ class ComplexInterceptModule(InterceptModule, nn.Module):
     """A single (possibly joint multi-parent) complex intercept net.
 
     Several parents given to one term feed a single network, so they interact.
-    The term's ``units``, ``activation`` and ``batch_norm`` size the network;
-    the term class holds their defaults (the reference's
-    ``ComplexInterceptDefaultTabular`` widths, see the module docstring).
+    The term's ``units``, ``activation`` and ``batch_norm`` size the network.
 
     Parameters
     ----------
@@ -525,9 +505,7 @@ class ComplexShiftModule(ShiftModule, nn.Module):
     """``CS`` — an additive network shift ``g(x)`` over its parents.
 
     One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The
-    term's ``units``, ``activation`` and ``batch_norm`` size the network; the
-    term class holds their defaults (the reference's
-    ``ComplexShiftDefaultTabular`` widths, see the module docstring).
+    term's ``units``, ``activation`` and ``batch_norm`` size the network.
 
     Parameters
     ----------
@@ -562,25 +540,13 @@ class ComplexShiftModule(ShiftModule, nn.Module):
 class VaryingCoefficientModule(ShiftModule, nn.Module):
     """``VC`` — ``beta(modifiers) * x_t`` with ``beta(x) = beta0 + b_theta(x)``.
 
-    ``b_theta`` is deliberately small: one hidden layer by default. Its
-    weights carry an L2 ``penalty`` in the fitting objective (see ``l2``;
-    ``fit`` adds ``penalty * l2()`` on the total-NLL scale). ``beta0`` is not
-    penalized.
-
-    The output layer starts at zero, so ``beta(x)`` equals ``beta0`` exactly
-    at construction. The head therefore learns only the deviation from a
-    constant effect, which makes the arm difference an estimate instead of a
-    by-product. The unpenalized reduced form ``CS(t, x...)`` reaches a
-    correlation of only about 0.5 against the true effect function. With
-    ``n_features == 0`` there are no modifiers, there is no network, and the
-    term is exactly ``LS(t)``. Only the treatment owns an edge.
-
-    The term's ``penalty``, ``units``, ``activation`` and ``batch_norm`` shape
-    the head; the term class holds their defaults. One hidden layer of 16 is
-    the head ``tests/test_vc_term.py`` recovers a known ``beta(x)`` with at
-    corr ~ 0.99; this term has no counterpart in the reference
-    implementations, so the size comes from that measurement. The module is
-    keyed by the treatment's name.
+    ``b_theta``'s weights carry the L2 ``penalty`` (``l2``; ``fit`` adds
+    ``penalty * l2()`` to the summed NLL); ``beta0`` is not penalized. The
+    output layer starts at zero, so ``beta(x) == beta0`` at construction. With
+    ``n_features == 0`` there is no network and the term is ``LS(t)``. After
+    the fit, ``recenter`` moves the training-mean of ``b_theta`` into
+    ``beta0`` through the ``center`` buffer, a reparameterization that leaves
+    the modelled function unchanged. Keyed by the treatment's name.
 
     Parameters
     ----------
@@ -589,16 +555,6 @@ class VaryingCoefficientModule(ShiftModule, nn.Module):
     spec : dict[str, NodeSpec]
         The DAG specification, for the modifiers' feature widths and the
         treatment's kind.
-
-    Notes
-    -----
-    A constant can move freely between ``beta0`` and ``b_theta``, so the split
-    is not identified by the likelihood alone. The penalty resolves it during
-    training, because it shrinks ``b_theta`` toward the zero function. After
-    training, ``recenter`` re-splits the two exactly: ``b_theta`` then sums to
-    zero over the training data, the GAM convention that
-    ``intercept_contributions`` also uses. Recentering is a reparameterization
-    through the ``center`` buffer and leaves the modelled function unchanged.
     """
 
     scored = True

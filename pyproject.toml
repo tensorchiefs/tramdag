@@ -5,10 +5,10 @@ requires = ["hatchling", "hatch-vcs"]
 [dependency-groups]
 # dev is the default `uv sync` group: everything a working checkout needs
 dev = [
-  {include-group = "docs"},
-  {include-group = "experiments"},
-  {include-group = "notebooks"},
-  {include-group = "test"},
+  { include-group = "docs" },
+  { include-group = "experiments" },
+  { include-group = "notebooks" },
+  { include-group = "test" },
   "pre-commit",
   "pylsp-rope",
   # pinned to the ruff-pre-commit hook's rev. Without it `ruff` is only a
@@ -58,9 +58,9 @@ test = [
 
 [project]
 authors = [
-  {name = "Oliver Dürr", email = "oliver.duerr@gmail.com"},
-  {name = "Beate Sick"},
-  {name = "Marcel Arpogaus"}
+  { name = "Oliver Dürr", email = "oliver.duerr@gmail.com" },
+  { name = "Beate Sick" },
+  { name = "Marcel Arpogaus" }
 ]
 classifiers = [
   "Development Status :: 4 - Beta",

@@ -403,7 +403,7 @@ class Term:
     """One additive term of a node's transformation; each kind is a subclass.
 
     Terms add: ``I("a") + CS("b")`` is the same transformation as
-    ``[I("a"), CS("b")]``. A term is plain data — comparable, hashable,
+    ``I("a") + CS("b")``. A term is plain data — comparable, hashable,
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
     class in [`modules`][tramdag.modules] that trains it, constructed as
@@ -567,7 +567,7 @@ class Intercept(Term):
         applied per continuous parent column (``train`` is that column's
         raw training data, frozen at ``calibrate``). Parents only.
         ``None``, the default, applies no transform.
-    **kwargs
+    **transform_options
         Any keyword that is not an option above goes straight to the
         transform class, for example ``I(transform="spline", bins=16)`` or
         ``I(n_coeffs=40)``. A keyword written out here wins over the same

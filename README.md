@@ -41,27 +41,35 @@ setup with tests and experiments.
 
 Guides, executed notebooks and the API reference are published at the
 [documentation site](https://tensorchiefs.github.io/tramdag/). Each subject has
-one place.
+one guide, and its worked example is one notebook.
 
-| Subject | Where |
-|---|---|
-| The model, its notation, what it cannot do | [`docs/model.md`](docs/model.md), [`docs/notation.md`](docs/notation.md) |
-| Reading a fitted model: coefficients, curves, interventional distributions | [`docs/interpretation.md`](docs/interpretation.md) |
-| Fitting: the likelihood, the Adam loop and its callbacks, the classical fit | [`docs/fitting.md`](docs/fitting.md), [`notebooks/training_strategies.py`](notebooks/training_strategies.py) |
-| Training speed measurements | [`docs/training-speed.md`](docs/training-speed.md) |
-| Complex intercepts, joint versus additive | [`notebooks/additive_vs_joint_ci.py`](notebooks/additive_vs_joint_ci.py) |
-| Treatment effects that vary with covariates | [`docs/varying-coefficients.md`](docs/varying-coefficients.md), [`notebooks/varying_coefficients.py`](notebooks/varying_coefficients.py) |
-| Scores and the effect-modifier scan | [`docs/scores.md`](docs/scores.md) |
-| Agreement with statsmodels and R, standard errors | [`notebooks/classical_fit_tram_dag.py`](notebooks/classical_fit_tram_dag.py) |
-| The paper's experiments, one by one | [`docs/paper-replication.md`](docs/paper-replication.md), [`experiments/`](experiments/) |
-| What the tests guarantee | [`tests/README.md`](tests/README.md) |
-| The API, every default and where it lives | [`docs/code-map.md`](docs/code-map.md) |
-| How the package is built inside | [`docs/architecture.md`](docs/architecture.md) |
-| zuko, and what tramdag would upstream | [`docs/zuko-upstream.md`](docs/zuko-upstream.md) |
+| Subject | Guide | Example |
+|---|---|---|
+| The model, its notation, what it cannot do | [`docs/model.md`](docs/model.md), [`docs/notation.md`](docs/notation.md) | [demo](notebooks/demo_tram_dag_colab.py) |
+| Reading a fitted model: coefficients, curves, interventional distributions | [`docs/interpretation.md`](docs/interpretation.md) | [classical fitting](notebooks/classical_fit_tram_dag.py) |
+| Fitting: the likelihood, the Adam loop and its callbacks, the classical fit | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
+| Training speed measurements | [`docs/training-speed.md`](docs/training-speed.md) | |
+| Complex intercepts, joint versus additive | | [additive vs joint intercepts](notebooks/additive_vs_joint_ci.py) |
+| Treatment effects that vary with covariates | [`docs/varying-coefficients.md`](docs/varying-coefficients.md) | [varying coefficients](notebooks/varying_coefficients.py) |
+| Scores and the effect-modifier scan | [`docs/scores.md`](docs/scores.md) | [varying coefficients](notebooks/varying_coefficients.py) |
+| Agreement with statsmodels and R, standard errors | | [classical fitting](notebooks/classical_fit_tram_dag.py) |
+| What the tests guarantee | [`tests/README.md`](tests/README.md) | |
+| The API, every default and where it lives | [`docs/code-map.md`](docs/code-map.md) | |
+| How the package is built inside | [`docs/architecture.md`](docs/architecture.md) | |
+| zuko, and what tramdag would upstream | [`docs/zuko-upstream.md`](docs/zuko-upstream.md) | |
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, linting and
 releases; [`notebooks/README.md`](notebooks/README.md) how the notebooks are
 written and run.
+
+## Experiments
+
+`experiments/` replicates the paper's experiments against its own R code and
+checks them against committed ground truth in continuous integration.
+[`experiments/README.md`](experiments/README.md) explains the layout, the
+YAML variants and the frozen data;
+[`docs/paper-replication.md`](docs/paper-replication.md) gives the protocol,
+the hyperparameters and the numbers, experiment by experiment.
 
 ## Layout
 

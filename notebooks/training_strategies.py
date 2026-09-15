@@ -25,11 +25,6 @@
 # time-to-target on real workloads see
 # [`docs/training-speed.md`](../docs/training-speed.md). For which strategy to
 # pick see the table in [`docs/fitting.md`](../docs/fitting.md).
-#
-# This notebook is executed on every documentation build, so its recipes are
-# checked against the current API. The snippets in `docs/fitting.md` are a
-# quick reference copied from here; if the two ever disagree, this file is
-# right.
 
 # %%
 import time
@@ -94,9 +89,6 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 # - `val`, the same for the validation rows, only when validation is on,
 # - `lr`, the optimizer's rate after each epoch, recorded after the callbacks
 #   ran, so a schedule's decision for that epoch is what gets stored.
-#
-# The per-node shape is not decoration. The joint likelihood decomposes per
-# node, so a per-node score says which node is still improving.
 
 # %%
 flow = build()
@@ -227,11 +219,10 @@ assert spent - stopper.best_epoch >= 25
 # %% [markdown]
 # ## 6. Per-node rates: `per_node_adam` with `PerNodePlateau`
 #
-# The per-node losses have independent gradients, so a rate per node is
-# exactly independent per-node training. `per_node_adam` builds an Adam with
-# one tagged parameter group per node. `PerNodePlateau` then decays each
-# node's rate on that node's own validation score and freezes the node once
-# the rate is low and flat. The fit stops when the last node freezes.
+# `per_node_adam` builds an Adam with one tagged parameter group per node, and
+# `PerNodePlateau` decays and freezes each node on its own validation score
+# ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when the last node
+# freezes.
 #
 # Do not attach a torch scheduler to the same optimizer. Two controllers would
 # steer the same group rates against each other.
@@ -267,15 +258,10 @@ plt.show()
 # %% [markdown]
 # ## 7. Writing your own
 #
-# A bare callable in `callbacks=` is an `on_epoch_end` hook, called as
-# `cb(flow, epoch, optimizer)`. Return `True` to stop the fit. That is enough
-# to carry any torch scheduler, because `fit` has already put this epoch's
-# validation score in `history["val"]`.
-#
-# Subclass `Callback` instead when you need the other two hooks:
-# `on_fit_begin` for state that must reset between fits, and `on_fit_end`,
-# which runs before the varying-coefficient re-centering so restored weights
-# still take part in it.
+# The callback contract is in [`docs/fitting.md`](../docs/fitting.md): a bare
+# callable is an `on_epoch_end` hook, and a `Callback` subclass gets the other
+# two hooks. `GlobalPlateau` below carries torch's `ReduceLROnPlateau` on the
+# validation score `fit` has already put in `history["val"]`.
 
 
 # %%

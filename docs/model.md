@@ -84,23 +84,22 @@ $$
 ## The components in code
 
 Each node declares its transformation as an additive formula of terms. The
-formula is the node's first argument, written as a list or as a `+` sum; the
-two spellings are the same model. Each constructor names the parents its term
-depends on. The paper's symbols `I`, `LS`, `CS`, `VC`, `Fn` are the classes
+formula is the node's first argument, a `+` sum of terms. Each constructor
+names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`, `VC`, `Fn` are the classes
 `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`, `FnShift`.
 
 | formula for a continuous node $x_3$ | $u_3 = h(x_3 \mid \mathrm{pa})$ |
 |---|---|
-| `[]` or `[I()]` | $h_{\vartheta}(x_3)$, the simple intercept |
-| `[LS("X1")]` | $h_{\vartheta}(x_3) + \beta x_1$ |
-| `[I("X1")]` | $h_{\vartheta(x_1)}(x_3)$, the complex intercept |
-| `[CS("X1")]` | $h_{\vartheta}(x_3) + g_1(x_1)$ |
-| `[LS("X1"), CS("X2")]` | $h_{\vartheta}(x_3) + \beta x_1 + g_2(x_2)$ |
-| `[CS("X1", "X2")]` | $h_{\vartheta}(x_3) + g_{12}(x_1, x_2)$, one joint network |
-| `[CS("X1"), CS("X2")]` | $h_{\vartheta}(x_3) + g_1(x_1) + g_2(x_2)$, two additive networks |
-| `[I("X1", "X2")]` | $h_{\vartheta(x_1, x_2)}(x_3)$, one joint network |
-| `[I("X1", "X2", allow_interaction=False)]` | $h_{\vartheta(x_1) + \vartheta(x_2)}(x_3)$, one network per parent, summed in coefficient space |
-| `[CS("X1"), VC("X2", t="T")]` | $h_{\vartheta}(x_3) + g_1(x_1) + \beta(x_2)\, x_T$ |
+| nothing, or `I()` | $h_{\vartheta}(x_3)$, the simple intercept |
+| `LS("X1")` | $h_{\vartheta}(x_3) + \beta x_1$ |
+| `I("X1")` | $h_{\vartheta(x_1)}(x_3)$, the complex intercept |
+| `CS("X1")` | $h_{\vartheta}(x_3) + g_1(x_1)$ |
+| `LS("X1") + CS("X2")` | $h_{\vartheta}(x_3) + \beta x_1 + g_2(x_2)$ |
+| `CS("X1", "X2")` | $h_{\vartheta}(x_3) + g_{12}(x_1, x_2)$, one joint network |
+| `CS("X1") + CS("X2")` | $h_{\vartheta}(x_3) + g_1(x_1) + g_2(x_2)$, two additive networks |
+| `I("X1", "X2")` | $h_{\vartheta(x_1, x_2)}(x_3)$, one joint network |
+| `I("X1", "X2", allow_interaction=False)` | $h_{\vartheta(x_1) + \vartheta(x_2)}(x_3)$, one network per parent, summed in coefficient space |
+| `CS("X1") + VC("X2", t="T")` | $h_{\vartheta}(x_3) + g_1(x_1) + \beta(x_2)\, x_T$ |
 
 Three rules follow from the model.
 
@@ -175,9 +174,6 @@ ordinal nodes.
 ## What the model cannot do
 
 - The latent distribution is fixed to standard logistic. It is not learned.
-- Every parent must enter through exactly one edge-owning term. The one
-  exception is a varying-coefficient modifier, which can also act
-  prognostically through another term.
 - A `VC` treatment is continuous or a binary ordinal node; a multi-level
   ordinal treatment is not supported. Propensity centering needs a binary
   ordinal treatment.

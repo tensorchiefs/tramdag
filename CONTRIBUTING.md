@@ -11,8 +11,8 @@ With [direnv](https://direnv.net/), `.envrc` activates `.venv` on `cd`.
 ## Tests
 
 ```bash
-uv run pytest -q -m "not slow"          # the fast subset, 2-3 min
-uv run pytest -q                        # everything, incl. the long fits (25-40 min on 2-core CI)
+uv run pytest -q -m "not slow"          # the fast subset
+uv run pytest -q                        # everything, incl. the long fits
 uv run pytest tests/test_flow.py -q     # one file
 ```
 

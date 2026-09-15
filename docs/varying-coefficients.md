@@ -24,7 +24,7 @@ the arms, so the read-out is the difference of two jointly fitted,
 unregularized networks and amplifies noise. On the `vc_hetero` process the
 `CS` reduced form reaches a correlation of about 0.5 with the true effect
 function even though the model is in-class; the `VC` term reaches about 0.99
-on the same protocol, and `tests/test_vc_term.py` pins the bar at 0.9. Causal
+on the same protocol. Causal
 forests and R-learners work not because they target the effect but because
 they regularize it (Nie & Wager 2021; Athey, Tibshirani & Wager 2019). `VC`
 brings that ingredient into the TRAM framework.

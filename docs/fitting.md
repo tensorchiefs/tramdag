@@ -64,8 +64,9 @@ weights.
   cutpoints. The spline, the affine and the `range_q=0` transforms have no
   such start. The call is a pure initialization and leaves the MLE unchanged.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
-  a float and uses the last fraction of `train_df`, unshuffled, and only the
-  head calibrates. With either, `fit` writes the per-node validation NLL after
+  a float and uses the last fraction of `train_df` unshuffled, so shuffle the
+  frame first if its row order means anything; only the head calibrates. With
+  either, `fit` writes the per-node validation NLL after
   every epoch into `flow.history["val"]`.
 - **Logging.** `flow.history["lr"]` records the optimizer's rate per epoch, a
   `{node: lr}` dict under `per_node_adam`. `verbose=N` prints every Nth epoch
@@ -97,10 +98,8 @@ and need the best-validation weights to recover the causal effect.
 | a global plateau `Callback` around torch's `ReduceLROnPlateau` | one shared decaying rate |
 | `PerNodePlateau(patience=, freeze=)` with `per_node_adam` | nodes converge at different speeds; self-stopping |
 
-Three details are easy to get wrong.
+Two details are easy to get wrong.
 
-- `validation_split` takes the last rows unshuffled. If the row order means
-  anything, shuffle the frame first.
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights

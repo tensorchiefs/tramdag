@@ -10,15 +10,9 @@ it needs:
 | [`benchmarks/`](benchmarks/) | training-speed and cross-machine measurements |
 | [`misc/`](misc/) | everything else — currently the classical-MLE validation |
 
-The `paper` area and the `misc` area each contain their own:
-
-- `data/`,
-- `ground_truth/`,
-- `results/` (gitignored),
-- `tests/`,
-- the helpers that only that area needs.
-
-`benchmarks/` is the exception by nature. It measures training speed *on* the
+The `paper` and `misc` areas each hold their own `data/`, `ground_truth/`,
+`results/` (gitignored), `tests/` and helpers. `benchmarks/` is the exception
+by nature. It measures training speed *on* the
 data of the other areas. It therefore reads `misc/data/` and `paper/data/`, and
 it commits no ground truth of its own. Its output is a write-up in `docs/`, not
 a pinned number.
@@ -74,30 +68,9 @@ carries its own copy of the bimodal DGP. `benchmarks/tests/` pins that copy to
 the maintained generator. A drifted copy can make the collected
 `final_val_nll` values incomparable.
 
-Runtime and the CI deviations: the triangle configs run batch 256 / lr 0.004
-for 300 epochs. Three variants differ:
-
-- `linear-cs` runs 500 epochs,
-- mixed `exp-cs` runs 350 epochs,
-- mixed `linear-ls` runs 200 epochs @ lr 0.002.
-
-The paper runs 500 epochs at batch 32 / lr 0.001; every ground-truth metric
-keeps its value under the values above.
-VACA and CAREFL run their references 1:1. VACA runs 10000 full-batch epochs @
-lr 0.001 with the plateau rule, and CAREFL runs 7000. CAREFL runs on the
-reference's own committed rows (`paper/data/carefl-cf`).
-`docs/paper-replication.md` holds the selection grid, the epoch floors and the
-rejected alternatives with their numbers.
-
+Each variant's protocol, its deviations from the paper and the measurements
+behind them are in [`docs/paper-replication.md`](../docs/paper-replication.md).
 To run variants locally, run one or two at a time with `OMP_NUM_THREADS=2`.
-The step is overhead-bound.
-
-`vaca.py` and `carefl.py` keep `input_transform: minmax` and tanh on their CI
-terms. The reference trains in `scale_df` space. Every raw-parent alternative
-measurably fails: tanh and sigmoid saturate, and relu wanders or underfits.
-`docs/paper-replication.md` holds those measurements. The reference of the
-triangle scripts fits raw parents, so those specs leave `input_transform`
-unset.
 
 [`paper/PAPER_COVERAGE.md`](paper/PAPER_COVERAGE.md) lists which paper figure
 each variant reproduces. It also lists what the replications deliberately do

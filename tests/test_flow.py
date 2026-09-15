@@ -49,7 +49,7 @@ def fitted_flow():
     return flow, df
 
 
-@pytest.mark.parametrize("ut", BernsteinUT(n_coeffs=12) + SplineUT(bins=6) + AffineUT())
+@pytest.mark.parametrize("ut", [BernsteinUT(n_coeffs=12), SplineUT(bins=6), AffineUT()])
 def test_univariate_roundtrip(ut):
     ut.set_range(-3.0, 7.0)
     n = 200

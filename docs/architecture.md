@@ -2,17 +2,17 @@
 
 The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its `Term` subclass (the spec) and its module in
-`modules.py`. Node-kind behavior lives in four `Node` methods. Everything else
+`modules.py`. Node-kind behavior lives in five `Node` methods. Everything else
 is framework code.
 
 ## Module map
 ```mermaid
 graph TD
     subgraph data["spec"]
-        spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient FnShift = I LS CS VC Fn),<br/>each holding its module class;<br/>nodes, normalization, Kahn sort, (de)serialization"]
+        spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient = I LS CS VC),<br/>each holding its module class;<br/>nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        modules["modules.py<br/>one nn.Module per term, built from (term, spec):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule FnShiftModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
+        modules["modules.py<br/>one nn.Module per term, built from (term, spec):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
         nodes["nodes.py<br/>Node: intercept + shifts,<br/>encode, log_prob, sample,<br/>abduct, marginal_theta"]
         flow["flow.py<br/>CausalFlowDAG: construct, calibrate,<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
@@ -70,7 +70,6 @@ classDiagram
     Term <|-- LinearShift : LS
     Term <|-- ComplexShift : CS
     Term <|-- VaryingCoefficient : VC
-    Term <|-- FnShift : Fn
     class TermModule {
         <<modules.py, nn.Module>>
         input_transform / calibrate(train_df)
@@ -97,7 +96,6 @@ classDiagram
     ShiftModule <|-- LinearShiftModule
     ShiftModule <|-- ComplexShiftModule
     ShiftModule <|-- VaryingCoefficientModule
-    ShiftModule <|-- FnShiftModule
     InterceptModule <|-- SimpleInterceptModule
     InterceptModule <|-- ComplexInterceptModule
     InterceptModule <|-- AdditiveInterceptModule
@@ -117,13 +115,11 @@ A custom term is two classes:
   `super().__init__(*parents)`; its rules are the checks after that, plus
   `check` and `edge_parents`.
 
-For a one-off term, the cheap path is `Fn`.
-
 ## Node kinds
 
 The two node kinds are continuous and ordinal. They stay an if/else in ONE
-place: the four `Node` methods `log_prob`, `sample`, `abduct` and
-`marginal_theta` in nodes.py, plus `encode` for the parent encoding.
+place: the five `Node` methods `log_prob`, `sample`, `abduct`,
+`marginal_theta` and `encode` in nodes.py.
 
 ## Guards that pin all of this
 
@@ -219,10 +215,6 @@ classDiagram
   }
   class FitMixin {
   }
-  class FnShift {
-  }
-  class FnShiftModule {
-  }
   class Intercept {
   }
   class InterceptModule {
@@ -269,14 +261,12 @@ classDiagram
   AdditiveInterceptModule --|> InterceptModule
   ComplexInterceptModule --|> InterceptModule
   ComplexShiftModule --|> ShiftModule
-  FnShiftModule --|> ShiftModule
   InterceptModule --|> TermModule
   LinearShiftModule --|> ShiftModule
   ShiftModule --|> TermModule
   SimpleInterceptModule --|> InterceptModule
   VaryingCoefficientModule --|> ShiftModule
   ComplexShift --|> Term
-  FnShift --|> Term
   Intercept --|> Term
   LinearShift --|> Term
   VaryingCoefficient --|> Term
@@ -284,7 +274,6 @@ classDiagram
   BernsteinUT --|> _ScaledUT
   SplineUT --|> _ScaledUT
   ComplexShiftModule --o ComplexShift : module
-  FnShiftModule --o FnShift : module
   LinearShiftModule --o LinearShift : module
   VaryingCoefficientModule --o VaryingCoefficient : module
 ```

@@ -724,9 +724,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         except (pickle.PicklingError, AttributeError) as err:
             raise ValueError(
                 "the spec does not serialize: a callable input_transform "
-                "or Fn(fn=) must be a picklable module-level function "
-                "— use 'minmax'/'standardize', or def the function (or the "
-                "nn.Module class) at module level."
+                "must be a picklable module-level function "
+                "— use 'minmax'/'standardize', or def the function at "
+                "module level."
             ) from err
 
     @classmethod

@@ -23,7 +23,6 @@ EDGE_STYLE = {
     "CI": dict(color="C1", ls="--", lw=1.8),
     "VC": dict(color="C3", ls="-", lw=2.4),
     "VC mod": dict(color="C3", ls=":", lw=1.4),
-    "Fn": dict(color="C2", ls="-.", lw=1.6),
 }
 EDGE_LABEL = {"VCm": "VC mod"}  # to_matrix's tag for a VC modifier
 NODE_FACE = {"continuous": "#e3f2fd", "ordinal": "#fff3e0"}
@@ -196,8 +195,8 @@ def plot_dag(
     nodes are ellipses, ordinal nodes rounded boxes with their level count.
     Each edge is drawn by the term that owns it: ``LS`` thin gray, ``CS`` thick
     blue, a complex intercept (``CI``) dashed orange, a ``VC`` treatment edge
-    red with its modifiers dotted, ``Fn`` dash-dotted green; a multi-parent
-    CS/CI is labelled ``joint``.
+    red with its modifiers dotted; a multi-parent CS/CI is labelled
+    ``joint``.
 
     Parameters
     ----------

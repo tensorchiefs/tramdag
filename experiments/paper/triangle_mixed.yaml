@@ -12,8 +12,8 @@
 #     (batch, lr and the epoch count are the deviations below, for CI runtime);
 #   * len_theta = 20, hidden_features_I = hidden_features_CS = c(2, 2, 2, 2),
 #     sigmoid activations (create_param_net; its ReLU line is commented out) —
-#     in/out dims around the hidden stack (2, 2), the same corrected reading
-#     as the continuous triangle (2026-09-02, source-verified 2026-09-03);
+#     in/out dims around the hidden stack (2, 2), read as for the continuous
+#     triangle;
 #   * n_coeffs = len_theta = 20 unconstrained coefficients; zuko ties two
 #     more control points on (order 21 against the reference's 19); the
 #     free-parameter count is what matches;
@@ -27,12 +27,13 @@
 # and biases (`init: normal`, the LinearMasked layers). A simple intercept's
 # theta is not a linear layer: it starts at zero here (no marginal init),
 # as `bernp$beta` does in R.
-# Known deviations, documented in CLAUDE.md: a [-5, 5] instead of a [0, 1]
+# Known deviations, documented in docs/paper-replication.md: a [-5, 5]
+# instead of a [0, 1]
 # domain (a reparametrization), zuko's tied end control points instead of the
 # reference's tangent extrapolation, order 21 vs 19 at equal free parameters;
 # the R script runs unseeded, so every seed below is a repo choice.
 #
-# CI-runtime deviations (2026-09-01, docs/paper-replication.md): the paper
+# CI-runtime deviations (docs/paper-replication.md): the paper
 # trains 500 epochs at Keras' default batch 32 with lr 0.001 — 42-69 min per
 # variant on the CI runners. Batch 256 with the lr scaled 4x takes 8x fewer
 # steps per epoch and keeps every ground-truth metric. The coefficient

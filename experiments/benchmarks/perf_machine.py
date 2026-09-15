@@ -6,9 +6,7 @@ stopping — identical work on every machine), on every available device
 
 - **intro**  (n=5,000):  a 4-node SCM, mixed continuous + ordinal with
   ls/cs terms, written out in ``intro_dgp`` below — measures per-step
-  overhead, the regime of typical tabular fits. The name is historical:
-  it came from a notebook that has since been folded into
-  ``notebooks/demo_tram_dag_colab.py``. Do not retune the equations or
+  overhead, the regime of typical tabular fits. Do not retune the equations or
   the draw order: ``docs/perf/REPORT.md`` pins the resulting NLL across
   machines as a cross-machine sanity check.
 - **large**  (n=50,000): all-``ci`` flow on the bimodal VACA benchmark, whose

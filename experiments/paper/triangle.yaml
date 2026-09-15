@@ -15,20 +15,20 @@
 #     The c(...) vector reads as in/out dims around the hidden stack (25, 25):
 #     the literal [2, 25, 25, 2] reading puts a 2-sigmoid bottleneck on the
 #     input and cannot reproduce paper Fig. 18 (sin curve err 1.22), while
-#     (25, 25) lands on the figure (0.24) — corrected 2026-09-02, source-
-#     verified against create_param_net 2026-09-03;
+#     (25, 25) lands on the figure (0.24);
 #   * n_coeffs = len_theta = 20 unconstrained coefficients; zuko ties two
 #     more control points on (order 21 against the reference's 19); the
 #     free-parameter count is what matches;
 #   * no learning-rate schedule, no early stopping, final weights;
 #   * no input_transform on any term: the triangle scripts feed the nets raw
-#     parents (repo decision 2026-09-01); the Bernstein domain comes from the
+#     parents; the Bernstein domain comes from the
 #     train 5%/95% quantiles as in the R script (range_q default 0.05).
 # Every linear layer starts from Keras' random_normal, sd 0.05, on weights
 # and biases (`init: normal`, the LinearMasked layers). A simple intercept's
 # theta is not a linear layer: it starts at zero here (no marginal init),
 # as `bernp$beta` does in R.
-# Known deviations, documented in CLAUDE.md: a [-5, 5] instead of a [0, 1]
+# Known deviations, documented in docs/paper-replication.md: a [-5, 5]
+# instead of a [0, 1]
 # domain (a reparametrization), zuko's tied end control points instead of the
 # reference's tangent extrapolation, order 21 vs 19 at equal free parameters;
 # the R script runs unseeded, so every seed below is a repo choice.
@@ -37,7 +37,7 @@
 # trains 500 epochs at Keras' default batch 32 with optimizer_adam()'s lr
 # 0.001; that is 42-69 min per variant on the CI runners. Batch 256 with the
 # lr scaled 4x runs in 8x fewer steps and keeps every ground-truth metric.
-# Epochs 300 instead of 500 is a further runtime cut (measured 2026-09-01:
+# Epochs 300 instead of 500 is a further runtime cut (measured:
 # every metric within its ground-truth bound; 150 epochs is not enough — the
 # do(x1) error fails on atan, 0.235 > 0.206; linear-cs keeps 500 — at 300 its
 # curve visibly flattens past |x2| > 0.5, max err 0.140 vs 0.088, because the

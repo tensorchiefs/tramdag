@@ -111,33 +111,6 @@ def ordinal_bounds(
     return cut[idx, y], cut[idx, y + 1]
 
 
-def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
-    """Build a scaled univariate transform by name.
-
-    Parameters
-    ----------
-    name : str
-        One of ``"bernstein"``, ``"spline"``, ``"affine"``.
-    **kwargs
-        Passed to the transform class.
-
-    Returns
-    -------
-    _ScaledUT
-        The transform.
-
-    Raises
-    ------
-    ValueError
-        If ``name`` is not one of the three.
-    """
-    if name not in _TRANSFORMS:
-        raise ValueError(
-            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)}"
-        )
-    return _TRANSFORMS[name](**kwargs)
-
-
 def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
     """Constrain unconstrained parameters to increasing cutpoints.
 
@@ -332,6 +305,33 @@ def ordinal_abduct(
         lower.shape, device=lower.device, generator=generator
     )
     return StandardLogistic.icdf(u)
+
+
+def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
+    """Build a scaled univariate transform by name.
+
+    Parameters
+    ----------
+    name : str
+        One of ``"bernstein"``, ``"spline"``, ``"affine"``.
+    **kwargs
+        Passed to the transform class.
+
+    Returns
+    -------
+    _ScaledUT
+        The transform.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is not one of the three.
+    """
+    if name not in _TRANSFORMS:
+        raise ValueError(
+            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)}"
+        )
+    return _TRANSFORMS[name](**kwargs)
 
 
 # %% private classes -------------------------------------------------------------------

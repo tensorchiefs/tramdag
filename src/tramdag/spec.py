@@ -86,6 +86,12 @@ INPUT_TRANSFORMS = ("minmax", "standardize")
 
 
 # %% private functions -----------------------------------------------------------------
+def _import_object(path: str):
+    """Give the object that a dotted import path names, ``my.pkg.module.Name``."""
+    module_name, _, attr = path.rpartition(".")
+    return getattr(importlib.import_module(module_name), attr)
+
+
 def _term_class(name: str) -> type[Term]:
     """Give the term class that a serialized ``term:`` entry names.
 
@@ -100,9 +106,10 @@ def _term_class(name: str) -> type[Term]:
         [`Term`][] subclass.
     """
     try:
-        cls = (
-            import_object(name) if "." in name else getattr(sys.modules[__name__], name)
-        )
+        if "." in name:
+            cls = _import_object(name)
+        else:
+            cls = getattr(sys.modules[__name__], name)
     except (ImportError, AttributeError) as err:
         raise ValueError(
             f"unknown term {name!r}. A custom term serializes as its import "
@@ -265,12 +272,6 @@ def _kahn_sort(spec: dict[str, NodeSpec]) -> list[str]:
 
 
 # %% public functions ------------------------------------------------------------------
-def import_object(path: str):
-    """Give the object that a dotted import path names, ``my.pkg.module.Name``."""
-    module_name, _, attr = path.rpartition(".")
-    return getattr(importlib.import_module(module_name), attr)
-
-
 def SI(**options) -> Intercept:
     """Build the simple-intercept baseline, the paper's SI: ``I()`` without parents.
 

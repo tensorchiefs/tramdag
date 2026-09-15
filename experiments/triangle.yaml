@@ -25,8 +25,11 @@
 #     train 5%/95% quantiles as in the R script (range_q default 0.05).
 # Every linear layer starts from Keras' random_normal, sd 0.05, on weights
 # and biases (`init: normal`, the LinearMasked layers). A simple intercept's
-# theta is not a linear layer: it starts at zero here (no marginal init),
-# as `bernp$beta` does in R.
+# theta is not a linear layer: `bernp$beta` starts at zero in R. Here it
+# starts at the empirical marginal (`init_marginals: true`, deviation D4 in
+# docs/paper-replication.md) except for linear-cs and sin-cs, where the
+# measured endpoint is worse; the zero start reaches the same NLL within
+# ~30 epochs where the marginal start needs ~5.
 # Known deviations, documented in docs/paper-replication.md: a [-5, 5]
 # instead of a [0, 1]
 # domain (a reparametrization), zuko's tied end control points instead of the
@@ -50,6 +53,7 @@ paper_protocol: &paper_protocol
   flow_kwargs:
     seed: 7               # weight init (repo choice, the R script is unseeded)
     init: normal          # LinearMasked: random_normal weights and biases (sd 0.05)
+  init_marginals: true    # D4: the empirical-marginal start; the reference starts at zero
   fit_kwargs:
     epochs: 300           # paper: 500 (num_epochs)
     batch_size: 256       # paper: 32 (Keras fit() default)
@@ -128,6 +132,7 @@ variants:
     <<: *paper_protocol
     f: linear
     shift: cs
+    init_marginals: false  # measured: the marginal start doubles the cs curve error (0.025 -> 0.056)
     fit_kwargs:
       epochs: 500           # not 300: see the epochs note above
       batch_size: 256
@@ -152,6 +157,7 @@ variants:
     <<: *paper_protocol
     f: sin
     shift: cs
+    init_marginals: false  # measured: the marginal start finds a different optimum, do(x1) error 0.075 -> 0.201
     # the paper evaluates the sin fit on half a period (Fig. 18 plots
     # x2 in [-1, 0]) — the grid follows it
     grid_low: -1.0

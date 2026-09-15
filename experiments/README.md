@@ -66,6 +66,9 @@ verbose, so one variant reads top to bottom:
   `input_transform`.
 - `flow_kwargs:` go verbatim to `CausalFlowDAG(spec, **flow_kwargs)`: `seed`
   and `init`.
+- `init_marginals:` says whether the simple intercepts start at their
+  empirical marginals (`flow.init_marginals`) after calibration; the
+  reference has no such start ([`docs/paper-replication.md`](../docs/paper-replication.md)).
 - `fit_kwargs:` go verbatim to `flow.fit(train, **fit_kwargs)`: `epochs`,
   `batch_size` and `seed`. `learning_rate`, `schedule` and the `plateau_*`
   keys stay top-level, because they configure the optimizer and the scheduler

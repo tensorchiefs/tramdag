@@ -1,4 +1,4 @@
-"""Tests for issue #20 Option A: post-hoc mean-centered per-term decomposition
+"""Post-hoc mean-centered per-term decomposition
 of an additive complex intercept (``flow.intercept_contributions``).
 
 The decomposition must be (a) exact — baseline + summed contributions reproduce

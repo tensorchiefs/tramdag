@@ -136,8 +136,10 @@ names, so checkpoints and the seeded RNG stream stay bit-stable.
 `modules.py` imports nothing from `spec.py`, which is what lets the term hold
 the class directly. There is no registry and no `register_term`.
 
-Node-kind branches live ONLY in the four `Node` methods `log_prob`, `sample`,
-`abduct` and `marginal_theta` in nodes.py.
+The likelihood, sampling and encoding branches on the node kind live ONLY in
+the five `Node` methods `log_prob`, `sample`, `abduct`, `marginal_theta` and
+`encode` in nodes.py; the rest of the package reads `kind` for dispatch and
+display only.
 `fitting.py` and `readouts.py` are mixins that CausalFlowDAG composes. Each
 method is defined once, and there is no delegate layer. The public names are:
 
@@ -523,8 +525,8 @@ matches.
 - ~~Generalize the generators beyond the stroke DAG~~ — done in June 2026 for
   the DGPs of the TRAM-DAG paper: triangle, triangle-mixed, vaca and carefl.
   Hidden confounding in the manner of DeCaFlow stays open.
-- ~~Package for PyPI~~ — the package is on PyPI as `tramdag`, latest 0.3.0,
-  June 2026. Since the 1.0-RC the release flow is tag-driven, by the skeleton
+- ~~Package for PyPI~~ — the package is on PyPI as `tramdag`. Since the
+  1.0-RC the release flow is tag-driven, by the skeleton
   convention. The version IS the git tag, through hatch-vcs. `cz bump` derives
   the tag from the conventional commits, or you tag `vX.Y.Z` by hand. A push of
   the tag runs `.github/workflows/release.yaml`, which does three steps:

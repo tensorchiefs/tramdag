@@ -143,7 +143,7 @@ MLE, as the finding below shows.
 | best-validation weights — `EarlyStopping()` | any CI/CS/VC model; the recommended recipe (register it — fit has no default) |
 | … + patience — `EarlyStopping(patience=)` | also stop once the best is that many epochs old |
 | global plateau schedule | decaying one shared rate beats picking one |
-| per-node plateau — `PerNodePlateau` | nodes converge at different speeds; self-stopping |
+| per-node plateau — `PerNodePlateau(patience=, freeze=)` | nodes converge at different speeds; self-stopping |
 
 The code below gives one line for each Adam recipe, as a quick reference. The
 exact-MLE path is Path B below, and the global plateau rule needs a `Callback`
@@ -176,8 +176,8 @@ flow.fit(
     epochs=4000,
     validation_split=0.1,
     optimizer=per_node_adam(flow, lr=1e-2),
-    callbacks=PerNodePlateau(),
-)  # patience=15, freeze=50
+    callbacks=PerNodePlateau(patience=15, freeze=50),
+)
 ```
 
 Import `EarlyStopping`, `PerNodePlateau` and `per_node_adam` from

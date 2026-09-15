@@ -1,4 +1,4 @@
-"""Tests for the API papercuts in issue #12: constructor seeding, history and
+"""API papercuts: constructor seeding, history and
 version metadata through save/load, the init option.
 """
 

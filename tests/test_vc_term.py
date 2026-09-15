@@ -1,11 +1,11 @@
-"""Tests for the varying-coefficient shift term VC(on, *modifiers, penalty=)
-(issue #28) — construction/validation, the LS nesting (exact and fitted), the
+"""Tests for the varying-coefficient shift term VC(*modifiers, t=, penalty=)
+— construction/validation, the LS nesting (exact and fitted), the
 recovery acceptance bar on the heterogeneous-effect DGP, the read-out
 identities, warm start, and serialization.
 
 The recovery bar (corr(beta_hat, beta_true) >= 0.9) is the regression guard
 against "expressive but unestimated": the unregularized ``CS(on, x...)``
-reduced form measures ~0.5 on this task class (tramdag-simu PR #21), so the
+reduced form measures ~0.5 on this task class, so the
 bar is what the term exists to clear.
 """
 
@@ -111,8 +111,8 @@ def test_to_matrix_vc_labels():
 
 
 def test_vc_without_modifiers_equals_ls_exactly():
-    """VC(on) has no net — with beta0 set to the LS weight the two models give
-    bit-identical log-probs (the nesting is exact, not approximate).
+    """VC(t=) without modifiers has no net — with beta0 set to the LS weight the
+    two models give bit-identical log-probs (the nesting is exact, not approximate).
     """
     rng = np.random.default_rng(3)
     t = rng.integers(0, 2, 200).astype(float)
@@ -147,7 +147,7 @@ def test_varying_coef_deterministic_and_y_free(small_fitted):
 
 def test_varying_coef_equals_abduct_difference(small_fitted):
     """For a binary treatment, beta(x) must equal the abduct-difference
-    u(x, T=1, y) - u(x, T=0, y) identically (issue #28 identity check).
+    u(x, T=1, y) - u(x, T=0, y) identically (the VC identity check).
     """
     flow, dgp = small_fitted
     new = dgp["draw"](300, 901)
@@ -188,7 +188,7 @@ def test_serialization_roundtrip_spec():
 
 @pytest.mark.slow
 def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
-    """Acceptance (issue #28): with `penalty` large the head is shrunk to the
+    """Acceptance: with `penalty` large the head is shrunk to the
     zero function and the fitted beta0 matches the fit_classical LS coefficient.
     """
     df = vc_hetero["draw"](4000, 100)
@@ -223,7 +223,7 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
 
 
 def test_recovery_bar_on_hetero_dgp(vc_hetero):
-    """THE acceptance bar (issue #28): corr(beta_hat, beta_true) >= 0.9 at
+    """THE acceptance bar: corr(beta_hat, beta_true) >= 0.9 at
     n = 5000 on the heterogeneous-effect DGP, default penalty. The
     unregularized CS(on, x...) workaround measures ~0.5 on this task class —
     this test is the regression guard against 'expressive but unestimated'.

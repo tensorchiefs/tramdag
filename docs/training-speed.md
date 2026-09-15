@@ -24,7 +24,7 @@ a local run artifact, and it stays out of the repository.
 
 ## The recipes, and where they live now
 
-Since 0.4, the recipes that this benchmark compares are **callbacks**. They are
+The recipes that this benchmark compares are **callbacks**. They are
 training strategies, and they are not part of the model.
 [fitting.md](fitting.md#training-strategies) says what each recipe is and gives
 one line of code for each Adam recipe. The worked version of every recipe is in

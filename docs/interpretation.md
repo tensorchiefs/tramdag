@@ -30,11 +30,10 @@ skipped.
 
 Two things decide how to read a weight.
 
-**The sign follows the latent-scale convention.** A continuous node adds its
-shift, so a parent that raises the child gets a *negative* weight. An ordinal
-node subtracts its shift, so the sign is the one you expect there. This is
-not a quirk of the implementation. It is the convention of the original
-TRAM-DAG work, and the test suite pins it.
+**The sign follows the latent-scale convention** of
+[notation.md](notation.md). A continuous node adds its shift, so a parent that
+raises the child gets a *negative* weight. An ordinal node subtracts its
+shift, so the sign is the one you expect there.
 
 **The scale is the latent scale, not the data scale.** For a continuous node
 the weights carry the transform's scaling. A single weight is therefore not
@@ -50,12 +49,10 @@ differences.
 `w[k] - w[0]` is the level-k-against-level-0 log-odds ratio, and it is the
 column that `flow.design_matrix(df, node, drop_first=True)` drops.
 
-Checked in [`notebooks/demo_tram_dag_colab.py`](../notebooks/demo_tram_dag_colab.py),
-which recovers a coefficient ratio from a known process, and in
-[`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
-which compares the weights against `statsmodels` and R. The odds-ratio
-reading is pinned in continuous integration by
-`experiments/paper/triangle_mixed.py`.
+Checked in [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
+which compares the weights against `statsmodels` and R, and pinned in
+continuous integration by `experiments/paper/triangle_mixed.py`, whose
+odds-ratio check is in [paper-replication.md](paper-replication.md).
 
 ## Ordinal nodes: cutpoints and the interventional PMF
 
@@ -101,14 +98,9 @@ after mean-centring both, not point by point.
 the transform parameters, so the node can bend in ways no additive shift can
 express. The cost is that there is no single coefficient to read.
 
-That is a real trade-off, and it is measurable. `experiments/paper/` fits the
-same process twice, once with an `LS` edge and once with a `CS` edge. It
-compares both against the known truth, and
-[paper-replication.md](paper-replication.md) reports the result. The short
-version has two halves. Where the true edge is linear, the interpretable model
-gives up very little likelihood. Where the edge is curved, the flexible model
-wins, and the interpretable one absorbs the curvature into a biased single
-number.
+[paper-replication.md](paper-replication.md) measures that trade-off on the
+paper's triangle process, fitted once with an `LS` edge and once with a `CS`
+edge.
 
 A middle option exists. `I("a", "b", allow_interaction=False)` builds one
 network per parent and sums their parameter vectors, so the parents act
@@ -122,9 +114,7 @@ Worked through in the [intercept notebook](../notebooks/additive_vs_joint_ci.py)
 ## An effect that varies with a covariate
 
 `VC(*modifiers, t=...)` fits $\beta(\text{modifiers}) \cdot x_t$, and
-`flow.varying_coef(df, node)` reads the fitted $\beta$ back. It is
-deterministic, needs no abduction, and for a binary treatment it equals the
-abduction difference.
+`flow.varying_coef(df, node)` reads the fitted $\beta$ back in closed form.
 
 `flow.scores(df, node)` and `flow.effect_modifier_scan(df, node, t=...)` come
 before that decision rather than after it. They rank candidate modifiers by

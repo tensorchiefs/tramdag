@@ -4,12 +4,7 @@ This file gives an overview of the tests and how to run them.
 
 ## Running the tests
 
-```bash
-uv run pytest tests/ -q            # everything (the slow fits dominate; ~25-40
-                                   #   min on 2-core CI, less on a workstation)
-uv run pytest tests/ -q -m "not slow"   # fast subset (~2-3 min) — unit + contracts
-uv run pytest tests/test_flow.py -q     # one file
-```
+The commands are in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 - **`slow` marker** — the long fits carry `@pytest.mark.slow`. The option
   `-m "not slow"` skips these fits. The marker is not "everything that trains a
@@ -23,9 +18,8 @@ uv run pytest tests/test_flow.py -q     # one file
   (Actions → CI → *Run workflow*). The split exists because the full suite is
   ~25–40 min on the 2-core runners.
 
-  This file gives no test count. The command
-  `pytest --collect-only -q | tail -1` is always right. A number in prose goes
-  stale within a week. This line was wrong twice.
+  This file gives no test count; `pytest --collect-only -q | tail -1` is
+  always right.
 - **Determinism** — tests seed `torch` before they construct the flow. Weight
   init happens at construction. Fits are therefore reproducible.
 
@@ -123,18 +117,6 @@ acceptance bars.
 | [`test_flow_columns.py`](test_flow_columns.py) | the frame a query needs: a missing column is named before any tensor operation sees it |
 | [`test_plots.py`](test_plots.py) | `plot_dag`, `plot_marginals` and `plot_training` draw every node, edge and freeze mark |
 | [`test_statedict_stability.py`](test_statedict_stability.py) | the bit-exact tripwire: four seeded flows compared against a recorded baseline, so a reordered construction fails here and not in a replication |
-
-## Adding tests
-
-- Validate every new causal feature against the **known truth** of an inline
-  DGP, not against "runs without error". If no inline DGP fits, add one to
-  `conftest.py`.
-- Mark a long fit `@pytest.mark.slow` so PR CI stays fast. Do not mark a fit
-  that *is* the acceptance measurement for a feature. Every run must measure
-  that fit.
-- Do not make a framework test depend on `experiments/`. The research
-  generators and their frozen CSVs live there, and the experiments workflow
-  checks them. For the testing policy, read [`CLAUDE.md`](../CLAUDE.md).
 
 Note: the additive-CI and joint-CS *known-truth* acceptance tests carry the
 slow marker. The fast lane (`-m "not slow"`) therefore covers those features

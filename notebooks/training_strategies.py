@@ -368,12 +368,4 @@ plt.show()
 #
 # The decision table lives in [`docs/fitting.md`](../docs/fitting.md) and the
 # measured time-to-target in
-# [`docs/training-speed.md`](../docs/training-speed.md). Two rules are worth
-# repeating here, because both are easy to get wrong:
-#
-# - An all-`LS` model wants the final weights, not the best ones. That is what
-#   makes it match `statsmodels` and R exactly. Use `fit_classical` for it
-#   instead, which is deterministic and faster.
-# - A flexible model with confounded observational data can overfit at the
-#   maximum-likelihood point and lose the causal effect. There
-#   `EarlyStopping` is not a speed choice but a correctness one.
+# [`docs/training-speed.md`](../docs/training-speed.md).

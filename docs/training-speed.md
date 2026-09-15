@@ -8,8 +8,8 @@ This document benchmarks five things:
 - devices
 - LBFGS
 
-The benchmark ran in June 2026 on an Apple-silicon Mac mini with torch 2.12. It
-ran on the CPU, unless a row notes another device.
+The benchmark ran on an Apple-silicon Mac mini with torch 2.12, on the CPU
+unless a row notes another device.
 
 To reproduce the benchmark, run
 [the training benchmark](../experiments/benchmarks/bench_training.py).
@@ -22,48 +22,27 @@ It runs fixed 200-epoch workloads on all available devices. It writes a machine
 fingerprint to JSON. It needs nothing but `pip install tramdag`. The raw CSV is
 a local run artifact, and it stays out of the repository.
 
-## The recipes, and where they live now
+## The recipes
 
-The recipes that this benchmark compares are **callbacks**. They are
-training strategies, and they are not part of the model.
-[fitting.md](fitting.md#training-strategies) says what each recipe is and gives
-one line of code for each Adam recipe. The worked version of every recipe is in
-[`notebooks/training_strategies.py`](../notebooks/training_strategies.py). This
-page is only the measurement.
+The recipes this benchmark compares are training strategies, not parts of
+the model. [fitting.md](fitting.md#which-recipe) says what each one is, and
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
+runs each of them. This page is only the measurement.
 
 One behaviour matters here, because the numbers below turn on it.
-`PerNodePlateau` watches each node's own validation score. When that score does
-not improve by `min_delta` for `patience` epochs, the callback multiplies the
-node's rate by 0.3. The floor is 1e-3 of the
-start rate. After the rate has decayed 100x and then stays flat for `freeze`
-epochs, the node leaves training at rate 0. The `min_delta` default is 1e-4,
-and the stroke run in this benchmark uses 1e-5.
+`PerNodePlateau` watches each node's own validation score. When that score
+does not improve by `min_delta` for `patience` epochs, the callback
+multiplies the node's rate by 0.3, down to a floor of 1e-3 of the start rate.
+After the rate has decayed 100x and then stays flat for `freeze` epochs, the
+node leaves training at rate 0. The stroke run here uses `min_delta=1e-5`.
+This is valid because the per-node losses have independent gradients, so the
+fit deletes whole epochs rather than shortening them.
 
-This behaviour is valid, because the per-node losses have independent
-gradients. It lets the fit delete whole epochs, and not only shorten them.
-
-One more recipe is a global plateau rule, which is one shared rate rather than
-one rate per node. That is torch's `ReduceLROnPlateau` on the summed validation
-NLL, and it is the rule the paper reference uses.
-`experiments/paper/helpers.py::fit_paper` drives it.
-
-**The exact-MLE path**: an exact comparison with the classical methods needs no
-recipe. The classical methods are `statsmodels` and R `polr`/`tram`. Two plain
-`fit` calls at decreasing rates reach the exact MLE.
-`experiments/misc/validate_ls.py` runs a three-phase variant with 800/700/500
-epochs at 1e-2/1e-3/1e-4 and batch 256. In 2026-09 this repository cut that
-budget from 4000/2000/1000. The cut gives the same MLE, a named-coefficient gap
-to statsmodels of 1.6e-5 against 1.8e-5, and about 3.5x less wall clock.
-
-`fit` keeps the final weights. The guard test
-`tests/test_fit_hooks.py::test_torch_plateau_scheduler_preserves_exact_mle`
-shows that a schedule through the hooks still lands the all-`ls` fit on the
-classical MLE within the usual tolerances.
-
-**LBFGS** ships as its own method, [`fit_classical`](fitting.md). It supersedes
-the hand-rolled recipe that this report benchmarked. The float32 variant
-measured here was fast (< 2 s) but seed-fragile (Finding #2). The float64
-upcast in `fit_classical` fixed that.
+The global plateau rule is one shared rate, torch's `ReduceLROnPlateau` on
+the summed validation NLL; `experiments/paper/helpers.py::fit_paper` drives
+it. The exact-MLE path is `fit_classical`; the L-BFGS rows below are its
+float32 full-batch ancestor, whose seed fragility (finding 2) the float64
+upcast of `fit_classical` removes.
 
 ## Method: time-to-target, not loss-go-down
 
@@ -82,10 +61,6 @@ their tolerances are:
 *Practical* ≈ coefficient-equivalent. A fit with gap ≈ 3e-3 already matches the
 R reference coefficients within the tolerances of
 [`experiments/misc/validate_ls.py`](../experiments/misc/validate_ls.py).
-
-The workloads are unchanged since the measurement, with the same frozen data
-and the same specs. A re-run therefore reproduces the machine-independent
-stroke-ls reference NLL 10.3042 exactly.
 
 ## Results
 
@@ -151,13 +126,9 @@ phase with a decay phase.
 
 ## Recommendation
 
-The everyday recipe is a plateau callback with a generous `epochs` ceiling.
-The shipped per-node variant is `tramdag.callbacks.PerNodePlateau`. For one
-shared rate, carry torch's `ReduceLROnPlateau` in a `Callback` of your own.
-[fitting.md](fitting.md#training-strategies) lists both, and
-[`notebooks/training_strategies.py`](../notebooks/training_strategies.py) runs
-each of them.
+The everyday recipe is a plateau callback with a generous `epochs` ceiling:
+`PerNodePlateau` for per-node rates, or torch's `ReduceLROnPlateau` in a
+`Callback` of your own for one shared rate.
 
-One finding became a package default. `epochs` has no default, because Finding
-6 shows that a fixed budget cannot be right for every workload. Every in-repo
-caller states its recipe in its own YAML.
+Finding 6 is why `epochs` has no default: a fixed budget cannot be right for
+every workload, so every caller states its own.

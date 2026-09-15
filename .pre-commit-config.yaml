@@ -77,7 +77,7 @@ repos:
   - id: actionlint   # workflow syntax, expressions, runner labels, shellcheck
 
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.12.10
+  rev: 0.12.13
   hooks:
   - id: uv-lock   # keep uv.lock in sync when pyproject dependencies change
 

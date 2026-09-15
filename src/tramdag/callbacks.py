@@ -40,9 +40,8 @@ def _last_val(flow, cb: Callback) -> dict[str, float]:
 def per_node_adam(flow, lr: float = 1e-2) -> torch.optim.Adam:
     """Give an Adam with one ``node``-tagged parameter group per node.
 
-    The per-node NLLs have independent gradients, so a learning rate per
-    group is exactly independent per-node training. This is the optimizer
-    [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] needs.
+    The optimizer [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] needs:
+    each group carries its node's name and an ``initial_lr`` stamp.
 
     Parameters
     ----------
@@ -100,14 +99,11 @@ class EarlyStopping(Callback):
 
     Tracks the summed validation NLL. With ``restore_best`` (the default)
     the weights of the best epoch are snapshotted and loaded back at fit
-    end (before the VC re-centering) — the flexible-model recipe: CI/CS
-    models overfit observational confounding at the MLE and need
-    best-validation weights to recover the causal effect
-    (docs/fitting.md). With ``patience`` the fit also stops once the last
-    improvement is that many epochs old; without it (the default) the fit
-    runs its full epoch budget and only the restoration happens. Reads
-    ``flow.history["val"]``, so the fit needs ``validation_data=`` or
-    ``validation_split=``.
+    end, before the VC re-centering. With ``patience`` the fit also stops
+    once the last improvement is that many epochs old; without it (the
+    default) the fit runs its full epoch budget and only the restoration
+    happens. Reads ``flow.history["val"]``, so the fit needs
+    ``validation_data=`` or ``validation_split=``.
 
     Parameters
     ----------
@@ -178,17 +174,11 @@ class PerNodePlateau(Callback):
     epochs without a ``min_delta`` improvement of its own validation NLL, floored
     at ``1e-3`` of its start; once it has decayed to ``1e-2`` of the start and
     stayed flat for ``freeze`` epochs the node leaves training (rate 0). The
-    callback stops the fit when every node has left. Valid because the per-node
-    NLLs have independent gradients — build the optimizer with
+    callback stops the fit when every node has left. Build the optimizer with
     [`per_node_adam`][tramdag.callbacks.per_node_adam] (one ``node``-tagged group
     per node), and give ``fit`` a validation set (the callback reads
-    ``flow.history["val"]``).
-
-    A frozen node's rate is 0 but its forward/backward still runs, so the
-    saving is in epochs, not per-epoch wall clock. Do not attach a torch lr
-    scheduler to the same optimizer — two controllers would steer the same
-    group rates (a ``LambdaLR`` even resets frozen nodes to ``initial_lr``).
-    `docs/training-speed.md` carries the measurements.
+    ``flow.history["val"]``). Do not attach a torch lr scheduler to the same
+    optimizer: two controllers would steer the same group rates.
 
     After a fit, ``frozen`` is ``{node: epoch}`` — the epoch in which each
     node left training — so a training figure can mark the freezes.
@@ -231,14 +221,7 @@ class PerNodePlateau(Callback):
         self.epoch = 0
 
     def on_fit_begin(self, flow, optimizer) -> None:
-        """Start fresh — rates and frozen nodes never carry into the next fit.
-
-        A reused optimizer's decayed (or zeroed) group rates go back to the
-        ``initial_lr`` that ``per_node_adam`` stamped on each group; without
-        that, the new baseline would be the old decayed rate and a frozen
-        node would "train" at rate 0. The stamp lives on the group, so a
-        fresh optimizer, a fresh callback or a second flow all stay correct.
-        """
+        """Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""
         for g in optimizer.param_groups:
             if "initial_lr" in g:
                 g["lr"] = g["initial_lr"]

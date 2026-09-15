@@ -73,20 +73,9 @@ class ReadoutsMixin:
     ) -> np.ndarray:
         """Evaluate the fitted effect function ``beta(x)`` of a ``VC`` term.
 
-        The value comes in closed form from the fitted term, as
-        ``beta0 + b_theta(modifiers)``.
-        It is deterministic and needs no abduction. It is free of ``y``,
-        because only the modifier columns of ``df`` are read. For a binary
-        treatment it is identical to the abduction difference
-        ``u(x, t=1, y) - u(x, t=0, y)``.
-
-        The value lives on the latent, log-odds scale of the node. A
-        continuous node adds it. An ordinal node subtracts it from the
-        cutpoints.
-
-        For a centered term (``center=...``) the form of the returned
-        ``beta`` does not change. ``beta0`` then reads as the effect at the
-        treatment margin, which is the observed propensities.
+        The value is ``beta0 + b_theta(modifiers)``, in closed form from the
+        fitted term; only the modifier columns of ``df`` are read. It lives on
+        the node's latent scale.
 
         Parameters
         ----------
@@ -142,19 +131,10 @@ class ReadoutsMixin:
     def ls_coefficients(self) -> dict[str, dict[str, np.ndarray]]:
         """Give the per-node linear-shift weights.
 
-        For an all-``ls`` model these are the interpretable log-odds-ratio
-        coefficients. A continuous parent has one weight, and that weight is
-        the estimate. An **ordinal parent has one weight per level** (its
-        one-hot encoding), and those are identified only up to a common
-        constant: the one-hot columns sum to 1 in every row, so adding c to
-        all of them and subtracting c from the node's intercept leaves the
-        likelihood unchanged. Read them as differences — ``w[k] - w[0]`` is
-        the level-k-vs-0 log-odds ratio; ``design_matrix(drop_first=True)``
-        drops that level-0 column.
-
-        Only ``LS`` terms have a weight to give. A node's ``CS`` and ``VC``
-        shifts are networks, so they are skipped — reading them needs
-        [`varying_coef`][] or an evaluation of the network itself.
+        A continuous parent has one weight. An ordinal parent has one weight
+        per level (its one-hot encoding), identified only up to a common
+        constant, so read them as differences ``w[k] - w[0]``. Only ``LS``
+        terms have a weight; ``CS`` and ``VC`` shifts are skipped.
 
         Returns
         -------
@@ -175,8 +155,6 @@ class ReadoutsMixin:
 
     def to_matrix(self) -> pd.DataFrame:
         """Give the labeled adjacency matrix of term effects.
-
-        This is the meta-adjacency view of the paper.
 
         Returns
         -------
@@ -201,34 +179,12 @@ class ReadoutsMixin:
 
     @torch.no_grad()
     def intercept_contributions(self, df: pd.DataFrame, node: str) -> dict:
-        """Decompose a complex intercept into mean-centered per-term parts.
+        """Decompose a complex intercept into mean-centered per-parent parts.
 
-        The parts are contributions to the transform parameters of the node.
-        Use them to plot additive partial effects.
-
-        An additive complex intercept,
-        ``CI("x1", "x2", allow_interaction=False)``, builds one
-        network per ``I`` term and **sums their outputs in unconstrained
-        parameter space**: ``theta(pa) = net_1(x1) + net_2(x2)``. The sum is
-        identified, so every L1/L2/L3 query is correct. Each term's output,
-        however, is identified only up to a constant — a constant moves
-        freely between the nets. The *raw* per-term outputs are therefore
-        not directly comparable.
-
-        This method resolves the ambiguity with the usual additive-model
-        (GAM) convention: a **sum-to-zero (mean-centering) constraint over
-        the rows of** ``df``. Each term's contribution is centered to mean
-        zero per parameter. The removed constants collect into a single
-        ``baseline``. The decomposition is exact:
-
-            ``theta(pa) = baseline + sum_terms contribution_term(pa)``
-
-        ``baseline`` plus the uncentered row sum of the contributions
-        reproduces the model's transform parameters. This is **post-hoc
-        only**: it reads the fitted weights and changes nothing about the
-        model or any frozen number. Shift terms
-        (``LS``/``CS``) are a separate, already-interpretable slot — see
-        [`ls_coefficients`][].
+        Each network's output over the rows of ``df`` is centered to mean zero
+        per parameter; the removed means collect into ``baseline``, so
+        ``theta(pa) = baseline + sum of the contributions`` exactly. Post-hoc
+        only: it reads the fitted weights and changes nothing.
 
         Parameters
         ----------
@@ -264,13 +220,8 @@ class ReadoutsMixin:
         -----
         An additive intercept holds one network per parent group in its
         ``nets``; a single intercept term, joint or not, is itself the one
-        network. This method reads whichever shape is there.
-
-        The contributions live in the transform's **unconstrained**
-        parameter space, where the model sums the additive terms before the
-        monotonicity constraint. They are exact partial effects on those
-        parameters, but not, in general, an additive shift of the curve
-        itself.
+        network. The contributions live in the transform's unconstrained
+        parameter space, before the monotonicity constraint.
         """
         nd = self._node(node)
         groups = nd.intercept.groups

@@ -1,68 +1,18 @@
-"""User-facing DAG specification.
+"""The DAG specification: nodes, terms, validation and (de)serialization.
 
-A model is one dict ``{node_name: NodeSpec}``. Each node declares its
-transformation ``h`` as an **additive formula of terms** — the first
-positional argument, written as a list or as a ``+`` sum:
+A model is one dict ``{node_name: NodeSpec}`` of [`ContinuousNode`][] and
+[`OrdinalNode`][]. Each node declares its transformation as an additive
+formula of [`Term`][] subclasses — a list or a ``+`` sum — whose first entry
+is the intercept ([`Intercept`][], written or prepended as ``I()``) followed
+by shifts ([`LinearShift`][], [`ComplexShift`][], [`VaryingCoefficient`][],
+[`FnShift`][]). The paper's symbols ``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are
+the same classes; ``SI()`` and ``CI(*parents)`` are the two intercept
+spellings with their arity checked.
 
-```python
-"X3": ContinuousNode([I("X1"), CS("X2")])       # h = h_theta(x1) + g(x2)
-"X3": ContinuousNode(I("X1") + CS("X2"))        # the same, formula style
-```
-
-Each term is a [`Term`][] subclass, called with the parent(s) it
-depends on: [`Intercept`][], [`LinearShift`][], [`ComplexShift`][],
-[`VaryingCoefficient`][] and [`FnShift`][]. The paper's symbols
-``I``, ``LS``, ``CS``, ``VC``, ``Fn`` are the same objects (``SI``/``CI`` build
-the two intercept arities) and the notation of the docs, so use whichever
-reads better:
-
-- ``I``, the ``Intercept`` term: the parent(s) reshape the monotone
-  transform, meaning its Bernstein coefficients or ordinal cutpoints. ``I``
-  dispatches on its arguments. Without parents it is the paper's simple
-  intercept [`SI`][], always present and optional to write. With parents it
-  is the complex intercept [`CI`][]. ``transform="spline"`` picks the class of the
-  monotone transform for a continuous node, and extra keyword arguments go
-  straight to that class (``SI(transform="spline", bins=16)``).
-- ``LS``, the ``LinearShift`` term: ``beta * x``, one interpretable weight
-  and one parent.
-- ``CS``, the ``ComplexShift`` term: an additive NN ``g(x)`` on the latent
-  scale.
-- ``VC``, the ``VaryingCoefficient`` term: ``beta(modifiers) * x_on`` with
-  ``beta(x) = beta0 + b_theta(x)``, where ``b_theta`` is a small
-  **penalized** network. It is a treatment-effect head with its own
-  bias-variance budget.
-
-A formula holds **exactly one intercept term, first** — written, or added as
-``SI()`` when the formula only lists shifts — so ``node.terms[0]`` is always
-the intercept. The intercept slot sums in coefficient space; the shift slot
-sums on the latent scale. "Joint vs additive" is argument grouping: a
-multi-parent term such as
-``CS("a","b")`` is one **joint** network over both parents (an interaction),
-whereas ``CS("a") + CS("b")`` are two **additive** terms. For intercepts the
-grouping is said explicitly: ``I("a", "b", allow_interaction=False)`` is the
-additive intercept. Several ``I`` terms with parents on one node are an
-error — the flag is the only way to say it, so a term list is always purely
-additive on the latent scale.
-
-What ``h`` looks like per transformation, for a continuous ``x3``:
-
-| `terms=` | `u_3 = h(x_3 given pa)` |
-|---------------------------------|--------------------------------------------|
-| `None` / `[I()]` | `h_theta(x3)` |
-| `[LS("X1")]` | `h_theta(x3) + beta*x1` |
-| `[I("X1")]` | `h_theta(x1)(x3)` |
-| `[CS("X1")]` | `h_theta(x3) + g_1(x1)` |
-| `[LS("X1"), CS("X2")]` | `h_theta(x3) + beta*x1 + g_2(x2)` |
-| `[CS("X1", "X2")]` | `h_theta(x3) + g_12(x1, x2)` |
-| `[CS("X1"), CS("X2")]` | `h_theta(x3) + g_1(x1) + g_2(x2)` |
-| `[I("X1", "X2")]` | `h_theta(x1,x2)(x3)`, joint |
-| `[I("X1","X2", allow_interaction=False)]` | `h_theta(x1)+theta(x2)(x3)`, additive |
-| `[CS("X1"), VC("X2", t="T")]` | `h_theta(x3) + g_1(x1) + beta(x2)*t` |
-
-Each parent enters through exactly one *edge-owning* term (I/LS/CS parents,
-and a VC term's treatment ``t``). VC **modifiers** are exempt:
-``CS("x2")`` + ``VC("x2", t="T")`` is the intended pattern — ``x2`` acts
-prognostically through the shift *and* modifies the treatment effect.
+[`validate_and_sort`][] checks that every parent exists and enters through
+exactly one edge-owning term (VC modifiers may repeat) and gives the
+topological order. [`spec_to_dict`][] and [`spec_from_dict`][] are the
+checkpoint form. What the terms mean is ``docs/model.md``.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -80,7 +30,6 @@ from .modules import (
 )
 
 # %% global variables ------------------------------------------------------------------
-# why bernstein and not spline: the `transform` parameter of Intercept
 DEFAULT_TRANSFORM = "bernstein"
 INPUT_TRANSFORMS = ("minmax", "standardize")
 
@@ -543,12 +492,7 @@ class Term:
         return type(self) is type(other) and vars(self) == vars(other)
 
     def __hash__(self):
-        """Hash the class and the parents.
-
-        Deliberately coarser than ``__eq__``: two terms that differ only in
-        their options share a bucket, which costs nothing at a spec's size and
-        frees the option values from having to be hashable themselves.
-        """
+        """Hash the class and the parents (coarser than ``__eq__``, by design)."""
         return hash((type(self), self.parents))
 
     def __repr__(self):
@@ -595,15 +539,8 @@ class Intercept(Term):
     transform : str | None, optional
         A continuous node's monotone transform: ``"bernstein"``,
         ``"spline"`` or ``"affine"``. ``None``, the default, means the node
-        picks ``"bernstein"``. The name stays
-        ``None`` here rather than becoming the literal, because ``None`` is
-        also how an ordinal node tells that no transform was asked for, and
-        an ordinal intercept is the cutpoint vector, which has none to pick.
-        Bernstein is the choice because zuko's spline extrapolates outside
-        ``[-B, B]`` with a *fixed* slope, independent of the fitted
-        parameters, so the ~10% of data beyond the 5%/95% pre-scaling range
-        is misweighted whenever the true tail slope differs; Bernstein
-        extrapolates linearly along its own boundary derivative.
+        picks ``"bernstein"``; an ordinal node's intercept is the cutpoint
+        vector and refuses a transform.
     transform_kwargs : Mapping | None, optional
         The transform's keyword arguments as one mapping. This is the
         serialized form, which is how a spec YAML and a checkpoint carry
@@ -613,19 +550,15 @@ class Intercept(Term):
         parent, their parameter vectors summed in coefficient space. A node
         takes at most one intercept term with parents — write an additive
         intercept with this flag, not with several intercept terms. Default
-        ``True``: one joint network is what the reference implementations
-        do.
+        ``True``.
 
     Other Parameters
     ----------------
     units : list[int] | tuple[int, ...], optional
-        Hidden layers of the term's network, for example ``units=[16]``. By
-        default ``(8, 8)``, the two hidden layers of the PyTorch reference's
-        ``ComplexInterceptDefaultTabular`` — see
-        [`modules`][tramdag.modules] for the provenance and for why a paper
-        replication sets this explicitly.
+        Hidden layers of the term's network, for example ``units=[16]``, by
+        default ``(8, 8)``.
     activation : str, optional
-        Activation of the network's hidden layers, by default ``"relu"`` —
+        Activation of the network's hidden layers, by default ``"relu"``;
         one of the keys of ``modules.ACTIVATIONS``.
     batch_norm : bool, optional
         Batch-normalize the network's hidden layers, by default False.
@@ -738,10 +671,7 @@ class ComplexShift(Term):
     Other Parameters
     ----------------
     units : list[int] | tuple[int, ...], optional
-        Hidden layers, for example ``units=[16]``. By default
-        ``(64, 128, 64)``, the three hidden layers of the PyTorch reference's
-        ``ComplexShiftDefaultTabular`` — see
-        [`modules`][tramdag.modules] for the provenance.
+        Hidden layers, for example ``units=[16]``, by default ``(64, 128, 64)``.
     activation : str, optional
         Activation of the hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
@@ -777,25 +707,15 @@ class ComplexShift(Term):
 
 
 class VaryingCoefficient(Term):
-    """The varying-coefficient shift ``VC``: ``beta(modifiers) * x_t``.
+    """The varying-coefficient shift ``VC``: ``(beta0 + b_theta(modifiers)) * x_t``.
 
-    The treatment-effect term: ``VC("X2", "X3", t="T")`` is
-    ``(beta0 + b_theta(x2, x3)) * x_t``, with ``b_theta`` a small network
-    whose weights carry the L2 ``penalty``. The fitting objective is the
-    penalized NLL ``sum_i nll_i + penalty * ||b_theta weights||^2`` on the
-    total-likelihood scale — a fixed Gaussian prior whose shrinkage
-    vanishes as n grows. ``beta0`` is not penalized.
-
-    The output of ``b_theta`` is zero-initialized and, after the fit,
-    mean-centered over the training data, so ``beta0`` is the
-    interpretable main effect on the log-odds scale — the classical
-    ``Colr``/``LS`` reading when ``beta`` is constant. ``penalty -> inf``,
-    or exactly zero modifiers, reduces the term to ``LS(t)``, so VC-vs-LS
-    is a nested question. Read the fitted effect out with
-    [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef].
-
-    Unlike other terms, VC *modifiers* can also appear in the node's
-    prognostic terms (``CS``/``LS``/``I``). Only ``t`` owns its edge.
+    ``b_theta`` is a small network whose weights carry the L2 ``penalty``;
+    ``beta0`` is not penalized. The network's output is zero-initialized and
+    re-centered to mean zero over the training rows after the fit, so
+    ``beta0`` is the main effect. Read the fitted effect out with
+    [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef]. Only ``t``
+    owns its edge; the modifiers may also appear in the node's other terms.
+    ``docs/varying-coefficients.md`` is the guide.
 
     Parameters
     ----------
@@ -809,27 +729,17 @@ class VaryingCoefficient(Term):
     Other Parameters
     ----------------
     penalty : float, optional
-        L2 weight on the ``b_theta`` weights, by default 1.0. Must be
-        >= 0. 1.0 is the value at which ``tests/test_vc_term.py`` recovers
-        the known ``beta(x)`` of the ``vc_hetero`` DGP at corr ~ 0.99. The
-        penalty is on the total-NLL scale, so its effective strength moves
-        with ``n``: raise it for small ``n`` or many modifiers.
+        L2 weight on the ``b_theta`` weights, on the total-NLL scale, by
+        default 1.0. Must be >= 0.
     center : str | None, optional
-        Propensity centering, by default ``None``: no centering,
-        bit-identical to the uncentered term. A string names the
-        **training-frame column** holding the out-of-fold propensities
-        ``P(t = 1 | pa_t)`` per row — compute them with any cross-fitted
-        classifier OUTSIDE the flow and merge them as a column (in-sample
-        values reintroduce the own-observation bias). The regressor becomes
-        ``beta(x) * (x_t - e_hat(pa_t))`` — the Robinson/R-learner
-        orthogonalization inside the likelihood; every query after the fit
-        recomputes the propensity live from the flow's own treatment node.
-        Requires a binary ordinal ``t``. ``docs/varying-coefficients.md``
-        measures a 5-10x bias reduction from turning it on.
+        Propensity centering, by default ``None`` (none). A string names the
+        training-frame column holding the out-of-fold propensities
+        ``P(t = 1 | pa_t)`` per row; the regressor becomes
+        ``beta(x) * (x_t - e_hat(pa_t))``. Training reads the column as
+        frozen data; every query after the fit recomputes ``e_hat`` from the
+        flow's own treatment node. Requires a binary ordinal ``t``.
     units : list[int] | tuple[int, ...], optional
-        Hidden layers of ``b_theta``, by default ``(16,)`` — the size is
-        justified at
-        [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule].
+        Hidden layers of ``b_theta``, by default ``(16,)``.
     activation : str, optional
         Activation of ``b_theta``'s hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
@@ -842,20 +752,6 @@ class VaryingCoefficient(Term):
     ------
     ValueError
         If ``t`` is also a modifier or if ``penalty`` is negative.
-
-    Notes
-    -----
-    With ``center="col"``, training reads **out-of-fold** ``e_hat`` for
-    every row from that column of the training frame — the DML
-    cross-fitting requirement; in-sample centering can be *worse* than
-    none. The values are frozen as data, so no gradient reaches the ``t``
-    node from this node's loss. Inference (``log_prob``/``sample``/
-    ``abduct``/``pmf``) recomputes ``e_hat`` from the flow's own fitted
-    ``t`` node — the full-data fit, the standard DML train/predict split —
-    and always re-derives ``x_t - e_hat`` under ``do``, never from a
-    cache. With centering, ``beta0`` is the effect at the treatment margin
-    (the observed propensities). The LS-nesting reading applies to the
-    uncentered term only.
     """
 
     name = "VC"
@@ -951,16 +847,13 @@ class VaryingCoefficient(Term):
 class FnShift(Term):
     """The function shift ``Fn``: ``fn(features)`` joins the additive shifts.
 
-    The cheapest custom term: ``fn`` takes the term's concatenated parent
-    features ``(n, k)`` (continuous raw, ordinal one-hot — through
-    ``input_transform`` when given) and returns the shift contribution,
-    shape ``(n,)`` or ``(n, 1)``. A plain function is a fixed offset; an
-    ``nn.Module`` registers as a submodule and trains with the flow.
-
-    Checkpoints pickle ``fn``, so it must be a module-level function or an
-    importable ``nn.Module`` — ``save()`` refuses a lambda. For a whole new
-    term (own options, penalty, side inputs) subclass [`Term`][] and
-    [`ShiftModule`][tramdag.modules.ShiftModule] instead.
+    ``fn`` takes the term's concatenated parent features ``(n, k)``
+    (continuous raw, ordinal one-hot, through ``input_transform`` when given)
+    and returns the shift contribution, shape ``(n,)`` or ``(n, 1)``. A plain
+    function is a fixed offset; an ``nn.Module`` registers as a submodule and
+    trains with the flow. Checkpoints pickle ``fn``, so it must be a
+    module-level function or an importable ``nn.Module``; ``save()`` refuses
+    a lambda.
 
     Parameters
     ----------

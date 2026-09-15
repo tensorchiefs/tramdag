@@ -2,13 +2,6 @@
 
 matplotlib is an optional dependency — ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
-
-```python
-from tramdag.plots import plot_dag, plot_marginals, plot_training
-plot_dag(spec)            # or plot_dag(flow): the spec is the DAG
-plot_marginals(flow, df)  # observed vs sampled, one panel per node
-plot_training(flow, frozen=plateau.frozen)   # NLL per epoch, freeze marks
-```
 """
 
 # %% imports ---------------------------------------------------------------------------

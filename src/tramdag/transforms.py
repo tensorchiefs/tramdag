@@ -5,15 +5,12 @@ the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.
 
-Conventions follow the original TRAM-DAG implementation
-(Keras/TF, https://github.com/tensorchiefs/tram-dag):
+- continuous: ``u = h(x) + s(parents)`` with ``h`` Bernstein / RQ-spline / affine
+  on the value range scaled from the train ``range_q`` quantiles to ``[-B, B]``.
+- ordinal: ``P(y <= k) = sigmoid(theta_k - s(parents))`` with increasing
+  cutpoints ``theta``.
 
-- continuous: ``u = h(x) + s(parents)`` with ``h`` Bernstein / RQ-spline / affine,
-  fitted on the value range scaled from the train 5%/95% quantiles to ``[-B, B]``
-  and linearly extrapolated outside.
-- ordinal:    ``P(y <= k) = sigmoid(theta_k - s(parents))`` with increasing
-  cutpoints ``theta``. This is the parametrization of
-  ``transform_intercepts_ordinal`` in the original implementation.
+``docs/model.md`` is the guide to both.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -73,7 +70,7 @@ _U_EPS = 1e-7
 
 # %% private functions -----------------------------------------------------------------
 def _log1mexp(x: Tensor) -> Tensor:
-    """log(1 - exp(x)) for x <= 0, numerically stable (Maechler 2012)."""
+    """log(1 - exp(x)) for x <= 0, numerically stable on both sides of log 2."""
     branch = x > -math.log(2.0)
     # mask each branch's input so the unused branch cannot produce inf/NaN grads
     x_hi = x.clamp(min=-math.log(2.0))
@@ -161,12 +158,8 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
 
     Notes
     -----
-    This inverts ``ordinal_cutpoints``. The finite cutpoints are
-    ``c_0 = tt[0]`` and ``c_i = c_0 + sum_{j<=i} exp(tt[j])``. Given the
-    target ``c_k = logit(F(k))`` (empirical CDF, clamped off 0/1),
-    recover ``tt[0] = c_0`` and ``tt[i] = log(c_i - c_{i-1})``. Like the
-    Bernstein marginal-init, this is a pure initialization: the converged
-    MLE is unchanged.
+    Inverts ``ordinal_cutpoints``: the targets are ``c_k = logit(F(k))`` from
+    the empirical CDF, clamped off 0 and 1.
     """
     counts = np.asarray(counts, dtype=np.float64)
     p = counts / counts.sum()
@@ -200,30 +193,16 @@ def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
 
     Notes
     -----
-    The computation stays in log-space. Both of these identities hold:
-
-    ```
-    log(sigmoid(u) - sigmoid(l))
-        = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
-        = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
-    ```
-
-    For each element the function takes the side whose logsigmoids are far from
-    zero, because that side is better conditioned.
-
-    **Do not replace this with the direct difference of two sigmoids.** That
-    form loses all gradient when the sigmoids saturate in float32, which happens
-    for ``|t| > 17`` or so. The gradient is then exactly zero and a badly
-    initialised node freezes at its starting values forever. The log-space form
-    keeps the gradient non-zero, so such a node recovers.
+    Computed in log-space as ``logsigmoid(b) + log1mexp(logsigmoid(a) -
+    logsigmoid(b))``, taking per element the better-conditioned side (the CDF
+    or the survival side). Do not replace this with the difference of two
+    sigmoids: that form has exactly zero gradient once the sigmoids saturate
+    in float32, and a node stuck there never recovers.
     """
     lower, upper = ordinal_bounds(theta_tilde, shift, y)
     ls = torch.nn.functional.logsigmoid
-    # Pick the better-conditioned side per element by *flipping the inputs*
-    # rather than by computing both sides and discarding one: the survival
-    # side is the CDF side of the negated, swapped bounds. Bit-identical to
-    # evaluating both and selecting, in values and in gradients, and it does
-    # half the work — forward+backward measured 20% faster.
+    # the survival side is the CDF side of the negated, swapped bounds, so one
+    # evaluation with flipped inputs replaces computing both and selecting
     flip = upper + lower > 0
     a = torch.where(flip, -upper, lower)
     b = torch.where(flip, -lower, upper)
@@ -346,10 +325,8 @@ class _ScaledUT(torch.nn.Module, ABC):
     ----------
     range_q : float, optional
         Quantile level of the domain pre-map: ``calibrate`` maps the train
-        ``range_q``/``1 - range_q`` quantiles onto ``[-B, B]``. The default
-        ``RANGE_Q`` (5%/95%) is the original implementation's min-max
-        scaling made robust to outliers; ``0.0`` is that min-max scaling
-        itself (``scale_df``), placing no data in the tails. An intercept
+        ``range_q``/``1 - range_q`` quantiles onto ``[-B, B]``, by default
+        ``RANGE_Q`` (5%/95%); ``0.0`` maps the data min/max. An intercept
         option: ``SI(range_q=0.0)``.
     """
 
@@ -575,21 +552,10 @@ class BernsteinUT(_ScaledUT):
 
         Notes
         -----
-        After ``set_range``, each node's ``range_q``/``1 - range_q`` data
-        quantiles sit at the domain bounds -+B. The linear start therefore
-        pins the domain ends exactly onto the latent's ``range_q``
-        quantiles, and the empirical one lands near them, at the empirical
-        CDF of those same ends. Either way the *scale* is right from step 0,
-        where zuko's default (zero) theta maps -+B onto about -6.93/+7.63,
-        about 2.5x too steep. The empirical start additionally gets the
-        *shape* right, which is what a skewed or multi-modal marginal costs
-        early training.
-
-        Both are pure initializations: the converged MLE is unchanged. The
-        unconstrained coefficients come from inverting
+        The unconstrained coefficients come from inverting zuko's
         ``BernsteinTransform._constrain_theta`` (a cumsum of softplus
-        diffs, with the first two and the last two tied for its smooth
-        bounds — hence the two averaged pairs below).
+        differences with the first two and the last two control points tied,
+        hence the two averaged pairs below).
         """
         n = self._n
         if self.range_q == 0:
@@ -640,8 +606,7 @@ class SplineUT(_ScaledUT):
     Parameters
     ----------
     bins : int, optional
-        Number of spline bins, by default 8 — zuko's own NSF default, so a
-        spline node reproduces upstream unless asked otherwise.
+        Number of spline bins, by default 8.
     range_q : float, optional
         Domain quantile level, see ``_ScaledUT``.
     """

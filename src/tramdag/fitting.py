@@ -185,27 +185,21 @@ class FitMixin:
     ) -> CausalFlowDAG:
         """Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.
 
-        The joint NLL decomposes per node with independent gradients, so one
-        optimizer over all parameters is the same as one per node. The loop
-        keeps the **final** weights: an all-``ls`` model trained to
-        convergence reproduces the classical maximum-likelihood estimate and
-        matches ``statsmodels`` and R ``polr``. A second ``fit`` call
-        continues the training. Everything else — validation monitoring,
-        learning-rate schedules, early stopping, best-weight restoration,
-        logging — is the caller's, through ``optimizer`` and ``callbacks``;
-        [`callbacks`][tramdag.callbacks] ships the common recipes and
-        ``docs/fitting.md`` shows them in use. A ``VC`` term adds its penalty
-        to the loss, never to ``history["train"]``, and is re-centered after
-        the loop (``docs/varying-coefficients.md``).
+        The joint NLL decomposes per node, so one optimizer over all
+        parameters fits every node at once. The loop keeps the **final**
+        weights, and a second ``fit`` call continues the training. Validation
+        monitoring, learning-rate schedules, early stopping, best-weight
+        restoration and logging are the caller's, through ``optimizer`` and
+        ``callbacks``; [`callbacks`][tramdag.callbacks] ships the common
+        recipes. A ``VC`` term adds its penalty to the loss, never to
+        ``history["train"]``, and is re-centered after the loop.
 
         Parameters
         ----------
         train_df : pd.DataFrame
             Training data, one column per node.
         epochs : int
-            Number of passes over the data. There is no default: a fixed
-            budget over-spends on some workloads and under-spends on others
-            (docs/training-speed.md).
+            Number of passes over the data. Required; there is no default.
         learning_rate : float, optional
             Adam step size of the default optimizer, by default 1e-2.
             Ignored when ``optimizer`` is given.
@@ -330,15 +324,10 @@ class FitMixin:
 
         The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
         line search. There are no minibatches, no schedule and no early
-        stopping, so the fit is deterministic and bit-reproducible. It lands
-        on the exact maximum-likelihood estimate and matches classical
-        software, that is ``statsmodels`` ``OrderedModel`` and R ``polr`` or
-        ``Colr``. It is much faster than minibatch Adam.
-
-        This method is valid only when every edge is ``ls``, because each
-        node-conditional is then a classical transformation model. Any other
-        model raises. For a ``cs`` or ``ci`` model use [`fit`][], where
-        the minibatch noise also regularizes the NNs.
+        stopping, so the fit is deterministic and lands on the maximum-
+        likelihood estimate. It is valid only when every term is a simple
+        intercept or an ``LS``, because each node-conditional is then a
+        classical transformation model; any other spec raises.
 
         Parameters
         ----------
@@ -371,17 +360,10 @@ class FitMixin:
         cleanly.
 
         Convergence is torch's own: L-BFGS stops when the NLL or the
-        parameters move by less than 1e-9 (``tolerance_grad`` is set to 0,
-        so the gradient never ends the run; 1e-6 was measured to stop on a
-        plateau step and leave a rare one-hot level 0.24 off statsmodels,
-        1e-9 lands within 0.03). ``|grad|`` and individual
-        coefficients do *not* settle to machine precision. A continuous
-        node's Bernstein intercept, and weakly-identified directions such
-        as rare one-hot levels or a flat treatment-effect ridge, keep
-        drifting along near-zero-curvature valleys long after the
-        likelihood and the well-identified coefficients reach the MLE.
-        Correctness is therefore verified by comparison to classical
-        software (see ``experiments/misc/validate_ls.py``), not by this flag.
+        parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the
+        gradient never ends the run. ``converged`` says whether a tolerance
+        ended the run rather than ``max_iter``; ``|grad|`` and weakly
+        identified coefficients do not settle to machine precision.
         """
         other = sorted(
             {t.name for nd in self.spec.values() for t in nd.terms if not t.classical}

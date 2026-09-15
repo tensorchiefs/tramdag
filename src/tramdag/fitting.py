@@ -99,13 +99,14 @@ def _normalize_callbacks(cbs) -> list[Callback]:
     return out
 
 
-def _learning_rates(opt) -> dict[str, float] | float:
+def _learning_rates(opt) -> dict[str, float] | float | list[float]:
     """Give the optimizer's current rate(s): per node when the groups are tagged."""
     groups = opt.param_groups
     if all("node" in g for g in groups):
         return {g["node"]: float(g["lr"]) for g in groups}
-    (group,) = groups  # untagged: one group over every parameter
-    return float(group["lr"])
+    if len(groups) == 1:
+        return float(groups[0]["lr"])
+    return [float(g["lr"]) for g in groups]  # a hand-built untagged optimizer
 
 
 def _log_epoch(
@@ -220,8 +221,8 @@ class FitMixin:
             there. ``flow.history["lr"]`` gets the optimizer's learning rate after every
             epoch (``{node: lr}`` with
             [`per_node_adam`][tramdag.callbacks.per_node_adam]'s tagged groups, else a
-            float), so a schedule's decisions are on record without a callback of
-            your own.
+            float, or a list for several untagged groups), so a schedule's decisions
+            are on record without a callback of your own.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
@@ -363,7 +364,7 @@ class FitMixin:
         Raises
         ------
         ValueError
-            If the spec has ``cs``, ``ci`` or ``vc`` terms.
+            If a term is not classical: anything but the simple intercept and ``LS``.
 
         Notes
         -----
@@ -387,11 +388,14 @@ class FitMixin:
         Correctness is therefore verified by comparison to classical
         software (see ``experiments/misc/validate_ls.py``), not by this flag.
         """
-        if not self._is_classical():
+        other = sorted(
+            {t.name for nd in self.spec.values() for t in nd.terms if not t.classical}
+        )
+        if other:
             raise ValueError(
-                "fit_classical requires an all-`ls` spec, that is every edge "
-                "term 'ls'. This spec has cs, ci or vc terms. Use fit() for "
-                "flexible models."
+                "fit_classical requires an all-`ls` spec, that is a simple "
+                f"intercept and LS terms only; this spec has {other} terms. Use "
+                "fit() for flexible models."
             )
         self.calibrate(train_df)
         self.double()  # parameters + buffers (xmin/xmax) -> float64, one call

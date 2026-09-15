@@ -868,6 +868,12 @@ read-outs keep their exact signatures as flow methods.
 
 ### Fixed
 
+- `fit` recorded `history["lr"]` for a hand-built optimizer with several
+  untagged parameter groups by unpacking one group, and crashed after the
+  first epoch; it records the list of rates again.
+- `fit_classical` refused a non-classical spec with a message naming "cs, ci
+  or vc" whatever the spec held (an `Fn` term was refused under that
+  wording); the message names the terms it found.
 - **`EarlyStopping` blamed its own wiring for a diverged fit.** A NaN
   validation NLL never beats `inf - min_delta`, so nothing was ever
   snapshotted and fit end raised "EarlyStopping has seen no epoch". The

@@ -475,10 +475,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             for m in nd.shifts.values():
                 m.finalize(nd, feats)
 
-    def _is_classical(self) -> bool:
-        """Say whether every term is one the exact classical fit handles."""
-        return all(term.classical for node in self.spec.values() for term in node.terms)
-
     @torch.no_grad()
     def sample(
         self,

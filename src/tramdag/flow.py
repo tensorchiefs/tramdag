@@ -10,6 +10,10 @@ Causal queries:
     u = flow.abduct(df)               Pearl step 1 (latents from observations)
     flow.sample(do={"T": 1}, u=u)     Pearl steps 2+3 (counterfactuals)
     flow.pmf(df, node, do=...)        analytic per-row interventional PMF
+
+The read-outs that need the flow's likelihood machinery (``pmf``, ``density``,
+``scores``, ``effect_modifier_scan``) are methods here; those that only read
+fitted weights and features live in ``readouts.py``.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -185,6 +189,25 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 f"{list(cols)}, the frame has {list(df.columns)}"
             )
 
+    def _check_level_values(self, name: str, values) -> None:
+        """Reject ordinal values that are not level indices of their node.
+
+        ``bincount``, the cutpoint likelihood and the one-hot parent
+        encoding all take the values as ``0..levels-1``; a 1-based or
+        non-integer value would silently be truncated instead of failing.
+        """
+        levels = self.spec[name].levels
+        v = np.asarray(values, dtype=np.float64)
+        if v.size == 0:
+            return
+        fractional = bool((v != np.round(v)).any())
+        if fractional or v.min() < 0 or v.max() >= levels:
+            raise ValueError(
+                f"node {name!r}: an ordinal column holds the level indices "
+                f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
+                f"{' (non-integer)' if fractional else ''}"
+            )
+
     def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""
         out = {}
@@ -198,17 +221,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         if seed is None:
             return None
         return torch.Generator(device=self.device).manual_seed(seed)
-
-    @torch.no_grad()
-    def _propensity(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
-        """Give ``P(node = 1 | parents)`` for a binary ordinal treatment node.
-
-        ``P(x <= 0) = sigmoid(theta_0 - s)``, so the answer is
-        ``sigmoid(s - theta_0)``. No side columns: chained centering is refused
-        by the spec, so a treatment node never carries a centered term itself.
-        """
-        theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
-        return torch.sigmoid(shift - theta[:, 0])
 
     def _node(self, name: str) -> Node:
         """Look a node up by name, with the same error everywhere."""
@@ -270,79 +282,71 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         cols = [p for m in nd.shifts.values() for p in m.extra_columns(self)]
         return [c for c in dict.fromkeys(cols) if c not in nd.parents]
 
-    def node_log_prob(
-        self,
-        values: dict[str, Tensor],
-        nodes: list[str] | None = None,
-    ) -> dict[str, Tensor]:
-        """Compute the per-node log-likelihood contributions.
+    @torch.no_grad()
+    def _propensity(self, nd: Node, values: dict[str, Tensor], n: int) -> Tensor:
+        """Give ``P(node = 1 | parents)`` for a binary ordinal treatment node.
 
-        Parameters
-        ----------
-        values : dict[str, Tensor]
-            Raw node values, keyed by node name, each shape ``(n,)``.
-        nodes : list[str] | None, optional
-            Restrict the computation to these nodes. A subset is exact
-            because the per-node losses
-            are independent. ``None`` (default) computes every node.
+        ``P(x <= 0) = sigmoid(theta_0 - s)``, so the answer is
+        ``sigmoid(s - theta_0)``. No side columns: chained centering is refused
+        by the spec, so a treatment node never carries a centered term itself.
+        """
+        theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
+        return torch.sigmoid(shift - theta[:, 0])
 
-        Returns
-        -------
-        dict[str, Tensor]
-            One log-likelihood tensor per node, each shape ``(n,)``.
+    def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
+        """Check the terms' side columns in the frame; give their names.
+
+        A centered ``VC`` needs its propensity column: ``P(t = 1 | pa_t)``
+        per training row, computed **out of fold** (the cross-fitting
+        requirement of the DML design; in-sample values reintroduce the
+        own-observation bias). How it is computed is the caller's choice —
+        a ``fit_classical`` on the treatment spec per fold, or any
+        classifier — merged into ``train_df`` as an ordinary column. The
+        training loss uses the frozen column; every query after the fit
+        recomputes the value live from the treatment node.
+        """
+        cols: list[str] = []
+        for name in self.order:
+            for m in self.nodes[name].shifts.values():
+                for col in m.side_columns():
+                    if col not in train_df.columns:
+                        raise ValueError(
+                            f"the centered VC on node {name!r} needs its "
+                            f"propensity column {col!r} in the training "
+                            "frame — compute P(t=1|pa_t) out of fold and "
+                            "merge it as a column."
+                        )
+                    m.check_column(name, col, train_df[col].to_numpy())
+                    cols.append(col)
+        return list(dict.fromkeys(cols))
+
+    def _recenter_vc(self, values: dict[str, Tensor]) -> None:
+        """Run every shift term's post-fit ``finalize`` (the VC re-centering).
+
+        A VC term re-splits ``beta0``/``b_theta`` so the head sums to zero
+        over the train rows; the modelled function does not change.
         """
         feats = self._features(values)
-        n = next(iter(values.values())).shape[0]
-        out = {}
-        for name in self.order if nodes is None else nodes:
+        for name in self.order:
             nd = self.nodes[name]
-            theta, shift = self._theta_shift(nd, feats, values, n)
-            out[name] = nd.log_prob(theta, shift, values[name])
-        return out
+            for m in nd.shifts.values():
+                m.finalize(nd, feats)
 
-    @torch.no_grad()
-    def log_prob(self, df: pd.DataFrame, *, nodes: list[str] | None = None) -> Tensor:
-        """Compute the joint log-likelihood per row.
+    def _conditional(
+        self, df: pd.DataFrame, node: str, do: dict[str, float] | None
+    ) -> tuple[Node, Tensor, Tensor, int]:
+        """Evaluate one node's conditional at the rows of ``df``.
 
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Observations, one column per node.
-        nodes : list[str] | None, optional
-            Sum only these nodes' contributions. A subset is exact, because
-            the per-node losses are independent — ``nodes=["Y"]`` is the
-            conditional log-likelihood of ``Y`` given its parents, per row,
-            in log space (safer than the log of [`pmf`][], which
-            underflows in the tail). ``None`` (default) is the joint.
-
-        Returns
-        -------
-        Tensor
-            ``log p(x)`` per row, shape ``(n,)``.
+        ``do`` overrides columns before the parents are read, which is what
+        makes [`pmf`][] and [`density`][] interventional. Gives the node,
+        its transform parameters, its shift and the row count.
         """
-        if nodes is not None and not nodes:
-            raise ValueError("nodes=[] sums nothing; omit it for the joint")
-        for name in nodes or ():
-            self._node(name)  # name the unknown node, not its KeyError
-        per_node = self.node_log_prob(self._tensorize(df), nodes)
-        return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
-
-    def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
-        """Compute the mean negative log-likelihood per node (a diagnostic).
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Observations, one column per node.
-
-        Returns
-        -------
-        dict[str, float]
-            The mean NLL, keyed by node name.
-        """
-        return self._mean_nll(self._tensorize(df))
-
-    nll = node_negative_log_prob  # the short name every notebook uses
+        nd = self._node(node)
+        df = df.assign(**(do or {}))
+        n = len(df)
+        values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
+        theta, shift = self._theta_shift(nd, self._parent_feats(nd, values), values, n)
+        return nd, theta, shift, n
 
     @torch.no_grad()
     def _mean_nll(self, values: dict[str, Tensor]) -> dict[str, float]:
@@ -418,76 +422,88 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         if not bool(self.calibrated):
             self.calibrate(train_df)
         for name in self.order:
-            if self.nodes[name].kind == "ordinal":
-                self._check_level_values(name, train_df[name].to_numpy())
-            self._marginal_start(name, train_df)
+            nd = self.nodes[name]
+            column = train_df[name].to_numpy()
+            if nd.kind == "ordinal":
+                self._check_level_values(name, column)
+            theta = nd.marginal_theta(column)
+            if theta is not None:  # a spline or affine transform has no start
+                nd.intercept.marginal_start(theta)
         return self
 
-    def _marginal_start(self, name: str, train_df: pd.DataFrame) -> None:
-        """Start a simple intercept at the node's data marginal."""
-        nd = self.nodes[name]
-        theta = nd.marginal_theta(train_df[name].to_numpy())
-        if theta is None:  # a spline or affine transform has no calibrated start
-            return
-        nd.intercept.marginal_start(theta)
+    def node_log_prob(
+        self,
+        values: dict[str, Tensor],
+        nodes: list[str] | None = None,
+    ) -> dict[str, Tensor]:
+        """Compute the per-node log-likelihood contributions.
 
-    def _check_level_values(self, name: str, values) -> None:
-        """Reject ordinal values that are not level indices of their node.
+        Parameters
+        ----------
+        values : dict[str, Tensor]
+            Raw node values, keyed by node name, each shape ``(n,)``.
+        nodes : list[str] | None, optional
+            Restrict the computation to these nodes. A subset is exact
+            because the per-node losses
+            are independent. ``None`` (default) computes every node.
 
-        ``bincount``, the cutpoint likelihood and the one-hot parent
-        encoding all take the values as ``0..levels-1``; a 1-based or
-        non-integer value would silently be truncated instead of failing.
-        """
-        levels = self.spec[name].levels
-        v = np.asarray(values, dtype=np.float64)
-        if v.size == 0:
-            return
-        fractional = bool((v != np.round(v)).any())
-        if fractional or v.min() < 0 or v.max() >= levels:
-            raise ValueError(
-                f"node {name!r}: an ordinal column holds the level indices "
-                f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
-                f"{' (non-integer)' if fractional else ''}"
-            )
-
-    def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
-        """Check the terms' side columns in the frame; give their names.
-
-        A centered ``VC`` needs its propensity column: ``P(t = 1 | pa_t)``
-        per training row, computed **out of fold** (the cross-fitting
-        requirement of the DML design; in-sample values reintroduce the
-        own-observation bias). How it is computed is the caller's choice —
-        a ``fit_classical`` on the treatment spec per fold, or any
-        classifier — merged into ``train_df`` as an ordinary column. The
-        training loss uses the frozen column; every query after the fit
-        recomputes the value live from the treatment node.
-        """
-        cols: list[str] = []
-        for name in self.order:
-            for m in self.nodes[name].shifts.values():
-                for col in m.side_columns():
-                    if col not in train_df.columns:
-                        raise ValueError(
-                            f"the centered VC on node {name!r} needs its "
-                            f"propensity column {col!r} in the training "
-                            "frame — compute P(t=1|pa_t) out of fold and "
-                            "merge it as a column."
-                        )
-                    m.check_column(name, col, train_df[col].to_numpy())
-                    cols.append(col)
-        return list(dict.fromkeys(cols))
-
-    def _recenter_vc(self, values: dict[str, Tensor]) -> None:
-        """Run every shift term's post-fit ``finalize`` (the VC re-centering).
-
-        A VC term re-splits ``beta0``/``b_theta`` so the head sums to zero
-        over the train rows; the modelled function does not change.
+        Returns
+        -------
+        dict[str, Tensor]
+            One log-likelihood tensor per node, each shape ``(n,)``.
         """
         feats = self._features(values)
-        for name in self.order:
+        n = next(iter(values.values())).shape[0]
+        out = {}
+        for name in self.order if nodes is None else nodes:
             nd = self.nodes[name]
-            for m in nd.shifts.values():
-                m.finalize(nd, feats)
+            theta, shift = self._theta_shift(nd, feats, values, n)
+            out[name] = nd.log_prob(theta, shift, values[name])
+        return out
+
+    @torch.no_grad()
+    def log_prob(self, df: pd.DataFrame, *, nodes: list[str] | None = None) -> Tensor:
+        """Compute the joint log-likelihood per row.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Observations, one column per node.
+        nodes : list[str] | None, optional
+            Sum only these nodes' contributions. A subset is exact, because
+            the per-node losses are independent — ``nodes=["Y"]`` is the
+            conditional log-likelihood of ``Y`` given its parents, per row,
+            in log space (safer than the log of [`pmf`][], which
+            underflows in the tail). ``None`` (default) is the joint.
+
+        Returns
+        -------
+        Tensor
+            ``log p(x)`` per row, shape ``(n,)``.
+        """
+        if nodes is not None and not nodes:
+            raise ValueError("nodes=[] sums nothing; omit it for the joint")
+        for name in nodes or ():
+            self._node(name)  # name the unknown node, not its KeyError
+        per_node = self.node_log_prob(self._tensorize(df), nodes)
+        return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
+
+    def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
+        """Compute the mean negative log-likelihood per node (a diagnostic).
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Observations, one column per node.
+
+        Returns
+        -------
+        dict[str, float]
+            The mean NLL, keyed by node name.
+        """
+        return self._mean_nll(self._tensorize(df))
+
+    nll = node_negative_log_prob  # the short name every notebook uses
 
     @torch.no_grad()
     def sample(
@@ -586,22 +602,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             theta, shift = self._theta_shift(nd, feats, values, n)
             u[name] = nd.abduct(theta, shift, values[name], generator=gen)
         return pd.DataFrame({k: v.cpu().numpy() for k, v in u.items()}, index=df.index)
-
-    def _conditional(
-        self, df: pd.DataFrame, node: str, do: dict[str, float] | None
-    ) -> tuple[Node, Tensor, Tensor, int]:
-        """Evaluate one node's conditional at the rows of ``df``.
-
-        ``do`` overrides columns before the parents are read, which is what
-        makes [`pmf`][] and [`density`][] interventional. Gives the node,
-        its transform parameters, its shift and the row count.
-        """
-        nd = self._node(node)
-        df = df.assign(**(do or {}))
-        n = len(df)
-        values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
-        theta, shift = self._theta_shift(nd, self._parent_feats(nd, values), values, n)
-        return nd, theta, shift, n
 
     @torch.no_grad()
     def pmf(

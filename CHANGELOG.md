@@ -879,6 +879,12 @@ read-outs keep their exact signatures as flow methods.
   Docstrings gained the Parameters sections their siblings had, and lost the
   issue numbers, the version numbers and the sentences that argued against
   code that no longer exists.
+- `CausalFlowDAG` reads in one order: constructor, the private helpers,
+  then `calibrate`/`init_marginals`, the likelihood, sampling, the read-outs
+  and `save`/`load`; `_marginal_start` is inlined into `init_marginals`.
+  `import_object` is `_import_object`, the one wire-format helper of
+  `spec_from_dict`; `make_univariate_transform` follows the `ordinal_*`
+  family instead of splitting it.
 
 ### Fixed
 

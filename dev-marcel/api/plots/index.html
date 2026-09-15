@@ -1448,8 +1448,8 @@ imported on the first call, so importing tramdag never needs it.</p>
 nodes are ellipses, ordinal nodes rounded boxes with their level count.
 Each edge is drawn by the term that owns it: <code>LS</code> thin gray, <code>CS</code> thick
 blue, a complex intercept (<code>CI</code>) dashed orange, a <code>VC</code> treatment edge
-red with its modifiers dotted, <code>Fn</code> dash-dotted green; a multi-parent
-CS/CI is labelled <code>joint</code>.</p>
+red with its modifiers dotted; a multi-parent CS/CI is labelled
+<code>joint</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1572,7 +1572,8 @@ CS/CI is labelled <code>joint</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">190</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
+<span class="normal">190</span>
 <span class="normal">191</span>
 <span class="normal">192</span>
 <span class="normal">193</span>
@@ -1640,8 +1641,7 @@ CS/CI is labelled <code>joint</code>.</p>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_dag</span><span class="p">(</span>
+<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_dag</span><span class="p">(</span>
     <span class="n">spec_or_flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">legend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Draw the labelled DAG of a spec (or of a fitted flow).</span>
@@ -1650,8 +1650,8 @@ CS/CI is labelled <code>joint</code>.</p>
 <span class="sd">    nodes are ellipses, ordinal nodes rounded boxes with their level count.</span>
 <span class="sd">    Each edge is drawn by the term that owns it: ``LS`` thin gray, ``CS`` thick</span>
 <span class="sd">    blue, a complex intercept (``CI``) dashed orange, a ``VC`` treatment edge</span>
-<span class="sd">    red with its modifiers dotted, ``Fn`` dash-dotted green; a multi-parent</span>
-<span class="sd">    CS/CI is labelled ``joint``.</span>
+<span class="sd">    red with its modifiers dotted; a multi-parent CS/CI is labelled</span>
+<span class="sd">    ``joint``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1874,7 +1874,8 @@ The sample has as many rows as <code>df</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">262</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">261</span>
+<span class="normal">262</span>
 <span class="normal">263</span>
 <span class="normal">264</span>
 <span class="normal">265</span>
@@ -1935,8 +1936,7 @@ The sample has as many rows as <code>df</code>.</p>
 <span class="normal">320</span>
 <span class="normal">321</span>
 <span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_marginals</span><span class="p">(</span>
+<span class="normal">323</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_marginals</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ncols</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Observed vs sampled marginal of every node, one panel each.</span>
@@ -2131,7 +2131,8 @@ as its <code>frozen</code>. By default no marks.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">327</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">326</span>
+<span class="normal">327</span>
 <span class="normal">328</span>
 <span class="normal">329</span>
 <span class="normal">330</span>
@@ -2191,8 +2192,7 @@ as its <code>frozen</code>. By default no marks.</p>
 <span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span>
-<span class="normal">387</span>
-<span class="normal">388</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Draw the summed train and validation NLL per epoch.</span>
 
 <span class="sd">    ``flow.history`` accumulates across ``fit`` calls, so the curves cover</span>

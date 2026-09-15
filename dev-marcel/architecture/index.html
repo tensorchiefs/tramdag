@@ -1499,15 +1499,15 @@
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
 <p>The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its <code>Term</code> subclass (the spec) and its module in
-<code>modules.py</code>. Node-kind behavior lives in four <code>Node</code> methods. Everything else
+<code>modules.py</code>. Node-kind behavior lives in five <code>Node</code> methods. Everything else
 is framework code.</p>
 <h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TD
     subgraph data["spec"]
-        spec["spec.py&lt;br/&gt;DSL: Term + one subclass per term&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient FnShift = I LS CS VC Fn),&lt;br/&gt;each holding its module class;&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
+        spec["spec.py&lt;br/&gt;DSL: Term + one subclass per term&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient = I LS CS VC),&lt;br/&gt;each holding its module class;&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        modules["modules.py&lt;br/&gt;one nn.Module per term, built from (term, spec):&lt;br/&gt;ShiftModule/InterceptModule hooks,&lt;br/&gt;intercept_module, feat_width, _InputTransform;&lt;br/&gt;LinearShiftModule ComplexShiftModule&lt;br/&gt;VaryingCoefficientModule FnShiftModule,&lt;br/&gt;SimpleInterceptModule ComplexInterceptModule&lt;br/&gt;AdditiveInterceptModule"]
+        modules["modules.py&lt;br/&gt;one nn.Module per term, built from (term, spec):&lt;br/&gt;ShiftModule/InterceptModule hooks,&lt;br/&gt;intercept_module, feat_width, _InputTransform;&lt;br/&gt;LinearShiftModule ComplexShiftModule&lt;br/&gt;VaryingCoefficientModule,&lt;br/&gt;SimpleInterceptModule ComplexInterceptModule&lt;br/&gt;AdditiveInterceptModule"]
         transforms["transforms.py&lt;br/&gt;Bernstein/Spline/Affine,&lt;br/&gt;ordinal_* likelihood,&lt;br/&gt;StandardLogistic"]
         nodes["nodes.py&lt;br/&gt;Node: intercept + shifts,&lt;br/&gt;encode, log_prob, sample,&lt;br/&gt;abduct, marginal_theta"]
         flow["flow.py&lt;br/&gt;CausalFlowDAG: construct, calibrate,&lt;br/&gt;log_prob, sample/abduct/pmf/density,&lt;br/&gt;save/load; composes the mixins"]
@@ -1561,7 +1561,6 @@ hold its module class directly (<code>LinearShift.module is LinearShiftModule</c
     Term &lt;|-- LinearShift : LS
     Term &lt;|-- ComplexShift : CS
     Term &lt;|-- VaryingCoefficient : VC
-    Term &lt;|-- FnShift : Fn
     class TermModule {
         &lt;&lt;modules.py, nn.Module&gt;&gt;
         input_transform / calibrate(train_df)
@@ -1588,7 +1587,6 @@ hold its module class directly (<code>LinearShift.module is LinearShiftModule</c
     ShiftModule &lt;|-- LinearShiftModule
     ShiftModule &lt;|-- ComplexShiftModule
     ShiftModule &lt;|-- VaryingCoefficientModule
-    ShiftModule &lt;|-- FnShiftModule
     InterceptModule &lt;|-- SimpleInterceptModule
     InterceptModule &lt;|-- ComplexInterceptModule
     InterceptModule &lt;|-- AdditiveInterceptModule</code></pre>
@@ -1605,11 +1603,10 @@ stable; <code>tests/test_statedict_stability.py</code> pins them.</p>
   <code>super().__init__(*parents)</code>; its rules are the checks after that, plus
   <code>check</code> and <code>edge_parents</code>.</li>
 </ul>
-<p>For a one-off term, the cheap path is <code>Fn</code>.</p>
 <h2 id="node-kinds">Node kinds<a class="headerlink" href="#node-kinds" title="Permanent link">&para;</a></h2>
 <p>The two node kinds are continuous and ordinal. They stay an if/else in ONE
-place: the four <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code> and
-<code>marginal_theta</code> in nodes.py, plus <code>encode</code> for the parent encoding.</p>
+place: the five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>,
+<code>marginal_theta</code> and <code>encode</code> in nodes.py.</p>
 <h2 id="guards-that-pin-all-of-this">Guards that pin all of this<a class="headerlink" href="#guards-that-pin-all-of-this" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>tests/tools/statedict_smoke.py</code> — seeded per-DGP state dicts, bit-compared.</li>
@@ -1694,10 +1691,6 @@ node.</p>
   }
   class FitMixin {
   }
-  class FnShift {
-  }
-  class FnShiftModule {
-  }
   class Intercept {
   }
   class InterceptModule {
@@ -1744,14 +1737,12 @@ node.</p>
   AdditiveInterceptModule --|&gt; InterceptModule
   ComplexInterceptModule --|&gt; InterceptModule
   ComplexShiftModule --|&gt; ShiftModule
-  FnShiftModule --|&gt; ShiftModule
   InterceptModule --|&gt; TermModule
   LinearShiftModule --|&gt; ShiftModule
   ShiftModule --|&gt; TermModule
   SimpleInterceptModule --|&gt; InterceptModule
   VaryingCoefficientModule --|&gt; ShiftModule
   ComplexShift --|&gt; Term
-  FnShift --|&gt; Term
   Intercept --|&gt; Term
   LinearShift --|&gt; Term
   VaryingCoefficient --|&gt; Term
@@ -1759,7 +1750,6 @@ node.</p>
   BernsteinUT --|&gt; _ScaledUT
   SplineUT --|&gt; _ScaledUT
   ComplexShiftModule --o ComplexShift : module
-  FnShiftModule --o FnShift : module
   LinearShiftModule --o LinearShift : module
   VaryingCoefficientModule --o VaryingCoefficient : module</code></pre>
 <h3 id="call-graph-flow-construction-traced">Call graph — flow construction (traced)<a class="headerlink" href="#call-graph-flow-construction-traced" title="Permanent link">&para;</a></h3>

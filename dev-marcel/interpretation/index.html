@@ -1480,7 +1480,7 @@ conditional without sampling it.</p>
 <p><code>flow.shift_curve(node, parent, grid)</code> evaluates one fitted shift term along a
 grid of parent values. Use it to plot a <code>CS</code> term against the function it was
 supposed to learn. It goes through the term's own evaluation, so a custom term
-and an <code>Fn</code> term work too.</p>
+works too.</p>
 <p>A caution on both: a <code>CS</code> term is identified only up to a constant, because
 that constant can move into the intercept. Compare a fitted curve to the truth
 after mean-centring both, not point by point.</p>

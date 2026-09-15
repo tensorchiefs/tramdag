@@ -630,6 +630,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d4-the-marginal-start-measured-per-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D4: the marginal start, measured per variant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-and-the-ci-deviations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1399,6 +1410,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d4-the-marginal-start-measured-per-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D4: the marginal start, measured per variant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-and-the-ci-deviations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1492,7 +1514,7 @@ replay, so every seed here is a repository choice.</p>
 <tr>
 <td>calibrated start</td>
 <td>none</td>
-<td>none; <code>calibrate</code> never touches the weights and no paper script calls <code>init_marginals</code></td>
+<td><code>init_marginals: true</code> for the two triangle LS models, <code>atan-cs</code> and <code>exp-cs</code>, deviation D4 below; off where it moves the endpoint (<code>linear-cs</code>, <code>sin-cs</code>, VACA) and impossible for CAREFL's <code>range_q: 0</code> domain. <code>calibrate</code> never touches the weights</td>
 </tr>
 <tr>
 <td>intercept output layer</td>
@@ -1989,6 +2011,79 @@ the 1.403 ± 0.05 band) and grows a fragile Bernstein tail, with one held-out
 row inverted to x4 ≈ 580; minibatch underweights the sparse x2 tail where the
 Fig. 6 grid ends (cf MAE x3 at do(x2 = 1.5) 0.40 against the 0.319 bound, and
 the Fig. 6 x3 error 5.9 against the full-batch 2.7).</p>
+<h2 id="d4-the-marginal-start-measured-per-variant">D4: the marginal start, measured per variant<a class="headerlink" href="#d4-the-marginal-start-measured-per-variant" title="Permanent link">&para;</a></h2>
+<p><code>init_marginals</code> sets every simple intercept to its column's empirical
+marginal before the first epoch (Bernstein: the control points follow
+<span class="arithmatex">\(\operatorname{logit}\hat F\)</span>; ordinal: the class log-odds). The reference
+starts <code>bernp$beta</code> at zero. Measured on this machine at the CI protocol, one
+run per variant with the start off and on, seeds unchanged:</p>
+<table>
+<thead>
+<tr>
+<th>variant</th>
+<th>epochs to within 0.01 of the final train NLL, off → on</th>
+<th>endpoint, off → on</th>
+<th>verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>triangle linear-ls</td>
+<td>28 → 5</td>
+<td>identical (β to 4 digits, val NLL 2.4606)</td>
+<td>on</td>
+</tr>
+<tr>
+<td>triangle linear-cs</td>
+<td>28 → 5</td>
+<td>cs max err 0.025 → 0.056; do(x1) err 0.132 → 0.080</td>
+<td>off: the misspecified line is what this variant measures, and the start bends it</td>
+</tr>
+<tr>
+<td>triangle atan-cs</td>
+<td>28 → 6</td>
+<td>cs max err 0.108 → 0.074; do(x1) err 0.095 → 0.072</td>
+<td>on</td>
+</tr>
+<tr>
+<td>triangle sin-cs</td>
+<td>34 → 10</td>
+<td>cs max err 0.240 → 0.088; do(x1) err 0.075 → 0.201, past the 0.188 bound</td>
+<td>off: a different optimum, better curve, worse L2</td>
+</tr>
+<tr>
+<td>mixed linear-ls</td>
+<td>42 → 9</td>
+<td>identical</td>
+<td>on</td>
+</tr>
+<tr>
+<td>mixed exp-cs</td>
+<td>28 → 6</td>
+<td>cs max err 0.143 → 0.060; do(x1) err 0.018 → 0.010</td>
+<td>on</td>
+</tr>
+<tr>
+<td>VACA</td>
+<td>within 0.5: 2245 → 168</td>
+<td>val NLL 1.4496 → 1.4348; do(x2 = 0) err 0.019 → 0.101, past the 0.044 bound</td>
+<td>off: the plateau anneal fires elsewhere and freezes a different point</td>
+</tr>
+<tr>
+<td>CAREFL</td>
+<td>—</td>
+<td>—</td>
+<td>impossible: <code>range_q: 0</code> has no marginal start</td>
+</tr>
+</tbody>
+</table>
+<p>The start is a pure initialization, so where the optimizer reaches the same
+basin the endpoint is identical and only the epoch count changes. Where the
+model has a network shift or the anneal decides the endpoint, the basin
+changes, and the four such cases split two to two. The pinned ground truth
+of the four variants that switched on is unchanged: every metric stays
+within its tolerance, and the check's advisory notes on their bounds are
+listed for the next deliberate re-pin.</p>
 <h2 id="runtime-and-the-ci-deviations">Runtime and the CI deviations<a class="headerlink" href="#runtime-and-the-ci-deviations" title="Permanent link">&para;</a></h2>
 <p>The reference protocol's cost is the motivation for every deviation. The
 triangle runs 500 epochs × 1250 steps of batch 32; one epoch takes 3.2 s

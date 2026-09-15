@@ -1794,10 +1794,6 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <td><code>VC</code>: <span class="arithmatex">\(\beta_0 + b_\Theta(\text{mod})\)</span> with the L2 hook <code>l2()</code>; <code>beta()</code> evaluates the effect and <code>recenter()</code> re-splits <code>beta0</code>/<code>b_theta</code> after training (<a href="../varying-coefficients/">varying-coefficients.md</a>). <code>regressor</code> is both the forward regressor and the <code>beta0</code> score.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="FnShiftModule" href="../api/modules/#tramdag.modules.FnShiftModule"><code>FnShiftModule</code></a></td>
-<td><code>Fn</code>: a user-supplied shift function over the parent features.</td>
-</tr>
-<tr>
 <td><a class="autorefs autorefs-internal" title="SimpleInterceptModule" href="../api/modules/#tramdag.modules.SimpleInterceptModule"><code>SimpleInterceptModule</code></a> / <a class="autorefs autorefs-internal" title="ComplexInterceptModule" href="../api/modules/#tramdag.modules.ComplexInterceptModule"><code>ComplexInterceptModule</code></a> / <a class="autorefs autorefs-internal" title="AdditiveInterceptModule" href="../api/modules/#tramdag.modules.AdditiveInterceptModule"><code>AdditiveInterceptModule</code></a></td>
 <td>The intercept slot: free theta (<code>I()</code>), one joint net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in <code>nets</code>.</td>
 </tr>
@@ -1847,7 +1843,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <td>Defined here once, methods of the flow via the mixin.</td>
 </tr>
 <tr>
-<td>(<code>_split_validation</code>, <code>_normalize_callbacks</code>, <code>_check_fit_sizes</code>, <code>_learning_rates</code>, <code>_log_epoch</code>, <code>_val_nll</code>, <code>_fit_epoch</code>, <code>_FnCallback</code>)</td>
+<td>(<code>_split_validation</code>, <code>_normalize_callbacks</code>, <code>_check_fit_sizes</code>, <code>_learning_rates</code>, <code>_log_epoch</code>, <code>_fit_epoch</code>, <code>_FnCallback</code>)</td>
 <td>The loop plumbing: Keras-shaped validation split, callback normalization, the validation pass, the rate record, verbose printing.</td>
 </tr>
 </tbody>
@@ -1932,7 +1928,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="plot_dag" href="../api/plots/#tramdag.plots.plot_dag"><code>plot_dag()</code></a></td>
-<td>The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers / Fn, <code>joint</code> for a multi-parent net). Exported as <code>tramdag.plot_dag</code>.</td>
+<td>The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, <code>joint</code> for a multi-parent net). Exported as <code>tramdag.plot_dag</code>.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="plot_marginals" href="../api/plots/#tramdag.plots.plot_marginals"><code>plot_marginals()</code></a></td>

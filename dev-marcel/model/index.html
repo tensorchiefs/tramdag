@@ -1489,8 +1489,6 @@ parents <span class="arithmatex">\(\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}\)</span>
   a treatment <span class="arithmatex">\(x_t\)</span> whose effect <span class="arithmatex">\(\beta\)</span> varies with modifier covariates
   through a small penalized network. <a href="../varying-coefficients/">varying-coefficients.md</a>
   is its guide.</li>
-<li><strong>Function shift, Fn.</strong> <span class="arithmatex">\(f(x_{\text{pa}})\)</span> for a user-supplied function or
-  <code>nn.Module</code>, for a one-off term.</li>
 </ul>
 <p>Sampling has to invert only the intercept, because the shifts move to the
 other side:</p>
@@ -1502,8 +1500,8 @@ x_5 = h^{-1}(u_5 \mid x_1, x_2, x_4) = h_{\boldsymbol{\vartheta}}^{-1}\Big(u_5
 <h2 id="the-components-in-code">The components in code<a class="headerlink" href="#the-components-in-code" title="Permanent link">&para;</a></h2>
 <p>Each node declares its transformation as an additive formula of terms. The
 formula is the node's first argument, a <code>+</code> sum of terms. Each constructor
-names the parents its term depends on. The paper's symbols <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>Fn</code> are the classes
-<code>Intercept</code>, <code>LinearShift</code>, <code>ComplexShift</code>, <code>VaryingCoefficient</code>, <code>FnShift</code>.</p>
+names the parents its term depends on. The paper's symbols <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code>
+are the classes <code>Intercept</code>, <code>LinearShift</code>, <code>ComplexShift</code>, <code>VaryingCoefficient</code>.</p>
 <table>
 <thead>
 <tr>

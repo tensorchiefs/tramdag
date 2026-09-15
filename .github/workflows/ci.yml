@@ -24,11 +24,8 @@ jobs:
         - ubuntu-latest
         - windows-latest
         - macos-latest
-        python-version:
+        python-version:   # the oldest and the newest supported
         - '3.10'
-        - '3.11'
-        - '3.12'
-        - '3.13'
         - '3.14'
 
     runs-on: ${{ matrix.platform }}

@@ -56,13 +56,21 @@ weights.
   workload and wastes on the next, so every caller states its own.
 - **Calibration.** The first `fit` calls `calibrate(train_df)`. Every term
   freezes its data-dependent state there, the intercept its `range_q`
-  quantiles and each `input_transform=` its statistics. Calibration never
-  touches the weights, and a loaded checkpoint is never recalibrated.
-- **Marginal start.** `init_marginals(train_df)` is a separate, always
-  explicit step. It resets every Bernstein or ordinal simple intercept to the
-  empirical marginal of its column, as `logit(F_hat)` in control points or
-  cutpoints. The spline, the affine and the `range_q=0` transforms have no
-  such start. The call is a pure initialization and leaves the MLE unchanged.
+  quantiles and each `input_transform=` its statistics. A loaded checkpoint is
+  never recalibrated.
+- **Marginal start.** Off by default; every simple intercept starts at zuko's
+  zero. `fit(marginal_init=True)`, `fit_classical(marginal_init=True)` and
+  `calibrate(train_df, marginal_init=True)` all set it instead: every Bernstein
+  or ordinal simple intercept starts at the empirical marginal of its column,
+  as `logit(F_hat)` in control points or cutpoints. The spline, the affine and
+  the `range_q=0` transforms have no such start. It is a pure initialization
+  and leaves the MLE unchanged.
+
+  The flag rides on calibration's guard, so it applies once, on the fit that
+  calibrates. That is what a schedule needs: a second `fit` continues training
+  rather than discarding the intercepts the first one trained. To re-apply the
+  start whenever you want it, call `init_marginals(train_df)` directly — it is
+  explicit, repeatable and not guarded.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
   a float and uses the last fraction of `train_df` unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With

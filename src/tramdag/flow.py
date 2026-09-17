@@ -334,7 +334,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """Give the per-node mean NLL of already tensorized columns."""
         return {k: float(-v.mean()) for k, v in self.node_log_prob(values).items()}
 
-    def calibrate(self, train_df: pd.DataFrame) -> CausalFlowDAG:
+    def calibrate(
+        self, train_df: pd.DataFrame, *, marginal_init: bool = False
+    ) -> CausalFlowDAG:
         """Take the data-dependent state from the training rows, once.
 
         Every term calibrates itself: the intercept term maps its node's
@@ -346,14 +348,24 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         The first ``fit`` or ``fit_classical`` calls this when it has not run
         yet; a loaded model is already calibrated, and later fits on other rows
-        reuse this state — data on a new scale needs a new flow. Calibration
-        never touches the weights: a calibrated start is a separate, always
-        explicit step, [`init_marginals`][].
+        reuse this state — data on a new scale needs a new flow.
+
+        ``marginal_init`` additionally starts every simple intercept at its
+        column's marginal, through [`init_marginals`][]. It rides on this
+        method's guard on purpose: the start belongs to the one-time setup, so
+        a second ``fit`` — the next phase of a schedule — continues training
+        instead of discarding the intercepts it just trained. That also means
+        the flag does nothing on a flow that is already calibrated; call
+        [`init_marginals`][] directly to re-apply the start whenever you want
+        it.
 
         Parameters
         ----------
         train_df : pd.DataFrame
             Training rows, one column per node (plus any side columns).
+        marginal_init : bool, optional
+            Also set the calibrated start, by default ``False``: an
+            uninitialized intercept starts at zuko's zero instead.
 
         Returns
         -------
@@ -371,6 +383,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             for m in nd.shifts.values():
                 m.calibrate(train_df)
         self.calibrated.fill_(True)
+        if marginal_init:
+            # after the flag, so init_marginals does not calibrate a second time
+            self.init_marginals(train_df)
         return self
 
     def init_marginals(self, train_df: pd.DataFrame) -> CausalFlowDAG:

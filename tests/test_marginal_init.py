@@ -98,13 +98,55 @@ def test_marginal_init_only_touches_unconditional_roots():
         assert torch.equal(v.detach(), ci_before[k]), f"ci param {k} changed"
 
 
-def test_calibrate_never_touches_the_weights():
+def test_calibrate_leaves_the_weights_alone_unless_asked():
     flow, df = _mixed_flow_and_df()
-    flow.calibrate(df)  # zuko's zero start: init_marginals is always explicit
+    flow.calibrate(df)  # zuko's zero start: the marginal start is opt-in
     assert torch.allclose(
         flow.nodes["x1"].intercept.theta.detach(),
         torch.zeros_like(flow.nodes["x1"].intercept.theta),
     )
+
+
+def test_calibrate_sets_the_marginal_start_when_asked():
+    flow, df = _mixed_flow_and_df()
+    flow.calibrate(df, marginal_init=True)
+    np.testing.assert_allclose(
+        flow.nodes["x1"].intercept.theta.detach().numpy(),
+        flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
+        atol=1e-6,
+    )
+
+
+def test_fit_forwards_the_flag_and_defaults_to_the_zero_start():
+    """A zero learning rate leaves the weights at whatever the start put there."""
+    off, df = _mixed_flow_and_df()
+    off.fit(df, epochs=1, batch_size=400, learning_rate=0.0)
+    assert torch.allclose(
+        off.nodes["x1"].intercept.theta.detach(),
+        torch.zeros_like(off.nodes["x1"].intercept.theta),
+    )
+
+    on, df = _mixed_flow_and_df()
+    on.fit(df, epochs=1, batch_size=400, learning_rate=0.0, marginal_init=True)
+    np.testing.assert_allclose(
+        on.nodes["x1"].intercept.theta.detach().numpy(),
+        on.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
+        atol=1e-6,
+    )
+
+
+def test_a_second_fit_continues_instead_of_restarting_at_the_marginal():
+    """The start rides on calibration's guard, so a schedule's later phase trains on.
+
+    Were it re-applied, the second phase would begin where the first did and
+    land on the same weights; it must not.
+    """
+    flow, df = _mixed_flow_and_df()
+    flow.fit(df, epochs=2, batch_size=400, marginal_init=True)
+    after_first = flow.nodes["x1"].intercept.theta.detach().clone()
+    flow.fit(df, epochs=2, batch_size=400, marginal_init=True)
+    after_second = flow.nodes["x1"].intercept.theta.detach()
+    assert not torch.allclose(after_second, after_first)
 
 
 @pytest.mark.slow

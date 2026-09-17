@@ -59,12 +59,16 @@ weights.
   quantiles and each `input_transform=` its statistics. A loaded checkpoint is
   never recalibrated.
 - **Marginal start.** Off by default; every simple intercept starts at zuko's
-  zero. `fit(marginal_init=True)`, `fit_classical(marginal_init=True)` and
-  `calibrate(train_df, marginal_init=True)` all set it instead: every Bernstein
+  zero. `fit(marginal_init=True)` and `calibrate(train_df, marginal_init=True)`
+  set it instead: every Bernstein
   or ordinal simple intercept starts at the empirical marginal of its column,
   as `logit(F_hat)` in control points or cutpoints. The spline, the affine and
   the `range_q=0` transforms have no such start. It is a pure initialization
   and leaves the MLE unchanged.
+
+  `fit_classical` takes no such flag. That route is deterministic and lands on
+  the maximum likelihood wherever it starts, so a start would change how far
+  the line search travels and nothing else.
 
   The flag rides on calibration's guard, so it applies once, on the fit that
   calibrates. That is what a schedule needs: a second `fit` continues training

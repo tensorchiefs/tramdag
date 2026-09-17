@@ -325,7 +325,6 @@ class FitMixin:
         *,
         max_iter: int = 400,
         history_size: int = 50,
-        marginal_init: bool = False,
     ) -> dict:
         """Fit an all-``ls`` model the classical way.
 
@@ -344,11 +343,6 @@ class FitMixin:
             Upper limit on L-BFGS iterations, by default 400.
         history_size : int, optional
             L-BFGS memory, by default 50.
-        marginal_init : bool, optional
-            Start every simple intercept at its column's marginal, by default
-            ``False``. The route is deterministic and lands on the maximum
-            likelihood wherever it starts, so this changes how far the line
-            search has to travel, not where it arrives.
 
         Returns
         -------
@@ -386,7 +380,9 @@ class FitMixin:
                 f"intercept and LS terms only; this spec has {other} terms. Use "
                 "fit() for flexible models."
             )
-        self.calibrate(train_df, marginal_init=marginal_init)
+        # no marginal_init here: the route is deterministic and lands on the
+        # maximum likelihood wherever it starts, so a start is not a knob
+        self.calibrate(train_df)
         self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
         t0 = time.perf_counter()
         try:

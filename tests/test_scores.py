@@ -1,4 +1,4 @@
-"""Tests for per-observation scores + the effect-modifier scan (issue #29).
+"""Tests for per-observation scores + the effect-modifier scan.
 
 Acceptance: (1) per-parameter score sums ~ 0 at the fitted MLE; (2) exact
 finite-difference agreement (float64, any parameter point); (3) the end-to-end
@@ -32,11 +32,11 @@ def _hetero_df(n: int, seed: int = 11) -> pd.DataFrame:
 
 def _ls_spec() -> dict:
     return {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "X3": ContinuousNode([I(transform="affine")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "X3": ContinuousNode(I(transform="affine")),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("X3"), LS("T")]),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("X3") + LS("T")),
     }
 
 
@@ -68,8 +68,8 @@ def test_score_sums_vanish_at_mle_ordinal_outcome():
     y = np.digitize(lat, [-1.0, 0.8]).astype(float)
     df = pd.DataFrame({"X": x, "Y": y})
     spec = {
-        "X": ContinuousNode([I(transform="affine")]),
-        "Y": OrdinalNode(3, [LS("X")]),
+        "X": ContinuousNode(I(transform="affine")),
+        "Y": OrdinalNode(3, LS("X")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit_classical(df)
@@ -84,11 +84,11 @@ def test_scores_match_finite_differences():
     """
     df = _hetero_df(200, seed=5)
     spec = {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "X3": ContinuousNode([I(transform="affine")]),
-        "T": OrdinalNode(2, [LS("X1")]),
-        "Y": ContinuousNode([LS("X1"), CS("X3"), VC("X2", "X3", t="T")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "X3": ContinuousNode(I(transform="affine")),
+        "T": OrdinalNode(2, LS("X1")),
+        "Y": ContinuousNode(LS("X1") + CS("X3") + VC("X2", "X3", t="T")),
     }
     flow = CausalFlowDAG(spec, seed=1)
     flow.fit(df, epochs=5, seed=1)  # any point works; move off init
@@ -129,7 +129,7 @@ def test_scores_match_finite_differences():
 
 def test_effect_modifier_scan_flags_true_modifiers(mle_flow):
     """The point of the feature: on the heterogeneous SCM the scan must flag
-    the true modifiers X2 and X3 and NOT the inert X1 (issue #29).
+    the true modifiers X2 and X3 and NOT the inert X1.
     """
     flow, df = mle_flow
     scan = flow.effect_modifier_scan(df, node="Y", t="T")
@@ -150,10 +150,10 @@ def test_scan_null_is_quiet():
     y = (rng.logistic(size=n) - (x1 - 0.5 * x2) + 0.9 * t) / 2.0
     df = pd.DataFrame({"X1": x1, "X2": x2, "T": t, "Y": y})
     spec = {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("T")]),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("T")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit_classical(df)
@@ -168,7 +168,7 @@ def test_scores_on_vc_model_and_scan_column_resolution():
     df = _hetero_df(1500, seed=8)
     spec = {
         **_ls_spec(),
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("X3"), VC("X2", t="T")]),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("X3") + VC("X2", t="T")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=40, seed=0)
@@ -182,9 +182,29 @@ def test_scores_error_paths(mle_flow):
     flow, df = mle_flow
     with pytest.raises(KeyError, match="unknown node"):
         flow.scores(df, node="nope")
-    with pytest.raises(KeyError, match="missing column"):
+    with pytest.raises(KeyError, match="lacks the column"):
         flow.scores(df.drop(columns=["Y"]), node="Y")
     with pytest.raises(ValueError, match="no LS or VC"):
         flow.scores(df, node="T")  # T is a source: no shift terms
     with pytest.raises(KeyError, match="no score column"):
         flow.effect_modifier_scan(df, node="Y", t="X9")
+
+
+def test_scan_column_override_scans_a_level_contrast(ls_chain):
+    """``column=`` scans a named score column directly — the route for a
+    multi-level ordinal treatment, whose default lookup has no single column.
+    """
+    df = ls_chain["draw"](800, 0)
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    by_default = flow.effect_modifier_scan(df, "y", t="t")
+    by_column = flow.effect_modifier_scan(df, "y", t="t", column="t[1]")
+    pd.testing.assert_frame_equal(by_default, by_column)
+    with pytest.raises(KeyError, match="no score column 'nope'"):
+        flow.effect_modifier_scan(df, "y", t="t", column="nope")

@@ -1,11 +1,13 @@
 """Compare an experiment's metrics against the committed ground truth.
 
 The experiments workflow calls this after each run. Ground truth lives in
-``<area>/ground_truth/<result-dir>.json`` as one entry per metric::
+``ground_truth/<result-dir>.json`` as one entry per metric:
 
-    {"_note": "what these numbers mean",
-     "beta12": {"value": 1.9825, "atol": 0.05},
-     "cs_curve_max_abs_err": {"max": 0.23}}
+```
+{"_note": "what these numbers mean",
+ "beta12": {"value": 1.9825, "atol": 0.05},
+ "cs_curve_max_abs_err": {"max": 0.23}}
+```
 
 Two forms. ``{value, atol}`` is two-sided, for a quantity that should stay
 where it is. ``{max}`` is an upper bound, for an **error measure**, where a
@@ -17,12 +19,14 @@ fails on another machine for no reason (measured: one such bound passed at
 A bound outside the band is reported as ``note`` — not a failure, because a
 tolerance is a judgement call, but visibly, so it gets re-pinned deliberately
 rather than drifting. A bound that is *meant* to be wide carries a ``"why"``
-string, which is printed in place of the note::
+string, which is printed in place of the note:
 
-    "max_abs_diff_flow_vs_statsmodels": {
-      "max": 0.25,
-      "why": "the max is over a coefficient with 7 of 1275 observations: 0.028
-              here, 0.113 on the CI runner"}
+```
+"max_abs_diff_flow_vs_statsmodels": {
+  "max": 0.25,
+  "why": "the max is over a coefficient with 7 of 1275 observations: 0.028
+          here, 0.113 on the CI runner"}
+```
 
 A ``"why"`` excuses width only. The *too tight* note always fires, because no
 argument makes a bound below 1.5x its measurement survive another machine.
@@ -40,9 +44,11 @@ without an entry is reported and ignored; an entry without a metric is an
 error, because that means the experiment stopped producing a number the
 ground truth claims to check.
 
-Usage (from ``experiments/``)::
+Usage (from ``experiments/``):
 
-    uv run python -m check paper triangle-atan-cs
+```
+uv run python -m check triangle-atan-cs
+```
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -55,21 +61,18 @@ from pathlib import Path
 
 # %% global variables ------------------------------------------------------------------
 HERE = Path(__file__).resolve().parent
-# only areas that commit ground truth; the benchmarks are measured and
-# written up in docs/, not checked against a recorded value
-AREAS = ("paper", "misc")
 
 
 # %% private functions -----------------------------------------------------------------
-def _load_json_pair(area: str, name: str) -> tuple[dict, dict]:
+def _load_json_pair(name: str) -> tuple[dict, dict]:
     """Load the run's metrics and its ground truth, or raise."""
-    metrics_path = HERE / area / "results" / name / "metrics.json"
-    truth_path = HERE / area / "ground_truth" / f"{name}.json"
+    metrics_path = HERE / "results" / name / "metrics.json"
+    truth_path = HERE / "ground_truth" / f"{name}.json"
     if not metrics_path.exists():
         raise FileNotFoundError(f"no metrics to check: {metrics_path}")
     if not truth_path.exists():
         raise FileNotFoundError(
-            f"no ground truth for '{area}/{name}': {truth_path}. Write one from "
+            f"no ground truth for {name!r}: {truth_path}. Write one from "
             "a reviewed run before wiring the experiment into CI."
         )
     return json.loads(metrics_path.read_text()), json.loads(truth_path.read_text())
@@ -167,14 +170,12 @@ def _check_center(metric: str, measured: float, expected: dict) -> list:
     return out
 
 
-def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list[str]]:
+# %% public functions ------------------------------------------------------------------
+def compare(name: str) -> tuple[list[str], list[str], list[str], list[str]]:
     """Compare one result directory against its ground truth.
 
     Parameters
     ----------
-    area : str
-        Experiment area: ``paper`` or ``misc`` — the two that commit ground
-        truth (see ``AREAS``).
     name : str
         Name of the results directory, for example ``"triangle-atan-cs"``.
 
@@ -192,7 +193,7 @@ def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list
     ValueError
         If the ground-truth file has no metric entry, so nothing was checked.
     """
-    metrics, truth = _load_json_pair(area, name)
+    metrics, truth = _load_json_pair(name)
 
     results = [
         pair
@@ -212,9 +213,9 @@ def compare(area: str, name: str) -> tuple[list[str], list[str], list[str], list
     return failures, passed, unchecked, notes
 
 
-def main(area: str, name: str) -> int:
+def main(name: str) -> int:
     """Print the comparison and give the process exit code."""
-    failures, passed, unchecked, notes = compare(area, name)
+    failures, passed, unchecked, notes = compare(name)
     for item in passed:
         print(f"  ok   {item}")
     for item in unchecked:
@@ -224,16 +225,14 @@ def main(area: str, name: str) -> int:
     for failure in failures:
         print(f"  FAIL {failure}")
     if failures:
-        print(f"\n{area}/{name}: {len(failures)} metric(s) outside tolerance")
+        print(f"\n{name}: {len(failures)} metric(s) outside tolerance")
         return 1
-    print(f"\n{area}/{name}: all checked metrics within tolerance")
+    print(f"\n{name}: all checked metrics within tolerance")
     return 0
 
 
 # %% main ------------------------------------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("area", choices=AREAS, help="experiment area")
     parser.add_argument("name", help="results directory name, e.g. triangle-atan-cs")
-    args = parser.parse_args()
-    sys.exit(main(args.area, args.name))
+    sys.exit(main(parser.parse_args().name))

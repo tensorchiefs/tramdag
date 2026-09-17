@@ -2,16 +2,17 @@ name: experiments
 
 # Every experiment, one matrix job each. They run on every push, so a
 # commit's report is always current — note that this trains real models on
-# the paper's own protocol (500 epochs over 40000 rows on the triangle
-# scripts, at batch 256 — the one documented CI deviation from the paper's
-# batch 32, see docs/paper-replication.md). Measured 2026-08-26 on the 2-core
-# runners (run 32974872751): triangle jobs 7-11 min (42-69 min at batch 32),
-# vaca 5.8 min, carefl 6.7 min, validate_ls 0.8-4.4 min; the jobs run in
-# parallel, so a push costs about 12 min wall. A workflow_dispatch may narrow
-# it to a single script+variant.
+# the paper's own protocol. `triangle.py` runs 300 epochs over 40000 rows at
+# batch 256 and lr 0.004, and 500 for linear-cs. `triangle_mixed.py` runs 350
+# for exp-cs and 200 at lr 0.002 for linear-ls. Those are the documented CI
+# deviations from the paper's 500 epochs at batch 32 and lr 0.001; see
+# docs/paper-replication.md. Measured on the 2-core runners: triangle jobs
+# 7-11 min (42-69 min at batch 32), vaca 5.8 min, carefl 6.7 min; the jobs run
+# in parallel, so a push costs about 12 min wall. A workflow_dispatch may
+# narrow it to a single script+variant.
 #
 # Each job runs its experiment, compares the metrics against the committed
-# ground truth in <area>/ground_truth/, and posts the run's report — table
+# ground truth in experiments/ground_truth/, and posts the run's report — table
 # plus figures — as a commit comment. CML uploads the figures to its asset
 # server, so no branch in this repository holds generated images.
 on:
@@ -45,7 +46,7 @@ jobs:
       include: ${{ steps.pick.outputs.include }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
-    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
+    - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4   # v10.1.0
       with:
         enable-cache: true
     - id: pick
@@ -67,15 +68,13 @@ jobs:
                 f"script={only_script!r} variant={only_variant!r}"
             )
         include = []
-        for path in sorted(pathlib.Path(".").glob("*/*.yaml")):
-            area, script = path.parent.name, path.stem
+        for path in sorted(pathlib.Path(".").glob("*.yaml")):
+            script = path.stem
             document = yaml.safe_load(path.read_text()) or {}
             for variant in sorted(document.get("variants", ())):
                 if only_script and (script, variant) != (only_script, only_variant):
                     continue
-                include.append(
-                    {"area": area, "script": script, "variant": variant}
-                )
+                include.append({"script": script, "variant": variant})
         if not include:
             raise SystemExit(
                 f"no experiment matches script={only_script!r} variant={only_variant!r}"
@@ -96,7 +95,7 @@ jobs:
       OMP_NUM_THREADS: '2'       # the runners have 2 cores; avoid thread thrash
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
-    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
+    - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4   # v10.1.0
       with:
         enable-cache: true
 
@@ -104,7 +103,7 @@ jobs:
       working-directory: experiments
       run: >-
         uv run --group experiments python -m
-        ${{ matrix.area }}.${{ matrix.script }} ${{ matrix.variant }}
+        ${{ matrix.script }} ${{ matrix.variant }}
 
     # the results directory of a run: <script-with-dashes>-<variant>
     - name: name the result directory
@@ -119,18 +118,18 @@ jobs:
       working-directory: experiments
       run: >-
         uv run --group experiments python -m check
-        ${{ matrix.area }} ${{ steps.result.outputs.name }}
+        ${{ steps.result.outputs.name }}
 
     # a drifted run is when the figures matter most — but only once the run got
     # as far as writing its report; earlier failures are the job's own error
-    - if: always() && hashFiles(format('experiments/{0}/results/{1}/report.md', matrix.area, steps.result.outputs.name)) != ''
+    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
       name: post the report as a commit comment
       uses: iterative/setup-cml@e5f9f4673e0a8f275c45cc66dbbfd29c8469fb4e # v2.1.0
       with:
         vega: false
-    - if: always() && hashFiles(format('experiments/{0}/results/{1}/report.md', matrix.area, steps.result.outputs.name)) != ''
+    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
       working-directory: >-
-        experiments/${{ matrix.area }}/results/${{ steps.result.outputs.name }}
+        experiments/results/${{ steps.result.outputs.name }}
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |

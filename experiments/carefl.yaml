@@ -1,0 +1,88 @@
+# The CAREFL counterfactual benchmark (carefl.py): full model spec + every
+# training hyperparameter. The script reads no defaults of its own — `spec`
+# is the whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct the
+# flow, `fit_kwargs` go into flow.fit verbatim.
+#
+# Protocol = the reference implementation's own comparison run
+# (tensorchiefs/tram-dag, comparison/utils.R with carefl_fig5.r), 1:1:
+#   * trains on CAREFL's own 2500 rows (USE_EXTERNAL_DATA = TRUE reads
+#     data/CAREFL_CF/X.csv, x3/x4 sd-standardized) — frozen here under
+#     data/carefl-cf with the paper's observation and the analytic truth
+#     curves, so Fig. 6 is comparable point by point;
+#   * val = train (carefl_fig5.r's own choice for the external-data run);
+#   * EPOCHS = 7000 at Adam lr 0.001, one full-batch gradient step per epoch
+#     (train_step: one apply_gradients over all rows);
+#   * update_learning_rate: ReduceLROnPlateau on the summed validation NLL,
+#     factor 0.1, patience 50, min_lr 1e-7, no min_delta (strict <);
+#   * make_model: one net per node, dense(10, tanh) -> dense(100, tanh) ->
+#     dense(len_theta), M = 30 so len_theta = 31 (the spec's units and
+#     n_coeffs; zuko ties two extra control points on, order 32 against the
+#     reference's 30 — the free-parameter count is what matches); final
+#     weights, no early stop;
+#   * range_q: 0.0 in the spec — the Bernstein domain is the train min/max,
+#     scale_df's min-max scaling (the 5%/95% default measurably misweights
+#     the tails here: fig6_max_abs_err_x4 0.37 -> 0.20, x3 0.20 -> 0.07);
+#   * input_transform: minmax on the CI terms, also scale_df (raw parents
+#     saturate the tanh nets — and relu+raw fails too, see
+#     docs/paper-replication.md).
+# The weights start from Keras' Dense default, glorot_uniform / zero bias
+# (`init: glorot`, make_model's layer_dense).
+#
+# Remaining known deviations, documented in docs/paper-replication.md: the
+# intercept net's output layer has no bias (Keras dense has one); Adam eps
+# 1e-8 vs Keras 1e-7 (measured: no effect); the reference seeds R's RNG with
+# 42, which torch cannot replay, so every seed below is a repo choice.
+
+variants:
+  # all conditionals complex intercepts
+  flexible:
+    n_val: 5000               # fresh standardized draw, scoring only (R holds nothing out)
+    flow_kwargs:
+      seed: 7                 # weight init (repo choice)
+      init: glorot            # Keras Dense default: glorot_uniform, zero bias
+    init_marginals: false     # no marginal start exists for a range_q 0 Bernstein domain
+    fit_kwargs:
+      epochs: 7000            # EPOCHS
+      batch_size: 2500        # = the row count: one full-batch step per epoch
+      seed: 0                 # full batch: the shuffle seed has no effect
+    learning_rate: 0.001
+    schedule: plateau         # update_learning_rate
+    plateau_patience: 50
+    plateau_factor: 0.1
+    plateau_min_lr: 1.0e-7
+    min_delta: 0.0
+    dgp_seed: 42              # repo choice (held-out scoring draws only)
+    n_heldout: 300            # typical rows scored next to the single x_obs
+    heldout_seed_offset: 999  # seed offset of the held-out draw
+    alphas_scored: [-1.5, 0.0, 1.5]
+    figures:                  # titles and report captions; {x_obs} is the observation
+      dag.png:
+        title: 'CAREFL: the DAG, complex intercepts on x3 and x4'
+        caption: The model as declared, one edge per term, labelled by the term that owns it.
+      training.png:
+        title: 'CAREFL: training (val = train, as in the reference)'
+        caption: Summed NLL per epoch under the reference's plateau rule.
+      marginals.png:
+        title: 'CAREFL: observed vs sampled marginals'
+        caption: CAREFL's committed rows against a sample of the fitted flow, in sd-standardized units.
+      cf_curves.png:
+        title: "CAREFL counterfactual queries at $x_{{obs}}$ = ({x_obs})\n(Fig. 6; x3/x4 in CAREFL's sd-standardized units)"
+        caption: Both counterfactual curves at the committed observation against the analytic truth and CAREFL's own predictions; the fig6_* metrics are the largest gaps.
+    spec:
+      x1:
+        kind: continuous
+        terms:
+        - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
+      x2:
+        kind: continuous
+        terms:
+        - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}}}
+      x3:
+        kind: continuous
+        terms:
+        # make_model: dense(10, tanh) -> dense(100, tanh) -> dense(31)
+        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}
+      x4:
+        kind: continuous
+        terms:
+        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.0}, units: [10, 100], activation: tanh, input_transform: minmax}}

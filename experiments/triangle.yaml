@@ -1,0 +1,168 @@
+# The continuous-triangle replication (triangle.py): full model spec + every
+# training hyperparameter. The script reads no defaults of its own — `spec`
+# is the whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct the
+# flow, `fit_kwargs` go into flow.fit verbatim.
+#
+# Protocol = the paper's own code, summerof24/triangle_structured_continous.R
+# (tensorchiefs/tram-dag), reproduced 1:1 where the framework allows:
+#   * train = dgp(40000), test = dgp(40000): two separate draws, no split;
+#   * 500 epochs, optimizer_adam() = Keras Adam at lr 0.001, Keras fit() with
+#     its default batch size 32, shuffled; one compiled model, so one
+#     continuous optimizer run — the coefficients are read after every epoch
+#     (epochs, batch and lr are the deviations below, for CI runtime);
+#   * len_theta = 20, hidden_features_I = hidden_features_CS = c(2, 25, 25, 2),
+#     sigmoid activations (create_param_net; its ReLU line is commented out).
+#     The c(...) vector reads as in/out dims around the hidden stack (25, 25):
+#     the literal [2, 25, 25, 2] reading puts a 2-sigmoid bottleneck on the
+#     input and cannot reproduce paper Fig. 18 (sin curve err 1.22), while
+#     (25, 25) lands on the figure (0.24);
+#   * n_coeffs = len_theta = 20 unconstrained coefficients; zuko ties two
+#     more control points on (order 21 against the reference's 19); the
+#     free-parameter count is what matches;
+#   * no learning-rate schedule, no early stopping, final weights;
+#   * no input_transform on any term: the triangle scripts feed the nets raw
+#     parents; the Bernstein domain comes from the
+#     train 5%/95% quantiles as in the R script (range_q default 0.05).
+# Every linear layer starts from Keras' random_normal, sd 0.05, on weights
+# and biases (`init: normal`, the LinearMasked layers). A simple intercept's
+# theta is not a linear layer: `bernp$beta` starts at zero in R. Here it
+# starts at the empirical marginal (`init_marginals: true`, deviation D4 in
+# docs/paper-replication.md) except for linear-cs and sin-cs, where the
+# measured endpoint is worse; the zero start reaches the same NLL within
+# ~30 epochs where the marginal start needs ~5.
+# Known deviations, documented in docs/paper-replication.md: a [-5, 5]
+# instead of a [0, 1]
+# domain (a reparametrization), zuko's tied end control points instead of the
+# reference's tangent extrapolation, order 21 vs 19 at equal free parameters;
+# the R script runs unseeded, so every seed below is a repo choice.
+#
+# CI-runtime deviations, documented in docs/paper-replication.md: the paper
+# trains 500 epochs at Keras' default batch 32 with optimizer_adam()'s lr
+# 0.001; that is 42-69 min per variant on the CI runners. Batch 256 with the
+# lr scaled 4x runs in 8x fewer steps and keeps every ground-truth metric.
+# Epochs 300 instead of 500 is a further runtime cut (measured:
+# every metric within its ground-truth bound; 150 epochs is not enough — the
+# do(x1) error fails on atan, 0.235 > 0.206; linear-cs keeps 500 — at 300 its
+# curve visibly flattens past |x2| > 0.5, max err 0.140 vs 0.088, because the
+# DGP line spans only +-0.3 and the sigmoid net's slow tail convergence is
+# half of that); this config's own numbers are in ground_truth/.
+
+paper_protocol: &paper_protocol
+  n_train: 40000          # dgp(40000)
+  n_val: 40000            # test = dgp(40000), a separate draw
+  flow_kwargs:
+    seed: 7               # weight init (repo choice, the R script is unseeded)
+    init: normal          # LinearMasked: random_normal weights and biases (sd 0.05)
+  init_marginals: true    # D4: the empirical-marginal start; the reference starts at zero
+  fit_kwargs:
+    epochs: 300           # paper: 500 (num_epochs)
+    batch_size: 256       # paper: 32 (Keras fit() default)
+    seed: 0               # minibatch shuffling
+  learning_rate: 0.004    # paper: 0.001 (optimizer_adam() default)
+  schedule:               # the reference has no schedule
+  dgp_seed: 42
+  sample_seed: 0          # sampling for the distribution comparisons
+  n_compare: 10000        # rows per distribution panel (Fig. 16/17)
+  do_x1: -1.0             # the paper's L2 query, do(x1 = -1)
+  grid_low: -1.0          # x2 grid of the complex-shift overlay (Fig. 7 right)
+  grid_high: 1.0
+  grid_points: 81
+  figures:                # titles and report captions; {f} and {shift} fill from the variant
+    dag.png:
+      title: 'triangle/{f}: the DAG, {shift} shift on x2 -> x3'
+      caption: The model as declared, one edge per term, labelled by the term that owns it.
+    training.png:
+      title: 'triangle/{f}, {shift} model: training'
+      caption: Summed train and validation NLL per epoch; the fit keeps the final weights.
+    marginals.png:
+      title: 'triangle/{f}, {shift} model: observed vs sampled marginals'
+      caption: The validation rows against a sample of the fitted flow, one panel per node.
+    coefficients.png:
+      title: 'triangle/{f}, {shift} model: linear-shift coefficients (Fig. 14/15)'
+      caption: The linear-shift weights after every epoch, dashed at the DGP truth.
+    cs_curve.png:
+      title: 'complex shift, DGP f = {f}: fitted vs $-f(x_2)$'
+      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at x2 = 0; cs_curve_max_abs_err is the largest gap.
+    distributions.png:
+      title: 'triangle/{f}, {shift} model: L1/L2 (Fig. 16/17)'
+      caption: Observational and do(x1) samples per variable, DGP filled and flow stepped; the do(x1) mean of x3 is the metric.
+
+# shared node specs — one place to change if the intercept or LS edge varies
+x1: &x1
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+
+x2: &x2
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
+
+x3_ls: &x3_ls
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
+  - {term: LS, parents: [x2], options: {}}
+
+x3_cs: &x3_cs
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
+  # hidden (25, 25), sigmoid: create_param_net's reference CS net
+  - {term: CS, parents: [x2], options: {units: [25, 25], activation: sigmoid}}
+
+variants:
+  # the linear DGP is the only one with a true beta23 (+0.3) to recover
+  linear-ls:
+    <<: *paper_protocol
+    f: linear
+    shift: ls             # which coefficients the trajectory plot reads
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_ls
+
+  # the misspecified case (paper App. C.3.3, Fig. 17): the DGP's x2 -> x3
+  # effect is linear, but it is fitted with a complex shift, which must
+  # recover that straight line instead of bending to noise
+  linear-cs:
+    <<: *paper_protocol
+    f: linear
+    shift: cs
+    init_marginals: false  # measured: the marginal start doubles the cs curve error (0.025 -> 0.056)
+    fit_kwargs:
+      epochs: 500           # not 300: see the epochs note above
+      batch_size: 256
+      seed: 0
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_cs
+
+  # the headline complex-shift experiment (Fig. 7/15/16)
+  atan-cs:
+    <<: *paper_protocol
+    f: atan
+    shift: cs
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_cs
+
+  # a second nonlinear f, to show the shift recovery is not atan-specific
+  sin-cs:
+    <<: *paper_protocol
+    f: sin
+    shift: cs
+    init_marginals: false  # measured: the marginal start finds a different optimum, do(x1) error 0.075 -> 0.201
+    # the paper evaluates the sin fit on half a period (Fig. 18 plots
+    # x2 in [-1, 0]) — the grid follows it
+    grid_low: -1.0
+    grid_high: 0.0
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_cs

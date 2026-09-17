@@ -1,11 +1,13 @@
-"""Tests for ``calibrate(marginal_init=True)`` — calibrated initialization of each
+"""Tests for ``init_marginals`` — the explicit calibrated initialization of each
 *unconditional* (root) node's transform to the empirical marginal.
 
 What it guarantees:
-- Bernstein roots start as the linear map of the pre-scaled domain onto the
-  standard-logistic 5%/95% quantiles (±2.944), not zuko's ~2.5×-too-steep zero θ.
+- Bernstein roots start at the Bernstein approximation of logit(F_hat(y)), the
+  empirical marginal, with the domain ends on the standard-logistic 5%/95%
+  quantiles (±2.944) — not zuko's ~2.5×-too-steep zero θ. Without a column the
+  start is the plain linear map between those ends.
 - Ordinal roots start with cutpoints reproducing the empirical class frequencies.
-- It only touches unconditional `SimpleIntercept` roots — `ci` intercepts are
+- It only touches unconditional `SimpleInterceptModule` roots — parented `I` terms are
   left alone.
 - It is a *pure init*: a marginal-init fit and a default fit converge to the same
   optimum (so the exact-MLE property is preserved).
@@ -20,19 +22,20 @@ import pytest
 import torch
 
 from tramdag import LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
-from tramdag.conditioners import ComplexIntercept, SimpleIntercept
+from tramdag.modules import ComplexInterceptModule, SimpleInterceptModule
 from tramdag.transforms import BernsteinUT, ordinal_marginal_init_theta, ordinal_pmf
 
 
 # %% private functions -----------------------------------------------------------------
 def _mixed_flow_and_df():
     """Flow with a Bernstein root, an ordinal root, and a continuous node whose
-    parent enters as `ci` (so its intercept is a ComplexIntercept, not a root).
+    parent enters as `I("x1")`, so its intercept is a ComplexInterceptModule and
+    not a root.
     """
     spec = {
         "x1": ContinuousNode(),  # Bernstein root
         "y": OrdinalNode(levels=4),  # ordinal root
-        "x2": ContinuousNode([I("x1")]),  # ci -> ComplexIntercept
+        "x2": ContinuousNode(I("x1")),  # -> ComplexInterceptModule
     }
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
@@ -52,7 +55,7 @@ def test_bernstein_marginal_init_is_calibrated_logistic_map():
     """marginal_init θ maps the pre-scaled domain onto [logit .05, logit .95]."""
     ut = BernsteinUT()
     ut.set_range(-5.0, 5.0)  # range == bound -> _scale is identity
-    theta = ut.marginal_init_theta()  # q=0.05 default
+    theta = ut.marginal_init_theta(None)  # the data-free map, q=0.05 default
     x = torch.tensor([-5.0, 0.0, 5.0])
     z0, _ = ut.forward(theta.unsqueeze(0).expand(3, -1), x)
     logit05 = math.log(0.05) - math.log(0.95)  # -2.9444
@@ -69,9 +72,9 @@ def test_ordinal_marginal_init_reproduces_class_frequencies():
 
 def test_marginal_init_only_touches_unconditional_roots():
     flow, df = _mixed_flow_and_df()
-    # sanity: the ci node really has a ComplexIntercept
-    assert isinstance(flow.nodes["x2"].intercept, ComplexIntercept)
-    assert isinstance(flow.nodes["x1"].intercept, SimpleIntercept)
+    # sanity: the parented node really has a ComplexInterceptModule
+    assert isinstance(flow.nodes["x2"].intercept, ComplexInterceptModule)
+    assert isinstance(flow.nodes["x1"].intercept, SimpleInterceptModule)
 
     root_x1_before = flow.nodes["x1"].intercept.theta.detach().clone()
     root_y_before = flow.nodes["y"].intercept.theta.detach().clone()
@@ -80,28 +83,70 @@ def test_marginal_init_only_touches_unconditional_roots():
         for k, v in flow.nodes["x2"].intercept.state_dict().items()
     }
 
-    flow.calibrate(df, marginal_init=True)
+    flow.init_marginals(df)
 
     # the two roots are now calibrated (changed from their zero init)...
     assert not torch.allclose(flow.nodes["x1"].intercept.theta.detach(), root_x1_before)
     assert not torch.allclose(flow.nodes["y"].intercept.theta.detach(), root_y_before)
     np.testing.assert_allclose(
         flow.nodes["x1"].intercept.theta.detach().numpy(),
-        flow.nodes["x1"].ut.marginal_init_theta().numpy(),
+        flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
         atol=1e-6,
     )
-    # ...while the ci node's ComplexIntercept is untouched
+    # ...while the parented node's ComplexInterceptModule is untouched
     for k, v in flow.nodes["x2"].intercept.state_dict().items():
         assert torch.equal(v.detach(), ci_before[k]), f"ci param {k} changed"
 
 
-def test_marginal_init_on_by_default_calibrates_roots():
+def test_calibrate_leaves_the_weights_alone_unless_asked():
     flow, df = _mixed_flow_and_df()
-    flow.calibrate(df, marginal_init=False)  # zuko's zero start, on request
+    flow.calibrate(df)  # zuko's zero start: the marginal start is opt-in
     assert torch.allclose(
         flow.nodes["x1"].intercept.theta.detach(),
         torch.zeros_like(flow.nodes["x1"].intercept.theta),
     )
+
+
+def test_calibrate_sets_the_marginal_start_when_asked():
+    flow, df = _mixed_flow_and_df()
+    flow.calibrate(df, marginal_init=True)
+    np.testing.assert_allclose(
+        flow.nodes["x1"].intercept.theta.detach().numpy(),
+        flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
+        atol=1e-6,
+    )
+
+
+def test_fit_forwards_the_flag_and_defaults_to_the_zero_start():
+    """A zero learning rate leaves the weights at whatever the start put there."""
+    off, df = _mixed_flow_and_df()
+    off.fit(df, epochs=1, batch_size=400, learning_rate=0.0)
+    assert torch.allclose(
+        off.nodes["x1"].intercept.theta.detach(),
+        torch.zeros_like(off.nodes["x1"].intercept.theta),
+    )
+
+    on, df = _mixed_flow_and_df()
+    on.fit(df, epochs=1, batch_size=400, learning_rate=0.0, marginal_init=True)
+    np.testing.assert_allclose(
+        on.nodes["x1"].intercept.theta.detach().numpy(),
+        on.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
+        atol=1e-6,
+    )
+
+
+def test_a_second_fit_continues_instead_of_restarting_at_the_marginal():
+    """The start rides on calibration's guard, so a schedule's later phase trains on.
+
+    Were it re-applied, the second phase would begin where the first did and
+    land on the same weights; it must not.
+    """
+    flow, df = _mixed_flow_and_df()
+    flow.fit(df, epochs=2, batch_size=400, marginal_init=True)
+    after_first = flow.nodes["x1"].intercept.theta.detach().clone()
+    flow.fit(df, epochs=2, batch_size=400, marginal_init=True)
+    after_second = flow.nodes["x1"].intercept.theta.detach()
+    assert not torch.allclose(after_second, after_first)
 
 
 @pytest.mark.slow
@@ -110,11 +155,13 @@ def test_marginal_init_is_pure_init_same_optimum(ls_chain):
     it only moves the starting point, not the optimum.
     """
     obs = ls_chain["draw"](5000, 11)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
 
     def converged_nll(marginal_init):
         flow = CausalFlowDAG(spec, seed=0)
-        flow.calibrate(obs, marginal_init=marginal_init)
+        flow.calibrate(obs)
+        if marginal_init:
+            flow.init_marginals(obs)
         flow.fit(obs, epochs=1500, learning_rate=1e-2, batch_size=512)
         return sum(flow.nll(obs).values())
 
@@ -135,7 +182,7 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     loaded = CausalFlowDAG.load(tmp_path / "m.pt")
 
     before = loaded.nodes["y"].intercept.theta.detach().clone()
-    loaded.calibrate(df, marginal_init=True)
+    loaded.calibrate(df)  # no-op: the calibrated flag traveled in the checkpoint
     # lr 0: the epoch runs (and would recalibrate, if the flag were lost)
     # without moving any weight
     loaded.fit(df, epochs=1, learning_rate=0.0, batch_size=128)
@@ -168,3 +215,38 @@ def test_init_marginals_is_explicit_and_repeatable():
         ci_fitted, flow.nodes["x2"].intercept.parameters(), strict=True
     ):
         assert torch.equal(fitted, after.detach())  # ci intercept: never re-inited
+
+
+def test_bernstein_marginal_init_follows_the_empirical_marginal():
+    """A column beats the linear map on a skewed and on a bimodal marginal.
+
+    Both starts are pure initializations, so the check is the NLL *at the
+    start*: the empirical one must be strictly better, and the linear one
+    must still be what a call without a column returns.
+    """
+    rng = np.random.default_rng(0)
+    columns = {
+        "lognormal": rng.lognormal(0.0, 1.0, 4000),
+        "bimodal": np.r_[rng.normal(-3, 0.4, 2000), rng.normal(3, 0.4, 2000)],
+    }
+    for name, column in columns.items():
+        df = pd.DataFrame({"x": column})
+        flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
+        flow.calibrate(df)
+        linear = flow.nodes["x"].ut.marginal_init_theta(None)
+        flow.nodes["x"].intercept.marginal_start(linear)
+        nll_linear = float(sum(flow.nll(df).values()))
+
+        flow.init_marginals(df)  # the empirical start
+        empirical = flow.nodes["x"].intercept.theta.detach()
+        assert float(sum(flow.nll(df).values())) < nll_linear - 0.2, name
+        assert not torch.allclose(empirical, linear)
+
+    # a degenerate range falls back to the linear map instead of dividing by zero
+    ut = BernsteinUT()
+    ut.set_range(1.0, 1.0)
+    np.testing.assert_allclose(
+        ut.marginal_init_theta(np.ones(10)).numpy(),
+        ut.marginal_init_theta(None).numpy(),
+        atol=1e-6,
+    )

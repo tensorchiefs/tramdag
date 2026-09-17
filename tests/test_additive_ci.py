@@ -1,4 +1,4 @@
-"""R3b validation: additive complex intercept.
+"""The additive complex intercept.
 
 Separate `I` terms reshape the transform *additively* (one network per parent,
 summed in unconstrained coefficient space) — distinct from a single joint
@@ -38,7 +38,7 @@ def test_additive_ci_runs_and_finite():
         {
             "x1": ContinuousNode(),
             "x2": ContinuousNode(),
-            "x3": ContinuousNode([I("x1", "x2", allow_interaction=False)]),
+            "x3": ContinuousNode(I("x1", "x2", allow_interaction=False)),
         },
         seed=0,
     )
@@ -52,7 +52,7 @@ def test_additive_ci_beats_additive_shift_on_heteroscedastic(fit_x3_nll):
     df = _scale_df(4000)
     train, val = df.iloc[:3500], df.iloc[3500:]
     ci = fit_x3_nll(
-        [I("x1", "x2", allow_interaction=False)], train, val
+        I("x1", "x2", allow_interaction=False), train, val
     )  # reshape per parent
-    shift = fit_x3_nll([CS("x1"), CS("x2")], train, val)  # location only
+    shift = fit_x3_nll(CS("x1") + CS("x2"), train, val)  # location only
     assert ci < shift - 0.05, (ci, shift)

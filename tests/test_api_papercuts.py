@@ -1,4 +1,4 @@
-"""Tests for the API papercuts in issue #12: constructor seeding, history and
+"""API papercuts: constructor seeding, history and
 version metadata through save/load, the init option.
 """
 
@@ -16,8 +16,8 @@ from tramdag import LS, CausalFlowDAG, ContinuousNode, OrdinalNode
 def _spec():
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "y": OrdinalNode(3, [LS("x1")]),
+        "x2": ContinuousNode(LS("x1")),
+        "y": OrdinalNode(3, LS("x1")),
     }
 
 
@@ -63,7 +63,8 @@ def test_save_load_round_trips_history(tmp_path):
     p = tmp_path / "flow.pt"
     flow.save(p)
     loaded = CausalFlowDAG.load(p)
-    assert set(loaded.history) == {"train"}
+    assert set(loaded.history) == {"train", "lr"}  # no val: an unvalidated fit
+    assert loaded.history["lr"] == [0.01] * 12  # one Adam group: a float per epoch
     assert len(loaded.history["train"]) == 12
 
 
@@ -94,15 +95,15 @@ def test_ls_coefficients_skips_network_shifts():
 
     Reading `.weight` off every shift module used to raise an
     AttributeError on a ComplexShift, which broke the paper's headline
-    complex-shift replication (`experiments/paper/triangle.py atan-cs`).
+    complex-shift replication (`experiments/triangle.py atan-cs`).
     """
     from tramdag import CS, LS, VC, CausalFlowDAG, ContinuousNode, OrdinalNode
 
     spec = {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1")]),
-        "x3": ContinuousNode([LS("x1"), CS("x2"), VC("x2", t="t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1")),
+        "x3": ContinuousNode(LS("x1") + CS("x2") + VC("x2", t="t")),
     }
     coefficients = CausalFlowDAG(spec, seed=0).ls_coefficients()
     assert set(coefficients["x3"]) == {"x1"}  # CS and VC carry no weight
@@ -113,7 +114,7 @@ def test_ls_coefficients_skips_network_shifts():
 def test_ls_coefficients_omits_a_node_without_linear_shifts():
     from tramdag import CS, CausalFlowDAG, ContinuousNode
 
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([CS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     assert CausalFlowDAG(spec, seed=0).ls_coefficients() == {}
 
 
@@ -168,3 +169,77 @@ def test_glorot_init_is_keras_dense_default(tmp_path):
     assert all(torch.equal(a[k], b[k]) for k in a)
     flow.save(tmp_path / "g.pt")
     assert td.CausalFlowDAG.load(tmp_path / "g.pt").init == "glorot"
+
+
+def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
+    """``batch_norm=True`` inserts a BatchNorm1d per hidden layer, and only then."""
+    from torch import nn
+
+    from tramdag import CI, CS, VC, I, spec_from_dict, spec_to_dict
+
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(),
+        "t": OrdinalNode(2, I()),
+        "y": ContinuousNode(
+            [
+                CI("x1", units=[4], batch_norm=True),
+                CS("x2", units=[4], batch_norm=True),
+                VC("x1", t="t", units=[4], batch_norm=True),
+            ]
+        ),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    norms = [m for m in flow.nodes["y"].modules() if isinstance(m, nn.BatchNorm1d)]
+    assert len(norms) == 3  # one hidden layer each, in CI, CS and VC
+    assert spec_from_dict(spec_to_dict(spec)) == spec
+
+    plain = CausalFlowDAG({**spec, "y": ContinuousNode(CS("x2", units=[4]))}, seed=0)
+    assert not [m for m in plain.modules() if isinstance(m, nn.BatchNorm1d)]
+
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    df["t"] = (df["x1"] > 0).astype(int)
+    df["y"] = df["x1"] * 0.5 + df["x2"]
+    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2)
+    assert bool(torch.isfinite(flow.log_prob(df)).all())
+
+
+def test_log_prob_takes_a_node_subset(ls_chain):
+    """``nodes=`` sums a subset exactly: the parts add up to the joint."""
+    df = ls_chain["draw"](300, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
+    )
+    flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2)
+    parts = [flow.log_prob(df, nodes=[name]) for name in ("x1", "x2")]
+    torch.testing.assert_close(parts[0] + parts[1], flow.log_prob(df))
+    # the conditional NLL of one node matches its mean over the same rows
+    assert float(-parts[1].mean()) == pytest.approx(flow.nll(df)["x2"], abs=1e-5)
+
+
+def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
+    """`n % batch_size == 1` used to hand BatchNorm1d a single row and crash."""
+    from tramdag import CS
+
+    df = ls_chain["draw"](101, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(
+        {
+            "x1": td.ContinuousNode(),
+            "x2": td.ContinuousNode(CS("x1", units=[4], batch_norm=True)),
+        },
+        seed=0,
+    )
+    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2)
+    assert bool(torch.isfinite(flow.log_prob(df)).all())
+
+
+def test_log_prob_names_an_unknown_node_and_refuses_an_empty_list(ls_chain):
+    df = ls_chain["draw"](50, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
+    )
+    flow.calibrate(df)
+    with pytest.raises(KeyError, match="unknown node 'nope'"):
+        flow.log_prob(df, nodes=["nope"])
+    with pytest.raises(ValueError, match="sums nothing"):
+        flow.log_prob(df, nodes=[])

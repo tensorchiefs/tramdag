@@ -31,12 +31,10 @@ def test_sum_list_and_mixed_forms_are_identical():
 
 def test_sum_chains_flatten_in_order():
     node = ContinuousNode(I("a") + CS("b") + LS("c") + VC("b", t="t"))
-    assert [t.effect for t in node.terms] == ["I", "CS", "LS", "VC"]
+    assert [t.name for t in node.terms] == ["I", "CS", "LS", "VC"]
 
 
-def test_bare_i_and_single_term():
-    assert ContinuousNode([I]).terms == [I()]
-    assert ContinuousNode(I).terms == [I()]
+def test_single_term_and_implicit_intercept():
     # a shifts-only formula gets the implicit simple intercept, first
     assert ContinuousNode(LS("x1")).terms == [SI(), LS("x1")]
     assert ContinuousNode(LS("x1")) == ContinuousNode([SI(), LS("x1")])
@@ -98,7 +96,7 @@ def test_i_dispatches_to_si_and_ci():
         CI()
 
 
-def test_bare_i_can_carry_the_source_basis():
+def test_bare_i_can_carry_the_source_transform():
     assert ContinuousNode([I(transform="affine")]).transform == "affine"
 
 
@@ -111,11 +109,6 @@ def test_two_i_transforms_conflict():
 def test_ordinal_rejects_i_transform():
     with pytest.raises(ValueError, match="ordinal"):
         OrdinalNode(3, [I("a", transform="spline")])
-
-
-def test_vc_treatment_is_keyword_only():
-    with pytest.raises(TypeError):
-        VC("T", "X2")  # the treatment is the keyword t=
 
 
 def test_list_and_sum_build_the_identical_model():
@@ -148,19 +141,18 @@ def test_additive_flag_builds_one_net_per_parent():
     }
     flow = CausalFlowDAG(spec)
     node = flow.nodes["y"]
-    assert node.intercept is None
-    assert len(node.intercept_nets) == 2
-    assert node._intercept_groups == [("a",), ("b",)]
-    assert node.ci_parents == ["a", "b"]  # flat, for introspection
+    assert len(node.intercept.nets) == 2
+    assert node.intercept.groups == [("a",), ("b",)]
+    assert node.intercept.ci_parents == ["a", "b"]  # flat, for introspection
 
     joint = CausalFlowDAG({**spec, "y": ContinuousNode([I("a", "b")])})
-    assert joint.nodes["y"].intercept_nets is None
-    assert joint.nodes["y"]._intercept_groups == [("a", "b")]
-    assert joint.nodes["y"].ci_parents == ["a", "b"]
+    assert not hasattr(joint.nodes["y"].intercept, "nets")  # one joint net
+    assert joint.nodes["y"].intercept.groups == [("a", "b")]
+    assert joint.nodes["y"].intercept.ci_parents == ["a", "b"]
 
     single = CausalFlowDAG({**spec, "y": ContinuousNode([I("a")])})
-    assert single.nodes["y"].intercept_nets is None
-    assert single.nodes["y"].ci_parents == ["a"]
+    assert not hasattr(single.nodes["y"].intercept, "nets")  # one single net
+    assert single.nodes["y"].intercept.ci_parents == ["a"]
 
 
 def test_roundtrip_keeps_hoisted_transform_and_terms():
@@ -196,7 +188,7 @@ def test_every_option_survives_the_roundtrip():
         "y": ContinuousNode(
             [
                 I("a", "b", allow_interaction=False, units=[4, 4]),
-                VC("b", t="t", penalty=2.5, center=True),
+                VC("b", t="t", penalty=2.5, center="ps_b"),
             ]
         ),
     }
@@ -204,7 +196,7 @@ def test_every_option_survives_the_roundtrip():
     assert back == spec
     i_term, vc_term = back["y"].terms
     assert (i_term.allow_interaction, i_term.units) == (False, (4, 4))
-    assert (vc_term.penalty, vc_term.center) == (2.5, True)
+    assert (vc_term.penalty, vc_term.center) == (2.5, "ps_b")
     assert back["a"].transform_kwargs == {"bins": 6}
 
 
@@ -222,37 +214,32 @@ def test_malformed_serialized_spec_is_rejected():
             "y": {"kind": "continuous", "terms": [term_dict]},
         }
 
-    two_parent_ls = {"effect": "LS", "parents": ["a", "b"], "options": {}}
+    two_parent_ls = {"term": "LS", "parents": ["a", "b"], "options": {}}
     with pytest.raises(ValueError, match="exactly one parent"):
         validate_and_sort(spec_from_dict(spec_with(two_parent_ls)))
 
-    unknown = {"effect": "XX", "parents": ["a"], "options": {}}
-    with pytest.raises(ValueError, match="unknown term effect"):
+    unknown = {"term": "XX", "parents": ["a"], "options": {}}
+    with pytest.raises(ValueError, match="unknown term"):
         validate_and_sort(spec_from_dict(spec_with(unknown)))
 
-    unknown_parent = {"effect": "LS", "parents": ["nope"], "options": {}}
+    unknown_parent = {"term": "LS", "parents": ["nope"], "options": {}}
     with pytest.raises(ValueError, match="unknown parent"):
         validate_and_sort(spec_from_dict(spec_with(unknown_parent)))
 
 
-def test_short_aliases_are_the_definitions():
-    """LS is linear_shift, and both spellings build the same spec."""
+def test_paper_symbols_are_the_classes():
+    """I/LS/CS/VC are the term classes; SI/CI build the intercept arities."""
     import tramdag as td
 
-    assert (
-        td.intercept,
-        td.linear_shift,
-        td.complex_shift,
-        td.varying_coefficient,
-    ) == (I, LS, CS, VC)
-    short = ContinuousNode(I("x") + LS("y") + CS("z") + VC("z", t="y"))
-    long = ContinuousNode(
-        td.intercept("x")
-        + td.linear_shift("y")
-        + td.complex_shift("z")
-        + td.varying_coefficient("z", t="y")
+    assert (td.Intercept, td.LinearShift, td.ComplexShift, td.VaryingCoefficient) == (
+        td.I,
+        td.LS,
+        td.CS,
+        td.VC,
     )
-    assert short.terms == long.terms
+    assert SI() == I()
+    assert CI("a") == I("a")
+    assert not hasattr(td, "linear_shift")
 
 
 def test_units_reach_the_networks():
@@ -267,44 +254,11 @@ def test_units_reach_the_networks():
     assert flow.nodes["y"].shifts["x1"].net[0].out_features == 8
 
 
-def test_units_survive_the_roundtrip():
-    spec = {
-        "a": ContinuousNode(),
-        "b": ContinuousNode(CS("a", units=[16])),
-    }
-    back = spec_from_dict(spec_to_dict(spec))
-    assert back["b"].terms[1].units == (16,)  # [0] is the canonical SI()
-
-
-def test_vc_modifiers_are_positional_t_is_keyword():
-    t = VC("X2", "X3", t="T")
-    assert t.parents == ("T", "X2", "X3")  # internal layout: treatment first
-    with pytest.raises(ValueError, match="cannot be both"):
-        VC("T", t="T")
-
-
-def test_a_pre_0_4_spec_says_it_is_too_old():
-    """0.3 wrote a term's settings as sibling keys, not in "options".
-
-    Without this the loader raises a bare KeyError('options') from inside the
-    comprehension, which does not tell the reader their checkpoint is stale.
-    """
-    old_format = {
-        "x1": {"kind": "continuous", "terms": []},
-        "y": {
-            "kind": "continuous",
-            "terms": [{"effect": "VC", "parents": ["t", "x1"], "penalty": 2.5}],
-        },
-    }
-    with pytest.raises(ValueError, match=r"predates 0\.4"):
-        spec_from_dict(old_format)
-
-
-def test_basis_arguments_apply_without_naming_the_basis():
-    """SI(n_coeffs=40) must configure the default basis, not be ignored.
+def test_transform_arguments_apply_without_naming_the_transform():
+    """SI(n_coeffs=40) must configure the default transform, not be ignored.
 
     The effective transform used to be read only from a term that also set
-    `transform=`, so basis arguments on their own were silently dropped and
+    `transform=`, so transform arguments on their own were silently dropped and
     the reader got the default order with no indication.
     """
     node = ContinuousNode([SI(n_coeffs=40)])
@@ -334,3 +288,67 @@ def test_spec_survives_a_json_roundtrip():
     assert back == spec
     assert back["y"].terms[0].units == (8, 8)  # the CI intercept comes first
     assert hash(back["y"].terms[1]) == hash(spec["y"].terms[1])
+
+
+def test_wrong_term_option_errors_instead_of_defaulting():
+    """A key another term takes raises — no silent foreign defaults.
+
+    The options are the constructor's keyword arguments, so argument binding
+    is the check and the refusal is Python's own TypeError.
+    """
+    with pytest.raises(TypeError, match="unexpected keyword argument 'penalty'"):
+        CS("a", penalty=1.0)  # penalty is VC's
+    with pytest.raises(AttributeError):
+        _ = LS("x").penalty  # reading a foreign option refuses too
+    d = {
+        "x": {
+            "kind": "continuous",
+            "terms": [{"term": "I", "parents": [], "options": {}}],
+        },
+        "y": {
+            "kind": "continuous",
+            "terms": [
+                {"term": "I", "parents": [], "options": {}},
+                {"term": "LS", "parents": ["x"], "options": {"pnealty": 1.0}},
+            ],
+        },
+    }
+    from tramdag import spec_from_dict
+
+    with pytest.raises(TypeError, match="'pnealty'"):
+        spec_from_dict(d)
+
+
+def test_terms_pickle_and_deepcopy():
+    """pickle/deepcopy probe dunders on an empty instance — __getattr__ must
+    not recurse (torch.save of a whole flow, ensembles, sweeps).
+    """
+    import copy
+    import pickle
+
+    t = LS("a")
+    assert pickle.loads(pickle.dumps(t)) == t
+    assert copy.deepcopy(t) == t
+
+
+def test_ls_takes_no_input_transform():
+    """An LS weight is the raw-unit coefficient: the option is not one it takes,
+    written or serialized.
+    """
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
+        LS("a", input_transform="minmax")
+    d = {
+        "a": {"kind": "continuous", "terms": []},
+        "y": {
+            "kind": "continuous",
+            "terms": [
+                {
+                    "term": "LS",
+                    "parents": ["a"],
+                    "options": {"input_transform": "minmax"},
+                }
+            ],
+        },
+    }
+    with pytest.raises(TypeError, match="unexpected keyword argument"):
+        spec_from_dict(d)

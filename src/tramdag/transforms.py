@@ -1,25 +1,23 @@
-"""Univariate transforms for CausalFlowDAG nodes.
+r"""Univariate transforms for CausalFlowDAG nodes.
 
 Each continuous node carries a monotone 1-D transform ``h`` (zuko-backed) that maps
 the observed value to the latent scale; ordinal nodes carry a cutpoint ("ordered
 logit") transform. Together with the additive shift terms they form one triangular
 flow from the standard-logistic latent to the observed variables.
 
-Conventions follow the original TRAM-DAG implementation
-(Keras/TF, https://github.com/tensorchiefs/tram-dag):
+- continuous: $u = h(x) + s(\mathrm{pa})$ with $h$ Bernstein / RQ-spline / affine
+  on the value range scaled from the train ``range_q`` quantiles to $[-B, B]$.
+- ordinal: $P(Y \le k) = \sigma(\vartheta_k - s(\mathrm{pa}))$ with increasing
+  cutpoints $\vartheta$.
 
-- continuous: ``u = h(x) + s(parents)`` with ``h`` Bernstein / RQ-spline / affine,
-  fitted on the value range scaled from the train 5%/95% quantiles to ``[-B, B]``
-  and linearly extrapolated outside.
-- ordinal:    ``P(x <= k) = sigmoid(theta_k - s(parents))`` with increasing
-  cutpoints ``theta``. This is the parametrization of
-  ``transform_intercepts_ordinal`` in the original implementation.
+``docs/model.md`` is the guide to both.
 """
 
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
 import math
+from abc import ABC, abstractmethod
 
 import numpy as np
 import torch
@@ -38,6 +36,7 @@ __all__ = [
     "StandardLogistic",
     "make_univariate_transform",
     "ordinal_abduct",
+    "ordinal_bounds",
     "ordinal_cutpoints",
     "ordinal_log_prob",
     "ordinal_marginal_init_theta",
@@ -55,9 +54,12 @@ BOUND = 5.0
 # only calibrate each other if they use the same level.
 RANGE_Q = 0.05
 
-# floor on an empirical class frequency, and on the gap between two initial
-# cutpoints, in ordinal_marginal_init_theta. 1e-3 bounds the initial cutpoints
-# at +-logit(1e-3) ~ +-6.9, so an empty class starts implausible but finite.
+# used twice in the marginal starts, for two different things. As a floor on
+# an empirical CDF value it bounds the initial cutpoints at +-logit(1e-3) ~
+# +-6.9, so an empty class or a saturated tail starts implausible but finite.
+# As a floor on the latent-scale gap between two neighbouring cutpoints or
+# Bernstein control points it only keeps the sequence strictly increasing,
+# which the softplus inverse needs.
 _CDF_EPS = 1e-3
 
 # clamp margin of the uniform draw in StandardLogistic. 1e-7 keeps u off 0 and 1
@@ -67,16 +69,8 @@ _U_EPS = 1e-7
 
 
 # %% private functions -----------------------------------------------------------------
-def _bounds(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
-    """Give the shifted cutpoint interval of each observed level."""
-    cut = ordinal_cutpoints(theta_tilde) - shift.view(-1, 1)
-    idx = torch.arange(theta_tilde.shape[0], device=theta_tilde.device)
-    y = y.long()
-    return cut[idx, y], cut[idx, y + 1]
-
-
 def _log1mexp(x: Tensor) -> Tensor:
-    """log(1 - exp(x)) for x <= 0, numerically stable (Maechler 2012)."""
+    r"""Give $\log(1 - e^{x})$ for $x \le 0$, stable on both sides of $\log 2$."""
     branch = x > -math.log(2.0)
     # mask each branch's input so the unused branch cannot produce inf/NaN grads
     x_hi = x.clamp(min=-math.log(2.0))
@@ -87,41 +81,39 @@ def _log1mexp(x: Tensor) -> Tensor:
 
 
 # %% public functions ------------------------------------------------------------------
-def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
-    """Build a scaled univariate transform by name.
+def ordinal_bounds(
+    theta_tilde: Tensor, shift: Tensor, y: Tensor
+) -> tuple[Tensor, Tensor]:
+    """Give the shifted cutpoint interval of each observed level.
+
+    ``scores.py`` reads these bounds to form the latent-scale derivative.
 
     Parameters
     ----------
-    name : str
-        One of the registered names: ``"bernstein"``, ``"spline"``, ``"affine"``.
-    **kwargs
-        Passed to the transform class.
+    theta_tilde : Tensor
+        Unconstrained cutpoint parameters, shape ``(n, levels - 1)``.
+    shift : Tensor
+        The node's shift, shape ``(n,)``.
+    y : Tensor
+        Observed levels ``0..levels-1``, shape ``(n,)``.
 
     Returns
     -------
-    _ScaledUT
-        The transform.
-
-    Raises
-    ------
-    ValueError
-        If ``name`` is not registered.
+    tuple[Tensor, Tensor]
+        The lower and upper shifted cutpoint of each row's level, ``(n,)`` each.
     """
-    try:
-        cls = _TRANSFORMS[name]
-    except KeyError:
-        raise ValueError(
-            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)}"
-        ) from None
-    return cls(**kwargs)
+    cut = ordinal_cutpoints(theta_tilde) - shift.view(-1, 1)
+    idx = torch.arange(theta_tilde.shape[0], device=theta_tilde.device)
+    y = y.long()
+    return cut[idx, y], cut[idx, y + 1]
 
 
 def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
-    """Constrain unconstrained parameters to increasing cutpoints.
+    r"""Constrain unconstrained parameters to increasing cutpoints.
 
-    Port of the original implementation's
-    ``transform_intercepts_ordinal``:
-    ``[-inf, t0, t0 + cumsum(exp(t1:)), +inf]``.
+    The cutpoints are $\tilde\vartheta_0$ followed by
+    $\tilde\vartheta_0 + \mathrm{cumsum}(\exp \tilde\vartheta_{1:})$, with
+    $\pm\infty$ at both ends.
 
     Parameters
     ----------
@@ -148,9 +140,9 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
 
 
 def ordinal_marginal_init_theta(counts) -> Tensor:
-    """Give the unconstrained cutpoint parameters that match class counts.
+    r"""Give the unconstrained cutpoint parameters that match class counts.
 
-    The marginal ``P(Y<=k) = sigmoid(cutpoint_k)`` of the result matches
+    The marginal $P(Y \le k) = \sigma(\vartheta_k)$ of the result matches
     the empirical class frequencies.
 
     Parameters
@@ -166,19 +158,15 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
 
     Notes
     -----
-    This inverts ``ordinal_cutpoints``. The finite cutpoints are
-    ``c_0 = tt[0]`` and ``c_i = c_0 + sum_{j<=i} exp(tt[j])``. Given the
-    target ``c_k = logit(F(k))`` (empirical CDF, clamped off 0/1),
-    recover ``tt[0] = c_0`` and ``tt[i] = log(c_i - c_{i-1})``. Like the
-    Bernstein marginal-init, this is a pure initialization: the converged
-    MLE is unchanged.
+    Inverts ``ordinal_cutpoints``: the targets are
+    $c_k = \operatorname{logit} \hat F(k)$ from the empirical CDF, clamped off 0
+    and 1.
     """
     counts = np.asarray(counts, dtype=np.float64)
     p = counts / counts.sum()
     F = np.clip(np.cumsum(p)[:-1], _CDF_EPS, 1 - _CDF_EPS)  # P(Y<=k), k=0..K-2
-    c = np.log(F) - np.log1p(-F)  # logit -> increasing
-    c = np.maximum.accumulate(c)  # guard ties (empty classes)
-    diffs = np.maximum(np.diff(c), _CDF_EPS)
+    c = np.log(F) - np.log1p(-F)  # logit -> non-decreasing
+    diffs = np.maximum(np.diff(c), _CDF_EPS)  # guard ties (empty classes)
     tt = np.empty_like(c)
     tt[0] = c[0]
     tt[1:] = np.log(diffs)
@@ -186,9 +174,9 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
 
 
 def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
-    """Give ``log P(Y = y | cutpoints, shift)``.
+    r"""Give $\log P(Y = y \mid \vartheta, s)$.
 
-    The model is ``P(Y <= k) = sigmoid(theta_k - shift)``.
+    The model is $P(Y \le k) = \sigma(\vartheta_k - s)$.
 
     Parameters
     ----------
@@ -206,28 +194,16 @@ def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
 
     Notes
     -----
-    The computation stays in log-space. Both of these identities hold::
-
-        log(sigmoid(u) - sigmoid(l))
-            = logsigmoid(u) + log1mexp(logsigmoid(l) - logsigmoid(u))
-            = logsigmoid(-l) + log1mexp(logsigmoid(-u) - logsigmoid(-l))
-
-    For each element the function takes the side whose logsigmoids are far from
-    zero, because that side is better conditioned.
-
-    **Do not replace this with the direct difference of two sigmoids.** That
-    form loses all gradient when the sigmoids saturate in float32, which happens
-    for ``|t| > 17`` or so. The gradient is then exactly zero and a badly
-    initialised node freezes at its starting values forever. The log-space form
-    keeps the gradient non-zero, so such a node recovers.
+    Computed in log-space as ``logsigmoid(b) + log1mexp(logsigmoid(a) -
+    logsigmoid(b))``, taking per element the better-conditioned side (the CDF
+    or the survival side). Do not replace this with the difference of two
+    sigmoids: that form has exactly zero gradient once the sigmoids saturate
+    in float32, and a node stuck there never recovers.
     """
-    lower, upper = _bounds(theta_tilde, shift, y)
+    lower, upper = ordinal_bounds(theta_tilde, shift, y)
     ls = torch.nn.functional.logsigmoid
-    # Pick the better-conditioned side per element by *flipping the inputs*
-    # rather than by computing both sides and discarding one: the survival
-    # side is the CDF side of the negated, swapped bounds. Bit-identical to
-    # evaluating both and selecting, in values and in gradients, and it does
-    # half the work — forward+backward measured 20% faster.
+    # the survival side is the CDF side of the negated, swapped bounds, so one
+    # evaluation with flipped inputs replaces computing both and selecting
     flip = upper + lower > 0
     a = torch.where(flip, -upper, lower)
     b = torch.where(flip, -lower, upper)
@@ -254,9 +230,9 @@ def ordinal_pmf(theta_tilde: Tensor, shift: Tensor) -> Tensor:
 
 
 def ordinal_sample(theta_tilde: Tensor, shift: Tensor, z: Tensor) -> Tensor:
-    """Map latents to ordinal levels.
+    r"""Map latents to ordinal levels.
 
-    The rule is ``x = #{finite cutpoints theta_j - shift < z}``.
+    The rule is $x = \#\{j : \vartheta_j - s < z\}$ over the finite cutpoints.
 
     Parameters
     ----------
@@ -303,7 +279,7 @@ def ordinal_abduct(
     Tensor
         The latents, shape ``(n,)``.
     """
-    lower, upper = _bounds(theta_tilde, shift, y)
+    lower, upper = ordinal_bounds(theta_tilde, shift, y)
     u_lo, u_hi = torch.sigmoid(lower), torch.sigmoid(upper)
     u = u_lo + (u_hi - u_lo) * torch.rand(
         lower.shape, device=lower.device, generator=generator
@@ -311,33 +287,89 @@ def ordinal_abduct(
     return StandardLogistic.icdf(u)
 
 
-# %% private classes -------------------------------------------------------------------
-class _ScaledUT(torch.nn.Module):
-    """Base class for the scaled univariate transforms.
+def make_univariate_transform(name: str, **kwargs) -> _ScaledUT:
+    """Build a scaled univariate transform by name.
 
-    An affine pre-map takes ``[xmin, xmax]`` to ``[-B, B]`` with
-    ``B = BOUND``, then a zuko transform maps to the latent scale.
+    Parameters
+    ----------
+    name : str
+        One of ``"bernstein"``, ``"spline"``, ``"affine"``.
+    **kwargs
+        Passed to the transform class.
+
+    Returns
+    -------
+    _ScaledUT
+        The transform.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is not one of the three.
+    """
+    if name not in _TRANSFORMS:
+        raise ValueError(
+            f"unknown transform {name!r}; choose one of {sorted(_TRANSFORMS)}"
+        )
+    return _TRANSFORMS[name](**kwargs)
+
+
+# %% private classes -------------------------------------------------------------------
+class _ScaledUT(torch.nn.Module, ABC):
+    r"""Base class for the scaled univariate transforms.
+
+    An affine pre-map takes $[x_{\min}, x_{\max}]$ to $[-B, B]$ with
+    $B$ = ``BOUND``, then a zuko transform maps to the latent scale.
     Subclasses define ``n_params`` and ``_build(theta) -> zuko Transform``.
+
+    Parameters
+    ----------
+    range_q : float, optional
+        Quantile level of the domain pre-map: ``calibrate`` maps the train
+        ``range_q``/``1 - range_q`` quantiles onto ``[-B, B]``, by default
+        ``RANGE_Q`` (5%/95%); ``0.0`` maps the data min/max. An intercept
+        option: ``SI(range_q=0.0)``.
     """
 
-    def __init__(self):
+    def __init__(self, range_q: float = RANGE_Q):
         super().__init__()
+        if not 0.0 <= range_q < 0.5:
+            raise ValueError(f"range_q must be in [0, 0.5), got {range_q}")
+        self.range_q = range_q
         self.bound = BOUND
         self.register_buffer("xmin", torch.tensor(0.0))
         self.register_buffer("xmax", torch.tensor(1.0))
 
-    @property
-    def n_params(self) -> int:  # pragma: no cover - abstract
-        raise NotImplementedError
+    def marginal_init_theta(self, column: np.ndarray | None) -> Tensor | None:
+        """Give the calibrated marginal start, or ``None`` — no such start.
 
-    def _build(self, theta: Tensor):  # pragma: no cover - abstract
-        raise NotImplementedError
+        ``BernsteinUT`` overrides with its empirical-marginal start; a
+        spline or affine transform has none and silently skips the
+        marginal init.
+
+        Parameters
+        ----------
+        column : numpy.ndarray | None
+            The node's raw training column. ``None`` asks for the
+            data-free start.
+        """
+        return None
+
+    @property
+    @abstractmethod
+    def n_params(self) -> int:
+        """Number of unconstrained parameters the transform takes."""
+
+    @abstractmethod
+    def _build(self, theta: Tensor):
+        """Give the zuko transform on ``[-B, B]`` for one batch of ``theta``."""
 
     def set_range(self, xmin: float, xmax: float) -> None:
         """Set the data range that maps onto the pre-scaled domain.
 
-        ``CausalFlowDAG.calibrate`` calls this once with the train 5%/95%
-        quantiles.
+        ``CausalFlowDAG.calibrate`` calls this once with the train
+        ``range_q``/``1 - range_q`` quantiles (default 5%/95%; ``range_q=0``
+        is the min/max).
 
         Parameters
         ----------
@@ -401,9 +433,11 @@ class _ScaledUT(torch.nn.Module):
         Tensor
             The values in original units, shape ``(n,)``.
         """
+        # zuko inverts by bisection inside the bound and in closed form
+        # (linear / identity) outside
         with torch.no_grad():
-            t = self._build(theta).inv(z0)  # zuko: bisection inside the bound,
-        return self._unscale(t)  # closed-form (linear / identity) outside
+            t = self._build(theta).inv(z0)
+        return self._unscale(t)
 
 
 # %% public classes --------------------------------------------------------------------
@@ -471,10 +505,12 @@ class BernsteinUT(_ScaledUT):
     ----------
     n_coeffs : int, optional
         Number of Bernstein coefficients, by default 20.
+    range_q : float, optional
+        Domain quantile level, see ``_ScaledUT``.
     """
 
-    def __init__(self, n_coeffs: int = 20):
-        super().__init__()
+    def __init__(self, n_coeffs: int = 20, range_q: float = RANGE_Q):
+        super().__init__(range_q)
         self._n = n_coeffs
 
     @property
@@ -485,12 +521,31 @@ class BernsteinUT(_ScaledUT):
     def _build(self, theta: Tensor):
         return BernsteinTransform(theta, bound=self.bound)
 
-    def marginal_init_theta(self) -> Tensor:
-        """Give the unconstrained Bernstein coefficients of the calibrated map.
+    def marginal_init_theta(self, column: np.ndarray | None) -> Tensor:
+        r"""Give the unconstrained Bernstein coefficients of the marginal start.
 
-        The coefficients describe the linear map from the pre-scaled domain
-        ``[-B, B]`` onto the standard-logistic quantiles
-        ``[logit(RANGE_Q), logit(1-RANGE_Q)]``.
+        With ``column`` the control points follow the node's **empirical
+        marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the
+        value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so
+        the polynomial starts as the Bernstein approximation of
+        $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal
+        cutpoints' class log-odds. Without it the control points are
+        equally spaced, the plain linear map from the pre-scaled domain
+        $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with
+        $q$ = ``range_q``.
+
+        Parameters
+        ----------
+        column : numpy.ndarray | None, optional
+            The node's raw training column. ``None`` gives the linear map,
+            which needs no data.
+
+        Raises
+        ------
+        ValueError
+            With ``range_q=0``: the domain ends are the data min/max, whose
+            latent quantile target $\operatorname{logit} 0$ is undefined — skip
+            ``init_marginals`` for a min-max-domain model.
 
         Returns
         -------
@@ -499,31 +554,52 @@ class BernsteinUT(_ScaledUT):
 
         Notes
         -----
-        After ``set_range``, each node's 5%/95% data quantiles already sit
-        at the domain bounds -+B. A single canonical theta therefore maps
-        every node's body onto the latent's 5%/95% quantiles — the right
-        *scale* from step 0. zuko's default (zero) theta instead maps -+B
-        onto about -6.93/+7.63, about 2.5x too steep, so early training is
-        spent on rescaling. This is a pure initialization: the converged
-        MLE is unchanged. See the inversion of
-        ``BernsteinTransform._constrain_theta`` (cumsum of softplus
-        diffs).
+        The unconstrained coefficients come from inverting zuko's
+        ``BernsteinTransform._constrain_theta`` (a cumsum of softplus
+        differences with the first two and the last two control points tied,
+        hence the two averaged pairs below).
         """
         n = self._n
-        q = RANGE_Q
-        a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
-        span = -2.0 * a  # logit(1-q) - logit(q)
+        if self.range_q == 0:
+            raise ValueError(
+                "the marginal start maps the domain ends onto the latent "
+                "range_q quantiles, and logit(0) is undefined — a "
+                "range_q=0 (min-max domain) model has no marginal start; "
+                "skip init_marginals for it"
+            )
         order = n + 1  # constrained control points: n+2
-        b = span / order  # per-step increment (constant)
+        points = self._init_control_points(column if n >= 3 else None, order)
+        diffs = np.maximum(np.diff(points), _CDF_EPS)
+        # zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);
+        # averaging each pair keeps every later control point where it was. The
+        # two pairs overlap below n=3, which is why such a transform takes the
+        # equally spaced start: with 4 control points and both ends tied there
+        # is no shape left to fit.
+        first, last = diffs[:2].mean(), diffs[-2:].mean()
+        diffs[:2], diffs[-2:] = first, last
         shift = math.log(2.0) * n / 2.0  # zuko's centering offset
-        theta = torch.full(
-            (n,),
-            math.log(math.expm1(b)),
-            dtype=self.xmin.dtype,
-            device=self.xmin.device,
-        )
-        theta[0] = a + shift
-        return theta
+        theta = np.empty(n)
+        theta[0] = points[0] + shift
+        theta[1:] = np.log(np.expm1(diffs[1:n]))
+        return torch.as_tensor(theta, dtype=self.xmin.dtype, device=self.xmin.device)
+
+    def _init_control_points(self, column: np.ndarray | None, order: int) -> np.ndarray:
+        r"""Give the ``order + 1`` target control points of the marginal start.
+
+        $\operatorname{logit}$ of the empirical CDF at the equally spaced domain values
+        when a column is given, an equally spaced ramp from ``a`` to ``-a``
+        otherwise.
+        """
+        q = self.range_q
+        a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
+        lo, hi = float(self.xmin), float(self.xmax)
+        u = np.arange(order + 1) / order
+        if column is None or hi <= lo:
+            return a + u * (-2.0 * a)
+        values = np.sort(np.asarray(column, dtype=float))
+        cdf = np.searchsorted(values, lo + u * (hi - lo), side="right") / values.size
+        cdf = np.clip(cdf, _CDF_EPS, 1 - _CDF_EPS)
+        return np.log(cdf) - np.log1p(-cdf)
 
 
 class SplineUT(_ScaledUT):
@@ -532,12 +608,13 @@ class SplineUT(_ScaledUT):
     Parameters
     ----------
     bins : int, optional
-        Number of spline bins, by default 8 — zuko's own NSF default, so a
-        spline node reproduces upstream unless asked otherwise.
+        Number of spline bins, by default 8.
+    range_q : float, optional
+        Domain quantile level, see ``_ScaledUT``.
     """
 
-    def __init__(self, bins: int = 8):
-        super().__init__()
+    def __init__(self, bins: int = 8, range_q: float = RANGE_Q):
+        super().__init__(range_q)
         self.bins = bins
 
     @property

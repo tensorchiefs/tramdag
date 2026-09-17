@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
         fetch-depth: 0   # mike reads and writes the gh-pages branch
-    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
+    - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4   # v10.1.0
       with:
         enable-cache: true
     - run: uv sync --no-default-groups --group docs --group notebooks
@@ -40,18 +40,40 @@ jobs:
           https://github.com/jgm/pandoc/releases/download/3.5/pandoc-3.5-1-amd64.deb
         sudo dpkg -i /tmp/pandoc.deb
         mkdir -p build/pdf/nb
-        # badges are noise in a PDF, and remote images stall the build
-        sed -E -e 's#\[!\[[^]]*\]\([^)]*\)\]\([^)]*\)##g' -e 's#!\[[^]]*\]\(https?://[^)]*\)##g' \
-          README.md > build/pdf/README.md
-        for n in demo_tram_dag_colab intro_tram_dag additive_vs_joint_ci varying_coefficients classical_fit_tram_dag; do
+        # every input is staged through the same two rewrites:
+        #   badges  -- noise in a PDF, and a remote .svg badge makes pandoc emit
+        #              \includesvg, which needs inkscape and fails the build
+        #   [x][ref] -- mkdocstrings cross-references. The site resolves them;
+        #              pandoc prints them raw, and the reference is one long
+        #              unbreakable token that overflows its table column. The
+        #              visible half already carries its own backticks.
+        stage() {
+          sed -E -e 's#\[!\[[^]]*\]\([^)]*\)\]\([^)]*\)##g' \
+                 -e 's#!\[[^]]*\]\(https?://[^)]*\)##g' \
+                 -e 's#\[([^]]+)\]\[[^]]+\]#\1#g' "$1" > "$2"
+        }
+        stage README.md build/pdf/README.md
+        # architecture.md is deliberately absent: it is mostly mermaid fences, which the site renders and pandoc prints as raw code
+        for d in model notation interpretation fitting scores \
+                 varying-coefficients paper-replication code-map zuko-upstream; do
+          stage "docs/$d.md" "build/pdf/$d.md"
+        done
+        for n in demo_tram_dag_colab training_strategies additive_vs_joint_ci \
+                 varying_coefficients classical_fit_tram_dag; do
           uv run jupytext --to notebook --execute --output "build/pdf/nb/$n.ipynb" "notebooks/$n.py"
           uv run jupyter nbconvert --to markdown "build/pdf/nb/$n.ipynb" --output "$n" --output-dir build/pdf/nb
+          stage "build/pdf/nb/$n.md" "build/pdf/nb/$n.staged" && mv "build/pdf/nb/$n.staged" "build/pdf/nb/$n.md"
         done
-        pandoc -f gfm+tex_math_dollars --pdf-engine=xelatex \
+        # pandoc's own `markdown` reader, not `gfm`: only it derives the table
+        # column widths from the separator row, so a wide table wraps inside
+        # p{} columns instead of running off the page in l columns
+        pandoc -f markdown+tex_math_dollars --pdf-engine=xelatex \
           --resource-path=.:docs:build/pdf:build/pdf/nb -V mainfont="DejaVu Serif" -V monofont="DejaVu Sans Mono" \
           -V geometry:margin=2.2cm --toc --toc-depth=2 --metadata title="tramdag documentation" \
-          build/pdf/README.md docs/notation.md docs/fitting.md docs/training-speed.md docs/scores.md \
-          docs/varying-coefficients.md docs/paper-replication.md docs/code-map.md docs/zuko-upstream.md build/pdf/nb/*.md \
+          build/pdf/README.md build/pdf/model.md build/pdf/notation.md build/pdf/interpretation.md \
+          build/pdf/fitting.md build/pdf/scores.md \
+          build/pdf/varying-coefficients.md build/pdf/paper-replication.md \
+          build/pdf/code-map.md build/pdf/zuko-upstream.md build/pdf/nb/*.md \
           -o docs/tramdag-docs.pdf
 
     - name: keep the previous PDF when this build produced none
@@ -59,9 +81,12 @@ jobs:
         set -euo pipefail
         if [ ! -f docs/tramdag-docs.pdf ]; then
           dir="$REF"   # mike's latest alias is a symlink git show cannot traverse
+          # a warning, not a silent republish: the step before is
+          # continue-on-error, so without this a permanently broken PDF build
+          # hides behind a green job and the site serves a stale document
           git show "origin/gh-pages:$dir/tramdag-docs.pdf" > docs/tramdag-docs.pdf 2>/dev/null \
-            && echo "PDF build failed — republishing the previous PDF" \
-            || echo "no PDF this run and none to republish"
+            && echo "::warning::the PDF build failed; republishing the previous, now stale PDF" \
+            || echo "::warning::the PDF build failed and there is none to republish"
         fi
 
     - name: build and publish the site version for this ref

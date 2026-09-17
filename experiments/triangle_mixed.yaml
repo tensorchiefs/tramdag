@@ -1,0 +1,157 @@
+# The mixed-data triangle replication (triangle_mixed.py): full model spec +
+# every training hyperparameter. The script reads no defaults of its own —
+# `spec` is the whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct
+# the flow, `fit_kwargs` go into flow.fit verbatim.
+#
+# Protocol = the paper's own code, summerof24/triangle_structured_mixed.R
+# (tensorchiefs/tram-dag), reproduced 1:1 where the framework allows:
+#   * train = dgp(40000), test = dgp(10000): two separate draws, no split;
+#   * 500 epochs, optimizer_adam() = Keras Adam at lr 0.001, Keras fit() with
+#     its default batch size 32, shuffled; one compiled model, so one
+#     continuous optimizer run — the coefficients are read after every epoch
+#     (batch, lr and the epoch count are the deviations below, for CI runtime);
+#   * len_theta = 20, hidden_features_I = hidden_features_CS = c(2, 2, 2, 2),
+#     sigmoid activations (create_param_net; its ReLU line is commented out) —
+#     in/out dims around the hidden stack (2, 2), read as for the continuous
+#     triangle;
+#   * n_coeffs = len_theta = 20 unconstrained coefficients; zuko ties two
+#     more control points on (order 21 against the reference's 19); the
+#     free-parameter count is what matches;
+#   * ordinal cutpoints theta_k = c(-2, 0.42, 1.02), which this repository's
+#     generator reproduces;
+#   * no learning-rate schedule, no early stopping, final weights;
+#   * no input_transform on any term: the triangle scripts feed the nets raw
+#     parents; the Bernstein domain comes from the train 5%/95% quantiles as
+#     in the R script (range_q default 0.05).
+# Every linear layer starts from Keras' random_normal, sd 0.05, on weights
+# and biases (`init: normal`, the LinearMasked layers). A simple intercept's
+# theta is not a linear layer: `bernp$beta` starts at zero in R. Here it
+# starts at the empirical marginal (`init_marginals: true`, deviation D4 in
+# docs/paper-replication.md): the same endpoint, reached in a fifth of the
+# epochs.
+# Known deviations, documented in docs/paper-replication.md: a [-5, 5]
+# instead of a [0, 1]
+# domain (a reparametrization), zuko's tied end control points instead of the
+# reference's tangent extrapolation, order 21 vs 19 at equal free parameters;
+# the R script runs unseeded, so every seed below is a repo choice.
+#
+# CI-runtime deviations (docs/paper-replication.md): the paper
+# trains 500 epochs at Keras' default batch 32 with lr 0.001 — 42-69 min per
+# variant on the CI runners. Batch 256 with the lr scaled 4x takes 8x fewer
+# steps per epoch and keeps every ground-truth metric. The coefficient
+# trajectories are flat from ~epoch 50; the slow parts are the 2-unit sigmoid
+# CS net and the do(x1) mean (measured, cs variant: cs_curve_max_abs_err
+# 0.344/0.177/0.156 and mean_x3_abs_err_do_x1 0.033/0.060/0.022 at
+# 100/250/350 epochs vs 0.107/0.016 at 500), so the cs variant trains 350
+# epochs and the pure-ls variant 200. relu instead of sigmoid was tried and
+# rejected: the 2-unit relu net dies at this init (cs err 0.859, beta13 -0.055).
+
+paper_protocol: &paper_protocol
+  n_train: 40000          # dgp(40000)
+  n_val: 10000            # test = dgp(10000), a separate draw
+  flow_kwargs:
+    seed: 7               # weight init (repo choice, the R script is unseeded)
+    init: normal          # LinearMasked: random_normal weights and biases (sd 0.05)
+  init_marginals: true    # D4: the empirical-marginal start; the reference starts at zero
+  fit_kwargs:
+    epochs: 350           # paper: 500 (num_epochs); the ls variant trains 200
+    batch_size: 256       # paper: 32 (Keras fit() default)
+    seed: 0               # minibatch shuffling
+  learning_rate: 0.004    # paper: 0.001 (optimizer_adam() default)
+  schedule:               # the reference has no schedule
+  dgp_seed: 42
+  sample_seed: 0          # sampling for the distribution comparisons
+  n_compare: 10000        # rows per distribution panel (Fig. 9/20)
+  do_x1: -1.0             # the paper's L2 query, do(x1 = -1)
+  grid_low: -1.0          # x2 grid of the complex-shift overlay
+  grid_high: 1.0
+  grid_points: 81
+  levels: 4               # ordinal levels of x3, stored 0..3
+  odds_ratio_threshold: -1.0   # App. C.4 looks at odds(x2 <= -1)
+  odds_ratio_n: 40000          # rows of the shared-latent DGP comparison
+  odds_ratio_seed: 99
+  cf_n: 2000                   # rows scored for ordinal counterfactuals, App. B
+  cf_draws: 200                # abduction draws averaged into a per-row PMF
+  cf_seed: 1000
+  figures:                # titles and report captions; {f} and {shift} fill from the variant
+    dag.png:
+      title: 'triangle-mixed/{f}: the DAG, {shift} shift on x2 -> x3'
+      caption: The model as declared, one edge per term, labelled by the term that owns it.
+    training.png:
+      title: 'triangle-mixed/{f}, {shift} model: training'
+      caption: Summed train and validation NLL per epoch; the fit keeps the final weights.
+    marginals.png:
+      title: 'triangle-mixed/{f}, {shift} model: observed vs sampled marginals'
+      caption: The validation rows against a sample of the fitted flow, one panel per node.
+    coefficients.png:
+      title: 'triangle-mixed/{f}, {shift} model: linear-shift coefficients (Fig. 19)'
+      caption: The linear-shift weights after every epoch, dashed at the DGP truth.
+    cs_curve.png:
+      title: complex shift on the ordinal node, DGP f = {f}
+      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at x2 = 0; cs_curve_max_abs_err is the largest gap.
+    distributions.png:
+      title: 'triangle-mixed/{f}, {shift} model: L1/L2 (Fig. 9/20)'
+      caption: Observational and do(x1) samples per variable, DGP filled and flow stepped; the do(x1) mean of x3 is the metric.
+    counterfactual_pmf.png:
+      title: 'ordinal counterfactuals under do(x1={do_x1:+.0f}): only a distribution is identified (App. B)'
+      caption: The counterfactual PMF of x3 averaged over the scored rows, the flow's abduction draws against the analytic law.
+
+# shared node specs
+x1: &x1
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+
+x2: &x2
+  kind: continuous
+  terms:
+  - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
+  - {term: LS, parents: [x1], options: {}}
+
+x3_ls: &x3_ls
+  kind: ordinal
+  levels: 4
+  terms:
+  - {term: I, parents: [], options: {}}
+  - {term: LS, parents: [x1], options: {}}
+  - {term: LS, parents: [x2], options: {}}
+
+x3_cs: &x3_cs
+  kind: ordinal
+  levels: 4
+  terms:
+  - {term: I, parents: [], options: {}}
+  - {term: LS, parents: [x1], options: {}}
+  # hidden (2, 2), sigmoid: create_param_net's reference CS net (mixed)
+  - {term: CS, parents: [x2], options: {units: [2, 2], activation: sigmoid}}
+
+variants:
+  # the paper's headline mixed case (Fig. 9/19 + the C.4 odds-ratio check);
+  # the only variant with a true beta23 (+0.3 in the flow's convention)
+  linear-ls:
+    <<: *paper_protocol
+    f: linear
+    shift: ls             # which coefficients the trajectory plot reads
+    fit_kwargs:
+      epochs: 200           # no CS net to wait for; at 100 the weakly
+                            # identified beta13 sits 57% into its tolerance
+                            # (-0.271 vs the pinned -0.243), at 200 it is safe
+      batch_size: 256
+      seed: 0
+    learning_rate: 0.002    # reads the weakly identified beta13/beta23 out
+                            # slightly closer to the 500-epoch pins than lr
+                            # 0.004 does (beta23 0.333 vs 0.337, pin 0.306)
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_ls
+
+  # a nonlinear f on the ordinal node: the complex shift must recover -f(x2)
+  exp-cs:
+    <<: *paper_protocol
+    f: exp
+    shift: cs
+    spec:
+      x1: *x1
+      x2: *x2
+      x3: *x3_cs

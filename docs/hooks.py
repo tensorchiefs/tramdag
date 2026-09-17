@@ -6,15 +6,19 @@ repository becomes a GitHub URL for the ref being built (``REF``, default
 ``main``). The PDF link is added only when the PDF was built.
 """
 
+# %% imports ---------------------------------------------------------------------------
 import os
 import pathlib
 import posixpath
 import re
 
+# %% global variables ------------------------------------------------------------------
 REPO = "https://github.com/tensorchiefs/tramdag"
-_LINK = re.compile(r"(\]\()([^)\s#][^)\s]*)(\))")
+# markdown links in the guides, href attributes in the rendered notebooks
+_LINK = re.compile(r"(\]\(|href=\")([^)\s#\"][^)\s\"]*)(\)|\")")
 
 
+# %% public functions ------------------------------------------------------------------
 def on_config(config):
     """Execute the notebooks only when CI asks for it (DOCS_EXECUTE=true)."""
     config.plugins["mkdocs-jupyter"].config["execute"] = (
@@ -24,12 +28,35 @@ def on_config(config):
 
 
 def on_page_markdown(markdown, page, config, files):
-    """Rewrite repo-relative links of one page; index.md is README.md itself."""
+    """Rewrite repo-relative links of one guide; index.md is README.md itself."""
+    if page.file.src_uri.startswith("notebooks/"):
+        return markdown  # a notebook arrives as source; its links exist only as HTML
     if page.file.src_uri == "index.md":
         markdown = pathlib.Path("README.md").read_text()
-    page_dir = "" if page.file.src_uri == "index.md" else "docs"
+    markdown = _rewrite(markdown, page, files)
+    if (
+        page.file.src_uri == "index.md"
+        and pathlib.Path("docs/tramdag-docs.pdf").exists()
+    ):
+        markdown = "[Download these docs as one PDF](tramdag-docs.pdf)\n\n" + markdown
+    return markdown
+
+
+def on_page_content(html, page, config, files):
+    """Rewrite the ``href`` attributes of a rendered notebook to final page URLs."""
+    if page.file.src_uri.startswith("notebooks/"):
+        html = _rewrite(html, page, files)
+    return html
+
+
+# %% private functions -----------------------------------------------------------------
+def _rewrite(text, page, files):
+    notebook = page.file.src_uri.startswith("notebooks/")
+    page_dir = (
+        "" if page.file.src_uri == "index.md" else "notebooks" if notebook else "docs"
+    )
     ref = os.environ.get("REF", "main")
-    docs_pages = {f.src_uri for f in files}
+    docs_pages = {f.src_uri: f for f in files}
 
     def repl(m):
         target = m.group(2)
@@ -42,11 +69,12 @@ def on_page_markdown(markdown, page, config, files):
                 repo_path[len(strip) :] if repo_path.startswith(prefix) else None
             )
             if candidate and candidate in docs_pages:
-                rel = (
-                    posixpath.relpath(candidate, page_dir and ".")
-                    if page_dir
-                    else candidate
-                )
+                if notebook:
+                    rel = posixpath.relpath(docs_pages[candidate].url, page.url) + "/"
+                elif page_dir:
+                    rel = posixpath.relpath(candidate, ".")
+                else:
+                    rel = candidate
                 return f"{m.group(1)}{rel}{'#' + anchor if anchor else ''}{m.group(3)}"
         kind = (
             "tree"
@@ -55,10 +83,4 @@ def on_page_markdown(markdown, page, config, files):
         )
         return f"{m.group(1)}{REPO}/{kind}/{ref}/{repo_path}{m.group(3)}"
 
-    markdown = _LINK.sub(repl, markdown)
-    if (
-        page.file.src_uri == "index.md"
-        and pathlib.Path("docs/tramdag-docs.pdf").exists()
-    ):
-        markdown = "[Download these docs as one PDF](tramdag-docs.pdf)\n\n" + markdown
-    return markdown
+    return _LINK.sub(repl, text)

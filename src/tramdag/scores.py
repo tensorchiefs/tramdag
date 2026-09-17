@@ -1,28 +1,12 @@
-"""Per-observation scores and the effect-modifier scan (issue #29).
+r"""Per-observation scores of the shift coefficients, and the effect-modifier scan.
 
-The score psi_i = d l_i / d theta of a fitted model is the cheapest
-effect-modifier detector we know (model-based recursive partitioning /
-structural-change logic; Zeileis & Hornik 2007; Zeileis, Hothorn & Hornik 2008;
-Dandl et al. 2024): at the MLE the scores sum to zero, but if the true effect
-of a treatment *varies* with a covariate, the scores of the treatment
-coefficient drift systematically when ordered by that covariate. Fitting the
-cheap all-``ls`` model (seconds, ``fit_classical``) and scanning the scores
-turns "which VC modifiers should I declare?" from a modeling guess into a
-measured decision — *before* fitting anything expensive.
-
-Because every shift coefficient enters the latent additively, the scores are
-**analytic and exact** (no autograd): ``d l_i / d beta = (d l_i / d s_i) * x_i``
-with the latent-scale derivative in closed form —
-
-- continuous node (``u = h(x) + s``, standard-logistic latent):
-  ``d l / d s = 1 - 2 sigmoid(u)``;
-- ordinal node (``P(Y<=k) = sigmoid(theta_k - s)``):
-  ``d l / d s = (sig'(l) - sig'(u)) / (sig(u) - sig(l))`` with ``l``/``u`` the
-  observed level's shifted cutpoint bounds.
-
-The public entry points are the ``CausalFlowDAG`` methods
-:meth:`~tramdag.CausalFlowDAG.scores` and
-:meth:`~tramdag.CausalFlowDAG.effect_modifier_scan`. Both delegate here.
+The scores $\psi_i = \partial \ell_i / \partial \beta$ are analytic: every shift
+coefficient enters the latent additively, so
+$\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$ with the
+latent-scale derivative in closed form (``_dl_ds``). The scan orders
+one coefficient's scores by a candidate covariate and reports a CUSUM
+statistic with its p-value. The ``CausalFlowDAG`` methods [`scores`][] and
+[`effect_modifier_scan`][] delegate here; ``docs/scores.md`` is the guide.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -34,9 +18,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .conditioners import LinearShift
-from .spec import OrdinalNode
-from .transforms import _bounds
+from .transforms import ordinal_bounds
 
 # %% global variables ------------------------------------------------------------------
 __all__ = ["effect_modifier_scan", "node_scores", "sup_bb_pvalue"]
@@ -46,59 +28,23 @@ CRIT_5PCT = 1.3581
 
 
 # %% private functions -----------------------------------------------------------------
-def _dl_ds(
-    nd, feats: dict, x: torch.Tensor, n: int, vc_ehat: dict | None = None
-) -> torch.Tensor:
-    """Give ``d l_i / d s_i``, shape ``(n,)``.
+def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
+    r"""Give $\partial \ell_i / \partial s_i$, shape ``(n,)``.
 
     This is the closed-form derivative of the per-row log-likelihood with
     respect to the total shift of the node.
     """
-    theta, shift = nd.theta_shift(feats, n, vc_ehat=vc_ehat)
+    theta, shift = nd.theta_shift(feats, x.shape[0])
     if nd.kind == "continuous":
         z0, _ = nd.ut.forward(theta, x)
         return 1.0 - 2.0 * torch.sigmoid(z0 + shift)
-    lower, upper = _bounds(theta, shift, x)  # already include -s
+    lower, upper = ordinal_bounds(theta, shift, x)  # already include -s
     sl, su = torch.sigmoid(lower), torch.sigmoid(upper)
     return (sl * (1 - sl) - su * (1 - su)) / (su - sl)
 
 
-def _ls_score_columns(
-    flow, ls_groups: list, feats: dict, dlds: torch.Tensor
-) -> dict[str, np.ndarray]:
-    """Give the score columns of the ``LS`` coefficients.
-
-    Parameters
-    ----------
-    flow : CausalFlowDAG
-        The fitted flow, to look up parent kinds.
-    ls_groups : list
-        The ``(key, parents)`` shift groups whose conditioner is a
-        :class:`~tramdag.conditioners.LinearShift`.
-    feats : dict
-        The encoded parent features.
-    dlds : torch.Tensor
-        ``d l_i / d s_i``, shape ``(n,)``.
-
-    Returns
-    -------
-    dict[str, np.ndarray]
-        One entry per coefficient: a continuous parent gives one column
-        named after the parent, an ordinal parent one column per one-hot
-        level, named ``"{parent}[{k}]"``.
-    """
-    cols: dict[str, np.ndarray] = {}
-    for key, (parent,) in ls_groups:  # an LS term has exactly one parent
-        psi = (dlds.unsqueeze(1) * feats[parent]).cpu().numpy()
-        if isinstance(flow.spec[parent], OrdinalNode):
-            for k in range(psi.shape[1]):  # one column per one-hot level
-                cols[f"{parent}[{k}]"] = psi[:, k]
-        else:
-            cols[key] = psi[:, 0]
-    return cols
-
-
 # %% public functions ------------------------------------------------------------------
+@torch.no_grad()
 def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
     """Compute the per-observation scores of the interpretable coefficients.
 
@@ -136,31 +82,23 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
         If the node has no ``LS`` or ``VC`` term.
     """
     nd = flow._node(node)
-    ls_groups = [
-        (key, ps)
-        for key, ps in nd._shift_groups
-        if isinstance(nd.shifts[key], LinearShift)
-    ]
-    if not ls_groups and not nd._vc_groups:
+    scored = [m for m in nd.shifts.values() if m.scored]
+    if not scored:
         raise ValueError(
             f"node {node!r} has no LS or VC terms. Shift scores need "
             "at least one interpretable shift coefficient."
         )
 
     # not y-free: l_i needs x. Plus the e_hat inputs of centered terms.
-    needed = [*nd.parents, node, *flow._vc_ehat_columns(nd)]
-    missing = [c for c in needed if c not in df.columns]
-    if missing:
-        raise KeyError(f"data is missing column(s): {missing}")
-    values = flow._tensorize(df, needed)
-    feats = flow._features({p: values[p] for p in nd.parents})
-    ehat = flow._vc_ehat_live(nd, values, len(df))
-    dlds = _dl_ds(nd, feats, values[node], len(df), vc_ehat=ehat)
+    needed = [*nd.parents, node, *flow._query_side_columns(nd)]
+    values = flow._tensorize(df, needed)  # names a missing column
+    feats = flow._parent_feats(nd, values)
+    feats |= flow._side_feats(nd, values, len(df))
+    dlds = _dl_ds(nd, feats, values[node])
 
-    cols = _ls_score_columns(flow, ls_groups, feats, dlds)
-    for g in nd._vc_groups:  # d s / d beta0 is the term's own regressor
-        t = nd.vc_column(g, feats, ehat)
-        cols[g.on] = (dlds * t.squeeze(-1)).cpu().numpy()
+    cols: dict[str, np.ndarray] = {}
+    for m in scored:
+        cols.update(m.score_columns(nd, flow, feats, dlds))
     return pd.DataFrame(cols, index=df.index)
 
 
@@ -179,37 +117,40 @@ def sup_bb_pvalue(stat: float) -> float:
     """
     if stat <= 0:
         return 1.0  # the series alternates to 0.0 here, which is the wrong tail
-    # 100 terms: the k-th is exp(-2k^2 stat^2), so past k ~ 10 it underflows
+    # 100 terms, and they are all needed. The k-th is exp(-2k^2 stat^2), which
+    # underflows past k ~ 10 only for a LARGE statistic. A small one converges
+    # slowly: at stat = 0.02 the truncation at k = 10 returns 0.084 where the
+    # series gives 0.9997, so a perfectly stable coefficient would be reported
+    # as significant. stat = 0.2 still needs 20 terms.
     s = sum(
         (-1) ** (k + 1) * math.exp(-2.0 * k * k * stat * stat) for k in range(1, 101)
     )
     return min(1.0, max(0.0, 2.0 * s))
 
 
+@torch.no_grad()
 def effect_modifier_scan(
-    flow, df: pd.DataFrame, node: str, t: str, candidates: list[str] | None = None
+    flow,
+    df: pd.DataFrame,
+    node: str,
+    *,
+    t: str,
+    candidates: list[str] | None = None,
+    column: str | None = None,
 ) -> pd.DataFrame:
-    """Scan the ``t``-coefficient scores for effect-modifier drift.
+    r"""Scan the ``t``-coefficient scores for effect-modifier drift.
 
-    For each candidate covariate ``c``, the scan orders the
-    per-observation scores of the treatment coefficient by ``c`` and forms
-    the scaled cumulative-sum process
-    ``B_j = sum_{i<=j} psi_(i) / (sd(psi) * sqrt(n))``. Under parameter
-    stability ``B`` converges to a Brownian bridge, so ``sup_j |B_j|`` has
-    the Kolmogorov distribution (5% critical value 1.3581). A systematic
-    drift — the true effect varying with ``c`` — inflates it. Covariates
-    flagged here are the measured candidates for ``VC`` modifiers
-    (Zeileis-Hornik fluctuation test).
-
-    For heavily tied (few-level) candidates the ordering is only partial.
-    Read the scan as a ranking diagnostic, not as an exact-size test.
+    For each candidate covariate the scan orders the treatment coefficient's
+    scores by it, forms the scaled cumulative sum
+    $B_j = \sum_{i \le j} \psi_{(i)} / (\mathrm{sd}(\psi)\sqrt{n})$ and reports
+    $\sup_j |B_j|$ with its Kolmogorov p-value and the 5% critical value.
 
     Parameters
     ----------
     flow : CausalFlowDAG
         The fitted flow.
     df : pd.DataFrame
-        Observations, as for :func:`node_scores`.
+        Observations, as for [`node_scores`][tramdag.scores.node_scores].
     node : str
         Name of the outcome node.
     t : str
@@ -219,6 +160,10 @@ def effect_modifier_scan(
     candidates : list[str] | None, optional
         Candidate covariates. Defaults to every column of ``df`` except
         ``node`` and ``t``.
+    column : str | None, optional
+        Score column to scan, overriding the ``t``-derived choice — the
+        way to scan one level contrast of a multi-level ordinal
+        treatment (e.g. ``"t[2]"``), which has no single default column.
 
     Returns
     -------
@@ -235,20 +180,33 @@ def effect_modifier_scan(
         If the score column is constant.
     """
     psi_df = node_scores(flow, df, node)
-    if t in psi_df.columns:
+    if column is not None:
+        if column not in psi_df.columns:
+            raise KeyError(
+                f"no score column {column!r} on node {node!r} "
+                f"(have {list(psi_df.columns)})"
+            )
+        col = column
+    elif t in psi_df.columns:
         col = t
-    elif f"{t}[1]" in psi_df.columns and f"{t}[2]" not in psi_df.columns:
-        col = f"{t}[1]"  # binary ordinal LS: the contrast
+    elif (
+        t in flow.spec
+        and flow.spec[t].kind == "ordinal"
+        and flow.spec[t].levels == 2
+        and f"{t}[1]" in psi_df.columns
+    ):
+        col = f"{t}[1]"  # the identified contrast of a binary ordinal LS parent
     else:
         raise KeyError(
             f"no score column for treatment {t!r} on node {node!r} "
-            f"(have {list(psi_df.columns)})."
+            f"(have {list(psi_df.columns)}). For a multi-level ordinal "
+            "treatment pass column= with the level contrast to scan."
         )
     psi = psi_df[col].to_numpy()
     n = len(psi)
     sd = psi.std()
     if sd == 0:
-        raise ValueError(f"score column {col!r} is constant. There is nothing to scan.")
+        raise ValueError(f"score column {col!r} is constant; there is nothing to scan")
 
     if candidates is None:
         candidates = [c for c in df.columns if c not in (node, t)]

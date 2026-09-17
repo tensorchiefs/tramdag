@@ -7,7 +7,7 @@ import pytest
 import torch
 
 from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
-from tramdag.spec import validate_and_sort
+from tramdag.spec import spec_from_dict, spec_to_dict, validate_and_sort
 from tramdag.transforms import (
     BOUND,
     AffineUT,
@@ -35,8 +35,8 @@ def fitted_flow():
     df = pd.DataFrame({"X": x, "Y": y, "W": w})
     spec = {
         "X": ContinuousNode(),
-        "Y": OrdinalNode(4, [LS("X")]),
-        "W": ContinuousNode([LS("X"), LS("Y")]),
+        "Y": OrdinalNode(4, LS("X")),
+        "W": ContinuousNode(LS("X") + LS("Y")),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(
@@ -106,8 +106,8 @@ def test_ordinal_cutpoints_increasing_and_pmf_sums_to_one():
 
 def test_topological_order():
     spec = {
-        "C": OrdinalNode(3, [LS("A"), LS("B")]),
-        "B": ContinuousNode([CS("A")]),
+        "C": OrdinalNode(3, LS("A") + LS("B")),
+        "B": ContinuousNode(CS("A")),
         "A": ContinuousNode(),
     }
     order = validate_and_sort(spec)
@@ -185,9 +185,9 @@ def test_ls_node_equals_proportional_odds():
     df = pd.DataFrame({"X1": x1, "X2": x2, "Y": y})
 
     spec = {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "Y": OrdinalNode(4, [LS("X1"), LS("X2")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "Y": OrdinalNode(4, LS("X1") + LS("X2")),
     }
     flow = CausalFlowDAG(spec)
     flow.fit(df, epochs=400, learning_rate=0.05, batch_size=1000, seed=1)
@@ -197,8 +197,8 @@ def test_ls_node_equals_proportional_odds():
     )
 
     # our model: P(Y<=k) = sigmoid(theta_k - (w1 x1 + w2 x2)); statsmodels likewise
-    w1 = float(flow.nodes["Y"].shifts["X1"].weight)
-    w2 = float(flow.nodes["Y"].shifts["X2"].weight)
+    coefs = flow.ls_coefficients()["Y"]
+    w1, w2 = float(coefs["X1"][0]), float(coefs["X2"][0])
     assert w1 == pytest.approx(res.params["X1"], abs=0.05)
     assert w2 == pytest.approx(res.params["X2"], abs=0.05)
 
@@ -217,7 +217,7 @@ def test_affine_zero_theta_is_the_logistic_density():
     """
     df = pd.DataFrame({"x": np.linspace(-4.0, 6.0, 400)})
     flow = CausalFlowDAG({"x": ContinuousNode(I(transform="affine"))}, seed=0)
-    flow.calibrate(df, marginal_init=False)
+    flow.calibrate(df)
     with torch.no_grad():
         flow.nodes["x"].intercept.theta.zero_()
     xmin, xmax = (float(v) for v in (flow.nodes["x"].ut.xmin, flow.nodes["x"].ut.xmax))
@@ -230,3 +230,61 @@ def test_affine_zero_theta_is_the_logistic_density():
     # the transform ranges are the train 5%/95% quantiles, as calibrate documents
     q = df["x"].quantile([0.05, 0.95])
     assert (xmin, xmax) == pytest.approx((q.iloc[0], q.iloc[1]))
+
+
+def test_range_q_option_sets_the_domain():
+    """``range_q`` is an intercept option: 0.0 calibrates the domain to the
+    train min/max (the reference comparisons' ``scale_df``), and the value
+    survives a save/load round-trip through the spec.
+    """
+    df = pd.DataFrame({"x": np.linspace(-4.0, 6.0, 400)})
+    flow = CausalFlowDAG({"x": ContinuousNode(I(range_q=0.0))}, seed=0)
+    flow.calibrate(df)
+    ut = flow.nodes["x"].ut
+    assert (float(ut.xmin), float(ut.xmax)) == pytest.approx((-4.0, 6.0))
+    d = spec_from_dict(spec_to_dict(flow.spec))
+    assert d["x"].terms[0] == flow.spec["x"].terms[0]
+    with pytest.raises(ValueError, match="range_q"):
+        CausalFlowDAG({"x": ContinuousNode(I(range_q=0.6))})
+
+
+def test_shift_curve_matches_the_manual_composition(ls_chain):
+    """``shift_curve`` equals the nd.shifts + net_input reach-in it replaces,
+    and refuses an unknown shift key with the available ones named.
+    """
+    from tramdag import CS, ContinuousNode
+
+    df = ls_chain["draw"](400, 0)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df, epochs=5, batch_size=200)
+    grid = np.linspace(-2, 2, 41)
+    x = torch.as_tensor(grid, dtype=torch.float32).view(-1, 1)
+    nd = flow.nodes["x2"]
+    with torch.no_grad():
+        manual = nd.shifts["x1"](nd.net_input({"x1": x}, ("x1",), "x1")).numpy().ravel()
+    assert np.allclose(flow.shift_curve("x2", "x1", grid), manual)
+    with pytest.raises(KeyError, match="available"):
+        flow.shift_curve("x2", "nope", grid)
+
+
+def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain):
+    """An ordinal parent enters one-hot, so a 1-D grid is not its input.
+
+    It used to reach the layer and fail with torch's shape message, in a
+    package that names every other mistake by hand.
+    """
+    from tramdag import LS, ContinuousNode, OrdinalNode
+
+    df = ls_chain["draw"](200, 0)[["x1", "x2", "t"]]
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1")),
+        "y": ContinuousNode(LS("t")),
+    }
+    df = df.assign(y=df["x2"] - 0.8 * df["t"])
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df, epochs=2, batch_size=100)
+    with pytest.raises(ValueError, match="ordinal parent"):
+        flow.shift_curve("y", "t", np.linspace(0, 1, 5))

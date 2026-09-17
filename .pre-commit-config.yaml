@@ -3,7 +3,7 @@
 #   pre-commit install --install-hooks -t pre-commit -t commit-msg
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.16.3
+  rev: v0.16.7
   hooks:
   - id: ruff-check
     args: [--fix]
@@ -18,6 +18,8 @@ repos:
   - id: check-shebang-scripts-are-executable
   - id: check-toml
   - id: check-yaml
+    # syntax-only: mkdocs.yml needs the !!python/name mermaid-fence tag
+    args: [--unsafe]
   - id: end-of-file-fixer
   - id: mixed-line-ending
   - id: trailing-whitespace
@@ -50,15 +52,18 @@ repos:
     stages: [commit-msg]
 
 - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-  rev: v7.0.1
+  rev: v8.0.1
   hooks:
   # cognitive complexity, tiered: framework code may be intricate where the
   # maths is; examples and tests must stay simple enough to read as prose
   - id: complexipy
     alias: complexipy-src
-    name: complexipy (src, max 15)
+    name: complexipy (src + tools, max 15)
     args: [--max-complexity-allowed, '15']
-    files: ^src/
+    # tools/ is developer code, so it belongs on the framework tier rather
+    # than the examples one; it matched neither before, and gen_diagrams.py
+    # had drifted to 22 unnoticed
+    files: ^(src|tools)/
   - id: complexipy
     alias: complexipy-examples
     name: complexipy (experiments/notebooks/tests, max 10)
@@ -72,12 +77,12 @@ repos:
   - id: actionlint   # workflow syntax, expressions, runner labels, shellcheck
 
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.12.5
+  rev: 0.12.13
   hooks:
   - id: uv-lock   # keep uv.lock in sync when pyproject dependencies change
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v4.17.1
+  rev: v4.18.0
   hooks:
   - id: commitizen   # conventional-commit message check, per message
     stages: [commit-msg]

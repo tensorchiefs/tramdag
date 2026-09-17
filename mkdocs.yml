@@ -4,6 +4,10 @@ site_url: https://tensorchiefs.github.io/tramdag/
 repo_url: https://github.com/tensorchiefs/tramdag
 edit_uri: blob/main/
 docs_dir: docs
+# A docstring that documents a parameter the signature does not have, or a
+# link to a page that moved, is only a log line otherwise. Both had already
+# happened, so the build fails on a warning instead of printing it.
+strict: true
 exclude_docs: |
   __pycache__/
   *.pyc
@@ -20,17 +24,19 @@ theme:
 nav:
 - Home: index.md
 - Guides:
+  - The model: model.md
   - Notation: notation.md
+  - Interpretation: interpretation.md
   - Fitting: fitting.md
-  - Training speed: training-speed.md
   - Scores: scores.md
   - Varying coefficients: varying-coefficients.md
   - Paper replication: paper-replication.md
+  - Architecture: architecture.md
   - Code map: code-map.md
   - Zuko upstream: zuko-upstream.md
 - Notebooks:
-  - Demo (Colab): notebooks/demo_tram_dag_colab.py
-  - Introduction: notebooks/intro_tram_dag.py
+  - Introduction and demo (Colab): notebooks/demo_tram_dag_colab.py
+  - Training strategies: notebooks/training_strategies.py
   - Additive vs joint intercepts: notebooks/additive_vs_joint_ci.py
   - Varying coefficients: notebooks/varying_coefficients.py
   - Classical fitting: notebooks/classical_fit_tram_dag.py
@@ -38,10 +44,14 @@ nav:
   - tramdag: api/tramdag.md
   - spec: api/spec.md
   - flow: api/flow.md
+  - modules: api/modules.md
+  - nodes: api/nodes.md
+  - fitting: api/fitting.md
+  - readouts: api/readouts.md
   - transforms: api/transforms.md
-  - conditioners: api/conditioners.md
   - scores: api/scores.md
   - callbacks: api/callbacks.md
+  - plots: api/plots.md
 
 hooks: [docs/hooks.py]
 
@@ -54,10 +64,15 @@ plugins:
         paths: [src]
         options:
           docstring_style: numpy
-          show_source: false
+          show_source: true
           members_order: source
           show_root_heading: true
           separate_signature: true
+          # a docstring names a sibling as `[`pmf`][]` and the handler resolves
+          # it in scope, so a cross-reference does not carry a dotted path that
+          # goes stale on a rename
+          scoped_crossrefs: true
+          relative_crossrefs: true
 - mkdocs-jupyter:
     include: ['*.py']
     ignore: [hooks.py]    # the link hook is not a notebook
@@ -69,7 +84,13 @@ markdown_extensions:
 - admonition
 - tables
 - toc: {permalink: true}
-- pymdownx.superfences
+# the mermaid fence renders the architecture diagrams; Material ships the
+# mermaid.js integration once the fence class is "mermaid"
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format
 - pymdownx.arithmatex: {generic: true}
 
 extra_javascript:

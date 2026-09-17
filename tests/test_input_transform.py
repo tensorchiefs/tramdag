@@ -54,7 +54,7 @@ def test_simple_intercept_rejects_the_option():
     from tramdag import SI
 
     with pytest.raises(ValueError, match="no network inputs"):
-        CausalFlowDAG({"a": ContinuousNode([SI(input_transform="minmax")])})
+        CausalFlowDAG({"a": ContinuousNode(SI(input_transform="minmax"))})
 
 
 def test_net_inputs_span_unit_interval_after_first_fit():
@@ -69,7 +69,7 @@ def test_net_inputs_span_unit_interval_after_first_fit():
         assert torch.allclose(scaled.max(0).values, torch.ones(scaled.shape[1]))
     # a second fit on other rows keeps the first frozen statistics
     flow.fit(df + 10.0, epochs=1, batch_size=100)
-    lo = float(flow.nodes["x2"].input_transforms["@I"].lo[0])
+    lo = float(flow.nodes["x2"].intercept.input_transform.lo[0])
     assert lo == pytest.approx(df["x1"].min())
 
 
@@ -139,7 +139,7 @@ def test_save_load_keeps_option_and_calibration(tmp_path):
     flow.fit(df, epochs=1, batch_size=100)
     flow.save(tmp_path / "flow.pt")
     loaded = CausalFlowDAG.load(tmp_path / "flow.pt")
-    assert loaded.nodes["x2"].input_transforms["@I"].kind == "minmax"
+    assert loaded.nodes["x2"].intercept.input_transform.method == "minmax"
     u = pd.DataFrame(np.random.default_rng(1).logistic(size=(20, 3)), columns=SPEC)
     pd.testing.assert_frame_equal(
         flow.sample(20, u=u, do={"x1": 9.0}), loaded.sample(20, u=u, do={"x1": 9.0})
@@ -153,12 +153,13 @@ def test_mixed_node_transforms_only_its_own_term():
     flow.fit(df, epochs=1, batch_size=100)
     nd = flow.nodes["x3"]
     feats = flow._features(_tensors(df))
+    grid = df["x1"].to_numpy()
     with torch.no_grad():
         _, shift = nd.theta_shift(feats, len(df))
-        expected = nd.shifts["x1"](nd.net_input(feats, ("x1",), "x1")) + nd.shifts[
-            "x2"
-        ](feats["x2"])
-    assert torch.allclose(shift, expected)
+    # public routes: the CS curve (through its input transform) + the raw LS
+    cs = flow.shift_curve("x3", "x1", grid)
+    ls = float(flow.ls_coefficients()["x3"]["x2"][0]) * df["x2"].to_numpy()
+    np.testing.assert_allclose(shift.numpy(), cs + ls, atol=1e-5)
 
 
 def test_read_outs_use_the_transformed_inputs():
@@ -193,7 +194,7 @@ def test_read_outs_use_the_transformed_inputs():
         vc = nd.shifts["t"]
         beta = vc.beta(nd.net_input(feats, ("x1",), "t"), len(df))
         parts = flow.intercept_contributions(df, "y")
-        raw = nd.intercept_nets[0](nd.net_input(feats, ("x1",), "@I"))
+        raw = nd.intercept.nets[0](nd.net_input(feats, ("x1",), "@I"))
     np.testing.assert_allclose(flow.varying_coef(df, "y"), beta.numpy().ravel())
     np.testing.assert_allclose(
         parts["contributions"]["x1"], (raw - raw.mean(0)).numpy(), atol=1e-6

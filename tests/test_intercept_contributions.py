@@ -1,4 +1,4 @@
-"""Tests for issue #20 Option A: post-hoc mean-centered per-term decomposition
+"""Post-hoc mean-centered per-term decomposition
 of an additive complex intercept (``flow.intercept_contributions``).
 
 The decomposition must be (a) exact — baseline + summed contributions reproduce
@@ -30,7 +30,7 @@ def _additive_ci_flow():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "x3": ContinuousNode([I("x1", "x2", allow_interaction=False)]),
+        "x3": ContinuousNode(I("x1", "x2", allow_interaction=False)),
     }  # additive CI
     return CausalFlowDAG(spec, seed=1)
 
@@ -51,7 +51,7 @@ def test_baseline_plus_contributions_reproduces_theta():
     with torch.no_grad():
         theta = sum(
             net(torch.cat([feats[p] for p in grp], dim=1))
-            for net, grp in zip(nd.intercept_nets, nd._intercept_groups, strict=True)
+            for net, grp in zip(nd.intercept.nets, nd.intercept.groups, strict=True)
         )
     np.testing.assert_allclose(recon, theta.numpy(), rtol=1e-5, atol=1e-5)
 
@@ -81,7 +81,7 @@ def test_ordinal_additive_ci():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "y": OrdinalNode(4, [I("x1", "x2", allow_interaction=False)]),
+        "y": OrdinalNode(4, I("x1", "x2", allow_interaction=False)),
     }
     flow = CausalFlowDAG(spec, seed=2)
     df = _data()
@@ -100,7 +100,7 @@ def test_works_for_any_continuous_transform(transform, P):
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
         "x3": ContinuousNode(
-            [I("x1", "x2", allow_interaction=False, transform=transform)]
+            I("x1", "x2", allow_interaction=False, transform=transform)
         ),
     }
     flow = CausalFlowDAG(spec, seed=5)
@@ -115,7 +115,7 @@ def test_works_for_any_continuous_transform(transform, P):
     with torch.no_grad():
         theta = sum(
             net(torch.cat([feats[p] for p in grp], dim=1))
-            for net, grp in zip(nd.intercept_nets, nd._intercept_groups, strict=True)
+            for net, grp in zip(nd.intercept.nets, nd.intercept.groups, strict=True)
         )
     np.testing.assert_allclose(recon, theta.numpy(), rtol=1e-5, atol=1e-5)
     for contrib in res["contributions"].values():
@@ -125,7 +125,7 @@ def test_works_for_any_continuous_transform(transform, P):
 def test_raises_on_node_without_complex_intercept():
     spec = {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
+        "x2": ContinuousNode(LS("x1")),
     }  # shift only, no I-term
     flow = CausalFlowDAG(spec, seed=0)
     df = _data()
@@ -145,7 +145,7 @@ def test_raises_on_unknown_node():
 def test_raises_on_missing_parent_column():
     flow = _additive_ci_flow()
     df = _data().drop(columns=["x2"])
-    with pytest.raises(KeyError, match="missing intercept-parent"):
+    with pytest.raises(KeyError, match="lacks the column"):
         flow.intercept_contributions(df, "x3")
 
 
@@ -154,7 +154,7 @@ def test_joint_complex_intercept_single_component():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
-        "x3": ContinuousNode([I("x1", "x2")]),
+        "x3": ContinuousNode(I("x1", "x2")),
     }
     flow = CausalFlowDAG(spec, seed=4)
     df = _data()

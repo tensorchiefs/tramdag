@@ -1,14 +1,14 @@
 # Notebook data
 
 Small datasets the notebooks read. Anything larger, or tied to an experiment
-rather than a notebook, belongs in `experiments/<area>/data/` instead.
+rather than a notebook, belongs in `experiments/data/` instead.
 
 ## `birthwt.csv`
 
-Four columns of `MASS::birthwt` — the low-birth-weight study of Hosmer &
-Lemeshow (1989), 189 births at Baystate Medical Center — used by
-`classical_fit_tram_dag.py` as a logistic-regression example that a reader can
-re-fit in R.
+Five columns of `MASS::birthwt`, the low-birth-weight study of Hosmer and
+Lemeshow (1989). It holds 189 births at Baystate Medical Center.
+`classical_fit_tram_dag.py` uses it as a logistic-regression example that a
+reader can re-fit in R.
 
 | column | meaning |
 |---|---|
@@ -27,25 +27,21 @@ write.csv(birthwt[, c("low", "age", "lwt", "smoke", "bwt")],
 ```
 
 The copy exists only so the notebook runs without R. **The R side of the
-comparison needs no file at all** — `birthwt` ships with MASS, so the notebook's
-pasteable snippet reads `data = birthwt` directly, which is what makes the
-three-way agreement checkable by anyone with an R install. `MASS` is GPL-2/GPL-3
-and its datasets are redistributable on those terms.
+comparison needs no file at all.** `birthwt` ships with MASS, so the notebook's
+pasteable snippet reads `data = birthwt` directly. Anyone with an R install can
+therefore check the three-way agreement. `MASS` is GPL-2/GPL-3, and its
+datasets are redistributable on those terms.
 
-Regenerating this file is a **contract change**: `classical_fit_tram_dag.py`
-compares against R coefficients hard-coded from the fit above, so a regenerated
-CSV means re-running the R snippet and updating `R_GLM` / `R_LOGLIK` there.
+Regenerating this file is a **contract change**. `classical_fit_tram_dag.py`
+compares against R coefficients hard-coded from the fit above. A regenerated
+CSV therefore means you re-run the R snippet and update `R_GLM` and
+`R_LOGLIK` there.
 
 ## `vaca.csv`
 
 The bimodal VACA triangle of Section 1 of `classical_fit_tram_dag.py`: 1000 rows
-of `x1`, `x2`, `x3` from
-
-```
-x1 ~ 0.5 N(-2, 1.5) + 0.5 N(1.5, 1)
-x2 = -x1 + N(0, 1)
-x3 =  x1 + 0.25 x2 + N(0, 1)
-```
+of `x1`, `x2`, `x3` from the SCM stated in
+[`docs/paper-replication.md`](../../docs/paper-replication.md).
 
 The notebook carries its generator in an `if False:` block, so a normal run
 reads this file and does not rewrite it. Run that block by hand to regenerate
@@ -53,19 +49,16 @@ the sample, which is seeded and therefore reproducible. The file is tracked so
 that the R snippet in the same section reads the identical rows the flow was
 fitted on.
 
-The notebook pins R's reference coefficients from that file:
+The notebook pins R's reference coefficients for this file in its `R_COLR`
+constant, and `classical_fit_tram_dag.R` is the script that produces them.
+Use `order = 21`, not 19 ([`docs/zuko-upstream.md`](../../docs/zuko-upstream.md)
+on the count).
 
-```r
-library(tram)
-d <- read.csv("notebooks/data/vaca.csv")
-m <- Colr(x3 ~ x1 + x2, data = d, order = 19)
-coef(m)     # -> x1 -1.778313   x2 -0.455721
-logLik(m)   # -> -1412.012824
-```
+A change to `n` or to the seed changes those numbers. Re-run
+`Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
+change either.
 
-(R 4.2.3, tram 1.0.4.) A change to `n` or to the seed changes those numbers, so
-re-run the snippet and update `R_COLR` in the notebook when you change either.
-
-Not to be confused with `experiments/paper/data/vaca/` — that is the frozen
-5000-row benchmark of the TRAM-DAG paper replications, under the testing
-contract described in CLAUDE.md. This file is neither frozen nor a contract.
+Not to be confused with `experiments/data/vaca/`, the frozen 5000-row
+benchmark of the paper replications under the data contract of
+[`experiments/README.md`](../../experiments/README.md). This file is neither
+frozen nor a contract.

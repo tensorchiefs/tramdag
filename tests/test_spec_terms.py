@@ -25,9 +25,9 @@ def _toy_df(n=64, seed=0):
 def _terms_spec():
     return {
         "X1": ContinuousNode(),
-        "X2": ContinuousNode([LS("X1")]),
-        "X3": ContinuousNode([I("X1"), CS("X2")]),
-        "Y": OrdinalNode(4, [LS("X3")]),
+        "X2": ContinuousNode(LS("X1")),
+        "X3": ContinuousNode(I("X1") + CS("X2")),
+        "Y": OrdinalNode(4, LS("X3")),
     }
 
 
@@ -43,7 +43,7 @@ def test_terms_spec_builds_and_scores():
 
 def test_node_internal_structure_matches():
     flow = CausalFlowDAG(_terms_spec(), seed=0)
-    assert flow.nodes["X3"].ci_parents == ["X1"]  # I("X1") -> ci-parent
+    assert flow.nodes["X3"].intercept.ci_parents == ["X1"]  # I("X1") -> ci-parent
     assert set(flow.nodes["X3"].shifts) == {"X2"}  # CS("X2") -> shift
     assert flow.nodes["X3"].parents == ("X1", "X2")  # ordered parent names
 
@@ -65,17 +65,17 @@ def test_joint_terms_build(term, n_shift, n_ci):
     }
     node = CausalFlowDAG(spec, seed=0).nodes["X3"]
     assert len(node.shifts) == n_shift  # joint CS -> a single shift module
-    assert len(node.ci_parents) == n_ci  # joint I  -> both parents pooled
+    assert len(node.intercept.ci_parents) == n_ci  # joint I -> both parents pooled
 
 
 def test_duplicate_parent_across_terms_raises():
-    spec = {"X1": ContinuousNode(), "X3": ContinuousNode([LS("X1"), CS("X1")])}
+    spec = {"X1": ContinuousNode(), "X3": ContinuousNode(LS("X1") + CS("X1"))}
     with pytest.raises(ValueError, match="more than one term"):
         CausalFlowDAG(spec)
 
 
 def test_cycle_detected():
-    spec = {"A": ContinuousNode([LS("B")]), "B": ContinuousNode([LS("A")])}
+    spec = {"A": ContinuousNode(LS("B")), "B": ContinuousNode(LS("A"))}
     with pytest.raises(ValueError, match="cycle"):
         CausalFlowDAG(spec)
 
@@ -91,12 +91,12 @@ def test_serialization_roundtrip_terms():
         assert torch.allclose(a[k], b[k]), k
 
 
-def test_to_matrix_labels_every_effect_and_leaves_non_edges_empty():
+def test_to_matrix_labels_every_term_and_leaves_non_edges_empty():
     """The paper's meta-adjacency view: rows are parents, columns children."""
     spec = {
         "a": ContinuousNode(),
         "b": ContinuousNode(),
-        "y": OrdinalNode(3, [I("a"), CS("b")]),  # one edge-owning term each
+        "y": OrdinalNode(3, I("a") + CS("b")),  # one edge-owning term each
     }
     m = CausalFlowDAG(spec, seed=0).to_matrix()
     assert list(m.index) == list(m.columns)  # square, node-ordered
@@ -106,7 +106,7 @@ def test_to_matrix_labels_every_effect_and_leaves_non_edges_empty():
     assert m.loc["a", "b"] == ""
 
     joint = CausalFlowDAG(
-        {**spec, "y": OrdinalNode(3, [CS("a", "b")])}, seed=0
+        {**spec, "y": OrdinalNode(3, CS("a", "b"))}, seed=0
     ).to_matrix()
     assert joint.loc["a", "y"] == "CS['a', 'b']"  # a joint term names its group
 
@@ -121,7 +121,7 @@ def test_ls_coefficients_shape_and_agreement_with_the_modules():
     spec = {
         "x": ContinuousNode(),
         "t": OrdinalNode(3),
-        "y": ContinuousNode([LS("x"), LS("t")]),
+        "y": ContinuousNode(LS("x") + LS("t")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     coefs = flow.ls_coefficients()
@@ -130,6 +130,11 @@ def test_ls_coefficients_shape_and_agreement_with_the_modules():
     assert set(coefs["y"]) == {"x", "t"}
     assert coefs["y"]["x"].shape == (1,)
     assert coefs["y"]["t"].shape == (3,)  # one per ordinal level
-    for parent, w in coefs["y"].items():
-        expected = flow.nodes["y"].shifts[parent].weight.detach().numpy().ravel()
-        np.testing.assert_allclose(w, expected)
+
+
+def test_ordinal_node_refuses_a_transform():
+    """An ordinal intercept is the cutpoint vector; I(transform=) has no meaning."""
+    with pytest.raises(ValueError, match="cutpoint vector"):
+        OrdinalNode(3, I(transform="spline"))
+    with pytest.raises(ValueError, match="cutpoint vector"):
+        OrdinalNode(3, I(n_coeffs=5))

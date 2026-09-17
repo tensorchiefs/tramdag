@@ -325,6 +325,7 @@ class FitMixin:
         *,
         max_iter: int = 400,
         history_size: int = 50,
+        grad_tol: float = 1e-2,
     ) -> dict:
         """Fit an all-``ls`` model the classical way.
 
@@ -343,13 +344,19 @@ class FitMixin:
             Upper limit on L-BFGS iterations, by default 400.
         history_size : int, optional
             L-BFGS memory, by default 50.
+        grad_tol : float, optional
+            Gradient norm below which a fit that stopped on its own counts as
+            converged, by default 1e-2. The objective is a sum of per-node mean
+            NLLs, so its gradient does not scale with the number of rows and an
+            absolute bound is meaningful.
 
         Returns
         -------
         dict
-            A convergence report: ``converged``, ``n_iter``, ``final_nll``,
-            ``grad_norm``, ``seconds``, and the fitted ``coefficients``
-            from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].
+            A convergence report: ``converged``, ``stop_reason``, ``n_iter``,
+            ``final_nll``, ``grad_norm``, ``seconds``, and the fitted
+            ``coefficients`` from
+            [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].
 
         Raises
         ------
@@ -365,11 +372,19 @@ class FitMixin:
         Double precision is what lets the line search resolve the optimum
         cleanly.
 
-        Convergence is torch's own: L-BFGS stops when the NLL or the
-        parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the
-        gradient never ends the run. ``converged`` says whether a tolerance
-        ended the run rather than ``max_iter``; ``|grad|`` and weakly
-        identified coefficients do not settle to machine precision.
+        ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS
+        stopped on its own, because the NLL or the parameters moved by less
+        than 1e-9, and ``"max_iter"`` when the budget ran out.
+        ``tolerance_grad`` is 0, so the gradient never ends the run.
+
+        ``converged`` needs BOTH: the run stopped on its own AND the gradient
+        norm is at most ``grad_tol``. Stopping on its own is not enough on its
+        own, because the same tolerance fires when the line search stalls —
+        measured on the stroke case study, L-BFGS stopped after six to eight
+        iterations at an NLL of 12.8 against an optimum of 10.31, and a flag
+        reading only the stop reason called that converged. A real fit of that
+        model takes about 3900 iterations and ends with a gradient norm near
+        1e-3, so the two conditions separate cleanly.
         """
         other = sorted(
             {t.name for nd in self.spec.values() for t in nd.terms if not t.classical}
@@ -410,7 +425,7 @@ class FitMixin:
 
             opt.step(closure)
             n_iter = next(iter(opt.state.values()))["n_iter"]
-            converged = n_iter < max_iter  # torch stopped on a tolerance
+            stop_reason = "tolerance" if n_iter < max_iter else "max_iter"
             with torch.no_grad():
                 final_nll = float(total_nll())
             grad_norm = float(
@@ -418,6 +433,9 @@ class FitMixin:
                     [p.grad for p in self.parameters() if p.grad is not None]
                 )
             )
+            # a stalled line search stops on the same tolerance as an arrival,
+            # so the gradient is what tells the two apart
+            converged = stop_reason == "tolerance" and grad_norm <= grad_tol
             coefs = self.ls_coefficients()  # read while still float64
         finally:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
@@ -425,6 +443,7 @@ class FitMixin:
 
         return {
             "converged": converged,
+            "stop_reason": stop_reason,
             "n_iter": n_iter,
             "final_nll": final_nll,
             "grad_norm": grad_norm,

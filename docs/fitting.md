@@ -127,16 +127,22 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   bit-identical results, and the fit lands on the exact MLE. It matches
   `statsmodels` and R to about four decimals, where a converged Adam `fit`
   gets to about 1e-3.
-- **Budget.** `max_iter=400`, `history_size=50`. Torch's own stopping rule
-  ends the run when the NLL or the parameters move by less than 1e-9. The
-  report's `converged` says whether a tolerance ended the run rather than the
-  cap.
+- **Budget.** `max_iter=400` is a default, not a promise. Torch ends the run
+  when the NLL or the parameters move by less than 1e-9. A five-node all-`LS`
+  model on 1275 rows needs about 3900 iterations to stop on that rule, so at
+  400 it is still improving. Give the budget room and read the report.
+- **The report.** `stop_reason` is `"tolerance"` or `"max_iter"`. `converged`
+  needs both: the run stopped on its own AND `grad_norm <= grad_tol` (default
+  1e-2). Both conditions are necessary, because the same tolerance fires when
+  the line search stalls — a six-iteration fit at an NLL of 12.8, against an
+  optimum of 10.31, stops on "tolerance" and is not converged.
 - **float64 is transient.** The fit restores float32 afterwards, and
   checkpoints stay float32.
-- **The flag is advisory.** A Bernstein intercept and weakly identified
-  directions, rare one-hot levels or a flat treatment-effect ridge, drift
-  along zero-curvature valleys after the likelihood is at its optimum.
-  Correctness comes from the comparison with classical software in
+- **Weakly identified directions never settle.** A Bernstein intercept, rare
+  one-hot levels or a flat treatment-effect ridge drift along zero-curvature
+  valleys after the likelihood is at its optimum, which is why `tolerance_grad`
+  is 0 and `grad_tol` is loose. Correctness comes from the comparison with
+  classical software in
   [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py).
 
 `fit_classical` leaves the model at the MLE, ready for any operation. A

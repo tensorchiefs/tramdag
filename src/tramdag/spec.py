@@ -34,12 +34,6 @@ INPUT_TRANSFORMS = ("minmax", "standardize")
 
 
 # %% private functions -----------------------------------------------------------------
-def _import_object(path: str):
-    """Give the object that a dotted import path names, ``my.pkg.module.Name``."""
-    module_name, _, attr = path.rpartition(".")
-    return getattr(importlib.import_module(module_name), attr)
-
-
 def _term_class(name: str) -> type[Term]:
     """Give the term class that a serialized ``term:`` entry names.
 
@@ -55,7 +49,8 @@ def _term_class(name: str) -> type[Term]:
     """
     try:
         if "." in name:
-            cls = _import_object(name)
+            module_name, _, attr = name.rpartition(".")
+            cls = getattr(importlib.import_module(module_name), attr)
         else:
             cls = getattr(sys.modules[__name__], name)
     except (ImportError, AttributeError) as err:

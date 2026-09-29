@@ -14,7 +14,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode, fitting
 
 
 # %% private functions -----------------------------------------------------------------
@@ -135,11 +135,10 @@ def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
     assert rep["converged"] is False
 
 
-def test_an_unreachable_gradient_bound_is_never_converged(ls_chain):
+def test_an_unreachable_gradient_bound_is_never_converged(ls_chain, monkeypatch):
+    monkeypatch.setattr(fitting, "GRAD_TOL", 0.0)
     obs = ls_chain["draw"](800, 3)
-    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(
-        obs, max_iter=2000, grad_tol=0.0
-    )
+    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=2000)
     assert rep["converged"] is False
 
 

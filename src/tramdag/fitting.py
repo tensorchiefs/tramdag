@@ -24,6 +24,10 @@ if TYPE_CHECKING:
 # %% global variables ------------------------------------------------------------------
 __all__ = ["FitMixin"]
 
+GRAD_TOL = (
+    1e-2  # gradient norm at which a self-stopped classical fit counts as converged
+)
+
 
 # %% private functions -----------------------------------------------------------------
 def _check_fit_sizes(epochs: int, batch_size: int, verbose: int) -> None:
@@ -321,7 +325,6 @@ class FitMixin:
         *,
         max_iter: int = 400,
         history_size: int = 50,
-        grad_tol: float = 1e-2,
     ) -> dict:
         """Fit an all-``ls`` model the classical way.
 
@@ -340,11 +343,6 @@ class FitMixin:
             Upper limit on L-BFGS iterations, by default 400.
         history_size : int, optional
             L-BFGS memory, by default 50.
-        grad_tol : float, optional
-            Gradient norm below which a fit that stopped on its own counts as
-            converged, by default 1e-2. The objective is a sum of per-node mean
-            NLLs, so its gradient does not scale with the number of rows and an
-            absolute bound is meaningful.
 
         Returns
         -------
@@ -376,7 +374,9 @@ class FitMixin:
         ``tolerance_grad`` is 0, so the gradient never ends the run.
 
         ``converged`` needs BOTH: the run stopped on its own AND the gradient
-        norm is at most ``grad_tol``. Stopping on its own is not enough on its
+        norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node
+        mean NLLs, so its gradient does not scale with the number of rows and
+        an absolute bound is meaningful. Stopping on its own is not enough on its
         own, because the same tolerance fires when the line search stalls —
         measured on the stroke case study, L-BFGS stopped after six to eight
         iterations at an NLL of 12.8 against an optimum of 10.31, and a flag
@@ -439,7 +439,7 @@ class FitMixin:
             )
             # a stalled line search stops on the same tolerance as an arrival,
             # so the gradient is what tells the two apart
-            converged = stop_reason == "tolerance" and grad_norm <= grad_tol
+            converged = stop_reason == "tolerance" and grad_norm <= GRAD_TOL
             coefs = self.ls_coefficients()  # read while still float64
         finally:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)

@@ -815,13 +815,12 @@ class VaryingCoefficient(Term):
             raise ValueError(
                 f"node {name!r}: VC treatment {t!r} is ordinal with "
                 f"{t_node.levels} levels. Only a 2-level (binary) ordinal "
-                "treatment is supported. Multi-level is a follow-up."
+                "treatment is supported."
             )
         if self.center and t_node.kind != "ordinal":
             raise ValueError(
                 f"node {name!r}: VC(center=...) needs a binary ordinal "
-                f"treatment, and {t!r} is continuous. E[T|x] centering is a "
-                "follow-up."
+                f"treatment, and {t!r} is continuous"
             )
         if self.center and any(
             isinstance(term, VaryingCoefficient) and term.center

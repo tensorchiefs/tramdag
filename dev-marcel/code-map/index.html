@@ -1590,10 +1590,10 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="spec_to_dict" href="../api/spec/#tramdag.spec.spec_to_dict"><code>spec_to_dict()</code></a> / <a class="autorefs autorefs-internal" title="spec_from_dict" href="../api/spec/#tramdag.spec.spec_from_dict"><code>spec_from_dict()</code></a></td>
-<td>Checkpoint (de)serialization. A term serializes as <code>{term, parents, options}</code> with every option it carries; a hand-written spec may name only some, and the constructor fills the rest. A built-in term's <code>term</code> key is its <code>name</code>; a custom term writes its <code>module.ClassName</code> import path, which <code>_import_object</code> resolves. <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
+<td>Checkpoint (de)serialization. A term serializes as <code>{term, parents, options}</code> with every option it carries; a hand-written spec may name only some, and the constructor fills the rest. A built-in term's <code>term</code> key is its <code>name</code>; a custom term writes its <code>module.ClassName</code> import path, which <code>_term_class</code> imports. <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
 </tr>
 <tr>
-<td>(<code>_normalize_terms</code>, <code>_check_term</code>, <code>_term_class</code>, <code>_import_object</code>, <code>_checked_input_transform</code>, <code>_serialized</code>)</td>
+<td>(<code>_normalize_terms</code>, <code>_check_term</code>, <code>_term_class</code>, <code>_checked_input_transform</code>, <code>_serialized</code>)</td>
 <td>Formula flattening and per-entry validation (a <code>+</code> sum nested in a list is rejected), the one-parented-<code>I</code> rule plus transform hoisting in one pass. An option another term takes is refused by Python's own argument binding, as a <code>TypeError</code>.</td>
 </tr>
 <tr>
@@ -1617,7 +1617,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="BernsteinUT" href="../api/transforms/#tramdag.transforms.BernsteinUT"><code>BernsteinUT</code></a></td>
-<td>Bernstein-polynomial transform, the default. Linear tail extrapolation follows the boundary derivative. <code>marginal_init_theta(column)</code> gives the start <code>init_marginals</code> applies.</td>
+<td>Bernstein-polynomial transform, the default. Linear tail extrapolation follows the boundary derivative. <code>marginal_init_theta(column)</code> gives the start <code>marginal_init=True</code> applies.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="SplineUT" href="../api/transforms/#tramdag.transforms.SplineUT"><code>SplineUT</code></a></td>
@@ -1645,7 +1645,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_marginal_init_theta" href="../api/transforms/#tramdag.transforms.ordinal_marginal_init_theta"><code>ordinal_marginal_init_theta()</code></a></td>
-<td>Cutpoint start that matches the empirical class frequencies (<code>init_marginals</code>).</td>
+<td>Cutpoint start that matches the empirical class frequencies (<code>marginal_init=True</code>).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_bounds" href="../api/transforms/#tramdag.transforms.ordinal_bounds"><code>ordinal_bounds()</code></a></td>
@@ -1672,11 +1672,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="calibrate" href="../api/flow/#tramdag.flow.CausalFlowDAG.calibrate"><code>calibrate()</code></a></td>
-<td>The data-dependent state of every term, taken once from the training rows (<a href="../fitting/">fitting.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="init_marginals" href="../api/flow/#tramdag.flow.CausalFlowDAG.init_marginals"><code>init_marginals()</code></a></td>
-<td>The marginal start of every simple intercept, as an explicit step callable any time; on a trained flow it restarts those intercepts.</td>
+<td>The data-dependent state of every term, taken once from the training rows; <code>marginal_init=True</code> also starts every simple intercept at its marginal (<a href="../fitting/">fitting.md</a>).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a></td>
@@ -1984,8 +1980,8 @@ default you can read at the call site. Nothing numeric is buried.</p>
 </tr>
 <tr>
 <td>calibrated init</td>
-<td><code>init_marginals(train_df)</code></td>
-<td>never implicit; without it zuko's zero start</td>
+<td><code>fit(marginal_init=)</code>, <code>calibrate(marginal_init=)</code></td>
+<td>False: zuko's zero start; applied once, on the calibrating fit</td>
 </tr>
 <tr>
 <td>VC stage-1 propensities</td>
@@ -2000,7 +1996,7 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <tr>
 <td>L-BFGS budget</td>
 <td><code>fit_classical(max_iter=, history_size=)</code></td>
-<td>400 / 50; torch's <code>tolerance_change</code> is 1e-9 and <code>tolerance_grad</code> is off — one full-batch run, no chunks</td>
+<td>400 / 50; torch's <code>tolerance_change</code> is 1e-9 and <code>tolerance_grad</code> is off — one full-batch run, no chunks; <code>converged</code> also needs <code>GRAD_TOL</code> (1e-2)</td>
 </tr>
 <tr>
 <td>training budget</td>

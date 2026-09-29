@@ -1480,32 +1480,41 @@ weights.</p>
   workload and wastes on the next, so every caller states its own.</li>
 <li><strong>Calibration.</strong> The first <code>fit</code> calls <code>calibrate(train_df)</code>. Every term
   freezes its data-dependent state there, the intercept its <code>range_q</code>
-  quantiles and each <code>input_transform=</code> its statistics. Calibration never
-  touches the weights, and a loaded checkpoint is never recalibrated.</li>
-<li><strong>Marginal start.</strong> <code>init_marginals(train_df)</code> is a separate, always
-  explicit step. It resets every Bernstein or ordinal simple intercept to the
-  empirical marginal of its column, as <code>logit(F_hat)</code> in control points or
-  cutpoints. The spline, the affine and the <code>range_q=0</code> transforms have no
-  such start. The call is a pure initialization and leaves the MLE unchanged.</li>
-<li><strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
+  quantiles and each <code>input_transform=</code> its statistics. A loaded checkpoint is
+  never recalibrated.</li>
+<li><strong>Marginal start.</strong> Off by default; every simple intercept starts at zuko's
+  zero. <code>fit(marginal_init=True)</code> and <code>calibrate(train_df, marginal_init=True)</code>
+  set it instead: every Bernstein
+  or ordinal simple intercept starts at the empirical marginal of its column,
+  as <code>logit(F_hat)</code> in control points or cutpoints. The spline, the affine and
+  the <code>range_q=0</code> transforms have no such start. It is a pure initialization
+  and leaves the MLE unchanged.</li>
+</ul>
+<p><code>fit_classical</code> takes no such flag. The likelihood of an all-<code>LS</code> model has
+  one optimum, so a start would change how far the line search travels and
+  nothing else.</p>
+<p>The flag rides on calibration's guard, so it applies once, on the fit that
+  calibrates. That is what a schedule needs: a second <code>fit</code> continues training
+  rather than discarding the intercepts the first one trained.
+- <strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
   a float and uses the last fraction of <code>train_df</code> unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With
   either, <code>fit</code> writes the per-node validation NLL after
-  every epoch into <code>flow.history["val"]</code>.</li>
-<li><strong>Logging.</strong> <code>flow.history["lr"]</code> records the optimizer's rate per epoch, a
-  <code>{node: lr}</code> dict under <code>per_node_adam</code>. <code>verbose=N</code> prints every Nth epoch
-  and the last one; the default 0 is silent.</li>
-<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks are
+  every epoch into <code>flow.history["val"]</code>.
+- <strong>Logging.</strong> <code>flow.history["lr"]</code> records the optimizer's rates per epoch,
+  one dict keyed by a group's <code>node</code> tag or else its index: <code>{0: lr}</code> for the
+  default Adam, <code>{node: lr}</code> under <code>per_node_adam</code>. <code>verbose=N</code> prints every
+  Nth epoch and the last one; the default 0 is silent.
+- <strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks are
   <code>on_fit_begin</code>, <code>on_epoch_end</code> and <code>on_fit_end</code>; a bare callable is an
   <code>on_epoch_end</code> hook <code>cb(flow, epoch, optimizer)</code>, and any <code>True</code> return
   stops the fit. <code>on_fit_end</code> runs before the <code>VC</code> re-centering. The shipped
   callbacks are <code>EarlyStopping</code>, which restores the best-validation weights
   and takes an optional <code>patience</code>, and <code>PerNodePlateau</code> with <code>per_node_adam</code>
-  for per-node decay and freezing. All of them read <code>history["val"]</code>.</li>
-<li><strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
+  for per-node decay and freezing. All of them read <code>history["val"]</code>.
+- <strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
   <code>VC(center=)</code> names, and split and minibatch with it.
-  <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</li>
-</ul>
+  <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</p>
 <h3 id="which-recipe">Which recipe<a class="headerlink" href="#which-recipe" title="Permanent link">&para;</a></h3>
 <p>All-<code>LS</code> models train to the MLE and keep the final weights. Flexible models
 with a <code>CI</code>, <code>CS</code> or <code>VC</code> term overfit observational confounding at the MLE
@@ -1561,22 +1570,29 @@ node-conditional is an ordered logit or a Colr model. It raises on any <code>CS<
 <ul>
 <li><strong>Full-batch, float64, L-BFGS</strong> with a strong-Wolfe line search; no
   minibatches, schedule or early stopping, so the same init gives
-  bit-identical results, and the fit lands on the exact MLE. It matches
-  <code>statsmodels</code> and R to about four decimals, where a converged Adam <code>fit</code>
-  gets to about 1e-3.</li>
-<li><strong>Budget.</strong> <code>max_iter=400</code>, <code>history_size=50</code>. Torch's own stopping rule
-  ends the run when the NLL or the parameters move by less than 1e-9. The
-  report's <code>converged</code> says whether a tolerance ended the run rather than the
-  cap.</li>
+  bit-identical results. A converged fit matches <code>statsmodels</code> and R to about
+  four decimals, where a converged Adam <code>fit</code> gets to about 1e-3.</li>
+<li><strong>Budget.</strong> <code>max_iter=400</code> is a default, not a promise. Torch ends the run
+  when the NLL or the parameters move by less than 1e-9. A model with several
+  nodes can need thousands of iterations to stop on that rule. Give the
+  budget room and read the report.</li>
+<li><strong>The report.</strong> <code>stop_reason</code> is <code>"tolerance"</code>, <code>"max_iter"</code> or <code>"max_eval"</code>
+  (torch's budget of closure calls, <code>max_iter * 5 // 4</code>). <code>converged</code> needs
+  both: the run stopped on its own AND <code>grad_norm</code> is at most
+  <code>tramdag.fitting.GRAD_TOL</code> (1e-2). Both conditions are necessary, because
+  the same tolerance fires when the line search stalls far from the optimum.
+  Such a run stops on "tolerance" with a large gradient norm and is not
+  converged.</li>
 <li><strong>float64 is transient.</strong> The fit restores float32 afterwards, and
   checkpoints stay float32.</li>
-<li><strong>The flag is advisory.</strong> A Bernstein intercept and weakly identified
-  directions, rare one-hot levels or a flat treatment-effect ridge, drift
-  along zero-curvature valleys after the likelihood is at its optimum.
-  Correctness comes from the comparison with classical software in
+<li><strong>Weakly identified directions never settle.</strong> A Bernstein intercept, rare
+  one-hot levels or a flat treatment-effect ridge drift along zero-curvature
+  valleys after the likelihood is at its optimum, which is why <code>tolerance_grad</code>
+  is 0 and the gradient bound is loose. Correctness comes from the comparison with
+  classical software in
   <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>.</li>
 </ul>
-<p><code>fit_classical</code> leaves the model at the MLE, ready for any operation. A
+<p>A converged <code>fit_classical</code> leaves the model at the MLE, ready for any operation. A
 <code>fit</code> call from there stays put, which is both a check that the classical
 solution is the optimum and a warm start; the <code>VC</code> guide uses it for <code>beta0</code>.</p>
 <h2 id="memory-and-disk">Memory and disk<a class="headerlink" href="#memory-and-disk" title="Permanent link">&para;</a></h2>

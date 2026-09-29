@@ -2590,7 +2590,7 @@ flow from the standard-logistic latent to the observed variables.</p>
 <span class="sd">        ValueError</span>
 <span class="sd">            With ``range_q=0``: the domain ends are the data min/max, whose</span>
 <span class="sd">            latent quantile target $\operatorname{logit} 0$ is undefined — skip</span>
-<span class="sd">            ``init_marginals`` for a min-max-domain model.</span>
+<span class="sd">            ``marginal_init`` for a min-max-domain model.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -2610,7 +2610,7 @@ flow from the standard-logistic latent to the observed variables.</p>
                 <span class="s2">"the marginal start maps the domain ends onto the latent "</span>
                 <span class="s2">"range_q quantiles, and logit(0) is undefined — a "</span>
                 <span class="s2">"range_q=0 (min-max domain) model has no marginal start; "</span>
-                <span class="s2">"skip init_marginals for it"</span>
+                <span class="s2">"fit it with marginal_init=False"</span>
             <span class="p">)</span>
         <span class="n">order</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># constrained control points: n+2</span>
         <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_control_points</span><span class="p">(</span><span class="n">column</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
@@ -2759,7 +2759,7 @@ which needs no data.</p>
               <div class="doc-md-description">
                 <p>With <code>range_q=0</code>: the domain ends are the data min/max, whose
 latent quantile target <span class="arithmatex">\(\operatorname{logit} 0\)</span> is undefined — skip
-<code>init_marginals</code> for a min-max-domain model.</p>
+<code>marginal_init</code> for a min-max-domain model.</p>
               </div>
             </td>
           </tr>
@@ -2884,7 +2884,7 @@ hence the two averaged pairs below).</p>
 <span class="sd">    ValueError</span>
 <span class="sd">        With ``range_q=0``: the domain ends are the data min/max, whose</span>
 <span class="sd">        latent quantile target $\operatorname{logit} 0$ is undefined — skip</span>
-<span class="sd">        ``init_marginals`` for a min-max-domain model.</span>
+<span class="sd">        ``marginal_init`` for a min-max-domain model.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -2904,7 +2904,7 @@ hence the two averaged pairs below).</p>
             <span class="s2">"the marginal start maps the domain ends onto the latent "</span>
             <span class="s2">"range_q quantiles, and logit(0) is undefined — a "</span>
             <span class="s2">"range_q=0 (min-max domain) model has no marginal start; "</span>
-            <span class="s2">"skip init_marginals for it"</span>
+            <span class="s2">"fit it with marginal_init=False"</span>
         <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># constrained control points: n+2</span>
     <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_control_points</span><span class="p">(</span><span class="n">column</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>

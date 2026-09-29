@@ -1463,7 +1463,9 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
 <span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span>
@@ -1719,7 +1721,31 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
-<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
@@ -1733,6 +1759,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
         <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">marginal_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
@@ -1763,8 +1790,9 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">            Validation rows, one column per node. When given (or split off), the</span>
 <span class="sd">            per-node validation NLL is appended to ``flow.history["val"]`` after</span>
 <span class="sd">            every epoch; the shipped callbacks read it there. ``history["lr"]``</span>
-<span class="sd">            records the optimizer's rate per epoch (``{node: lr}`` for tagged</span>
-<span class="sd">            groups, a float for one group, a list for several).</span>
+<span class="sd">            records the optimizer's rates per epoch, one dict keyed by a</span>
+<span class="sd">            group's ``node`` tag or else its index (``{0: lr}`` for the</span>
+<span class="sd">            default optimizer).</span>
 <span class="sd">        validation_split : float | None, optional</span>
 <span class="sd">            Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
 <span class="sd">            validation set, without shuffling, and only the remaining rows</span>
@@ -1779,6 +1807,11 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">            Seeds torch's global RNG before the loop, for the minibatch</span>
 <span class="sd">            shuffling. Weight initialization is seeded at construction</span>
 <span class="sd">            (``CausalFlowDAG(spec, seed=...)``).</span>
+<span class="sd">        marginal_init : bool, optional</span>
+<span class="sd">            Start every simple intercept at its column's marginal, by default</span>
+<span class="sd">            ``False``. Passed to [`calibrate`][tramdag.flow.CausalFlowDAG.calibrate]</span>
+<span class="sd">            and so applied once, on the fit that calibrates: a later phase of a</span>
+<span class="sd">            schedule continues training rather than resetting those intercepts.</span>
 <span class="sd">        optimizer : torch.optim.Optimizer | None, optional</span>
 <span class="sd">            Any torch optimizer over ``flow.parameters()``; the default is</span>
 <span class="sd">            ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
@@ -1818,7 +1851,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
         <span class="p">)</span>
         <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
         <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
         <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1877,10 +1910,10 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 
 <span class="sd">        The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
 <span class="sd">        line search. There are no minibatches, no schedule and no early</span>
-<span class="sd">        stopping, so the fit is deterministic and lands on the maximum-</span>
-<span class="sd">        likelihood estimate. It is valid only when every term is a simple</span>
-<span class="sd">        intercept or an ``LS``, because each node-conditional is then an</span>
-<span class="sd">        ordered logit or a Colr model; any other spec raises.</span>
+<span class="sd">        stopping, so the fit is deterministic; the report says whether it</span>
+<span class="sd">        reached the maximum-likelihood estimate. It is valid only when every</span>
+<span class="sd">        term is a simple intercept or an ``LS``, because each node-conditional</span>
+<span class="sd">        is then an ordered logit or a Colr model; any other spec raises.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1894,9 +1927,10 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        dict</span>
-<span class="sd">            A convergence report: ``converged``, ``n_iter``, ``final_nll``,</span>
-<span class="sd">            ``grad_norm``, ``seconds``, and the fitted ``coefficients``</span>
-<span class="sd">            from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+<span class="sd">            A convergence report: ``converged``, ``stop_reason``, ``n_iter``,</span>
+<span class="sd">            ``final_nll``, ``grad_norm``, ``seconds``, and the fitted</span>
+<span class="sd">            ``coefficients`` from</span>
+<span class="sd">            [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -1912,11 +1946,19 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        Double precision is what lets the line search resolve the optimum</span>
 <span class="sd">        cleanly.</span>
 
-<span class="sd">        Convergence is torch's own: L-BFGS stops when the NLL or the</span>
-<span class="sd">        parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the</span>
-<span class="sd">        gradient never ends the run. ``converged`` says whether a tolerance</span>
-<span class="sd">        ended the run rather than ``max_iter``; ``|grad|`` and weakly</span>
-<span class="sd">        identified coefficients do not settle to machine precision.</span>
+<span class="sd">        ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS</span>
+<span class="sd">        stopped on its own, because the NLL or the parameters moved by less</span>
+<span class="sd">        than 1e-9, ``"max_iter"`` when the iteration budget ran out, and</span>
+<span class="sd">        ``"max_eval"`` when torch's evaluation budget (``max_iter * 5 // 4``</span>
+<span class="sd">        closure calls, line searches included) ran out first.</span>
+<span class="sd">        ``tolerance_grad`` is 0, so the gradient never ends the run.</span>
+
+<span class="sd">        ``converged`` needs BOTH: the run stopped on its own AND the gradient</span>
+<span class="sd">        norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node</span>
+<span class="sd">        mean NLLs, so its gradient does not scale with the number of rows and</span>
+<span class="sd">        an absolute bound is meaningful. Stopping on its own is not enough,</span>
+<span class="sd">        because the same tolerance fires when the line search stalls far from</span>
+<span class="sd">        the optimum; there the gradient norm is still large.</span>
 <span class="sd">        """</span>
         <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>
@@ -1954,8 +1996,14 @@ exact-MLE route for all-<code>ls</code> specs.</p>
                 <span class="k">return</span> <span class="n">loss</span>
 
             <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
-            <span class="n">n_iter</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))[</span><span class="s2">"n_iter"</span><span class="p">]</span>
-            <span class="n">converged</span> <span class="o">=</span> <span class="n">n_iter</span> <span class="o">&lt;</span> <span class="n">max_iter</span>  <span class="c1"># torch stopped on a tolerance</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="n">n_iter</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"n_iter"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">n_iter</span> <span class="o">&gt;=</span> <span class="n">max_iter</span><span class="p">:</span>
+                <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"max_iter"</span>
+            <span class="k">elif</span> <span class="n">state</span><span class="p">[</span><span class="s2">"func_evals"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">opt</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"max_eval"</span><span class="p">]:</span>
+                <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"max_eval"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"tolerance"</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="n">final_nll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_nll</span><span class="p">())</span>
             <span class="n">grad_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
@@ -1963,6 +2011,9 @@ exact-MLE route for all-<code>ls</code> specs.</p>
                     <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
                 <span class="p">)</span>
             <span class="p">)</span>
+            <span class="c1"># a stalled line search stops on the same tolerance as an arrival,</span>
+            <span class="c1"># so the gradient is what tells the two apart</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="n">stop_reason</span> <span class="o">==</span> <span class="s2">"tolerance"</span> <span class="ow">and</span> <span class="n">grad_norm</span> <span class="o">&lt;=</span> <span class="n">GRAD_TOL</span>
             <span class="n">coefs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>  <span class="c1"># read while still float64</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
@@ -1970,6 +2021,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
+            <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">stop_reason</span><span class="p">,</span>
             <span class="s2">"n_iter"</span><span class="p">:</span> <span class="n">n_iter</span><span class="p">,</span>
             <span class="s2">"final_nll"</span><span class="p">:</span> <span class="n">final_nll</span><span class="p">,</span>
             <span class="s2">"grad_norm"</span><span class="p">:</span> <span class="n">grad_norm</span><span class="p">,</span>
@@ -2010,6 +2062,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
     <span class="n">validation_split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">marginal_init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span>
@@ -2117,8 +2170,9 @@ full-batch step per epoch.</p>
                 <p>Validation rows, one column per node. When given (or split off), the
 per-node validation NLL is appended to <code>flow.history["val"]</code> after
 every epoch; the shipped callbacks read it there. <code>history["lr"]</code>
-records the optimizer's rate per epoch (<code>{node: lr}</code> for tagged
-groups, a float for one group, a list for several).</p>
+records the optimizer's rates per epoch, one dict keyed by a
+group's <code>node</code> tag or else its index (<code>{0: lr}</code> for the
+default optimizer).</p>
               </div>
             </td>
             <td>
@@ -2179,6 +2233,25 @@ shuffling. Weight initialization is seeded at construction
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>marginal_init</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Start every simple intercept at its column's marginal, by default
+<code>False</code>. Passed to <a class="autorefs autorefs-internal" title="calibrate" href="../flow/#tramdag.flow.CausalFlowDAG.calibrate"><code>calibrate</code></a>
+and so applied once, on the fit that calibrates: a later phase of a
+schedule continues training rather than resetting those intercepts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2288,7 +2361,9 @@ or is a <code>Callback</code> class instead of an instance.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
@@ -2430,7 +2505,12 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">311</span>
 <span class="normal">312</span>
 <span class="normal">313</span>
-<span class="normal">314</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2441,6 +2521,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
     <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">marginal_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
@@ -2471,8 +2552,9 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="sd">        Validation rows, one column per node. When given (or split off), the</span>
 <span class="sd">        per-node validation NLL is appended to ``flow.history["val"]`` after</span>
 <span class="sd">        every epoch; the shipped callbacks read it there. ``history["lr"]``</span>
-<span class="sd">        records the optimizer's rate per epoch (``{node: lr}`` for tagged</span>
-<span class="sd">        groups, a float for one group, a list for several).</span>
+<span class="sd">        records the optimizer's rates per epoch, one dict keyed by a</span>
+<span class="sd">        group's ``node`` tag or else its index (``{0: lr}`` for the</span>
+<span class="sd">        default optimizer).</span>
 <span class="sd">    validation_split : float | None, optional</span>
 <span class="sd">        Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
 <span class="sd">        validation set, without shuffling, and only the remaining rows</span>
@@ -2487,6 +2569,11 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="sd">        Seeds torch's global RNG before the loop, for the minibatch</span>
 <span class="sd">        shuffling. Weight initialization is seeded at construction</span>
 <span class="sd">        (``CausalFlowDAG(spec, seed=...)``).</span>
+<span class="sd">    marginal_init : bool, optional</span>
+<span class="sd">        Start every simple intercept at its column's marginal, by default</span>
+<span class="sd">        ``False``. Passed to [`calibrate`][tramdag.flow.CausalFlowDAG.calibrate]</span>
+<span class="sd">        and so applied once, on the fit that calibrates: a later phase of a</span>
+<span class="sd">        schedule continues training rather than resetting those intercepts.</span>
 <span class="sd">    optimizer : torch.optim.Optimizer | None, optional</span>
 <span class="sd">        Any torch optimizer over ``flow.parameters()``; the default is</span>
 <span class="sd">        ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
@@ -2526,7 +2613,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
     <span class="p">)</span>
     <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
     <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
     <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
     <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -2595,10 +2682,10 @@ or is a <code>Callback</code> class instead of an instance.</p>
         <p>Fit an all-<code>ls</code> model the classical way.</p>
 <p>The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
 line search. There are no minibatches, no schedule and no early
-stopping, so the fit is deterministic and lands on the maximum-
-likelihood estimate. It is valid only when every term is a simple
-intercept or an <code>LS</code>, because each node-conditional is then an
-ordered logit or a Colr model; any other spec raises.</p>
+stopping, so the fit is deterministic; the report says whether it
+reached the maximum-likelihood estimate. It is valid only when every
+term is a simple intercept or an <code>LS</code>, because each node-conditional
+is then an ordered logit or a Colr model; any other spec raises.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2679,9 +2766,10 @@ ordered logit or a Colr model; any other spec raises.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A convergence report: <code>converged</code>, <code>n_iter</code>, <code>final_nll</code>,
-<code>grad_norm</code>, <code>seconds</code>, and the fitted <code>coefficients</code>
-from <a class="autorefs autorefs-internal" title="ls_coefficients" href="../flow/#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
+                <p>A convergence report: <code>converged</code>, <code>stop_reason</code>, <code>n_iter</code>,
+<code>final_nll</code>, <code>grad_norm</code>, <code>seconds</code>, and the fitted
+<code>coefficients</code> from
+<a class="autorefs autorefs-internal" title="ls_coefficients" href="../flow/#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
               </div>
             </td>
           </tr>
@@ -2720,21 +2808,23 @@ buffers of the transforms in one call. Afterwards the model returns
 to float32, so the stored model and <code>save</code>/<code>load</code> stay float32.
 Double precision is what lets the line search resolve the optimum
 cleanly.</p>
-<p>Convergence is torch's own: L-BFGS stops when the NLL or the
-parameters move by less than 1e-9; <code>tolerance_grad</code> is 0, so the
-gradient never ends the run. <code>converged</code> says whether a tolerance
-ended the run rather than <code>max_iter</code>; <code>|grad|</code> and weakly
-identified coefficients do not settle to machine precision.</p>
+<p><code>stop_reason</code> is what ended the run: <code>"tolerance"</code> when L-BFGS
+stopped on its own, because the NLL or the parameters moved by less
+than 1e-9, <code>"max_iter"</code> when the iteration budget ran out, and
+<code>"max_eval"</code> when torch's evaluation budget (<code>max_iter * 5 // 4</code>
+closure calls, line searches included) ran out first.
+<code>tolerance_grad</code> is 0, so the gradient never ends the run.</p>
+<p><code>converged</code> needs BOTH: the run stopped on its own AND the gradient
+norm is at most <code>GRAD_TOL</code> (1e-2). The objective is a sum of per-node
+mean NLLs, so its gradient does not scale with the number of rows and
+an absolute bound is meaningful. Stopping on its own is not enough,
+because the same tolerance fires when the line search stalls far from
+the optimum; there the gradient norm is still large.</p>
 </details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">316</span>
-<span class="normal">317</span>
-<span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">321</span>
 <span class="normal">322</span>
 <span class="normal">323</span>
 <span class="normal">324</span>
@@ -2838,7 +2928,31 @@ identified coefficients do not settle to machine precision.</p>
 <span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
-<span class="normal">425</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2849,10 +2963,10 @@ identified coefficients do not settle to machine precision.</p>
 
 <span class="sd">    The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
 <span class="sd">    line search. There are no minibatches, no schedule and no early</span>
-<span class="sd">    stopping, so the fit is deterministic and lands on the maximum-</span>
-<span class="sd">    likelihood estimate. It is valid only when every term is a simple</span>
-<span class="sd">    intercept or an ``LS``, because each node-conditional is then an</span>
-<span class="sd">    ordered logit or a Colr model; any other spec raises.</span>
+<span class="sd">    stopping, so the fit is deterministic; the report says whether it</span>
+<span class="sd">    reached the maximum-likelihood estimate. It is valid only when every</span>
+<span class="sd">    term is a simple intercept or an ``LS``, because each node-conditional</span>
+<span class="sd">    is then an ordered logit or a Colr model; any other spec raises.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2866,9 +2980,10 @@ identified coefficients do not settle to machine precision.</p>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    dict</span>
-<span class="sd">        A convergence report: ``converged``, ``n_iter``, ``final_nll``,</span>
-<span class="sd">        ``grad_norm``, ``seconds``, and the fitted ``coefficients``</span>
-<span class="sd">        from [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+<span class="sd">        A convergence report: ``converged``, ``stop_reason``, ``n_iter``,</span>
+<span class="sd">        ``final_nll``, ``grad_norm``, ``seconds``, and the fitted</span>
+<span class="sd">        ``coefficients`` from</span>
+<span class="sd">        [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -2884,11 +2999,19 @@ identified coefficients do not settle to machine precision.</p>
 <span class="sd">    Double precision is what lets the line search resolve the optimum</span>
 <span class="sd">    cleanly.</span>
 
-<span class="sd">    Convergence is torch's own: L-BFGS stops when the NLL or the</span>
-<span class="sd">    parameters move by less than 1e-9; ``tolerance_grad`` is 0, so the</span>
-<span class="sd">    gradient never ends the run. ``converged`` says whether a tolerance</span>
-<span class="sd">    ended the run rather than ``max_iter``; ``|grad|`` and weakly</span>
-<span class="sd">    identified coefficients do not settle to machine precision.</span>
+<span class="sd">    ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS</span>
+<span class="sd">    stopped on its own, because the NLL or the parameters moved by less</span>
+<span class="sd">    than 1e-9, ``"max_iter"`` when the iteration budget ran out, and</span>
+<span class="sd">    ``"max_eval"`` when torch's evaluation budget (``max_iter * 5 // 4``</span>
+<span class="sd">    closure calls, line searches included) ran out first.</span>
+<span class="sd">    ``tolerance_grad`` is 0, so the gradient never ends the run.</span>
+
+<span class="sd">    ``converged`` needs BOTH: the run stopped on its own AND the gradient</span>
+<span class="sd">    norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node</span>
+<span class="sd">    mean NLLs, so its gradient does not scale with the number of rows and</span>
+<span class="sd">    an absolute bound is meaningful. Stopping on its own is not enough,</span>
+<span class="sd">    because the same tolerance fires when the line search stalls far from</span>
+<span class="sd">    the optimum; there the gradient norm is still large.</span>
 <span class="sd">    """</span>
     <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>
@@ -2926,8 +3049,14 @@ identified coefficients do not settle to machine precision.</p>
             <span class="k">return</span> <span class="n">loss</span>
 
         <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
-        <span class="n">n_iter</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))[</span><span class="s2">"n_iter"</span><span class="p">]</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="n">n_iter</span> <span class="o">&lt;</span> <span class="n">max_iter</span>  <span class="c1"># torch stopped on a tolerance</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">n_iter</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"n_iter"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_iter</span> <span class="o">&gt;=</span> <span class="n">max_iter</span><span class="p">:</span>
+            <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"max_iter"</span>
+        <span class="k">elif</span> <span class="n">state</span><span class="p">[</span><span class="s2">"func_evals"</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">opt</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"max_eval"</span><span class="p">]:</span>
+            <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"max_eval"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stop_reason</span> <span class="o">=</span> <span class="s2">"tolerance"</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">final_nll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_nll</span><span class="p">())</span>
         <span class="n">grad_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
@@ -2935,6 +3064,9 @@ identified coefficients do not settle to machine precision.</p>
                 <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="c1"># a stalled line search stops on the same tolerance as an arrival,</span>
+        <span class="c1"># so the gradient is what tells the two apart</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">stop_reason</span> <span class="o">==</span> <span class="s2">"tolerance"</span> <span class="ow">and</span> <span class="n">grad_norm</span> <span class="o">&lt;=</span> <span class="n">GRAD_TOL</span>
         <span class="n">coefs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>  <span class="c1"># read while still float64</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
@@ -2942,6 +3074,7 @@ identified coefficients do not settle to machine precision.</p>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
+        <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">stop_reason</span><span class="p">,</span>
         <span class="s2">"n_iter"</span><span class="p">:</span> <span class="n">n_iter</span><span class="p">,</span>
         <span class="s2">"final_nll"</span><span class="p">:</span> <span class="n">final_nll</span><span class="p">,</span>
         <span class="s2">"grad_norm"</span><span class="p">:</span> <span class="n">grad_norm</span><span class="p">,</span>

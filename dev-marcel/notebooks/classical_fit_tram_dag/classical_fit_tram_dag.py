@@ -22,8 +22,8 @@
 #  * a Colr model (R's `tram::Colr`) for continuous ones.
 #
 # For such a model `flow.fit_classical()` is the optimizer: deterministic
-# full-batch L-BFGS that lands on the exact maximum-likelihood estimate
-# ([`docs/fitting.md`](../docs/fitting.md)). This notebook checks that
+# full-batch L-BFGS whose report says when it reached the maximum-likelihood
+# estimate ([`docs/fitting.md`](../docs/fitting.md)). This notebook checks that
 # against `statsmodels` and R.
 #
 # Every R reference printed below is hard-coded from a real fit, and every one

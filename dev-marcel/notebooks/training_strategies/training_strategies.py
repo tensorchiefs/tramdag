@@ -246,9 +246,9 @@ assert set(plateau.frozen) == set(SPEC), "not every node froze"
 assert len(flow.history["train"]) < CEILING, "the plateau rule did not self-stop"
 
 # %% [markdown]
-# `history["lr"]` is a dict per epoch when the groups are tagged, so the decay
-# of each node is on record without a callback of your own. `plot_training`
-# reads both that and the freeze epochs.
+# `history["lr"]` holds one dict per epoch, keyed by the node tags here, so the
+# decay of each node is on record without a callback of your own.
+# `plot_training` marks the freeze epochs.
 
 # %%
 plot_training(flow, frozen=plateau.frozen)

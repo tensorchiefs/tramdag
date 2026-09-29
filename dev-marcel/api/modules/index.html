@@ -2658,6 +2658,8 @@ names a term may name to their <code>torch.nn</code> classes.</p>
 
 
     <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="torch.nn.Module">Module</span></code></p>
 
 
 
@@ -2703,7 +2705,7 @@ names a term may name to their <code>torch.nn</code> classes.</p>
 <span class="normal">230</span>
 <span class="normal">231</span>
 <span class="normal">232</span>
-<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TermModule</span><span class="p">:</span>
+<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TermModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""What every term module shares: the input transform and its calibration."""</span>
 
     <span class="nd">@property</span>
@@ -3603,7 +3605,7 @@ is the node's training column and <code>ut</code> its monotone transform
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code></p>
 
 
 
@@ -3710,7 +3712,7 @@ is the node's training column and <code>ut</code> its monotone transform
 <span class="normal">369</span>
 <span class="normal">370</span>
 <span class="normal">371</span>
-<span class="normal">372</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimpleInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">372</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimpleInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The free simple intercept: one theta vector, no parents.</span>
 
 <span class="sd">    Parameters</span>
@@ -3866,7 +3868,7 @@ is the node's training column and <code>ut</code> its monotone transform
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code></p>
 
 
 
@@ -3981,7 +3983,7 @@ The term's <code>units</code>, <code>activation</code> and <code>batch_norm</cod
 <span class="normal">407</span>
 <span class="normal">408</span>
 <span class="normal">409</span>
-<span class="normal">410</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">410</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A single (possibly joint multi-parent) complex intercept net.</span>
 
 <span class="sd">    Several parents given to one term feed a single network, so they interact.</span>
@@ -4112,7 +4114,7 @@ The term's <code>units</code>, <code>activation</code> and <code>batch_norm</cod
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="InterceptModule (tramdag.modules.InterceptModule)" href="#tramdag.modules.InterceptModule">InterceptModule</a></code></p>
 
 
 
@@ -4233,7 +4235,7 @@ parents.</p>
 <span class="normal">450</span>
 <span class="normal">451</span>
 <span class="normal">452</span>
-<span class="normal">453</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AdditiveInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">453</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AdditiveInterceptModule</span><span class="p">(</span><span class="n">InterceptModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""``allow_interaction=False``: one net per parent, outputs summed.</span>
 
 <span class="sd">    Each parent reshapes the transform independently, in unconstrained</span>
@@ -4346,7 +4348,7 @@ parents.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code></p>
 
 
 
@@ -4455,7 +4457,7 @@ name.</p>
 <span class="normal">498</span>
 <span class="normal">499</span>
 <span class="normal">500</span>
-<span class="normal">501</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinearShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">501</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinearShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.</span>
 
 <span class="sd">    For an ordinal child, $\exp(\beta)$ is an odds ratio. Keyed by the parent's</span>
@@ -4667,7 +4669,7 @@ analytic and exact.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code></p>
 
 
 
@@ -4764,7 +4766,7 @@ term's <code>units</code>, <code>activation</code> and <code>batch_norm</code> s
 <span class="normal">534</span>
 <span class="normal">535</span>
 <span class="normal">536</span>
-<span class="normal">537</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">537</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""``CS`` — an additive network shift ``g(x)`` over its parents.</span>
 
 <span class="sd">    One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The</span>
@@ -4893,7 +4895,7 @@ term's <code>units</code>, <code>activation</code> and <code>batch_norm</code> s
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code>, <code><span title="torch.nn.Module">Module</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="ShiftModule (tramdag.modules.ShiftModule)" href="#tramdag.modules.ShiftModule">ShiftModule</a></code></p>
 
 
 
@@ -5133,7 +5135,7 @@ treatment's kind.</p>
 <span class="normal">707</span>
 <span class="normal">708</span>
 <span class="normal">709</span>
-<span class="normal">710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VaryingCoefficientModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VaryingCoefficientModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""``VC``: $\beta(\text{mod})\, x_t$ with $\beta(x) = \beta_0 + b_\Theta(x)$.</span>
 
 <span class="sd">    The weights of $b_\Theta$ carry the L2 ``penalty`` (``l2``; ``fit`` adds</span>

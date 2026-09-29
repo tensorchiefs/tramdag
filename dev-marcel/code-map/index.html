@@ -1904,12 +1904,12 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <td>Best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the fit.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="PerNodePlateau" href="../api/callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a></td>
-<td>Per-node rate decay and freezing; stops the fit once every node froze and records <code>frozen = {node: epoch}</code>. <code>step(nll, opt, epoch)</code> for a hand-driven loop.</td>
+<td><a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../api/callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a></td>
+<td>Per-node early stopping: a node freezes after <code>patience</code> flat epochs and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones); <code>lr_patience=</code> decays the rate on the way. Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>. <code>step(flow, nll, opt, epoch)</code> for a hand-driven loop.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="per_node_adam" href="../api/callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam()</code></a></td>
-<td>Adam with one <code>node</code>-tagged parameter group per node — the optimizer <code>PerNodePlateau</code> needs.</td>
+<td>Adam with one <code>node</code>-tagged parameter group per node — the optimizer <code>PerNodeEarlyStopping</code> needs.</td>
 </tr>
 </tbody>
 </table>
@@ -1976,7 +1976,7 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <tr>
 <td>schedules, early stopping</td>
 <td><code>fit(optimizer=, callbacks=)</code></td>
-<td><code>tramdag.callbacks</code> ships <code>EarlyStopping</code>, <code>PerNodePlateau</code>; anything else is torch's <code>lr_scheduler</code> and a few lines of callback (<a href="../fitting/">fitting.md</a>)</td>
+<td><code>tramdag.callbacks</code> ships <code>EarlyStopping</code>, <code>PerNodeEarlyStopping</code>; anything else is torch's <code>lr_scheduler</code> and a few lines of callback (<a href="../fitting/">fitting.md</a>)</td>
 </tr>
 <tr>
 <td>calibrated init</td>

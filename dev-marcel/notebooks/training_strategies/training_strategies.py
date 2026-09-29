@@ -35,7 +35,12 @@ import pandas as pd
 import torch
 
 from tramdag import CausalFlowDAG, ContinuousNode, I
-from tramdag.callbacks import Callback, EarlyStopping, PerNodePlateau, per_node_adam
+from tramdag.callbacks import (
+    Callback,
+    EarlyStopping,
+    PerNodeEarlyStopping,
+    per_node_adam,
+)
 from tramdag.plots import plot_training
 
 plt.rcParams["figure.dpi"] = 110
@@ -216,10 +221,11 @@ assert spent < CEILING, "patience never triggered, so the ceiling bound instead"
 assert spent - stopper.best_epoch >= 25
 
 # %% [markdown]
-# ## 6. Per-node rates: `per_node_adam` with `PerNodePlateau`
+# ## 6. Per-node rates: `per_node_adam` with `PerNodeEarlyStopping`
 #
 # `per_node_adam` builds an Adam with one tagged parameter group per node, and
-# `PerNodePlateau` decays and freezes each node on its own validation score
+# `PerNodeEarlyStopping` decays, freezes and restores each node on its own
+# validation score
 # ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when the last node
 # freezes.
 #
@@ -229,7 +235,7 @@ assert spent - stopper.best_epoch >= 25
 # %%
 flow = build()
 t0 = time.perf_counter()
-plateau = PerNodePlateau(patience=10, freeze=30)
+plateau = PerNodeEarlyStopping(patience=40, lr_patience=10)
 flow.fit(
     train,
     epochs=CEILING,
@@ -238,7 +244,7 @@ flow.fit(
     optimizer=per_node_adam(flow, lr=1e-2),
     callbacks=plateau,
 )
-record("PerNodePlateau", flow, time.perf_counter() - t0)
+record("PerNodeEarlyStopping", flow, time.perf_counter() - t0)
 
 print(f"    froze at: {dict(sorted(plateau.frozen.items()))}")
 print("    per-node rates at the end:", flow.history["lr"][-1])

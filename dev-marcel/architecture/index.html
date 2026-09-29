@@ -1517,7 +1517,7 @@ is framework code.</p>
         readouts["readouts.py&lt;br/&gt;ReadoutsMixin: ls_coefficients,&lt;br/&gt;varying_coef, to_matrix, contributions,&lt;br/&gt;design_matrix, shift_curve"]
         scores["scores.py&lt;br/&gt;node_scores,&lt;br/&gt;effect_modifier_scan"]
     end
-    callbacks["callbacks.py&lt;br/&gt;Callback, EarlyStopping,&lt;br/&gt;PerNodePlateau, per_node_adam"]
+    callbacks["callbacks.py&lt;br/&gt;Callback, EarlyStopping,&lt;br/&gt;PerNodeEarlyStopping, per_node_adam"]
     plots["plots.py&lt;br/&gt;plot_dag, plot_marginals,&lt;br/&gt;plot_training (matplotlib optional)"]
 
     spec --&gt; modules
@@ -1703,7 +1703,7 @@ node.</p>
   }
   class OrdinalNode {
   }
-  class PerNodePlateau {
+  class PerNodeEarlyStopping {
   }
   class ReadoutsMixin {
   }
@@ -1730,7 +1730,7 @@ node.</p>
   class _ScaledUT {
   }
   EarlyStopping --|&gt; Callback
-  PerNodePlateau --|&gt; Callback
+  PerNodeEarlyStopping --|&gt; Callback
   _FnCallback --|&gt; Callback
   CausalFlowDAG --|&gt; FitMixin
   CausalFlowDAG --|&gt; ReadoutsMixin

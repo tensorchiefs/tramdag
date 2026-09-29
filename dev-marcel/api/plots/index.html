@@ -2062,8 +2062,8 @@ curves aligned when one <code>fit</code> validated and another did not.</p>
             <td>
               <div class="doc-md-description">
                 <p><code>{node: epoch}</code> of the freezes, each a dashed mark; a
-<a class="autorefs autorefs-internal" title="PerNodePlateau" href="../callbacks/#tramdag.callbacks.PerNodePlateau"><code>PerNodePlateau</code></a> records that dict
-as its <code>frozen</code>. By default no marks.</p>
+<a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a>
+records that dict as its <code>frozen</code>. By default no marks.</p>
               </div>
             </td>
             <td>
@@ -2206,8 +2206,8 @@ as its <code>frozen</code>. By default no marks.</p>
 <span class="sd">        The fitted flow; ``flow.history`` is read.</span>
 <span class="sd">    frozen : dict[str, int] | None, optional</span>
 <span class="sd">        ``{node: epoch}`` of the freezes, each a dashed mark; a</span>
-<span class="sd">        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] records that dict</span>
-<span class="sd">        as its ``frozen``. By default no marks.</span>
+<span class="sd">        [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping]</span>
+<span class="sd">        records that dict as its ``frozen``. By default no marks.</span>
 <span class="sd">    path : str | Path | None, optional</span>
 <span class="sd">        Save the figure here (150 dpi) after drawing.</span>
 <span class="sd">    title : str | None, optional</span>

@@ -1510,8 +1510,10 @@ weights.</p>
   <code>on_epoch_end</code> hook <code>cb(flow, epoch, optimizer)</code>, and any <code>True</code> return
   stops the fit. <code>on_fit_end</code> runs before the <code>VC</code> re-centering. The shipped
   callbacks are <code>EarlyStopping</code>, which restores the best-validation weights
-  and takes an optional <code>patience</code>, and <code>PerNodePlateau</code> with <code>per_node_adam</code>
-  for per-node decay and freezing. All of them read <code>history["val"]</code>.
+  and takes an optional <code>patience</code>, and <code>PerNodeEarlyStopping</code> with
+  <code>per_node_adam</code>, the same per node: a node freezes after <code>patience</code> flat
+  epochs, loads its best weights back and optionally decays its rate on the
+  way. <code>fit</code> refuses two callbacks that restore weights. All of them read <code>history["val"]</code>.
 - <strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
   <code>VC(center=)</code> names, and split and minibatch with it.
   <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</p>
@@ -1552,7 +1554,7 @@ and need the best-validation weights to recover the causal effect.</p>
 <td>one shared decaying rate</td>
 </tr>
 <tr>
-<td><code>PerNodePlateau(patience=, freeze=)</code> with <code>per_node_adam</code></td>
+<td><code>PerNodeEarlyStopping(patience=, lr_patience=)</code> with <code>per_node_adam</code></td>
 <td>nodes converge at different speeds; self-stopping</td>
 </tr>
 </tbody>

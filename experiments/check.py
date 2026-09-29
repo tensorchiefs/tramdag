@@ -14,18 +14,18 @@ where it is. ``{max}`` is an upper bound, for an **error measure**, where a
 smaller number is a better fit rather than a drift and must not fail the run.
 
 A ``{max}`` bound is only useful in a band. Below **1.5x** its measurement it
-fails on another machine for no reason (measured: one such bound passed at
-0.028 here and failed CI at 0.113). Above **4x** it cannot catch a regression.
+fails on another machine for no reason. Above **4x** it cannot catch a
+regression.
 A bound outside the band is reported as ``note`` — not a failure, because a
 tolerance is a judgement call, but visibly, so it gets re-pinned deliberately
 rather than drifting. A bound that is *meant* to be wide carries a ``"why"``
 string, which is printed in place of the note:
 
 ```
-"max_abs_diff_flow_vs_statsmodels": {
-  "max": 0.25,
-  "why": "the max is over a coefficient with 7 of 1275 observations: 0.028
-          here, 0.113 on the CI runner"}
+"beta13": {
+  "value": -0.1806,
+  "atol": 0.05,
+  "why": "weakly identified: the coefficient multiplies the mixture x1"}
 ```
 
 A ``"why"`` excuses width only. The *too tight* note always fires, because no

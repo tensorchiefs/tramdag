@@ -80,6 +80,11 @@ the hyperparameters and the numbers, experiment by experiment.
 - `notebooks/` are jupytext `.py` files, executed by the docs workflow.
 - `docs/` are the guides; the API pages render from the docstrings.
 
+## Use of AI tools
+
+This project was developed with the help of LLM coding assistants. The authors
+reviewed and take responsibility for all content.
+
 ## Citation
 
 If you use `tramdag`, please cite the method paper:

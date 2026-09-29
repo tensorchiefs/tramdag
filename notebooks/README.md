@@ -11,7 +11,7 @@ truth**.
 | `training_strategies.py` | every shipped fitting recipe on one workload, from the API side: `fit`'s own records, plain Adam, two phases, `EarlyStopping`, `PerNodePlateau`, and a `Callback` of your own |
 | `additive_vs_joint_ci.py` | joint vs additive complex intercept, and reading per-parent effects out of the additive one with `intercept_contributions` |
 | `varying_coefficients.py` | heterogeneous treatment effects: the `VC` head, `varying_coef`, the modifier scan and propensity centering, all scored against a known `beta(x)` |
-| `classical_fit_tram_dag.py` | `fit_classical` on all-`ls` models, opening with plain logistic regression on `MASS::birthwt` (a 2-level ordinal node) checked against R `glm`: determinism, the exact MLE against `statsmodels` / R, and the classical-fit-then-keep-training warm start |
+| `classical_fit_tram_dag.py` | `fit_classical` on all-`ls` models, opening with plain logistic regression on `MASS::birthwt` (a 2-level ordinal node) checked against R `glm`: determinism, the converged MLE against `statsmodels` / R, and the classical-fit-then-keep-training warm start |
 
 `classical_fit_tram_dag.R` is not a notebook. It is the R half of
 `classical_fit_tram_dag.py`. It fits every classical reference that the

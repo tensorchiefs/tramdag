@@ -32,14 +32,14 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`StandardLogistic`][tramdag.transforms.StandardLogistic] | The TRAM base distribution: `log_prob`, `sample` (generator-aware), `icdf`. |
-| [`BernsteinUT`][tramdag.transforms.BernsteinUT] | Bernstein-polynomial transform, the default. Linear tail extrapolation follows the boundary derivative. `marginal_init_theta(column)` gives the start `init_marginals` applies. |
+| [`BernsteinUT`][tramdag.transforms.BernsteinUT] | Bernstein-polynomial transform, the default. Linear tail extrapolation follows the boundary derivative. `marginal_init_theta(column)` gives the start `marginal_init=True` applies. |
 | [`SplineUT`][tramdag.transforms.SplineUT] | Monotone rational-quadratic spline. Tails extrapolate with a fixed slope ([zuko-upstream.md](zuko-upstream.md)). |
 | [`AffineUT`][tramdag.transforms.AffineUT] | Monotone affine transform: the node-conditional is a logistic GLM. |
 | [`make_univariate_transform()`][tramdag.transforms.make_univariate_transform] | Transform registry: name → transform instance. |
 | [`ordinal_cutpoints()`][tramdag.transforms.ordinal_cutpoints] | Unconstrained `(n, K-1)` → increasing cutpoints with ±inf ends. |
 | [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] | $\log P(Y=y)$, computed in log space ([model.md](model.md#ordinal-nodes)). |
 | [`ordinal_pmf()`][tramdag.transforms.ordinal_pmf] / [`ordinal_sample()`][tramdag.transforms.ordinal_sample] / [`ordinal_abduct()`][tramdag.transforms.ordinal_abduct] | Class probabilities / latent → level / truncated-logistic latent recovery (Pearl step 1) for ordinal nodes. |
-| [`ordinal_marginal_init_theta()`][tramdag.transforms.ordinal_marginal_init_theta] | Cutpoint start that matches the empirical class frequencies (`init_marginals`). |
+| [`ordinal_marginal_init_theta()`][tramdag.transforms.ordinal_marginal_init_theta] | Cutpoint start that matches the empirical class frequencies (`marginal_init=True`). |
 | [`ordinal_bounds()`][tramdag.transforms.ordinal_bounds] | The shifted cutpoint interval of each observed level. `scores.py` reads it for the latent-scale derivative. |
 | (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable $\log(1-e^{x})$. |
 
@@ -48,8 +48,7 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one [`Node`][tramdag.nodes.Node] per variable in topological order. Construction seeds the weights. |
-| [`calibrate()`][tramdag.flow.CausalFlowDAG.calibrate] | The data-dependent state of every term, taken once from the training rows ([fitting.md](fitting.md)). |
-| [`init_marginals()`][tramdag.flow.CausalFlowDAG.init_marginals] | The marginal start of every simple intercept, as an explicit step callable any time; on a trained flow it restarts those intercepts. |
+| [`calibrate()`][tramdag.flow.CausalFlowDAG.calibrate] | The data-dependent state of every term, taken once from the training rows; `marginal_init=True` also starts every simple intercept at its marginal ([fitting.md](fitting.md)). |
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Joint maximum likelihood by one minibatch Adam loop, with `validation_data=`/`validation_split=`, `verbose=`, `optimizer=` and `callbacks=`; `history` holds `train`, `val` and `lr` per epoch. A second call continues training. The mechanics are in [fitting.md](fitting.md). |
 | [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Float64 full-batch L-BFGS for all-`ls` specs; refuses flexible specs. |
 | [`sample()`][tramdag.flow.CausalFlowDAG.sample] | Observational, interventional (`do=`, graph mutilation) and counterfactual (`u=`) sampling. |
@@ -161,10 +160,10 @@ default you can read at the call site. Nothing numeric is buried.
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodePlateau`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
-| calibrated init | `init_marginals(train_df)` | never implicit; without it zuko's zero start |
+| calibrated init | `fit(marginal_init=)`, `calibrate(marginal_init=)` | False: zuko's zero start; applied once, on the calibrating fit |
 | VC stage-1 propensities | the training-frame column `VC(center=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, center=)` | 1.0 / False (`center="col"` names the propensity column) |
-| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks |
+| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
 | training budget | `fit(epochs=)` | **required** ([fitting.md](fitting.md)) |
 | network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64) — parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |
 | activation | `activation=` on `I`/`CS`/`VC` | `"relu"` (the reference default classes); `"sigmoid"` and `"tanh"` are the paper's |

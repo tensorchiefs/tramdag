@@ -24,7 +24,7 @@ replay, so every seed here is a repository choice.
 | networks | triangle scripts `create_param_net` with `hidden_features = c(2, 25, 25, 2)` continuous and `c(2, 2, 2, 2)` mixed, sigmoid (the ReLU line is commented out); the vector reads as in/out dims around the hidden stack, so the hidden layers are (25, 25) and (2, 2). Comparison scripts `make_model`: `dense(10, tanh) → dense(100, tanh) → dense(len_theta)`, one net per node | `units` and `activation` set per variant to exactly those stacks. The package defaults in [code-map.md](code-map.md) replicate the PyTorch reference `buehlpa/TramDag` instead and are not the paper's nets |
 | init | triangle scripts: `LinearMasked` layers with Keras `random_normal` (N(0, 0.05²)) on weights and biases, the LS `beta` layer included; comparison scripts: `layer_dense` default, glorot-uniform weights and zero biases | `init: normal` (triangle) and `init: glorot` (VACA/CAREFL) through `CausalFlowDAG(init=)`; torch's default init remains the framework default, and under the full-batch protocol the init decides the fit (see VACA) |
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
-| calibrated start | none | `init_marginals: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`, VACA) and impossible for CAREFL's `range_q: 0` domain. `calibrate` never touches the weights |
+| calibrated start | none | `marginal_init: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`, VACA) and impossible for CAREFL's `range_q: 0` domain. `calibrate` without the flag never touches the weights |
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
 | plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)` on the summed `history["val"]`, the same rule, verified against torch's source; `experiments/helpers.py::fit_paper` drives it |
 
@@ -231,7 +231,7 @@ the Fig. 6 x3 error 5.9 against the full-batch 2.7).
 
 ## D4: the marginal start, measured per variant
 
-`init_marginals` sets every simple intercept to its column's empirical
+`marginal_init` sets every simple intercept to its column's empirical
 marginal before the first epoch (Bernstein: the control points follow
 $\operatorname{logit}\hat F$; ordinal: the class log-odds). The reference
 starts `bernp$beta` at zero. Measured on this machine at the CI protocol, one

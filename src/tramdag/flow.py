@@ -337,7 +337,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def calibrate(
         self, train_df: pd.DataFrame, *, marginal_init: bool = False
     ) -> CausalFlowDAG:
-        """Take the data-dependent state from the training rows, once.
+        r"""Take the data-dependent state from the training rows, once.
 
         Every term calibrates itself: the intercept term maps its node's
         train ``range_q``/``1 - range_q`` quantiles (an intercept option,
@@ -351,13 +351,13 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         reuse this state — data on a new scale needs a new flow.
 
         ``marginal_init`` additionally starts every simple intercept at its
-        column's marginal, through [`init_marginals`][]. It rides on this
-        method's guard on purpose: the start belongs to the one-time setup, so
-        a second ``fit`` — the next phase of a schedule — continues training
-        instead of discarding the intercepts it just trained. That also means
-        the flag does nothing on a flow that is already calibrated; call
-        [`init_marginals`][] directly to re-apply the start whenever you want
-        it.
+        column's marginal: a Bernstein intercept at the Bernstein
+        approximation of $\operatorname{logit} \hat F(y)$, an ordinal one at
+        the marginal class log-odds; spline/affine intercepts and intercepts
+        with parents are untouched. The start rides on this method's guard, so
+        a second ``fit`` (the next phase of a schedule) continues training
+        instead of discarding the intercepts it just trained, and the flag
+        does nothing on a flow that is already calibrated.
 
         Parameters
         ----------
@@ -384,43 +384,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 m.calibrate(train_df)
         self.calibrated.fill_(True)
         if marginal_init:
-            # after the flag, so init_marginals does not calibrate a second time
-            self.init_marginals(train_df)
-        return self
-
-    def init_marginals(self, train_df: pd.DataFrame) -> CausalFlowDAG:
-        r"""Set every simple intercept to the marginal of its column — any time.
-
-        Always explicit; nothing runs it for you. A Bernstein simple intercept
-        starts at the Bernstein approximation of its column's
-        $\operatorname{logit} \hat F(y)$, an ordinal simple intercept at the marginal
-        class
-        log-odds; spline/affine intercepts and intercepts with parents are
-        untouched. It is NOT guarded by the calibrated flag, so calling it on
-        a loaded or already-trained flow **discards those intercepts'
-        weights**. An uncalibrated flow takes its ranges from the same rows
-        first.
-
-        Parameters
-        ----------
-        train_df : pd.DataFrame
-            Training rows, one column per node.
-
-        Returns
-        -------
-        CausalFlowDAG
-            ``self``.
-        """
-        if not bool(self.calibrated):
-            self.calibrate(train_df)
-        for name in self.order:
-            nd = self.nodes[name]
-            column = train_df[name].to_numpy()
-            if nd.kind == "ordinal":
-                self._check_level_values(name, column)
-            theta = nd.marginal_theta(column)
-            if theta is not None:  # a spline or affine transform has no start
-                nd.intercept.marginal_start(theta)
+            for name in self.order:
+                nd = self.nodes[name]
+                theta = nd.marginal_theta(train_df[name].to_numpy())
+                if theta is not None:  # a spline or affine transform has no start
+                    nd.intercept.marginal_start(theta)
         return self
 
     def node_log_prob(

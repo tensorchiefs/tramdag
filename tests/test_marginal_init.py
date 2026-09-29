@@ -1,4 +1,4 @@
-"""Tests for ``init_marginals`` — the explicit calibrated initialization of each
+"""Tests for ``marginal_init`` — the calibrated start of each
 *unconditional* (root) node's transform to the empirical marginal.
 
 What it guarantees:
@@ -83,7 +83,7 @@ def test_marginal_init_only_touches_unconditional_roots():
         for k, v in flow.nodes["x2"].intercept.state_dict().items()
     }
 
-    flow.init_marginals(df)
+    flow.calibrate(df, marginal_init=True)
 
     # the two roots are now calibrated (changed from their zero init)...
     assert not torch.allclose(flow.nodes["x1"].intercept.theta.detach(), root_x1_before)
@@ -159,9 +159,7 @@ def test_marginal_init_is_pure_init_same_optimum(ls_chain):
 
     def converged_nll(marginal_init):
         flow = CausalFlowDAG(spec, seed=0)
-        flow.calibrate(obs)
-        if marginal_init:
-            flow.init_marginals(obs)
+        flow.calibrate(obs, marginal_init=marginal_init)
         flow.fit(obs, epochs=1500, learning_rate=1e-2, batch_size=512)
         return sum(flow.nll(obs).values())
 
@@ -189,34 +187,6 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     assert torch.equal(before, loaded.nodes["y"].intercept.theta.detach())
 
 
-def test_init_marginals_is_explicit_and_repeatable():
-    """``init_marginals`` re-applies the calibrated start on a trained flow
-    (unlike ``calibrate``, which is once-only), touches only simple
-    intercepts, and calibrates a fresh flow's ranges itself.
-    """
-    flow, df = _mixed_flow_and_df()
-    flow.init_marginals(df)  # fresh flow: takes the ranges too
-    assert bool(flow.calibrated)
-    start = flow.nodes["x1"].intercept.theta.detach().clone()
-    start_y = flow.nodes["y"].intercept.theta.detach().clone()
-
-    flow.fit(df, epochs=5, learning_rate=1e-2, batch_size=128)
-    assert not torch.equal(start, flow.nodes["x1"].intercept.theta.detach())
-    ci_fitted = [p.detach().clone() for p in flow.nodes["x2"].intercept.parameters()]
-
-    flow.init_marginals(df)  # explicit restart at the marginal
-    np.testing.assert_allclose(
-        start.numpy(), flow.nodes["x1"].intercept.theta.detach().numpy(), atol=1e-6
-    )
-    np.testing.assert_allclose(
-        start_y.numpy(), flow.nodes["y"].intercept.theta.detach().numpy(), atol=1e-6
-    )
-    for fitted, after in zip(
-        ci_fitted, flow.nodes["x2"].intercept.parameters(), strict=True
-    ):
-        assert torch.equal(fitted, after.detach())  # ci intercept: never re-inited
-
-
 def test_bernstein_marginal_init_follows_the_empirical_marginal():
     """A column beats the linear map on a skewed and on a bimodal marginal.
 
@@ -237,7 +207,8 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
         flow.nodes["x"].intercept.marginal_start(linear)
         nll_linear = float(sum(flow.nll(df).values()))
 
-        flow.init_marginals(df)  # the empirical start
+        flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
+        flow.calibrate(df, marginal_init=True)  # the empirical start
         empirical = flow.nodes["x"].intercept.theta.detach()
         assert float(sum(flow.nll(df).values())) < nll_linear - 0.2, name
         assert not torch.allclose(empirical, linear)
@@ -250,3 +221,8 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
         ut.marginal_init_theta(None).numpy(),
         atol=1e-6,
     )
+
+
+def test_calibrate_returns_the_flow():
+    flow, df = _mixed_flow_and_df()
+    assert flow.calibrate(df, marginal_init=True) is flow

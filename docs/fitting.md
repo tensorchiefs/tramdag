@@ -72,9 +72,7 @@ weights.
 
   The flag rides on calibration's guard, so it applies once, on the fit that
   calibrates. That is what a schedule needs: a second `fit` continues training
-  rather than discarding the intercepts the first one trained. To re-apply the
-  start whenever you want it, call `init_marginals(train_df)` directly — it is
-  explicit, repeatable and not guarded.
+  rather than discarding the intercepts the first one trained.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
   a float and uses the last fraction of `train_df` unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With

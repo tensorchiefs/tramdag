@@ -545,7 +545,7 @@ class BernsteinUT(_ScaledUT):
         ValueError
             With ``range_q=0``: the domain ends are the data min/max, whose
             latent quantile target $\operatorname{logit} 0$ is undefined — skip
-            ``init_marginals`` for a min-max-domain model.
+            ``marginal_init`` for a min-max-domain model.
 
         Returns
         -------
@@ -565,7 +565,7 @@ class BernsteinUT(_ScaledUT):
                 "the marginal start maps the domain ends onto the latent "
                 "range_q quantiles, and logit(0) is undefined — a "
                 "range_q=0 (min-max domain) model has no marginal start; "
-                "skip init_marginals for it"
+                "fit it with marginal_init=False"
             )
         order = n + 1  # constrained control points: n+2
         points = self._init_control_points(column if n >= 3 else None, order)

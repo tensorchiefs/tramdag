@@ -185,8 +185,8 @@ class PerNodeEarlyStopping(Callback):
     (one ``node``-tagged group per node), and give ``fit`` a validation set
     (the callback reads ``flow.history["val"]``). Do not attach a torch lr
     scheduler to the same optimizer: two controllers would steer the same
-    group rates. ``fit`` refuses it beside another restoring callback, such as
-    ``EarlyStopping(restore_best=True)``.
+    group rates. With ``restore_best``, ``fit`` refuses it beside another
+    restoring callback, such as ``EarlyStopping(restore_best=True)``.
 
     Parameters
     ----------
@@ -243,7 +243,7 @@ class PerNodeEarlyStopping(Callback):
 
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Step on the epoch's validation NLL; ``True`` once every node froze."""
-        return self.step(flow, _last_val(flow, self), optimizer, epoch)
+        return self._step(flow, _last_val(flow, self), optimizer, epoch)
 
     def on_fit_end(self, flow, optimizer) -> None:
         """Load every node's best weights again (``restore_best``).
@@ -255,7 +255,7 @@ class PerNodeEarlyStopping(Callback):
             for name in self.lr0:
                 self._restore(flow, name)
 
-    def step(self, flow, nll: dict[str, float], optimizer, epoch: int) -> bool:
+    def _step(self, flow, nll: dict[str, float], optimizer, epoch: int) -> bool:
         """Step every unfrozen node on its own NLL; ``True`` when all are frozen.
 
         ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that

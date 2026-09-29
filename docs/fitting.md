@@ -90,7 +90,8 @@ weights.
   and takes an optional `patience`, and `PerNodeEarlyStopping` with
   `per_node_adam`, the same per node: a node freezes after `patience` flat
   epochs, loads its best weights back and optionally decays its rate on the
-  way. `fit` refuses two callbacks that restore weights. All of them read `history["val"]`.
+  way. `fit` refuses two callbacks that restore weights. Both read
+  `history["val"]`.
 - **Centered `VC` propensities** ride the training frame as the column that
   `VC(center=)` names, and split and minibatch with it.
   [varying-coefficients.md](varying-coefficients.md) is the guide.

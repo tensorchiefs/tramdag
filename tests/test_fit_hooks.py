@@ -336,11 +336,11 @@ def test_per_node_early_stopping_rejects_a_zero_start_rate(ls_chain):
     ]
     stopping = PerNodeEarlyStopping(patience=50, lr_patience=15)
     with pytest.raises(ValueError, match="initial_lr"):
-        stopping.step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
+        stopping._step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
     for g in groups:
         g["initial_lr"] = 0.0
     with pytest.raises(ValueError, match="learning rate 0"):
-        stopping.step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
+        stopping._step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
 
 
 def test_per_node_early_stopping_rejects_an_untagged_optimizer(ls_chain):
@@ -350,7 +350,7 @@ def test_per_node_early_stopping_rejects_an_untagged_optimizer(ls_chain):
     flow.calibrate(df)
     opt = torch.optim.Adam(flow.parameters(), lr=1e-2)
     with pytest.raises(ValueError, match="per_node_adam"):
-        PerNodeEarlyStopping(patience=10).step(flow, flow.nll(df), opt, 1)
+        PerNodeEarlyStopping(patience=10)._step(flow, flow.nll(df), opt, 1)
 
 
 def test_per_node_early_stopping_restores_each_node_at_its_best_epoch(ls_chain):
@@ -407,7 +407,7 @@ def test_per_node_early_stopping_decays_the_rate_every_lr_patience_epochs(ls_cha
     stopping = PerNodeEarlyStopping(patience=100, lr_patience=3, restore_best=False)
     rates = []
     for epoch in range(1, 11):  # epoch 1 improves on inf, then the NLL is flat
-        stopping.step(flow, {"x1": 1.0, "x2": 1.0}, opt, epoch)
+        stopping._step(flow, {"x1": 1.0, "x2": 1.0}, opt, epoch)
         rates.append(opt.param_groups[0]["lr"])
     assert rates == pytest.approx(
         [1.0, 1.0, 1.0, 0.3, 0.3, 0.3, 0.09, 0.09, 0.09, 0.027]

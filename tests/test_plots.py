@@ -58,18 +58,18 @@ def test_plot_dag_layers_children_past_their_parents():
 
 
 def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
-    """Both figures read the flow after a short plateau fit; ``path`` saves."""
+    """Both figures read the flow after a short per-node fit; ``path`` saves."""
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    plateau = PerNodeEarlyStopping(patience=8, lr_patience=2)
+    stopping = PerNodeEarlyStopping(patience=8, lr_patience=2)
     flow.fit(
         df,
         epochs=30,
         batch_size=100,
         validation_data=df,
         optimizer=per_node_adam(flow, lr=1e-2),
-        callbacks=plateau,
+        callbacks=stopping,
     )
     axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png", title="m")
     assert axes.flat[0].figure._suptitle.get_text() == "m"
@@ -79,8 +79,8 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert ax.get_title() == "t"
     assert len(ax.lines) == 2  # train and val, no marks without frozen=
     assert (tmp_path / "t.png").exists()
-    ax = plot_training(flow, frozen=plateau.frozen)
-    assert len(ax.lines) == 2 + len(plateau.frozen)  # one mark per freeze
+    ax = plot_training(flow, frozen=stopping.frozen)
+    assert len(ax.lines) == 2 + len(stopping.frozen)  # one mark per freeze
     # no validation history, no marks: one line
     flow2 = CausalFlowDAG(spec, seed=0)
     flow2.fit(df, epochs=3, batch_size=100)

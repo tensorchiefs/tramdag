@@ -24,9 +24,8 @@ if TYPE_CHECKING:
 # %% global variables ------------------------------------------------------------------
 __all__ = ["FitMixin"]
 
-GRAD_TOL = (
-    1e-2  # gradient norm at which a self-stopped classical fit counts as converged
-)
+# gradient norm at which a self-stopped classical fit counts as converged
+GRAD_TOL = 1e-2
 
 
 # %% private functions -----------------------------------------------------------------

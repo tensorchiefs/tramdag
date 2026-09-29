@@ -1353,17 +1353,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.step" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        step
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1606,17 +1595,6 @@
     <span class="md-ellipsis">
       
         on_fit_end
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.step" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        step
       
     </span>
   </a>
@@ -2303,8 +2281,8 @@ floored at <code>1e-3</code> of its start.</p>
 (one <code>node</code>-tagged group per node), and give <code>fit</code> a validation set
 (the callback reads <code>flow.history["val"]</code>). Do not attach a torch lr
 scheduler to the same optimizer: two controllers would steer the same
-group rates. <code>fit</code> refuses it beside another restoring callback, such as
-<code>EarlyStopping(restore_best=True)</code>.</p>
+group rates. With <code>restore_best</code>, <code>fit</code> refuses it beside another
+restoring callback, such as <code>EarlyStopping(restore_best=True)</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2590,8 +2568,8 @@ figure can mark the freezes.</p>
 <span class="sd">    (one ``node``-tagged group per node), and give ``fit`` a validation set</span>
 <span class="sd">    (the callback reads ``flow.history["val"]``). Do not attach a torch lr</span>
 <span class="sd">    scheduler to the same optimizer: two controllers would steer the same</span>
-<span class="sd">    group rates. ``fit`` refuses it beside another restoring callback, such as</span>
-<span class="sd">    ``EarlyStopping(restore_best=True)``.</span>
+<span class="sd">    group rates. With ``restore_best``, ``fit`` refuses it beside another</span>
+<span class="sd">    restoring callback, such as ``EarlyStopping(restore_best=True)``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -2648,7 +2626,7 @@ figure can mark the freezes.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Load every node's best weights again (``restore_best``).</span>
@@ -2660,7 +2638,7 @@ figure can mark the freezes.</p>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Step every unfrozen node on its own NLL; ``True`` when all are frozen.</span>
 
 <span class="sd">        ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that</span>
@@ -2788,7 +2766,7 @@ figure can mark the freezes.</p>
 <span class="normal">245</span>
 <span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2832,89 +2810,6 @@ buffers move after the freeze; this final restore resets them too.</p>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="tramdag.callbacks.PerNodeEarlyStopping.step" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">step</span>
-
-
-<a href="#tramdag.callbacks.PerNodeEarlyStopping.step" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Step every unfrozen node on its own NLL; <code>True</code> when all are frozen.</p>
-<p><code>epoch</code> (1-based, as <code>fit</code> counts) is recorded for a node that
-improves or freezes on this step.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Step every unfrozen node on its own NLL; ``True`` when all are frozen.</span>
-
-<span class="sd">    ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that</span>
-<span class="sd">    improves or freezes on this step.</span>
-<span class="sd">    """</span>
-    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">"node"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"PerNodeEarlyStopping needs one 'node'-tagged parameter "</span>
-                <span class="s2">"group per node — build the optimizer with per_node_adam(flow, lr)"</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"PerNodeEarlyStopping needs the 'initial_lr' stamp on every "</span>
-                <span class="s2">"parameter group — build the optimizer with "</span>
-                <span class="s2">"per_node_adam(flow, lr); a bare group's current rate may "</span>
-                <span class="s2">"already be decayed and would silently become the baseline"</span>
-            <span class="p">)</span>
-        <span class="n">lr0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">"initial_lr"</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">lr0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">g</span><span class="p">[</span><span class="s1">'node'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> starts at learning rate 0 — build a "</span>
-                <span class="s2">"fresh per_node_adam(flow, lr): its initial_lr stamp lets "</span>
-                <span class="s2">"a reused optimizer restore its rates"</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_step_node</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">nll</span><span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]],</span> <span class="n">epoch</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

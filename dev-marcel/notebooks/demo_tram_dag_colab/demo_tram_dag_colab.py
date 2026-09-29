@@ -150,7 +150,8 @@ plt.show()
 # `validation_data=` scores the validation rows per epoch, `verbose=` prints
 # progress, and the strategy attaches through `callbacks=`: `per_node_adam`
 # with `PerNodeEarlyStopping` freezes each node once its own validation score
-# has plateaued and loads its best weights back, so `epochs=200` is a ceiling and not a budget.
+# has plateaued and loads its best weights back, so `epochs=200` is a ceiling
+# and not a budget.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
@@ -184,10 +185,10 @@ epochs_used = len(flow.history["val"])
 print(f"\nfitted on {DEVICE} in {t_fit:.1f}s, {epochs_used} epochs")
 print(f"each node froze at epoch: {dict(sorted(sched.frozen.items()))}")
 
-# The ceiling must not bind. If it does, the plateau rule never finished and
+# The ceiling must not bind. If it does, the per-node stop never finished and
 # the numbers below describe an unconverged fit.
 assert epochs_used < 200, (
-    "the fit used all 200 epochs, so no node froze and the plateau rule did "
+    "the fit used all 200 epochs, so no node froze and the per-node stop did "
     "not self-stop; raise the ceiling before trusting anything below"
 )
 

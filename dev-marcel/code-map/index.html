@@ -1905,7 +1905,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../api/callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a></td>
-<td>Per-node early stopping: a node freezes after <code>patience</code> flat epochs and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones); <code>lr_patience=</code> decays the rate on the way. Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>. <code>step(flow, nll, opt, epoch)</code> for a hand-driven loop.</td>
+<td>Per-node early stopping: a node freezes after <code>patience</code> flat epochs and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones); <code>lr_patience=</code> decays the rate on the way. Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="per_node_adam" href="../api/callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam()</code></a></td>

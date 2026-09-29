@@ -221,13 +221,12 @@ assert spent < CEILING, "patience never triggered, so the ceiling bound instead"
 assert spent - stopper.best_epoch >= 25
 
 # %% [markdown]
-# ## 6. Per-node rates: `per_node_adam` with `PerNodeEarlyStopping`
+# ## 6. Per-node early stopping: `per_node_adam` with `PerNodeEarlyStopping`
 #
 # `per_node_adam` builds an Adam with one tagged parameter group per node, and
 # `PerNodeEarlyStopping` decays, freezes and restores each node on its own
-# validation score
-# ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when the last node
-# freezes.
+# validation score ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when
+# the last node freezes.
 #
 # Do not attach a torch scheduler to the same optimizer. Two controllers would
 # steer the same group rates against each other.
@@ -235,21 +234,21 @@ assert spent - stopper.best_epoch >= 25
 # %%
 flow = build()
 t0 = time.perf_counter()
-plateau = PerNodeEarlyStopping(patience=40, lr_patience=10)
+stopping = PerNodeEarlyStopping(patience=40, lr_patience=10)
 flow.fit(
     train,
     epochs=CEILING,
     batch_size=256,
     validation_data=val,
     optimizer=per_node_adam(flow, lr=1e-2),
-    callbacks=plateau,
+    callbacks=stopping,
 )
 record("PerNodeEarlyStopping", flow, time.perf_counter() - t0)
 
-print(f"    froze at: {dict(sorted(plateau.frozen.items()))}")
+print(f"    froze at: {dict(sorted(stopping.frozen.items()))}")
 print("    per-node rates at the end:", flow.history["lr"][-1])
-assert set(plateau.frozen) == set(SPEC), "not every node froze"
-assert len(flow.history["train"]) < CEILING, "the plateau rule did not self-stop"
+assert set(stopping.frozen) == set(SPEC), "not every node froze"
+assert len(flow.history["train"]) < CEILING, "the per-node stop did not self-stop"
 
 # %% [markdown]
 # `history["lr"]` holds one dict per epoch, keyed by the node tags here, so the
@@ -257,7 +256,7 @@ assert len(flow.history["train"]) < CEILING, "the plateau rule did not self-stop
 # `plot_training` marks the freeze epochs.
 
 # %%
-plot_training(flow, frozen=plateau.frozen)
+plot_training(flow, frozen=stopping.frozen)
 plt.show()
 
 # %% [markdown]

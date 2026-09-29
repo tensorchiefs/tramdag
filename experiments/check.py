@@ -22,10 +22,10 @@ rather than drifting. A bound that is *meant* to be wide carries a ``"why"``
 string, which is printed in place of the note:
 
 ```
-"beta13": {
-  "value": -0.1806,
-  "atol": 0.05,
-  "why": "weakly identified: the coefficient multiplies the mixture x1"}
+"fit_seconds": {
+  "max": 986,
+  "why": "3x the 2-core CI runner measurement: shared-runner wall clock
+          is noisy, so this is a gross-regression tripwire"}
 ```
 
 A ``"why"`` excuses width only. The *too tight* note always fires, because no

@@ -199,7 +199,7 @@ class _InputTransform(nn.Module):
 
 
 # %% public classes --------------------------------------------------------------------
-class TermModule:
+class TermModule(nn.Module):
     """What every term module shares: the input transform and its calibration."""
 
     @property
@@ -340,7 +340,7 @@ class InterceptModule(TermModule, ABC):
         """Set the calibrated marginal start; only a free intercept has one."""
 
 
-class SimpleInterceptModule(InterceptModule, nn.Module):
+class SimpleInterceptModule(InterceptModule):
     """The free simple intercept: one theta vector, no parents.
 
     Parameters
@@ -372,7 +372,7 @@ class SimpleInterceptModule(InterceptModule, nn.Module):
             self.theta.copy_(theta)
 
 
-class ComplexInterceptModule(InterceptModule, nn.Module):
+class ComplexInterceptModule(InterceptModule):
     """A single (possibly joint multi-parent) complex intercept net.
 
     Several parents given to one term feed a single network, so they interact.
@@ -410,7 +410,7 @@ class ComplexInterceptModule(InterceptModule, nn.Module):
         return self(node.net_input(feats, self.ci_parents, "@I"))
 
 
-class AdditiveInterceptModule(InterceptModule, nn.Module):
+class AdditiveInterceptModule(InterceptModule):
     """``allow_interaction=False``: one net per parent, outputs summed.
 
     Each parent reshapes the transform independently, in unconstrained
@@ -453,7 +453,7 @@ class AdditiveInterceptModule(InterceptModule, nn.Module):
         )
 
 
-class LinearShiftModule(ShiftModule, nn.Module):
+class LinearShiftModule(ShiftModule):
     r"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
 
     For an ordinal child, $\exp(\beta)$ is an odds ratio. Keyed by the parent's
@@ -501,7 +501,7 @@ class LinearShiftModule(ShiftModule, nn.Module):
         return {self.key: psi[:, 0]}
 
 
-class ComplexShiftModule(ShiftModule, nn.Module):
+class ComplexShiftModule(ShiftModule):
     """``CS`` — an additive network shift ``g(x)`` over its parents.
 
     One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The
@@ -537,7 +537,7 @@ class ComplexShiftModule(ShiftModule, nn.Module):
         return self(node.net_input(feats, self.parents, self.key))
 
 
-class VaryingCoefficientModule(ShiftModule, nn.Module):
+class VaryingCoefficientModule(ShiftModule):
     r"""``VC``: $\beta(\text{mod})\, x_t$ with $\beta(x) = \beta_0 + b_\Theta(x)$.
 
     The weights of $b_\Theta$ carry the L2 ``penalty`` (``l2``; ``fit`` adds

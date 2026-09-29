@@ -2,6 +2,25 @@
 
 ### BREAKING CHANGE
 
+- CausalFlowDAG.init_marginals is gone; pass
+marginal_init=True to fit or calibrate. Experiment YAMLs use the key
+marginal_init instead of init_marginals.
+- fit_classical takes no grad_tol argument.
+- history["lr"] entries of an untagged optimizer are
+dicts, not floats or lists.
+- `converged` in the fit_classical report changes meaning
+and the report gains `stop_reason`.
+- fit_classical(marginal_init=) is gone. It was added in
+the previous commit for symmetry and it buys nothing: the route is
+full-batch L-BFGS on a concave objective, so it lands on the maximum
+likelihood wherever it starts. Measured on the stroke case study over
+five seeds and both cohorts, every node's validation NLL moved by at
+most 0.003, which is the seed spread, and the fit was marginally slower.
+A knob that provably does nothing is one to remove.
+- `tramdag.Fn` / `tramdag.FnShift` are gone; a spec or
+checkpoint carrying a `term: Fn` entry no longer loads.
+- `python -m paper.<script>` is `python -m <script>` from
+experiments/, and `python -m check <name>` takes no area.
 - code reading `Term.term` reads `Term.name`.
 - a spec dict or YAML written with `effect:` no longer
 loads; rename the key. Checkpoints saved before this commit need the same
@@ -23,6 +42,9 @@ package states a reason.
 
 ### Feat
 
+- **fit**: the marginal start is an option on calibrate and on fit, off by default
+- **exps**: the marginal start is a blueprint switch, on where it holds
+- **exps**: reports with sections and captions, the package's plots in every run
 - **spec**: a custom term serializes as its import path
 - **flow**: log_prob takes a node subset
 - **transforms**: a continuous node starts at its empirical marginal
@@ -58,6 +80,11 @@ package states a reason.
 
 ### Fix
 
+- **spec**: VC errors say what is supported, not what may come
+- **flow**: a frame column of object dtype reads as numbers again
+- **fit**: the classical report names the spent evaluation budget
+- **fit**: the classical report says why it stopped, and `converged` means it
+- **docs**: strict build and hooks pass in CI
 - two defects the review of the simplification turned up
 - **readouts**: shift_curve builds its grid on the flow's device
 - four defects a review reproduced, each with a regression test
@@ -112,6 +139,14 @@ package states a reason.
 
 ### Refactor
 
+- **spec**: the term lookup imports a dotted path itself
+- the marginal start is the marginal_init flag only
+- **fit**: the classical gradient bound is a module constant
+- **fit**: history["lr"] is one dict per epoch
+- **modules**: a term module is an nn.Module by its base class
+- **fit**: fit_classical takes no marginal start
+- drop the Fn term
+- the paper replications are the only experiments
 - CausalFlowDAG reads top to bottom; three small folds
 - one spelling per thing across the package; prose follows the code
 - a term module is constructed from its term; no build classmethods

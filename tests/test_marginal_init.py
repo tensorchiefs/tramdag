@@ -10,7 +10,7 @@ What it guarantees:
 - It only touches unconditional `SimpleInterceptModule` roots — parented `I` terms are
   left alone.
 - It is a *pure init*: a marginal-init fit and a default fit converge to the same
-  optimum (so the exact-MLE property is preserved).
+  optimum.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ def test_marginal_init_only_touches_unconditional_roots():
         for k, v in flow.nodes["x2"].intercept.state_dict().items()
     }
 
-    flow.calibrate(df, marginal_init=True)
+    assert flow.calibrate(df, marginal_init=True) is flow
 
     # the two roots are now calibrated (changed from their zero init)...
     assert not torch.allclose(flow.nodes["x1"].intercept.theta.detach(), root_x1_before)
@@ -221,8 +221,3 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
         ut.marginal_init_theta(None).numpy(),
         atol=1e-6,
     )
-
-
-def test_calibrate_returns_the_flow():
-    flow, df = _mixed_flow_and_df()
-    assert flow.calibrate(df, marginal_init=True) is flow

@@ -382,13 +382,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             nd.intercept.calibrate_intercept(train_df, train_df[name], nd.ut)
             for m in nd.shifts.values():
                 m.calibrate(train_df)
-        self.calibrated.fill_(True)
-        if marginal_init:
-            for name in self.order:
-                nd = self.nodes[name]
+            if marginal_init:
                 theta = nd.marginal_theta(train_df[name].to_numpy())
                 if theta is not None:  # a spline or affine transform has no start
                     nd.intercept.marginal_start(theta)
+        self.calibrated.fill_(True)
         return self
 
     def node_log_prob(

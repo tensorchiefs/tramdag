@@ -42,7 +42,7 @@ import torch
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
 from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, OrdinalNode
-from tramdag.callbacks import PerNodePlateau, per_node_adam
+from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
 
 # repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
@@ -591,7 +591,7 @@ assert corr > 0.95, f"the density's mode does not track the shifts: r = {corr:.4
 # %%
 flow_a = CausalFlowDAG(spec_vaca, seed=0)
 t0 = time.perf_counter()
-sched = PerNodePlateau(patience=15, freeze=60)
+sched = PerNodeEarlyStopping(patience=60, lr_patience=15)
 flow_a.fit(
     df,
     epochs=2000,

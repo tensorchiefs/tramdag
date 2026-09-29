@@ -87,8 +87,10 @@ weights.
   `on_epoch_end` hook `cb(flow, epoch, optimizer)`, and any `True` return
   stops the fit. `on_fit_end` runs before the `VC` re-centering. The shipped
   callbacks are `EarlyStopping`, which restores the best-validation weights
-  and takes an optional `patience`, and `PerNodePlateau` with `per_node_adam`
-  for per-node decay and freezing. All of them read `history["val"]`.
+  and takes an optional `patience`, and `PerNodeEarlyStopping` with
+  `per_node_adam`, the same per node: a node freezes after `patience` flat
+  epochs, loads its best weights back and optionally decays its rate on the
+  way. `fit` refuses two callbacks that restore weights. All of them read `history["val"]`.
 - **Centered `VC` propensities** ride the training frame as the column that
   `VC(center=)` names, and split and minibatch with it.
   [varying-coefficients.md](varying-coefficients.md) is the guide.
@@ -107,7 +109,7 @@ and need the best-validation weights to recover the causal effect.
 | `EarlyStopping()` | any `CI`, `CS` or `VC` model; register it, `fit` has no default |
 | `EarlyStopping(patience=)` | also stop once the best epoch is that old |
 | a global plateau `Callback` around torch's `ReduceLROnPlateau` | one shared decaying rate |
-| `PerNodePlateau(patience=, freeze=)` with `per_node_adam` | nodes converge at different speeds; self-stopping |
+| `PerNodeEarlyStopping(patience=, lr_patience=)` with `per_node_adam` | nodes converge at different speeds; self-stopping |
 
 Two details are easy to get wrong.
 

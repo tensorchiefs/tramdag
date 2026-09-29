@@ -22,7 +22,7 @@ graph TD
         readouts["readouts.py<br/>ReadoutsMixin: ls_coefficients,<br/>varying_coef, to_matrix, contributions,<br/>design_matrix, shift_curve"]
         scores["scores.py<br/>node_scores,<br/>effect_modifier_scan"]
     end
-    callbacks["callbacks.py<br/>Callback, EarlyStopping,<br/>PerNodePlateau, per_node_adam"]
+    callbacks["callbacks.py<br/>Callback, EarlyStopping,<br/>PerNodeEarlyStopping, per_node_adam"]
     plots["plots.py<br/>plot_dag, plot_marginals,<br/>plot_training (matplotlib optional)"]
 
     spec --> modules
@@ -227,7 +227,7 @@ classDiagram
   }
   class OrdinalNode {
   }
-  class PerNodePlateau {
+  class PerNodeEarlyStopping {
   }
   class ReadoutsMixin {
   }
@@ -254,7 +254,7 @@ classDiagram
   class _ScaledUT {
   }
   EarlyStopping --|> Callback
-  PerNodePlateau --|> Callback
+  PerNodeEarlyStopping --|> Callback
   _FnCallback --|> Callback
   CausalFlowDAG --|> FitMixin
   CausalFlowDAG --|> ReadoutsMixin

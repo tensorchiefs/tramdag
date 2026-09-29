@@ -92,6 +92,12 @@ def _normalize_callbacks(cbs) -> list[Callback]:
                 f"callbacks entries must be Callback instances or callables, got {cb!r}"
             )
         out.append(_FnCallback(cb))
+    restoring = [type(cb).__name__ for cb in out if getattr(cb, "restore_best", False)]
+    if len(restoring) > 1:
+        raise ValueError(
+            f"callbacks= has two callbacks that restore weights ({restoring}); "
+            "they would overwrite each other at fit end, so keep one"
+        )
     return out
 
 
@@ -242,8 +248,9 @@ class FitMixin:
             re-centering order). A bare callable is an ``on_epoch_end``
             hook, ``cb(flow, epoch, optimizer)`` — use it for schedules and
             coefficient trajectories. ``callbacks`` ships
-            ``EarlyStopping`` and ``PerNodePlateau``, all
-            reading ``history["val"]``.
+            ``EarlyStopping`` and ``PerNodeEarlyStopping``, both
+            reading ``history["val"]``; two callbacks that restore weights
+            are refused.
 
         Returns
         -------
@@ -256,7 +263,8 @@ class FitMixin:
             If ``epochs`` or ``batch_size`` is below 1, ``verbose`` is
             negative, both validation arguments are given, the split leaves
             an empty side, or a centered VC term's propensity column is
-            missing from the training frame or out of [0, 1].
+            missing from the training frame or out of [0, 1], or two
+            callbacks restore weights.
         TypeError
             If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
             or is a ``Callback`` class instead of an instance.

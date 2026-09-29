@@ -337,8 +337,8 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
         The fitted flow; ``flow.history`` is read.
     frozen : dict[str, int] | None, optional
         ``{node: epoch}`` of the freezes, each a dashed mark; a
-        [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] records that dict
-        as its ``frozen``. By default no marks.
+        [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping]
+        records that dict as its ``frozen``. By default no marks.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
     title : str | None, optional

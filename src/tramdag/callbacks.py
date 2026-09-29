@@ -1,4 +1,4 @@
-"""Predefined ``fit`` callbacks: ``EarlyStopping`` and ``PerNodePlateau``.
+"""Predefined ``fit`` callbacks: ``EarlyStopping`` and ``PerNodeEarlyStopping``.
 
 ``fit`` owns validation and progress printing; the callbacks here read the per-node
 validation NLL that ``fit`` appends to ``flow.history["val"]`` after every epoch —
@@ -16,7 +16,7 @@ import math
 import torch
 
 # %% global variables ------------------------------------------------------------------
-__all__ = ["Callback", "EarlyStopping", "PerNodePlateau", "per_node_adam"]
+__all__ = ["Callback", "EarlyStopping", "PerNodeEarlyStopping", "per_node_adam"]
 
 
 # %% private functions -----------------------------------------------------------------
@@ -40,7 +40,8 @@ def _last_val(flow, cb: Callback) -> dict[str, float]:
 def per_node_adam(flow, lr: float = 1e-2) -> torch.optim.Adam:
     """Give an Adam with one ``node``-tagged parameter group per node.
 
-    The optimizer [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] needs:
+    The optimizer that
+    [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] needs:
     each group carries its node's name and an ``initial_lr`` stamp.
 
     Parameters
@@ -57,7 +58,7 @@ def per_node_adam(flow, lr: float = 1e-2) -> torch.optim.Adam:
     """
     return torch.optim.Adam(
         [
-            # initial_lr (torch's scheduler convention) lets PerNodePlateau
+            # initial_lr (torch's scheduler convention) lets PerNodeEarlyStopping
             # restore a decayed group to its start at the next fit begin
             {
                 "params": list(flow.nodes[n].parameters()),
@@ -167,47 +168,61 @@ class EarlyStopping(Callback):
         flow.load_state_dict(self._state)
 
 
-class PerNodePlateau(Callback):
-    """Per-node plateau decay and freezing on the validation NLL.
+class PerNodeEarlyStopping(Callback):
+    """Early stopping per node: each node freezes on its own validation plateau.
 
-    A node's learning rate decays to 0.3 of its value after every ``patience``
-    epochs without a ``min_delta`` improvement of its own validation NLL, floored
-    at ``1e-3`` of its start; once it has decayed to ``1e-2`` of the start and
-    stayed flat for ``freeze`` epochs the node leaves training (rate 0). The
-    callback stops the fit when every node has left. Build the optimizer with
-    [`per_node_adam`][tramdag.callbacks.per_node_adam] (one ``node``-tagged group
-    per node), and give ``fit`` a validation set (the callback reads
-    ``flow.history["val"]``). Do not attach a torch lr scheduler to the same
-    optimizer: two controllers would steer the same group rates.
+    Tracks every node's validation NLL. A node freezes (rate 0) once its last
+    ``min_delta`` improvement is ``patience`` epochs old, and the fit stops
+    when every node has frozen. With ``restore_best`` (the default) a node
+    loads the weights of its best epoch back when it freezes, and every node
+    loads them in ``on_fit_end``, before the VC re-centering. The joint NLL is
+    a sum of per-node terms and a node's parameters enter only its own term,
+    so each node restores its own optimum. With ``lr_patience`` a node's rate
+    also decays to 0.3 of its value after every ``lr_patience`` flat epochs,
+    floored at ``1e-3`` of its start.
 
-    After a fit, ``frozen`` is ``{node: epoch}`` — the epoch in which each
-    node left training — so a training figure can mark the freezes.
+    Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]
+    (one ``node``-tagged group per node), and give ``fit`` a validation set
+    (the callback reads ``flow.history["val"]``). Do not attach a torch lr
+    scheduler to the same optimizer: two controllers would steer the same
+    group rates. ``fit`` refuses it beside another restoring callback, such as
+    ``EarlyStopping(restore_best=True)``.
 
     Parameters
     ----------
-    patience, freeze : int
-        Flat epochs before a decay, and before a decayed node freezes.
+    patience : int
+        Flat epochs before a node freezes.
+    restore_best : bool, optional
+        Load each node's best-epoch weights back, by default True.
+    lr_patience : int | None, optional
+        Flat epochs before each rate decay; ``None`` (the default) keeps the
+        rates.
     min_delta : float, optional
         Improvement below this is flat, by default 1e-4.
 
     Attributes
     ----------
+    best_epoch : dict[str, int]
+        ``{node: epoch}`` of each node's best validation NLL.
     frozen : dict[str, int]
-        ``{node: epoch}`` of the nodes that left training, after a fit.
+        ``{node: epoch}`` of the nodes that left training, so a training
+        figure can mark the freezes.
     """
 
     def __init__(
         self,
         *,
         patience: int,
-        freeze: int,
+        restore_best: bool = True,
+        lr_patience: int | None = None,
         min_delta: float = 1e-4,
     ):
-        if patience < 1 or freeze < 1:
-            raise ValueError(
-                f"patience and freeze must be at least 1, got {patience}/{freeze}"
-            )
-        self.patience, self.freeze = patience, freeze
+        if patience < 1:
+            raise ValueError(f"patience must be at least 1, got {patience}")
+        if lr_patience is not None and lr_patience < 1:
+            raise ValueError(f"lr_patience must be at least 1, got {lr_patience}")
+        self.patience, self.lr_patience = patience, lr_patience
+        self.restore_best = restore_best
         self.min_delta = min_delta
         self._reset()
 
@@ -215,8 +230,9 @@ class PerNodePlateau(Callback):
         self.lr0: dict = {}
         self.best: dict = {}
         self.bad: dict = {}
+        self.best_epoch: dict[str, int] = {}
         self.frozen: dict[str, int] = {}
-        self.epoch = 0
+        self._state: dict = {}
 
     def on_fit_begin(self, flow, optimizer) -> None:
         """Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""
@@ -227,24 +243,33 @@ class PerNodePlateau(Callback):
 
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Step on the epoch's validation NLL; ``True`` once every node froze."""
-        return self.step(_last_val(flow, self), optimizer, epoch)
+        return self.step(flow, _last_val(flow, self), optimizer, epoch)
 
-    def step(self, nll: dict[str, float], optimizer, epoch: int) -> bool:
+    def on_fit_end(self, flow, optimizer) -> None:
+        """Load every node's best weights again (``restore_best``).
+
+        A frozen node still runs forward in training mode, so its batch-norm
+        buffers move after the freeze; this final restore resets them too.
+        """
+        if self.restore_best:
+            for name in self.lr0:
+                self._restore(flow, name)
+
+    def step(self, flow, nll: dict[str, float], optimizer, epoch: int) -> bool:
         """Step every unfrozen node on its own NLL; ``True`` when all are frozen.
 
         ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that
-        freezes on this step.
+        improves or freezes on this step.
         """
-        self.epoch = epoch
         for g in optimizer.param_groups:
             if "node" not in g:
                 raise ValueError(
-                    "PerNodePlateau needs one 'node'-tagged parameter group "
-                    "per node — build the optimizer with per_node_adam(flow, lr)"
+                    "PerNodeEarlyStopping needs one 'node'-tagged parameter "
+                    "group per node — build the optimizer with per_node_adam(flow, lr)"
                 )
             if "initial_lr" not in g:
                 raise ValueError(
-                    "PerNodePlateau needs the 'initial_lr' stamp on every "
+                    "PerNodeEarlyStopping needs the 'initial_lr' stamp on every "
                     "parameter group — build the optimizer with "
                     "per_node_adam(flow, lr); a bare group's current rate may "
                     "already be decayed and would silently become the baseline"
@@ -257,18 +282,31 @@ class PerNodePlateau(Callback):
                     "a reused optimizer restore its rates"
                 )
             if g["node"] not in self.frozen:
-                self._step_node(g, nll[g["node"]])
+                self._step_node(flow, g, nll[g["node"]], epoch)
         return len(self.frozen) == len(optimizer.param_groups)
 
-    def _step_node(self, g: dict, nll: float) -> None:
+    def _step_node(self, flow, g: dict, nll: float, epoch: int) -> None:
         name = g["node"]
         if nll < self.best.get(name, math.inf) - self.min_delta:
             self.best[name], self.bad[name] = nll, 0
-        else:
-            self.bad[name] = self.bad.get(name, 0) + 1
-        if self.bad[name] and self.bad[name] % self.patience == 0:
+            self.best_epoch[name] = epoch
+            if self.restore_best:
+                self._state[name] = copy.deepcopy(flow.nodes[name].state_dict())
+            return
+        self.bad[name] = self.bad.get(name, 0) + 1
+        if self.lr_patience is not None and self.bad[name] % self.lr_patience == 0:
             g["lr"] = max(g["lr"] * 0.3, self.lr0[name] * 1e-3)
-        decayed = g["lr"] <= self.lr0[name] * 1e-2 * (1 + 1e-9)
-        if decayed and self.bad[name] >= self.freeze:
-            self.frozen[name] = self.epoch
+        if self.bad[name] >= self.patience:
+            self.frozen[name] = epoch
             g["lr"] = 0.0
+            if self.restore_best:
+                self._restore(flow, name)
+
+    def _restore(self, flow, name: str) -> None:
+        if name not in self._state:  # a first finite NLL always beats inf
+            raise RuntimeError(
+                f"PerNodeEarlyStopping has nothing to restore for node {name!r}: "
+                "its validation NLL was never finite. Lower learning_rate, or "
+                "check the validation frame for a column the model cannot score."
+            )
+        flow.nodes[name].load_state_dict(self._state[name])

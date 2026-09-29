@@ -9,7 +9,7 @@ import pytest
 mpl.use("Agg")
 
 from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, OrdinalNode, plot_dag
-from tramdag.callbacks import PerNodePlateau, per_node_adam
+from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
 from tramdag.plots import plot_marginals, plot_training
 
 
@@ -62,7 +62,7 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    plateau = PerNodePlateau(patience=2, freeze=4)
+    plateau = PerNodeEarlyStopping(patience=8, lr_patience=2)
     flow.fit(
         df,
         epochs=30,

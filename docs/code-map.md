@@ -125,8 +125,8 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the fit. |
-| [`PerNodePlateau`][tramdag.callbacks.PerNodePlateau] | Per-node rate decay and freezing; stops the fit once every node froze and records `frozen = {node: epoch}`. `step(nll, opt, epoch)` for a hand-driven loop. |
-| [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodePlateau` needs. |
+| [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] | Per-node early stopping: a node freezes after `patience` flat epochs and loads its best-epoch weights back (`restore_best=False` keeps the last ones); `lr_patience=` decays the rate on the way. Stops the fit once every node froze and records `best_epoch` and `frozen` as `{node: epoch}`. `step(flow, nll, opt, epoch)` for a hand-driven loop. |
+| [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodeEarlyStopping` needs. |
 
 ## `plots.py` — the figures (matplotlib optional: `tramdag[plots]`)
 
@@ -159,7 +159,7 @@ default you can read at the call site. Nothing numeric is buried.
 |----------------------|-------------------------------|----------------------------------------------------------|
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
-| schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodePlateau`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
+| schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodeEarlyStopping`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
 | calibrated init | `fit(marginal_init=)`, `calibrate(marginal_init=)` | False: zuko's zero start; applied once, on the calibrating fit |
 | VC stage-1 propensities | the training-frame column `VC(center=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, center=)` | 1.0 / False (`center="col"` names the propensity column) |

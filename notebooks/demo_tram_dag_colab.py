@@ -56,7 +56,7 @@ import pandas as pd
 import torch
 
 from tramdag import CausalFlowDAG, ContinuousNode, I, plot_dag
-from tramdag.callbacks import PerNodePlateau, per_node_adam
+from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
 from tramdag.plots import plot_marginals, plot_training
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -149,8 +149,8 @@ plt.show()
 # One Adam fits every node at once ([`docs/fitting.md`](../docs/fitting.md)).
 # `validation_data=` scores the validation rows per epoch, `verbose=` prints
 # progress, and the strategy attaches through `callbacks=`: `per_node_adam`
-# with `PerNodePlateau` freezes each node once its own validation score has
-# plateaued, so `epochs=200` is a ceiling and not a budget.
+# with `PerNodeEarlyStopping` freezes each node once its own validation score
+# has plateaued and loads its best weights back, so `epochs=200` is a ceiling and not a budget.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
@@ -167,7 +167,7 @@ plt.show()
 # %%
 torch.manual_seed(0)
 flow = CausalFlowDAG(spec, device=DEVICE)
-sched = PerNodePlateau(patience=10, freeze=40)
+sched = PerNodeEarlyStopping(patience=40, lr_patience=10)
 
 t0 = time.perf_counter()
 flow.fit(

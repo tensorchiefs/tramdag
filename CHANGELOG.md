@@ -2,6 +2,11 @@
 
 ### BREAKING CHANGE
 
+- PerNodePlateau is gone. PerNodePlateau(patience=p,
+freeze=f) becomes PerNodeEarlyStopping(patience=max(4 * p, f),
+lr_patience=p) for the same freeze point, now with the best weights
+restored; restore_best=False keeps the last ones. step() takes the flow
+as its first argument.
 - CausalFlowDAG.init_marginals is gone; pass
 marginal_init=True to fit or calibrate. Experiment YAMLs use the key
 marginal_init instead of init_marginals.
@@ -42,6 +47,7 @@ package states a reason.
 
 ### Feat
 
+- **callbacks**: PerNodeEarlyStopping, early stopping per node
 - **fit**: the marginal start is an option on calibrate and on fit, off by default
 - **exps**: the marginal start is a blueprint switch, on where it holds
 - **exps**: reports with sections and captions, the package's plots in every run
@@ -139,6 +145,7 @@ package states a reason.
 
 ### Refactor
 
+- **flow**: calibrate sets the marginal start in its node loop
 - **spec**: the term lookup imports a dotted path itself
 - the marginal start is the marginal_init flag only
 - **fit**: the classical gradient bound is a module constant

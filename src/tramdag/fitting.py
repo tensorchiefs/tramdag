@@ -368,7 +368,7 @@ class FitMixin:
         ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS
         stopped on its own, because the NLL or the parameters moved by less
         than 1e-9, ``"max_iter"`` when the iteration budget ran out, and
-        ``"max_eval"`` when torch's evaluation budget (``1.25 * max_iter``
+        ``"max_eval"`` when torch's evaluation budget (``max_iter * 5 // 4``
         closure calls, line searches included) ran out first.
         ``tolerance_grad`` is 0, so the gradient never ends the run.
 

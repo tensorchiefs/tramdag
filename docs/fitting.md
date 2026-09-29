@@ -130,7 +130,7 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   nodes can need thousands of iterations to stop on that rule. Give the
   budget room and read the report.
 - **The report.** `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
-  (torch's budget of closure calls, `1.25 * max_iter`). `converged` needs
+  (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
   both: the run stopped on its own AND `grad_norm` is at most
   `tramdag.fitting.GRAD_TOL` (1e-2). Both conditions are necessary, because
   the same tolerance fires when the line search stalls far from the optimum.

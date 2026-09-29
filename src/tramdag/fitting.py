@@ -92,14 +92,9 @@ def _normalize_callbacks(cbs) -> list[Callback]:
     return out
 
 
-def _learning_rates(opt) -> dict[str, float] | float | list[float]:
-    """Give the optimizer's current rate(s): per node when the groups are tagged."""
-    groups = opt.param_groups
-    if all("node" in g for g in groups):
-        return {g["node"]: float(g["lr"]) for g in groups}
-    if len(groups) == 1:
-        return float(groups[0]["lr"])
-    return [float(g["lr"]) for g in groups]  # a hand-built untagged optimizer
+def _learning_rates(opt) -> dict[str | int, float]:
+    """Give the optimizer's current rates, keyed by node tag or group index."""
+    return {g.get("node", i): float(g["lr"]) for i, g in enumerate(opt.param_groups)}
 
 
 def _log_epoch(
@@ -211,8 +206,9 @@ class FitMixin:
             Validation rows, one column per node. When given (or split off), the
             per-node validation NLL is appended to ``flow.history["val"]`` after
             every epoch; the shipped callbacks read it there. ``history["lr"]``
-            records the optimizer's rate per epoch (``{node: lr}`` for tagged
-            groups, a float for one group, a list for several).
+            records the optimizer's rates per epoch, one dict keyed by a
+            group's ``node`` tag or else its index (``{0: lr}`` for the
+            default optimizer).
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows

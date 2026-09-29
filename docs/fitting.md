@@ -80,8 +80,9 @@ weights.
   frame first if its row order means anything; only the head calibrates. With
   either, `fit` writes the per-node validation NLL after
   every epoch into `flow.history["val"]`.
-- **Logging.** `flow.history["lr"]` records the optimizer's rate per epoch, a
-  `{node: lr}` dict under `per_node_adam`. `verbose=N` prints every Nth epoch
+- **Logging.** `flow.history["lr"]` records the optimizer's rates per epoch,
+  one dict keyed by a group's `node` tag or else its index: `{0: lr}` for the
+  default Adam, `{node: lr}` under `per_node_adam`. `verbose=N` prints every Nth epoch
   and the last one; the default 0 is silent.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks are
   `on_fit_begin`, `on_epoch_end` and `on_fit_end`; a bare callable is an

@@ -93,9 +93,8 @@ def test_load_requires_a_complete_checkpoint(tmp_path):
 def test_ls_coefficients_skips_network_shifts():
     """A node mixing LS and CS terms gives only its linear-shift weights.
 
-    Reading `.weight` off every shift module used to raise an
-    AttributeError on a ComplexShift, which broke the paper's headline
-    complex-shift replication (`experiments/triangle.py atan-cs`).
+    A ComplexShift has no `.weight`, so the read-out must skip it rather
+    than raise an AttributeError.
     """
     from tramdag import CS, LS, VC, CausalFlowDAG, ContinuousNode, OrdinalNode
 
@@ -119,7 +118,7 @@ def test_ls_coefficients_omits_a_node_without_linear_shifts():
 
 
 def test_fit_rejects_a_batch_size_below_one():
-    """batch_size=0 used to reach range() and fail with a cryptic message."""
+    """batch_size=0 is refused by name before the loop reaches range()."""
     df = pd.DataFrame({"x1": np.zeros(8), "x2": np.zeros(8), "y": np.zeros(8)})
     with pytest.raises(ValueError, match="batch_size must be at least 1"):
         CausalFlowDAG(_spec(), seed=0).fit(df, epochs=1, batch_size=0)
@@ -218,7 +217,7 @@ def test_log_prob_takes_a_node_subset(ls_chain):
 
 
 def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
-    """`n % batch_size == 1` used to hand BatchNorm1d a single row and crash."""
+    """`n % batch_size == 1` never hands BatchNorm1d a single row."""
     from tramdag import CS
 
     df = ls_chain["draw"](101, 0)[["x1", "x2"]]

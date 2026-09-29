@@ -271,8 +271,8 @@ def test_shift_curve_matches_the_manual_composition(ls_chain):
 def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain):
     """An ordinal parent enters one-hot, so a 1-D grid is not its input.
 
-    It used to reach the layer and fail with torch's shape message, in a
-    package that names every other mistake by hand.
+    The call names the ordinal parent instead of failing inside the layer
+    with torch's shape message.
     """
     from tramdag import LS, ContinuousNode, OrdinalNode
 

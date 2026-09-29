@@ -98,8 +98,8 @@ def test_max_iter_and_history_size_reach_the_solver(ls_chain):
 def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
     """Stopping early is not arriving: a short budget stalls on the same tolerance.
 
-    The flag used to read the stop reason alone, so a fit that gave up after a
-    handful of iterations, far from the optimum, reported convergence.
+    A fit that gives up after a handful of iterations, far from the optimum,
+    stops on "tolerance" but must not report convergence.
     """
     obs = ls_chain["draw"](800, 3)
     rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)

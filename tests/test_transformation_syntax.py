@@ -257,9 +257,8 @@ def test_units_reach_the_networks():
 def test_transform_arguments_apply_without_naming_the_transform():
     """SI(n_coeffs=40) must configure the default transform, not be ignored.
 
-    The effective transform used to be read only from a term that also set
-    `transform=`, so transform arguments on their own were silently dropped and
-    the reader got the default order with no indication.
+    Transform arguments on their own configure the default transform; they
+    are not dropped for want of a `transform=` on the same term.
     """
     node = ContinuousNode([SI(n_coeffs=40)])
     assert node.transform == "bernstein"

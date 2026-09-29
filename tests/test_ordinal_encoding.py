@@ -5,7 +5,7 @@ An ordinal parent enters every shift and every intercept net as a full
 implementation. Three consequences are pinned here:
 
 - the values must be level indices ``0..levels-1``, at *every* entry point —
-  training rejected 1.5 already, inference used to truncate it silently;
+  1.5 is refused at training and at inference alike;
 - the full one-hot plus a node intercept is over-complete by exactly one
   parameter per ordinal ``LS`` parent, so only the level *differences* are
   identified (`design_matrix(drop_first=True)` and `w[k] - w[0]` are the two
@@ -80,7 +80,7 @@ def test_design_matrix_drops_the_flat_direction():
 
 @pytest.mark.parametrize("bad", [1.5, 9.0, -1.0])
 def test_a_non_level_ordinal_value_is_refused_at_every_entry_point(bad):
-    """1.5 used to truncate to level 1 in silence; 9 raised without a name."""
+    """1.5, 9 and -1 are refused by name, never truncated to a level."""
     spec, df = _ordinal_parent_frame(n=200)
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)

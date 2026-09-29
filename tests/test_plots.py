@@ -105,9 +105,8 @@ def test_plots_name_the_optional_dependency(monkeypatch):
 def test_the_validation_curve_keeps_its_own_epochs(ls_chain):
     """History accumulates across fits, so val must carry its epoch.
 
-    A fit without validation followed by one with it used to draw the
-    validation curve from epoch 1, silently misaligned with the training
-    curve it is read against.
+    After a fit without validation and one with it, the validation curve
+    starts at the second fit's first epoch, aligned with the training curve.
     """
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}

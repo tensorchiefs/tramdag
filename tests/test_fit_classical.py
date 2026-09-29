@@ -103,7 +103,7 @@ def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
     """
     obs = ls_chain["draw"](800, 3)
     rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)
-    assert rep["stop_reason"] in ("tolerance", "max_iter")
+    assert rep["stop_reason"] in ("tolerance", "max_iter", "max_eval")
     assert rep["converged"] is False
     assert rep["grad_norm"] > 1e-2  # nowhere near a settled fit
 
@@ -113,12 +113,26 @@ def test_the_report_keeps_its_two_flags_consistent(ls_chain, max_iter):
     """``stop_reason`` names the limit that ended it; both gate ``converged``."""
     obs = ls_chain["draw"](800, 3)
     rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=max_iter)
-    assert rep["stop_reason"] == (
-        "max_iter" if rep["n_iter"] == max_iter else "tolerance"
-    )
+    if rep["n_iter"] == max_iter:
+        assert rep["stop_reason"] == "max_iter"
+    else:
+        assert rep["stop_reason"] in ("tolerance", "max_eval")
     if rep["converged"]:
         assert rep["stop_reason"] == "tolerance"
         assert rep["grad_norm"] <= 1e-2
+
+
+def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
+    """Line searches spend torch's ``max_eval`` before ``max_iter`` is reached."""
+    rng = np.random.default_rng(1)
+    x1 = 5 * rng.standard_normal(3000)
+    df = pd.DataFrame({"x1": x1, "x2": 2 * x1 + rng.logistic(size=3000)})
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    torch.manual_seed(0)
+    rep = CausalFlowDAG(spec).fit_classical(df, max_iter=3)
+    assert rep["n_iter"] < 3
+    assert rep["stop_reason"] == "max_eval"
+    assert rep["converged"] is False
 
 
 def test_an_unreachable_gradient_bound_is_never_converged(ls_chain):

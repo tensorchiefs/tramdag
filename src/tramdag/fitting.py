@@ -374,7 +374,9 @@ class FitMixin:
 
         ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS
         stopped on its own, because the NLL or the parameters moved by less
-        than 1e-9, and ``"max_iter"`` when the budget ran out.
+        than 1e-9, ``"max_iter"`` when the iteration budget ran out, and
+        ``"max_eval"`` when torch's evaluation budget (``1.25 * max_iter``
+        closure calls, line searches included) ran out first.
         ``tolerance_grad`` is 0, so the gradient never ends the run.
 
         ``converged`` needs BOTH: the run stopped on its own AND the gradient
@@ -424,8 +426,14 @@ class FitMixin:
                 return loss
 
             opt.step(closure)
-            n_iter = next(iter(opt.state.values()))["n_iter"]
-            stop_reason = "tolerance" if n_iter < max_iter else "max_iter"
+            state = next(iter(opt.state.values()))
+            n_iter = state["n_iter"]
+            if n_iter >= max_iter:
+                stop_reason = "max_iter"
+            elif state["func_evals"] >= opt.param_groups[0]["max_eval"]:
+                stop_reason = "max_eval"
+            else:
+                stop_reason = "tolerance"
             with torch.no_grad():
                 final_nll = float(total_nll())
             grad_norm = float(

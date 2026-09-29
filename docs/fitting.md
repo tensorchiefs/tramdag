@@ -131,7 +131,8 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   when the NLL or the parameters move by less than 1e-9. A five-node all-`LS`
   model on 1275 rows needs about 3900 iterations to stop on that rule, so at
   400 it is still improving. Give the budget room and read the report.
-- **The report.** `stop_reason` is `"tolerance"` or `"max_iter"`. `converged`
+- **The report.** `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
+  (torch's budget of closure calls, `1.25 * max_iter`). `converged`
   needs both: the run stopped on its own AND `grad_norm <= grad_tol` (default
   1e-2). Both conditions are necessary, because the same tolerance fires when
   the line search stalls — a six-iteration fit at an NLL of 12.8, against an

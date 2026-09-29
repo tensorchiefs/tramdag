@@ -154,7 +154,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self._check_columns(df, cols)
         out = {}
         for c in cols:
-            values = df[c].to_numpy()
+            values = df[c].to_numpy(dtype=float)
             if levels and c in self.nodes and self.nodes[c].kind == "ordinal":
                 self._check_level_values(c, values)
             out[c] = torch.tensor(values, dtype=self._dtype, device=self.device)

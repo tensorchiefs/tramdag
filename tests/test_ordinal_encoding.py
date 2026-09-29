@@ -104,3 +104,13 @@ def test_a_latent_frame_skips_the_level_check():
     assert not np.allclose(u["p"], np.round(u["p"]))  # latents, not levels
     back = flow.sample(u=u)
     np.testing.assert_array_equal(back["p"].to_numpy(), df["p"].to_numpy())
+
+
+@pytest.mark.parametrize("dtype", ["int64", "Int64", "category", "object"])
+def test_a_level_column_of_any_numeric_dtype_reads_the_same(dtype):
+    """A frame built row by row or read as mixed CSV holds ``object`` levels."""
+    spec, df = _ordinal_parent_frame(n=200)
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)
+    other = df.assign(p=df["p"].astype("int64").astype(dtype))
+    assert flow.nll(other) == flow.nll(df)

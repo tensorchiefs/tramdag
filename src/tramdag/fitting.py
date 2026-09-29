@@ -330,10 +330,10 @@ class FitMixin:
 
         The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
         line search. There are no minibatches, no schedule and no early
-        stopping, so the fit is deterministic and lands on the maximum-
-        likelihood estimate. It is valid only when every term is a simple
-        intercept or an ``LS``, because each node-conditional is then an
-        ordered logit or a Colr model; any other spec raises.
+        stopping, so the fit is deterministic; the report says whether it
+        reached the maximum-likelihood estimate. It is valid only when every
+        term is a simple intercept or an ``LS``, because each node-conditional
+        is then an ordered logit or a Colr model; any other spec raises.
 
         Parameters
         ----------
@@ -376,13 +376,9 @@ class FitMixin:
         ``converged`` needs BOTH: the run stopped on its own AND the gradient
         norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node
         mean NLLs, so its gradient does not scale with the number of rows and
-        an absolute bound is meaningful. Stopping on its own is not enough on its
-        own, because the same tolerance fires when the line search stalls —
-        measured on the stroke case study, L-BFGS stopped after six to eight
-        iterations at an NLL of 12.8 against an optimum of 10.31, and a flag
-        reading only the stop reason called that converged. A real fit of that
-        model takes about 3900 iterations and ends with a gradient norm near
-        1e-3, so the two conditions separate cleanly.
+        an absolute bound is meaningful. Stopping on its own is not enough,
+        because the same tolerance fires when the line search stalls far from
+        the optimum; there the gradient norm is still large.
         """
         other = sorted(
             {t.name for nd in self.spec.values() for t in nd.terms if not t.classical}
@@ -393,8 +389,6 @@ class FitMixin:
                 f"intercept and LS terms only; this spec has {other} terms. Use "
                 "fit() for flexible models."
             )
-        # no marginal_init here: the route is deterministic and lands on the
-        # maximum likelihood wherever it starts, so a start is not a knob
         self.calibrate(train_df)
         self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
         t0 = time.perf_counter()

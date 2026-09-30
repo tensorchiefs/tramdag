@@ -42,10 +42,13 @@ and `X3` and not with `X1`:
   `X1` does not change the effect. The section
   [Read it as screening](#read-it-as-screening) explains this.
 
+The grey band marks the 5 % critical value. A path that leaves the band
+flags.
+
 ## The statistic
 
 For one candidate the scan sorts the $n$ rows by that candidate and forms the
-scaled running sum
+scaled running sum, also called a CUSUM (cumulative sum)
 
 $$
 B_j = \frac{1}{\mathrm{sd}(\psi)\sqrt{n}} \sum_{i \le j} \psi_{(i)},
@@ -56,12 +59,16 @@ with $\psi_{(i)}$ the score of the $i$-th row in the sorted order. The
 statistic `stat` is $\sup_j |B_j|$, the largest distance of the path from
 zero.
 
-- The path starts at 0 and ends near 0, because the scores sum to about zero.
-- The scaling by $\mathrm{sd}(\psi)\sqrt{n}$ makes the statistic independent
-  of the sample size and of the size of the scores.
-- With a constant effect, $B$ behaves like a Brownian bridge. So `stat` has a
-  known distribution, the Kolmogorov distribution. It gives the `p_value`
-  without simulation.
+- The path starts and ends near 0, because the scores sum to about zero.
+- The scaling by $\mathrm{sd}(\psi)\sqrt{n}$ makes the distribution of
+  `stat` independent of the sample size and of the size of the scores.
+- With a constant effect, $B$ behaves approximately like a Brownian bridge: a
+  random path that starts and ends at 0. So `stat` approximately follows the
+  Kolmogorov distribution, which gives the `p_value` without simulation.
+- The approximation is not exact. The scan uses the raw treatment score and
+  does not remove its correlation with the scores of the other fitted
+  coefficients, as the full test of Zeileis & Hornik does. Read the p-value
+  as a guide, not as an exact size.
 - A `stat` above 1.358, the 5 % critical value, sets `flag`.
 
 This is the structural-change test of model-based recursive partitioning
@@ -82,7 +89,7 @@ quadratic prognostic effect and it flags as strongly as the true modifiers.
 So a flag means "look here". What you find is a modifier or a
 misspecification, and both are worth knowing.
 
-The scan is less exact in two cases:
+Two cases make the p-value rougher still:
 
 - **Few distinct values.** A binary or three-level candidate sorts the rows
   only partly, because many rows tie. Read the p-value as a ranking, not as
@@ -119,25 +126,27 @@ The scores also serve influence analyses and robust standard errors.
 
 ## How the scores are computed
 
-Every shift coefficient adds $\beta x$ to the node's total shift $s$. The
+Every shift coefficient adds $\beta x_j$ to the node's total shift $s$. Here
+$x_j$ is the value of a parent, or one column of its one-hot encoding. The
 chain rule therefore gives
 
 $$
 \frac{\partial \ell_i}{\partial \beta}
-= \frac{\partial \ell_i}{\partial s_i}\, x_i ,
+= \frac{\partial \ell_i}{\partial s_i}\, x_{ij} ,
 $$
 
 so one derivative per row serves every coefficient. The derivative has a
 closed form for both node kinds, and the computation uses no autograd.
 
-- **Continuous node.** The latent is $z = h(x) + s$ and
-  $\ell = \log f(z) + \log h'(x)$, with $f$ the standard-logistic density.
-  So $\partial \ell / \partial s = 1 - 2\sigma(z)$.
-- **Ordinal node.** $P(Y = y) = \sigma(u) - \sigma(l)$ with the shifted
-  cutpoints $l = \vartheta_y - s$ and $u = \vartheta_{y+1} - s$. So
-  $\partial \ell / \partial s = \bigl(\sigma'(l) - \sigma'(u)\bigr) /
-  \bigl(\sigma(u) - \sigma(l)\bigr)$, with $\sigma' = \sigma(1 - \sigma)$.
-  At the first and last class the outer cutpoint is infinite and its
+- **Continuous node.** For the node value $y$ the latent is
+  $u = h(y) + s$ and $\ell = \log f(u) + \log h'(y)$, with $f$ the
+  standard-logistic density. So $\partial \ell / \partial s = 1 - 2\sigma(u)$.
+- **Ordinal node.** $P(Y = y) = \sigma(b) - \sigma(a)$ with the shifted
+  cutpoints $a = \vartheta_{y-1} - s$ and $b = \vartheta_y - s$, as in
+  [model.md](model.md#ordinal-nodes). So
+  $\partial \ell / \partial s = \bigl(\sigma'(a) - \sigma'(b)\bigr) /
+  \bigl(\sigma(b) - \sigma(a)\bigr)$, with $\sigma' = \sigma(1 - \sigma)$.
+  For the first and last class the outer cutpoint is $\mp\infty$ and its
   $\sigma'$ is zero.
 
 The function only reads the fitted model. It changes neither fitting nor

@@ -1598,7 +1598,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="VaryingCoefficient" href="../api/spec/#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> / <code>VC</code></td>
-<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span> — the penalized treatment-effect head. <code>propensity=</code> adds propensity centering.</td>
+<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span>, the penalized treatment-effect head. <code>propensity=</code> names the propensity column for centering.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ContinuousNode" href="../api/spec/#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a></td>
@@ -1925,7 +1925,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="EarlyStopping" href="../api/callbacks/#tramdag.callbacks.EarlyStopping"><code>EarlyStopping</code></a></td>
-<td>Best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the fit.</td>
+<td>Best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the fit, and <code>min_delta=</code> sets the smallest gain that counts.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../api/callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a></td>
@@ -2005,7 +2005,7 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <tr>
 <td>calibrated init</td>
 <td><code>fit(marginal_init=)</code></td>
-<td>False: zuko's zero start; applied once, on the first fit</td>
+<td>False: zuko's zero start; applied only by the fit that calibrates, so a flow that <code>fit_classical</code> calibrated ignores it</td>
 </tr>
 <tr>
 <td>VC stage-1 propensities</td>

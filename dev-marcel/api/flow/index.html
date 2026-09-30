@@ -6416,9 +6416,10 @@ shuffling. Weight initialization is seeded at construction
             <td>
               <div class="doc-md-description">
                 <p>Start every simple intercept at its column's marginal, by default
-<code>False</code>. Applied once, on the first fit, which calibrates the
-flow: a later phase of a schedule continues training rather than
-resetting those intercepts.</p>
+<code>False</code>. Applied only by the fit that calibrates the flow, so a
+flow that <code>fit_classical</code> already calibrated ignores it. A later
+phase of a schedule continues training rather than resetting those
+intercepts.</p>
               </div>
             </td>
             <td>
@@ -6684,7 +6685,8 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">323</span>
 <span class="normal">324</span>
 <span class="normal">325</span>
-<span class="normal">326</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">326</span>
+<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -6744,9 +6746,10 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="sd">        (``CausalFlowDAG(spec, seed=...)``).</span>
 <span class="sd">    marginal_init : bool, optional</span>
 <span class="sd">        Start every simple intercept at its column's marginal, by default</span>
-<span class="sd">        ``False``. Applied once, on the first fit, which calibrates the</span>
-<span class="sd">        flow: a later phase of a schedule continues training rather than</span>
-<span class="sd">        resetting those intercepts.</span>
+<span class="sd">        ``False``. Applied only by the fit that calibrates the flow, so a</span>
+<span class="sd">        flow that ``fit_classical`` already calibrated ignores it. A later</span>
+<span class="sd">        phase of a schedule continues training rather than resetting those</span>
+<span class="sd">        intercepts.</span>
 <span class="sd">    optimizer : torch.optim.Optimizer | None, optional</span>
 <span class="sd">        Any torch optimizer over ``flow.parameters()``; the default is</span>
 <span class="sd">        ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
@@ -6997,8 +7000,7 @@ an absolute bound is meaningful.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">328</span>
-<span class="normal">329</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
 <span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
@@ -7123,7 +7125,8 @@ an absolute bound is meaningful.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span>
-<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">454</span>
+<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>

@@ -1464,8 +1464,8 @@ R-learner orthogonalization
 model-based forests, this ingredient is decisive for effect estimation under
 confounding (Dandl et al., 2024)<sup id="fnref:dandl2024forest"><a class="footnote-ref" href="#fn:dandl2024forest">4</a></sup>. That finding reproduces here on the
 <code>confounded</code> process, where the model deliberately under-specifies its
-prognostic part: the uncentered <span class="arithmatex">\(\hat\beta\)</span> absorbs the
-confounded misfit, and centering brings it back near the truth. The notebook
+prognostic part. The uncentered <span class="arithmatex">\(\hat\beta\)</span> absorbs the confounded misfit,
+and centering brings it back near the truth. The notebook
 reports the measured reduction and <code>tests/test_vc_centered.py</code> requires at
 least a factor of two. If the prognostic part is correctly specified,
 centering changes little. It is insurance against the misspecification you do

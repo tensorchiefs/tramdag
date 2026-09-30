@@ -1528,17 +1528,18 @@ weights.</p>
   <code>seed=</code>, which seeds the shuffle only and not the weight init.</li>
 <li><strong>Epochs.</strong> <code>epochs</code> has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.</li>
-<li><strong>Calibration.</strong> The first <code>fit</code> calibrates the flow on <code>train_df</code>. Every term
-  freezes its data-dependent state there, the intercept its <code>range_q</code>
-  quantiles and each <code>input_transform=</code> its statistics. A loaded checkpoint is
-  never recalibrated.</li>
+<li><strong>Calibration.</strong> The first <code>fit</code> or <code>fit_classical</code> calibrates the flow on
+  <code>train_df</code>. Every term freezes its data-dependent state there, the
+  intercept its <code>range_q</code> quantiles and each <code>input_transform=</code> its
+  statistics. A loaded checkpoint is never recalibrated.</li>
 <li><strong>Marginal start.</strong> Off by default: every simple intercept starts with all
   its parameters at zero, the zero start. <code>fit(marginal_init=True)</code> starts
   each Bernstein or ordinal simple intercept at the empirical distribution of
   its column instead. At shift zero the untrained model then already fits
-  each marginal, and the fit needs fewer epochs.
-  <a href="#the-marginal-start">The marginal start</a> says how, and when the endpoint
-  changes.</li>
+  each marginal, and the fit needs fewer epochs. Only the fit that
+  calibrates the flow applies it, so a flow that <code>fit_classical</code> calibrated
+  ignores the flag. <a href="#the-marginal-start">The marginal start</a> says how, and
+  when the endpoint changes.</li>
 <li><strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
   a float and uses the last fraction of <code>train_df</code> unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With
@@ -1552,11 +1553,11 @@ weights.</p>
   <code>on_fit_begin</code>, <code>on_epoch_end</code> and <code>on_fit_end</code>; a bare callable is an
   <code>on_epoch_end</code> hook <code>cb(flow, epoch, optimizer)</code>, and any <code>True</code> return
   stops the fit. <code>on_fit_end</code> runs before the <code>VC</code> re-centering. The shipped
-  callbacks are <code>EarlyStopping</code>, which restores the best-validation weights
-  and takes an optional <code>patience</code> and <code>min_delta</code>, and <code>PerNodeEarlyStopping</code>
-  with <code>per_node_adam</code>, the same per node: a node freezes after <code>patience</code>
-  flat epochs and loads its best weights back. <code>fit</code> refuses two callbacks
-  that restore weights. Both read
+  callbacks are <code>EarlyStopping</code> and <code>PerNodeEarlyStopping</code>. <code>EarlyStopping</code>
+  restores the best-validation weights and takes an optional <code>patience</code> and
+  <code>min_delta</code>. <code>PerNodeEarlyStopping</code> with <code>per_node_adam</code> does the same per
+  node: a node freezes after <code>patience</code> flat epochs and loads its best
+  weights back. <code>fit</code> refuses two callbacks that restore weights. Both read
   <code>history["val"]</code>.</li>
 <li><strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
   <code>VC(propensity=)</code> names, and split and minibatch with it.
@@ -1598,7 +1599,7 @@ to the function whose values at <span class="arithmatex">\(k/M\)</span> are <spa
 pre-scales the calibrated range onto the domain of the polynomial
 (<a href="../model/#the-three-knobs-on-a-term">model.md</a>). The point <span class="arithmatex">\(k/M\)</span> of the
 domain then belongs to a data value <span class="arithmatex">\(x_k\)</span>. zuko turns <code>n_coeffs</code> parameters
-into <span class="arithmatex">\(M + 1\)</span> control points, with <span class="arithmatex">\(M\)</span> = <code>n_coeffs + 1</code>; step 3 explains the
+into <span class="arithmatex">\(M + 1\)</span> control points, with <span class="arithmatex">\(M\)</span> = <code>n_coeffs + 1</code>. Step 3 explains the
 two extra points. The start uses the closeness property in three steps:</p>
 <ol>
 <li>It places <span class="arithmatex">\(M + 1\)</span> equally spaced points <span class="arithmatex">\(x_k\)</span> on the calibrated range,

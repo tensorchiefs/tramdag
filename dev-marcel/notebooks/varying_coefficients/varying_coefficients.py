@@ -356,7 +356,7 @@ assert ratio >= 2, f"centering should at least halve the bias: {ratio:.2f}"
 # | one interpretable effect | `LS("T")` | `ls_coefficients()` |
 # | an effect that varies with covariates | `VC(*modifiers, t="T")` | `varying_coef(df, node)` |
 # | the same under confounding + a misspecified prognostic part | `VC(..., propensity="ps")` | the same read-out |
-# | a shortlist of modifiers before you commit | `effect_modifier_scan` on a cheap all-`ls` fit | its `flag` column, read as screening |
+# | a shortlist of modifiers before you commit | `effect_modifier_scan` on a simple all-`LS` fit | its `flag` column, read as screening |
 #
 # Why not a joint `CS` over treatment and modifiers, and what the penalty and
 # the centering mean: [`docs/varying-coefficients.md`](../docs/varying-coefficients.md).

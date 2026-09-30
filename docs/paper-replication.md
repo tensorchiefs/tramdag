@@ -250,7 +250,8 @@ run per variant with the start off and on, seeds unchanged:
 The start is a pure initialization, so where the optimizer reaches the same
 basin the endpoint is identical and only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
-changes, and the four such cases split two to two. The pinned ground truth
+changes. Of the five such cases, two switch the start on and three leave it
+off. The pinned ground truth
 of the four variants that switched on is unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
 listed for the next deliberate re-pin.

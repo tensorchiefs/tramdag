@@ -125,7 +125,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the fit. |
-| [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] | Per-node early stopping: a node freezes after `patience` flat epochs and loads its best-epoch weights back (`restore_best=False` keeps the last ones); `lr_patience=` decays the rate on the way. Stops the fit once every node froze and records `best_epoch` and `frozen` as `{node: epoch}`. |
+| [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] | `EarlyStopping` per node, with the same options: a node freezes after `patience` flat epochs (`None` never freezes) and loads its best-epoch weights back (`restore_best=False` keeps the last ones). Stops the fit once every node froze and records `best_epoch` and `frozen` as `{node: epoch}`. |
 | [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodeEarlyStopping` needs. |
 
 ## `plots.py` — the figures (matplotlib optional: `tramdag[plots]`)

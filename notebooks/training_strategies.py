@@ -224,8 +224,8 @@ assert spent - stopper.best_epoch >= 25
 # ## 6. Per-node early stopping: `per_node_adam` with `PerNodeEarlyStopping`
 #
 # `per_node_adam` builds an Adam with one tagged parameter group per node, and
-# `PerNodeEarlyStopping` decays, freezes and restores each node on its own
-# validation score ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when
+# `PerNodeEarlyStopping` freezes and restores each node on its own validation
+# score ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when
 # the last node freezes.
 #
 # Do not attach a torch scheduler to the same optimizer. Two controllers would
@@ -234,7 +234,7 @@ assert spent - stopper.best_epoch >= 25
 # %%
 flow = build()
 t0 = time.perf_counter()
-stopping = PerNodeEarlyStopping(patience=40, lr_patience=10)
+stopping = PerNodeEarlyStopping(patience=40)
 flow.fit(
     train,
     epochs=CEILING,

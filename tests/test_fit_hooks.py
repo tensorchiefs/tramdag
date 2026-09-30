@@ -244,7 +244,7 @@ def test_per_node_early_stopping_stops_early_and_keeps_the_mle(ls_chain):
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     opt = per_node_adam(flow, lr=1e-2)
-    sched = PerNodeEarlyStopping(patience=40, lr_patience=10)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(
         df,
         epochs=4000,
@@ -275,7 +275,7 @@ def test_per_node_early_stopping_reuse_restores_the_optimizer_rates(ls_chain):
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     opt = per_node_adam(flow, lr=1e-2)
-    sched = PerNodeEarlyStopping(patience=40, lr_patience=10)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(df, epochs=4000, validation_data=df, optimizer=opt, callbacks=sched)
     assert all(g["lr"] == 0.0 for g in opt.param_groups)  # everything froze
     flow.fit(df, epochs=1, validation_data=df, optimizer=opt, callbacks=sched)
@@ -289,7 +289,7 @@ def test_per_node_early_stopping_respects_a_fresh_optimizer_rate(ls_chain):
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    sched = PerNodeEarlyStopping(patience=40, lr_patience=10)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(
         df,
         epochs=4000,
@@ -334,7 +334,7 @@ def test_per_node_early_stopping_rejects_a_zero_start_rate(ls_chain):
         {"params": list(flow.nodes[n].parameters()), "lr": 0.0, "node": n}
         for n in flow.order
     ]
-    stopping = PerNodeEarlyStopping(patience=50, lr_patience=15)
+    stopping = PerNodeEarlyStopping(patience=50)
     with pytest.raises(ValueError, match="initial_lr"):
         stopping._step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
     for g in groups:
@@ -398,20 +398,34 @@ def test_per_node_early_stopping_without_restore_keeps_the_last_weights(ls_chain
     assert flow.nll(val) == pytest.approx(flow.history["val"][-1], rel=1e-6)
 
 
-def test_per_node_early_stopping_decays_the_rate_every_lr_patience_epochs(ls_chain):
-    """A node that stays flat decays to 0.3 of its rate every ``lr_patience``."""
+def test_per_node_early_stopping_without_patience_restores_and_never_freezes(ls_chain):
+    """``patience=None`` runs the full budget and ends each node at its best."""
+    train = ls_chain["draw"](150, 1)[["x1", "x2"]]
+    val = ls_chain["draw"](150, 2)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    stopping = PerNodeEarlyStopping()
+    flow.fit(
+        train,
+        epochs=60,
+        batch_size=150,
+        validation_data=val,
+        optimizer=per_node_adam(flow, lr=3e-2),
+        callbacks=stopping,
+    )
+    assert stopping.frozen == {}
+    assert len(flow.history["train"]) == 60
+    final = flow.nll(val)
+    for node in ("x1", "x2"):
+        best = min(e[node] for e in flow.history["val"])
+        assert final[node] == pytest.approx(best, rel=1e-6)
+
+
+def test_early_stopping_min_delta_counts_a_small_gain_as_flat(ls_chain):
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
-    opt = per_node_adam(flow, lr=1.0)
-    stopping = PerNodeEarlyStopping(patience=100, lr_patience=3, restore_best=False)
-    rates = []
-    for epoch in range(1, 11):  # epoch 1 improves on inf, then the NLL is flat
-        stopping._step(flow, {"x1": 1.0, "x2": 1.0}, opt, epoch)
-        rates.append(opt.param_groups[0]["lr"])
-    assert rates == pytest.approx(
-        [1.0, 1.0, 1.0, 0.3, 0.3, 0.3, 0.09, 0.09, 0.09, 0.027]
-    )
+    stopping = EarlyStopping(min_delta=1e6)
+    flow.fit(df, epochs=5, validation_data=df, callbacks=stopping)
+    assert stopping.best_epoch == 1  # nothing beats epoch 1 by a million
 
 
 def test_two_restoring_callbacks_are_refused(ls_chain):

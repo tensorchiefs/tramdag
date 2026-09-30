@@ -62,7 +62,7 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    stopping = PerNodeEarlyStopping(patience=8, lr_patience=2)
+    stopping = PerNodeEarlyStopping(patience=8)
     flow.fit(
         df,
         epochs=30,

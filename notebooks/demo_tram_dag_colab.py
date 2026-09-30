@@ -168,7 +168,7 @@ plt.show()
 # %%
 torch.manual_seed(0)
 flow = CausalFlowDAG(spec, device=DEVICE)
-sched = PerNodeEarlyStopping(patience=40, lr_patience=10)
+sched = PerNodeEarlyStopping(patience=40)
 
 t0 = time.perf_counter()
 flow.fit(

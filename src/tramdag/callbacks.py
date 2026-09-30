@@ -98,7 +98,8 @@ class Callback:
 class EarlyStopping(Callback):
     """Keep the best-validation weights; optionally stop once they are old.
 
-    Tracks the summed validation NLL. With ``restore_best`` (the default)
+    Tracks the summed validation NLL; an epoch improves when it beats the best
+    by more than ``min_delta``. With ``restore_best`` (the default)
     the weights of the best epoch are snapshotted and loaded back at fit
     end, before the VC re-centering. With ``patience`` the fit also stops
     once the last improvement is that many epochs old; without it (the
@@ -113,6 +114,8 @@ class EarlyStopping(Callback):
         default) never stops.
     restore_best : bool, optional
         Load the best epoch's weights back at fit end, by default True.
+    min_delta : float, optional
+        Improvement at or below this is flat, by default 0.0.
 
     Attributes
     ----------
@@ -125,6 +128,7 @@ class EarlyStopping(Callback):
         *,
         patience: int | None = None,
         restore_best: bool = True,
+        min_delta: float = 0.0,
     ):
         if patience is not None and patience < 1:
             raise ValueError(f"patience must be at least 1, got {patience}")
@@ -134,6 +138,7 @@ class EarlyStopping(Callback):
             )
         self.patience = patience
         self.restore_best = restore_best
+        self.min_delta = min_delta
         self._reset()
 
     def _reset(self) -> None:
@@ -148,7 +153,7 @@ class EarlyStopping(Callback):
     def on_epoch_end(self, flow, epoch: int, optimizer) -> bool:
         """Snapshot on improvement; ``True`` once the best is ``patience`` old."""
         nll = sum(_last_val(flow, self).values())
-        if nll < self.best_nll:
+        if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
             if self.restore_best:
                 self._state = copy.deepcopy(flow.state_dict())
@@ -169,36 +174,33 @@ class EarlyStopping(Callback):
 
 
 class PerNodeEarlyStopping(Callback):
-    """Early stopping per node: each node freezes on its own validation plateau.
+    """Early stopping per node: ``EarlyStopping`` on each node's own NLL.
 
-    Tracks every node's validation NLL. A node freezes (rate 0) once its last
-    ``min_delta`` improvement is ``patience`` epochs old, and the fit stops
-    when every node has frozen. With ``restore_best`` (the default) a node
-    loads the weights of its best epoch back when it freezes, and every node
-    loads them in ``on_fit_end``, before the VC re-centering. The joint NLL is
-    a sum of per-node terms and a node's parameters enter only its own term,
-    so each node restores its own optimum. With ``lr_patience`` a node's rate
-    also decays to 0.3 of its value after every ``lr_patience`` flat epochs,
-    floored at ``1e-3`` of its start.
+    Tracks every node's validation NLL; an epoch improves a node when it beats
+    that node's best by more than ``min_delta``. With ``patience`` a node
+    freezes (rate 0) once its best is that many epochs old, and the fit stops
+    when every node has frozen; without it (the default) no node freezes and
+    the fit runs its full epoch budget. With ``restore_best`` (the default) a
+    node loads the weights of its best epoch back when it freezes, and every
+    node loads them in ``on_fit_end``, before the VC re-centering. The joint
+    NLL is a sum of per-node terms and a node's parameters enter only its own
+    term, so each node restores its own optimum.
 
     Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]
     (one ``node``-tagged group per node), and give ``fit`` a validation set
-    (the callback reads ``flow.history["val"]``). Do not attach a torch lr
-    scheduler to the same optimizer: two controllers would steer the same
-    group rates. With ``restore_best``, ``fit`` refuses it beside another
-    restoring callback, such as ``EarlyStopping(restore_best=True)``.
+    (the callback reads ``flow.history["val"]``). With ``restore_best``,
+    ``fit`` refuses it beside another restoring callback, such as
+    ``EarlyStopping(restore_best=True)``.
 
     Parameters
     ----------
-    patience : int
-        Flat epochs before a node freezes.
+    patience : int | None, optional
+        Epochs without an improvement before a node freezes; ``None`` (the
+        default) never freezes.
     restore_best : bool, optional
         Load each node's best-epoch weights back, by default True.
-    lr_patience : int | None, optional
-        Flat epochs before each rate decay; ``None`` (the default) keeps the
-        rates.
     min_delta : float, optional
-        Improvement below this is flat, by default 1e-4.
+        Improvement at or below this is flat, by default 0.0.
 
     Attributes
     ----------
@@ -212,16 +214,17 @@ class PerNodeEarlyStopping(Callback):
     def __init__(
         self,
         *,
-        patience: int,
+        patience: int | None = None,
         restore_best: bool = True,
-        lr_patience: int | None = None,
-        min_delta: float = 1e-4,
+        min_delta: float = 0.0,
     ):
-        if patience < 1:
+        if patience is not None and patience < 1:
             raise ValueError(f"patience must be at least 1, got {patience}")
-        if lr_patience is not None and lr_patience < 1:
-            raise ValueError(f"lr_patience must be at least 1, got {lr_patience}")
-        self.patience, self.lr_patience = patience, lr_patience
+        if patience is None and not restore_best:
+            raise ValueError(
+                "patience=None and restore_best=False is a no-op — set at least one"
+            )
+        self.patience = patience
         self.restore_best = restore_best
         self.min_delta = min_delta
         self._reset()
@@ -229,7 +232,6 @@ class PerNodeEarlyStopping(Callback):
     def _reset(self) -> None:
         self.lr0: dict = {}
         self.best: dict = {}
-        self.bad: dict = {}
         self.best_epoch: dict[str, int] = {}
         self.frozen: dict[str, int] = {}
         self._state: dict = {}
@@ -256,11 +258,7 @@ class PerNodeEarlyStopping(Callback):
                 self._restore(flow, name)
 
     def _step(self, flow, nll: dict[str, float], optimizer, epoch: int) -> bool:
-        """Step every unfrozen node on its own NLL; ``True`` when all are frozen.
-
-        ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that
-        improves or freezes on this step.
-        """
+        """Step every unfrozen node on its own NLL; ``True`` when all are frozen."""
         for g in optimizer.param_groups:
             if "node" not in g:
                 raise ValueError(
@@ -288,15 +286,13 @@ class PerNodeEarlyStopping(Callback):
     def _step_node(self, flow, g: dict, nll: float, epoch: int) -> None:
         name = g["node"]
         if nll < self.best.get(name, math.inf) - self.min_delta:
-            self.best[name], self.bad[name] = nll, 0
-            self.best_epoch[name] = epoch
+            self.best[name], self.best_epoch[name] = nll, epoch
             if self.restore_best:
                 self._state[name] = copy.deepcopy(flow.nodes[name].state_dict())
-            return
-        self.bad[name] = self.bad.get(name, 0) + 1
-        if self.lr_patience is not None and self.bad[name] % self.lr_patience == 0:
-            g["lr"] = max(g["lr"] * 0.3, self.lr0[name] * 1e-3)
-        if self.bad[name] >= self.patience:
+        elif (
+            self.patience is not None
+            and epoch - self.best_epoch.get(name, 0) >= self.patience
+        ):
             self.frozen[name] = epoch
             g["lr"] = 0.0
             if self.restore_best:

@@ -643,7 +643,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @torch.no_grad()
     def scores(self, df: pd.DataFrame, node: str) -> pd.DataFrame:
-        r"""Give the scores $\psi_i = \partial \ell_i / \partial \theta$.
+        r"""Give the scores $\psi_i = \partial \ell_i / \partial \beta$.
 
         The method form of [`node_scores`][tramdag.scores.node_scores], which
         documents the arguments and the column naming.

@@ -104,9 +104,9 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
 
 
 def test_restore_best_matches_the_manual_six_line_callback(ls_chain):
-    """``EarlyStopping()`` (no patience) lands exactly where the manual
-    snapshot recipe (docs/fitting.md) does — restoration is automatic at
-    fit end, and without patience the full budget runs.
+    """``EarlyStopping()`` (no patience) lands exactly where a manual
+    snapshot callback does — restoration is automatic at fit end, and
+    without patience the full budget runs.
     """
     df = ls_chain["draw"](800, 2)[["x1", "x2"]]
     val = ls_chain["draw"](400, 3)[["x1", "x2"]]

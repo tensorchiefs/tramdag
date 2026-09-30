@@ -71,7 +71,7 @@ def test_ordinal_marginal_init_reproduces_class_frequencies():
     np.testing.assert_allclose(pmf, counts / counts.sum(), atol=1e-4)
 
 
-def test_marginal_init_only_touches_unconditional_roots():
+def test_marginal_init_only_touches_simple_intercepts():
     flow, df = _mixed_flow_and_df()
     # sanity: the parented node really has a ComplexInterceptModule
     assert isinstance(flow.nodes["x2"].intercept, ComplexInterceptModule)

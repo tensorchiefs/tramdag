@@ -1881,7 +1881,8 @@ the weights hands them to the re-centering.</p>
 
 
         <p>Keep the best-validation weights; optionally stop once they are old.</p>
-<p>Tracks the summed validation NLL. With <code>restore_best</code> (the default)
+<p>Tracks the summed validation NLL; an epoch improves when it beats the best
+by more than <code>min_delta</code>. With <code>restore_best</code> (the default)
 the weights of the best epoch are snapshotted and loaded back at fit
 end, before the VC re-centering. With <code>patience</code> the fit also stops
 once the last improvement is that many epochs old; without it (the
@@ -1932,6 +1933,22 @@ default) never stops.</p>
             </td>
             <td>
                   <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>min_delta</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Improvement at or below this is flat, by default 0.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
             </td>
           </tr>
       </tbody>
@@ -2040,10 +2057,16 @@ default) never stops.</p>
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
-<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Keep the best-validation weights; optionally stop once they are old.</span>
 
-<span class="sd">    Tracks the summed validation NLL. With ``restore_best`` (the default)</span>
+<span class="sd">    Tracks the summed validation NLL; an epoch improves when it beats the best</span>
+<span class="sd">    by more than ``min_delta``. With ``restore_best`` (the default)</span>
 <span class="sd">    the weights of the best epoch are snapshotted and loaded back at fit</span>
 <span class="sd">    end, before the VC re-centering. With ``patience`` the fit also stops</span>
 <span class="sd">    once the last improvement is that many epochs old; without it (the</span>
@@ -2058,6 +2081,8 @@ default) never stops.</p>
 <span class="sd">        default) never stops.</span>
 <span class="sd">    restore_best : bool, optional</span>
 <span class="sd">        Load the best epoch's weights back at fit end, by default True.</span>
+<span class="sd">    min_delta : float, optional</span>
+<span class="sd">        Improvement at or below this is flat, by default 0.0.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2070,6 +2095,7 @@ default) never stops.</p>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">restore_best</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">min_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">patience</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"patience must be at least 1, got </span><span class="si">{</span><span class="n">patience</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -2079,6 +2105,7 @@ default) never stops.</p>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span> <span class="o">=</span> <span class="n">restore_best</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span> <span class="o">=</span> <span class="n">min_delta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -2093,7 +2120,7 @@ default) never stops.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
         <span class="n">nll</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
@@ -2145,9 +2172,9 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh — neither patience nor the snapshot carries over."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
@@ -2174,17 +2201,17 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">153</span>
 <span class="normal">154</span>
-<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
     <span class="n">nll</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
@@ -2213,18 +2240,18 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
 <span class="normal">163</span>
 <span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
-<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load the best weights back into the flow (``restore_best`` only)."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
         <span class="k">return</span>
@@ -2267,22 +2294,23 @@ default) never stops.</p>
 
 
 
-        <p>Early stopping per node: each node freezes on its own validation plateau.</p>
-<p>Tracks every node's validation NLL. A node freezes (rate 0) once its last
-<code>min_delta</code> improvement is <code>patience</code> epochs old, and the fit stops
-when every node has frozen. With <code>restore_best</code> (the default) a node
-loads the weights of its best epoch back when it freezes, and every node
-loads them in <code>on_fit_end</code>, before the VC re-centering. The joint NLL is
-a sum of per-node terms and a node's parameters enter only its own term,
-so each node restores its own optimum. With <code>lr_patience</code> a node's rate
-also decays to 0.3 of its value after every <code>lr_patience</code> flat epochs,
-floored at <code>1e-3</code> of its start.</p>
+        <p>Early stopping per node: <code>EarlyStopping</code> on each node's own NLL.</p>
+<p>Tracks every node's validation NLL; an epoch improves a node when it beats
+that node's best by more than <code>min_delta</code>. With <code>patience</code> a node
+freezes (rate 0) once its best is that many epochs old, and the fit stops
+when every node has frozen; without it (the default) no node freezes and
+the fit runs its full epoch budget. With <code>restore_best</code> (the default) a
+node loads the weights of its best epoch back when it freezes, and every
+node loads them in <code>on_fit_end</code>, before the VC re-centering. The joint
+NLL is a sum of per-node terms and a node's parameters enter only its own
+term, so each node restores its own optimum.</p>
 <p>Build the optimizer with <a class="autorefs autorefs-internal" title="per_node_adam" href="#tramdag.callbacks.per_node_adam"><code>per_node_adam</code></a>
 (one <code>node</code>-tagged group per node), and give <code>fit</code> a validation set
 (the callback reads <code>flow.history["val"]</code>). Do not attach a torch lr
-scheduler to the same optimizer: two controllers would steer the same
-group rates. With <code>restore_best</code>, <code>fit</code> refuses it beside another
-restoring callback, such as <code>EarlyStopping(restore_best=True)</code>.</p>
+scheduler to the same optimizer: it could set a frozen node's rate above
+0 again. With <code>restore_best</code>,
+<code>fit</code> refuses it beside another restoring callback, such as
+<code>EarlyStopping(restore_best=True)</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2301,15 +2329,16 @@ restoring callback, such as <code>EarlyStopping(restore_best=True)</code>.</p>
                 <code>patience</code>
             </td>
             <td>
-                  <code><span title="int">int</span></code>
+                  <code><span title="int">int</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Flat epochs before a node freezes.</p>
+                <p>Epochs without an improvement before a node freezes; <code>None</code> (the
+default) never freezes.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2330,23 +2359,6 @@ restoring callback, such as <code>EarlyStopping(restore_best=True)</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>lr_patience</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Flat epochs before each rate decay; <code>None</code> (the default) keeps the
-rates.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>min_delta</code>
             </td>
             <td>
@@ -2354,11 +2366,11 @@ rates.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Improvement below this is flat, by default 1e-4.</p>
+                <p>Improvement at or below this is flat, by default 0.0.</p>
               </div>
             </td>
             <td>
-                  <code>0.0001</code>
+                  <code>0.0</code>
             </td>
           </tr>
       </tbody>
@@ -2410,12 +2422,7 @@ figure can mark the freezes.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -2549,39 +2556,36 @@ figure can mark the freezes.</p>
 <span class="normal">307</span>
 <span class="normal">308</span>
 <span class="normal">309</span>
-<span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Early stopping per node: each node freezes on its own validation plateau.</span>
+<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Early stopping per node: ``EarlyStopping`` on each node's own NLL.</span>
 
-<span class="sd">    Tracks every node's validation NLL. A node freezes (rate 0) once its last</span>
-<span class="sd">    ``min_delta`` improvement is ``patience`` epochs old, and the fit stops</span>
-<span class="sd">    when every node has frozen. With ``restore_best`` (the default) a node</span>
-<span class="sd">    loads the weights of its best epoch back when it freezes, and every node</span>
-<span class="sd">    loads them in ``on_fit_end``, before the VC re-centering. The joint NLL is</span>
-<span class="sd">    a sum of per-node terms and a node's parameters enter only its own term,</span>
-<span class="sd">    so each node restores its own optimum. With ``lr_patience`` a node's rate</span>
-<span class="sd">    also decays to 0.3 of its value after every ``lr_patience`` flat epochs,</span>
-<span class="sd">    floored at ``1e-3`` of its start.</span>
+<span class="sd">    Tracks every node's validation NLL; an epoch improves a node when it beats</span>
+<span class="sd">    that node's best by more than ``min_delta``. With ``patience`` a node</span>
+<span class="sd">    freezes (rate 0) once its best is that many epochs old, and the fit stops</span>
+<span class="sd">    when every node has frozen; without it (the default) no node freezes and</span>
+<span class="sd">    the fit runs its full epoch budget. With ``restore_best`` (the default) a</span>
+<span class="sd">    node loads the weights of its best epoch back when it freezes, and every</span>
+<span class="sd">    node loads them in ``on_fit_end``, before the VC re-centering. The joint</span>
+<span class="sd">    NLL is a sum of per-node terms and a node's parameters enter only its own</span>
+<span class="sd">    term, so each node restores its own optimum.</span>
 
 <span class="sd">    Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]</span>
 <span class="sd">    (one ``node``-tagged group per node), and give ``fit`` a validation set</span>
 <span class="sd">    (the callback reads ``flow.history["val"]``). Do not attach a torch lr</span>
-<span class="sd">    scheduler to the same optimizer: two controllers would steer the same</span>
-<span class="sd">    group rates. With ``restore_best``, ``fit`` refuses it beside another</span>
-<span class="sd">    restoring callback, such as ``EarlyStopping(restore_best=True)``.</span>
+<span class="sd">    scheduler to the same optimizer: it could set a frozen node's rate above</span>
+<span class="sd">    0 again. With ``restore_best``,</span>
+<span class="sd">    ``fit`` refuses it beside another restoring callback, such as</span>
+<span class="sd">    ``EarlyStopping(restore_best=True)``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    patience : int</span>
-<span class="sd">        Flat epochs before a node freezes.</span>
+<span class="sd">    patience : int | None, optional</span>
+<span class="sd">        Epochs without an improvement before a node freezes; ``None`` (the</span>
+<span class="sd">        default) never freezes.</span>
 <span class="sd">    restore_best : bool, optional</span>
 <span class="sd">        Load each node's best-epoch weights back, by default True.</span>
-<span class="sd">    lr_patience : int | None, optional</span>
-<span class="sd">        Flat epochs before each rate decay; ``None`` (the default) keeps the</span>
-<span class="sd">        rates.</span>
 <span class="sd">    min_delta : float, optional</span>
-<span class="sd">        Improvement below this is flat, by default 1e-4.</span>
+<span class="sd">        Improvement at or below this is flat, by default 0.0.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -2595,16 +2599,17 @@ figure can mark the freezes.</p>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">restore_best</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">lr_patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">min_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">min_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="n">patience</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">patience</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"patience must be at least 1, got </span><span class="si">{</span><span class="n">patience</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">lr_patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lr_patience</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lr_patience must be at least 1, got </span><span class="si">{</span><span class="n">lr_patience</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_patience</span> <span class="o">=</span> <span class="n">patience</span><span class="p">,</span> <span class="n">lr_patience</span>
+        <span class="k">if</span> <span class="n">patience</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">restore_best</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"patience=None and restore_best=False is a no-op — set at least one"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span> <span class="o">=</span> <span class="n">restore_best</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span> <span class="o">=</span> <span class="n">min_delta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
@@ -2612,7 +2617,6 @@ figure can mark the freezes.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2639,11 +2643,7 @@ figure can mark the freezes.</p>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Step every unfrozen node on its own NLL; ``True`` when all are frozen.</span>
-
-<span class="sd">        ``epoch`` (1-based, as ``fit`` counts) is recorded for a node that</span>
-<span class="sd">        improves or freezes on this step.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Step every unfrozen node on its own NLL; ``True`` when all are frozen."""</span>
         <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">"node"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -2655,7 +2655,7 @@ figure can mark the freezes.</p>
                     <span class="s2">"PerNodeEarlyStopping needs the 'initial_lr' stamp on every "</span>
                     <span class="s2">"parameter group — build the optimizer with "</span>
                     <span class="s2">"per_node_adam(flow, lr); a bare group's current rate may "</span>
-                    <span class="s2">"already be decayed and would silently become the baseline"</span>
+                    <span class="s2">"already be zero and would silently become the baseline"</span>
                 <span class="p">)</span>
             <span class="n">lr0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">"initial_lr"</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">lr0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
@@ -2671,15 +2671,13 @@ figure can mark the freezes.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">_step_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="mi">0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
-            <span class="k">return</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_patience</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bad</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
             <span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
@@ -2727,12 +2725,12 @@ figure can mark the freezes.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""</span>
     <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
@@ -2762,9 +2760,9 @@ figure can mark the freezes.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -2793,15 +2791,15 @@ buffers move after the freeze; this final restore resets them too.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
-<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load every node's best weights again (``restore_best``).</span>
 
 <span class="sd">    A frozen node still runs forward in training mode, so its batch-norm</span>
@@ -2969,7 +2967,7 @@ each group carries its node's name and an <code>initial_lr</code> stamp.</p>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="c1"># initial_lr (torch's scheduler convention) lets PerNodeEarlyStopping</span>
-            <span class="c1"># restore a decayed group to its start at the next fit begin</span>
+            <span class="c1"># restore a frozen group to its start at the next fit begin</span>
             <span class="p">{</span>
                 <span class="s2">"params"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">parameters</span><span class="p">()),</span>
                 <span class="s2">"lr"</span><span class="p">:</span> <span class="n">lr</span><span class="p">,</span>

@@ -85,11 +85,11 @@ print(
 # %% [markdown]
 # ## 2. Which covariates modify the effect? (`effect_modifier_scan`)
 #
-# Before committing to a set of modifiers, ask the data. Fit the **cheap
-# all-`ls` model** — seconds, deterministic — and look at the per-observation
-# scores of the treatment coefficient. If the effect really were constant,
-# those scores would carry no structure in any covariate; a CUSUM statistic per
-# covariate turns that into a ranking.
+# Before you choose the modifiers, ask the data. Fit the **simple all-`LS`
+# model**, which takes seconds and is deterministic. Then look at the per-row
+# scores of the treatment coefficient. With a constant effect, these scores
+# show no pattern along any covariate. The scan measures that pattern per
+# covariate and ranks the covariates.
 
 
 # %%
@@ -108,14 +108,14 @@ screen.fit_classical(train)
 print(screen.effect_modifier_scan(train, "Y", t="T"))
 
 # %% [markdown]
-# `X2` and `X3` are the true modifiers and both flag — but so does `X1`, which
-# does **not** enter $\beta(x)$ at all. Here $g$ contains $\tfrac12 X_1^2$,
-# which the cheap linear model cannot represent, and
+# `X2` and `X3` are the true modifiers, and both flag. `X1` flags too, but it
+# does **not** enter $\beta(x)$. Here $g$ contains $\tfrac12 X_1^2$, which the
+# simple linear model cannot represent.
 # [`docs/scores.md`](../docs/scores.md) explains why a misspecified prognostic
 # part flags too.
 #
-# The demonstration: re-generate with a *linear* prognostic $X_1$, change
-# nothing else, and `X1` drops out of the shortlist.
+# To show this, generate the data again with a *linear* prognostic $X_1$ and
+# change nothing else. `X1` then does not flag.
 
 
 # %%
@@ -123,7 +123,7 @@ def simulate_linear_x1(n, seed):
     rng = np.random.default_rng(seed)
     x1, x2, x3 = (rng.normal(size=n) for _ in range(3))
     t = (rng.logistic(size=n) > -(0.4 * x1 + 0.4 * x2)).astype(float)
-    g = 0.5 * x1 + x2 - 0.5 * x3  # linear, so the cheap model fits it exactly
+    g = 0.5 * x1 + x2 - 0.5 * x3  # linear, so the simple model has the right form
     y = (rng.logistic(size=n) - g - (B0 + B2 * x2 + B3 * x3) * t) / 2.0
     return pd.DataFrame({"X1": x1, "X2": x2, "X3": x3, "T": t, "Y": y})
 
@@ -132,6 +132,60 @@ well_specified = simulate_linear_x1(4500, 1)
 screen2 = CausalFlowDAG(cheap_all_ls(), seed=0)
 screen2.fit_classical(well_specified)
 print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
+
+# %% [markdown]
+# The figure draws the scaled running sum $B_j$ of the scan for each candidate
+# ([`docs/scores.md`](../docs/scores.md) explains it). The left panel uses the
+# quadratic `X1`, the right panel the linear `X1`. `stat` is the largest
+# distance of the path from zero, the dot on each line. If a path leaves the
+# grey band, the scan flags its covariate.
+
+# %%
+CANDIDATES = {"X1": "#2a78d6", "X2": "#eb6834", "X3": "#1baf7a"}
+
+
+def plot_cusum(ax, flow, df, title):
+    """Draw each candidate's scaled running sum of the T scores, as the scan forms it."""
+    psi = flow.scores(df, "Y")["T[1]"].to_numpy()
+    n = len(psi)
+    scan = flow.effect_modifier_scan(df, "Y", t="T")
+    crit = scan["crit_5pct"].iloc[0]
+    ax.axhspan(
+        -crit, crit, color="0.93", lw=0, label=f"$|B_j| < {crit:.3f}$: no flag at 5%"
+    )
+    for c in (-crit, crit):
+        ax.axhline(c, color="0.55", lw=1, ls="--")
+    ax.axhline(0, color="0.75", lw=0.8)
+    frac = np.arange(1, n + 1) / n
+    for name, color in CANDIDATES.items():
+        b = np.cumsum(psi[np.argsort(df[name].to_numpy(), kind="stable")])
+        b /= psi.std() * np.sqrt(n)
+        j = np.abs(b).argmax()
+        ax.plot(frac, b, color=color, lw=2, label=name)
+        ax.plot(frac[j], b[j], "o", ms=8, color=color, mec="white", mew=2)
+        ax.annotate(
+            f"{name}: stat {scan.loc[name, 'stat']:.2f}",
+            (frac[j], b[j]),
+            xytext=(0, 10 if b[j] > 0 else -16),
+            textcoords="offset points",
+            ha="center",
+            color="0.2",
+        )
+    ax.set(
+        title=title, xlabel="fraction of rows, sorted by the candidate", ylim=(-6, 5)
+    )
+
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
+plot_cusum(axes[0], screen, train, "X1 quadratic in the outcome: X1 flags too")
+plot_cusum(
+    axes[1], screen2, well_specified, "X1 linear in the outcome: only X2, X3 flag"
+)
+axes[0].set_ylabel("scaled running sum $B_j$ of the T scores")
+fig.legend(
+    *axes[1].get_legend_handles_labels(), loc="lower center", ncol=4, frameon=False
+)
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 
 # %% [markdown]
 # ## 3. The spec: prognostic part and effect head are separate

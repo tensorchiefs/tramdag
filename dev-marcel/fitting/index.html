@@ -525,6 +525,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-marginal-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The marginal start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#which-recipe" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1373,6 +1384,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-marginal-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The marginal start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#which-recipe" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1478,46 +1500,139 @@ weights.</p>
   <code>seed=</code>, which seeds the shuffle only and not the weight init.</li>
 <li><strong>Epochs.</strong> <code>epochs</code> has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.</li>
-<li><strong>Calibration.</strong> The first <code>fit</code> calls <code>calibrate(train_df)</code>. Every term
+<li><strong>Calibration.</strong> The first <code>fit</code> calibrates the flow on <code>train_df</code>. Every term
   freezes its data-dependent state there, the intercept its <code>range_q</code>
   quantiles and each <code>input_transform=</code> its statistics. A loaded checkpoint is
   never recalibrated.</li>
-<li><strong>Marginal start.</strong> Off by default; every simple intercept starts at zuko's
-  zero. <code>fit(marginal_init=True)</code> and <code>calibrate(train_df, marginal_init=True)</code>
-  set it instead: every Bernstein
-  or ordinal simple intercept starts at the empirical marginal of its column,
-  as <code>logit(F_hat)</code> in control points or cutpoints. The spline, the affine and
-  the <code>range_q=0</code> transforms have no such start. It is a pure initialization
-  and leaves the MLE unchanged.</li>
-</ul>
-<p><code>fit_classical</code> takes no such flag. The likelihood of an all-<code>LS</code> model has
-  one optimum, so a start would change how far the line search travels and
-  nothing else.</p>
-<p>The flag rides on calibration's guard, so it applies once, on the fit that
-  calibrates. That is what a schedule needs: a second <code>fit</code> continues training
-  rather than discarding the intercepts the first one trained.
-- <strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
+<li><strong>Marginal start.</strong> Off by default: every simple intercept starts with all
+  its parameters at zero, the zero start. <code>fit(marginal_init=True)</code> starts
+  each Bernstein or ordinal simple intercept at the empirical distribution of
+  its column instead. At shift zero the untrained model then already fits
+  each marginal, and the fit needs fewer epochs.
+  <a href="#the-marginal-start">The marginal start</a> says how, and when the endpoint
+  changes.</li>
+<li><strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
   a float and uses the last fraction of <code>train_df</code> unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With
   either, <code>fit</code> writes the per-node validation NLL after
-  every epoch into <code>flow.history["val"]</code>.
-- <strong>Logging.</strong> <code>flow.history["lr"]</code> records the optimizer's rates per epoch,
+  every epoch into <code>flow.history["val"]</code>.</li>
+<li><strong>Logging.</strong> <code>flow.history["lr"]</code> records the optimizer's rates per epoch,
   one dict keyed by a group's <code>node</code> tag or else its index: <code>{0: lr}</code> for the
   default Adam, <code>{node: lr}</code> under <code>per_node_adam</code>. <code>verbose=N</code> prints every
-  Nth epoch and the last one; the default 0 is silent.
-- <strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks are
+  Nth epoch and the last one; the default 0 is silent.</li>
+<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks are
   <code>on_fit_begin</code>, <code>on_epoch_end</code> and <code>on_fit_end</code>; a bare callable is an
   <code>on_epoch_end</code> hook <code>cb(flow, epoch, optimizer)</code>, and any <code>True</code> return
   stops the fit. <code>on_fit_end</code> runs before the <code>VC</code> re-centering. The shipped
   callbacks are <code>EarlyStopping</code>, which restores the best-validation weights
-  and takes an optional <code>patience</code>, and <code>PerNodeEarlyStopping</code> with
-  <code>per_node_adam</code>, the same per node: a node freezes after <code>patience</code> flat
-  epochs, loads its best weights back and optionally decays its rate on the
-  way. <code>fit</code> refuses two callbacks that restore weights. Both read
-  <code>history["val"]</code>.
-- <strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
+  and takes an optional <code>patience</code> and <code>min_delta</code>, and <code>PerNodeEarlyStopping</code>
+  with <code>per_node_adam</code>, the same per node: a node freezes after <code>patience</code>
+  flat epochs and loads its best weights back. <code>fit</code> refuses two callbacks
+  that restore weights. Both read
+  <code>history["val"]</code>.</li>
+<li><strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
   <code>VC(center=)</code> names, and split and minibatch with it.
-  <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</p>
+  <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</li>
+</ul>
+<h3 id="the-marginal-start">The marginal start<a class="headerlink" href="#the-marginal-start" title="Permanent link">&para;</a></h3>
+<p>The marginal start puts the optimizer near the data before the first step.
+It changes the parameters the optimizer starts from, not the model or the
+loss.</p>
+<p><code>marginal_init=True</code> sets the <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span> of each Bernstein or
+ordinal simple intercept. At shift <span class="arithmatex">\(s = 0\)</span>, the node's CDF then equals the
+empirical marginal <span class="arithmatex">\(\hat F\)</span> of its training column. The match is exact for
+an ordinal node and a smooth approximation for a continuous node. An
+intercept with parents (<code>I("x1")</code>) has no single <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span>.
+The flag leaves it at the seeded initialization of its network.</p>
+<p><strong>Why logit.</strong> The latent <span class="arithmatex">\(U\)</span> is standard logistic, so its CDF is the
+sigmoid <span class="arithmatex">\(\sigma\)</span> and its quantile function is <span class="arithmatex">\(\operatorname{logit}\)</span>. At
+<span class="arithmatex">\(s = 0\)</span> the model says <span class="arithmatex">\(P(X \le x) = \sigma(h(x))\)</span>. For this CDF to equal
+<span class="arithmatex">\(\hat F\)</span>, the transform must be</p>
+<div class="arithmatex">\[
+h(x) = \operatorname{logit} \hat F(x) = \log \hat F(x) - \log\bigl(1 - \hat F(x)\bigr).
+\]</div>
+<p>The code evaluates <span class="arithmatex">\(\log(1 - p)\)</span> as <code>log1p(-p)</code>, which stays accurate for
+<span class="arithmatex">\(p\)</span> near 0.</p>
+<p><strong>Ordinal node.</strong> <code>ordinal_marginal_init_theta</code> takes the counts of the <span class="arithmatex">\(K\)</span>
+classes <span class="arithmatex">\(0, \dots, K-1\)</span>. The model is <span class="arithmatex">\(P(X \le k) = \sigma(\vartheta_k - s)\)</span>,
+so the targets are the cumulative class log-odds
+<span class="arithmatex">\(c_k = \operatorname{logit} \hat F(k)\)</span> for <span class="arithmatex">\(k = 0, \dots, K-2\)</span>.
+<code>ordinal_cutpoints</code> builds increasing cutpoints from unconstrained
+parameters: <span class="arithmatex">\(\vartheta_0 = \tilde\vartheta_0\)</span> and
+<span class="arithmatex">\(\vartheta_k = \vartheta_{k-1} + e^{\tilde\vartheta_k}\)</span>. The start inverts
+this map. It sets <span class="arithmatex">\(\tilde\vartheta_0 = c_0\)</span> and
+<span class="arithmatex">\(\tilde\vartheta_k = \log(c_k - c_{k-1})\)</span>. At <span class="arithmatex">\(s = 0\)</span> the class
+probabilities are then the empirical frequencies. For counts
+<code>[50, 30, 15, 5]</code> the start gives the PMF <code>[0.50, 0.30, 0.15, 0.05]</code>.</p>
+<p><strong>Continuous node.</strong> <code>BernsteinUT.marginal_init_theta</code> takes the column. A
+Bernstein polynomial of order <span class="arithmatex">\(M\)</span> with control points <span class="arithmatex">\(\vartheta_k\)</span> is close
+to the function whose values at <span class="arithmatex">\(k/M\)</span> are <span class="arithmatex">\(\vartheta_k\)</span>. The transform
+pre-scales the calibrated range onto the domain of the polynomial
+(<a href="../model/#the-three-knobs-on-a-term">model.md</a>). The point <span class="arithmatex">\(k/M\)</span> of the
+domain then belongs to a data value <span class="arithmatex">\(x_k\)</span>. zuko turns <code>n_coeffs</code> parameters
+into <span class="arithmatex">\(M + 1\)</span> control points, with <span class="arithmatex">\(M\)</span> = <code>n_coeffs + 1</code>; step 3 explains the
+two extra points. The start uses the closeness property in three steps:</p>
+<ol>
+<li>It places <span class="arithmatex">\(M + 1\)</span> equally spaced points <span class="arithmatex">\(x_k\)</span> on the calibrated range,
+   from the <code>range_q</code> quantile to the <code>1 - range_q</code> quantile of the column.
+   With <code>n_coeffs = 20</code>, <span class="arithmatex">\(M = 21\)</span> and there are 22 points.</li>
+<li>It sets each control point to <span class="arithmatex">\(\operatorname{logit} \hat F(x_k)\)</span>, with
+   <span class="arithmatex">\(\hat F(x_k)\)</span> the fraction of rows at or below <span class="arithmatex">\(x_k\)</span>.</li>
+<li>It inverts zuko's parameterization. zuko builds the control points as a
+   cumulative sum of softplus steps and ties the first two and the last two
+   steps. The start averages each tied pair and inverts the softplus with
+   <span class="arithmatex">\(\log(e^d - 1)\)</span>. It adds zuko's centering offset <span class="arithmatex">\(n \log 2 / 2\)</span>, with
+   <span class="arithmatex">\(n\)</span> = <code>n_coeffs</code>, to the first parameter.
+   <a href="../zuko-upstream/#3-public-inverse-of-_constrain_theta">zuko-upstream.md</a>
+   lists the zuko internals this relies on.</li>
+</ol>
+<p>The polynomial then starts as the Bernstein approximation of
+<span class="arithmatex">\(\operatorname{logit} \hat F\)</span>. The approximation smooths <span class="arithmatex">\(\hat F\)</span>, and a
+sharp feature such as the dip between two modes smooths most. On 4000 rows,
+the largest gap between the start's CDF and <span class="arithmatex">\(\hat F\)</span> is 0.010 for a normal
+column, 0.080 for a lognormal column and 0.103 for a bimodal column.</p>
+<p>The ends of the range carry the empirical quantiles <code>range_q</code> and
+<code>1 - range_q</code>, so the end control points are close to
+<span class="arithmatex">\(\operatorname{logit} q\)</span> and <span class="arithmatex">\(\operatorname{logit}(1 - q)\)</span> with <span class="arithmatex">\(q\)</span> =
+<code>range_q</code>. At the default <span class="arithmatex">\(q = 0.05\)</span> these are <span class="arithmatex">\(-2.944\)</span> and <span class="arithmatex">\(2.944\)</span>. With
+fewer than 3 coefficients, the tied steps use all the parameters and leave
+only a straight line. The start then takes the line between these two end
+values.</p>
+<p><strong>Guards.</strong> Two limits keep the start finite and increasing:</p>
+<ul>
+<li>The start clips <span class="arithmatex">\(\hat F\)</span> to <span class="arithmatex">\([10^{-3}, 1 - 10^{-3}]\)</span>. A control point or
+  a cutpoint then stays within about <span class="arithmatex">\(\pm 6.9\)</span>.</li>
+<li>Each step between adjacent control points or cutpoints is at least
+  <span class="arithmatex">\(10^{-3}\)</span>, because the softplus and log inverses need strictly increasing
+  points. An empty class or a gap in the data therefore gets a small but
+  nonzero probability. An empty middle class starts at <span class="arithmatex">\(2.5 \cdot 10^{-4}\)</span>
+  or less.</li>
+</ul>
+<p><strong>Where it does not apply.</strong> The spline and affine transforms have no
+marginal start, and the flag skips them. A <code>range_q=0</code> Bernstein transform
+maps the data minimum and maximum onto the range ends. The start ties the
+range ends to <span class="arithmatex">\(\operatorname{logit} q\)</span> and <span class="arithmatex">\(\operatorname{logit}(1 - q)\)</span>,
+which are infinite for <span class="arithmatex">\(q = 0\)</span>. So <code>fit</code> raises before it reads the column.
+It raises for such a transform also in an intercept with parents, which does
+not use the start. Fit such a model with <code>marginal_init=False</code>.</p>
+<p><strong>What it changes.</strong> For the three columns above, the zero start gives a
+per-row NLL of 2.35, 4.15 and 5.52. The marginal start gives 1.42, 1.51 and
+1.34. At <code>n_coeffs = 20</code> the zero start is close to a straight line too. Its
+control points run from about <span class="arithmatex">\(-6.9\)</span> to <span class="arithmatex">\(7.6\)</span>, so it is 2.5 times steeper
+than the line from <span class="arithmatex">\(-2.944\)</span> to <span class="arithmatex">\(2.944\)</span>. A steeper <span class="arithmatex">\(h\)</span> gives a narrower
+distribution than the data, which explains the higher NLL.</p>
+<p>The likelihood of an all-<code>LS</code> model has one optimum, and the fit reaches it
+with or without the start. So the start only shortens the way, and
+<code>fit_classical</code> takes no such flag. The triangle <code>linear-ls</code> variant comes
+within 0.01 of its final NLL in 5 epochs instead of 28.</p>
+<p>A model with a network shift or a learning-rate anneal can reach a
+different local optimum. For such a model the start can improve or worsen
+the causal estimate. D4 in
+<a href="../paper-replication/#d4-the-marginal-start-measured-per-variant">paper-replication.md</a>
+measures this per variant.</p>
+<p><code>fit</code> applies the start only on the call that calibrates. A second <code>fit</code>
+therefore continues from the trained intercepts and does not reset them. A
+multi-phase schedule depends on this.</p>
 <h3 id="which-recipe">Which recipe<a class="headerlink" href="#which-recipe" title="Permanent link">&para;</a></h3>
 <p>All-<code>LS</code> models train to the MLE and keep the final weights. Flexible models
 with a <code>CI</code>, <code>CS</code> or <code>VC</code> term overfit observational confounding at the MLE
@@ -1555,7 +1670,7 @@ and need the best-validation weights to recover the causal effect.</p>
 <td>one shared decaying rate</td>
 </tr>
 <tr>
-<td><code>PerNodeEarlyStopping(patience=, lr_patience=)</code> with <code>per_node_adam</code></td>
+<td><code>PerNodeEarlyStopping(patience=)</code> with <code>per_node_adam</code></td>
 <td>nodes converge at different speeds; self-stopping</td>
 </tr>
 </tbody>

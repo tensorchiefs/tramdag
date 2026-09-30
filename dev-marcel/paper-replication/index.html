@@ -1514,7 +1514,7 @@ replay, so every seed here is a repository choice.</p>
 <tr>
 <td>calibrated start</td>
 <td>none</td>
-<td><code>marginal_init: true</code> for the two triangle LS models, <code>atan-cs</code> and <code>exp-cs</code>, deviation D4 below; off where it moves the endpoint (<code>linear-cs</code>, <code>sin-cs</code>, VACA) and impossible for CAREFL's <code>range_q: 0</code> domain. <code>calibrate</code> without the flag never touches the weights</td>
+<td><code>marginal_init: true</code> for the two triangle LS models, <code>atan-cs</code> and <code>exp-cs</code>, deviation D4 below; off where it moves the endpoint (<code>linear-cs</code>, <code>sin-cs</code>, VACA) and impossible for CAREFL's <code>range_q: 0</code> domain. Calibration without the flag never touches the weights</td>
 </tr>
 <tr>
 <td>intercept output layer</td>
@@ -2012,10 +2012,9 @@ row inverted to x4 ≈ 580; minibatch underweights the sparse x2 tail where the
 Fig. 6 grid ends (cf MAE x3 at do(x2 = 1.5) 0.40 against the 0.319 bound, and
 the Fig. 6 x3 error 5.9 against the full-batch 2.7).</p>
 <h2 id="d4-the-marginal-start-measured-per-variant">D4: the marginal start, measured per variant<a class="headerlink" href="#d4-the-marginal-start-measured-per-variant" title="Permanent link">&para;</a></h2>
-<p><code>marginal_init</code> sets every simple intercept to its column's empirical
-marginal before the first epoch (Bernstein: the control points follow
-<span class="arithmatex">\(\operatorname{logit}\hat F\)</span>; ordinal: the class log-odds). The reference
-starts <code>bernp$beta</code> at zero. Measured on this machine at the CI protocol, one
+<p><code>marginal_init</code> starts every simple intercept at its column's empirical
+marginal (<a href="../fitting/#the-marginal-start">fitting.md</a>). The reference starts
+<code>bernp$beta</code> at zero. Measured on this machine at the CI protocol, one
 run per variant with the start off and on, seeds unchanged:</p>
 <table>
 <thead>
@@ -2077,11 +2076,12 @@ run per variant with the start off and on, seeds unchanged:</p>
 </tr>
 </tbody>
 </table>
-<p>The start is a pure initialization, so where the optimizer reaches the same
-basin the endpoint is identical and only the epoch count changes. Where the
+<p>The start is only an initialization. Where the optimizer reaches the same
+basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
-changes, and the four such cases split two to two. The pinned ground truth
-of the four variants that switched on is unchanged: every metric stays
+changes. Of the five such cases, two switch the start on and three leave it
+off. The pinned ground truth of the four variants that switched on is
+unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
 listed for the next deliberate re-pin.</p>
 <h2 id="runtime-and-the-ci-deviations">Runtime and the CI deviations<a class="headerlink" href="#runtime-and-the-ci-deviations" title="Permanent link">&para;</a></h2>

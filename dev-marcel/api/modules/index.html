@@ -2721,7 +2721,7 @@ names a term may name to their <code>torch.nn</code> classes.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">calibrate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Freeze this term's data-dependent state: the input-transform stats.</span>
 
-<span class="sd">        ``CausalFlowDAG.calibrate`` calls this once per term; a term without</span>
+<span class="sd">        ``CausalFlowDAG._calibrate`` calls this once per term; a term without</span>
 <span class="sd">        an ``input_transform`` has nothing to freeze. The intercept slot has a</span>
 <span class="sd">        second step on top of this one — see</span>
 <span class="sd">        [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].</span>
@@ -2794,7 +2794,7 @@ class attribute would shadow the registered submodule.</p>
     <div class="doc doc-contents ">
 
         <p>Freeze this term's data-dependent state: the input-transform stats.</p>
-<p><code>CausalFlowDAG.calibrate</code> calls this once per term; a term without
+<p><code>CausalFlowDAG._calibrate</code> calls this once per term; a term without
 an <code>input_transform</code> has nothing to freeze. The intercept slot has a
 second step on top of this one — see
 <a class="autorefs autorefs-internal" title="calibrate_intercept" href="#tramdag.modules.InterceptModule.calibrate_intercept"><code>calibrate_intercept</code></a>.</p>
@@ -2823,7 +2823,7 @@ second step on top of this one — see
 <span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">calibrate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Freeze this term's data-dependent state: the input-transform stats.</span>
 
-<span class="sd">    ``CausalFlowDAG.calibrate`` calls this once per term; a term without</span>
+<span class="sd">    ``CausalFlowDAG._calibrate`` calls this once per term; a term without</span>
 <span class="sd">    an ``input_transform`` has nothing to freeze. The intercept slot has a</span>
 <span class="sd">    second step on top of this one — see</span>
 <span class="sd">    [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].</span>

@@ -1811,9 +1811,9 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">            (``CausalFlowDAG(spec, seed=...)``).</span>
 <span class="sd">        marginal_init : bool, optional</span>
 <span class="sd">            Start every simple intercept at its column's marginal, by default</span>
-<span class="sd">            ``False``. Passed to [`calibrate`][tramdag.flow.CausalFlowDAG.calibrate]</span>
-<span class="sd">            and so applied once, on the fit that calibrates: a later phase of a</span>
-<span class="sd">            schedule continues training rather than resetting those intercepts.</span>
+<span class="sd">            ``False``. Applied once, on the first fit, which calibrates the</span>
+<span class="sd">            flow: a later phase of a schedule continues training rather than</span>
+<span class="sd">            resetting those intercepts.</span>
 <span class="sd">        optimizer : torch.optim.Optimizer | None, optional</span>
 <span class="sd">            Any torch optimizer over ``flow.parameters()``; the default is</span>
 <span class="sd">            ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
@@ -1855,7 +1855,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
         <span class="p">)</span>
         <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
         <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
         <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1973,7 +1973,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
                 <span class="sa">f</span><span class="s2">"intercept and LS terms only; this spec has </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2"> terms. Use "</span>
                 <span class="s2">"fit() for flexible models."</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>  <span class="c1"># parameters + buffers (xmin/xmax) -&gt; float64, one call</span>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
@@ -2249,9 +2249,9 @@ shuffling. Weight initialization is seeded at construction
             <td>
               <div class="doc-md-description">
                 <p>Start every simple intercept at its column's marginal, by default
-<code>False</code>. Passed to <a class="autorefs autorefs-internal" title="calibrate" href="../flow/#tramdag.flow.CausalFlowDAG.calibrate"><code>calibrate</code></a>
-and so applied once, on the fit that calibrates: a later phase of a
-schedule continues training rather than resetting those intercepts.</p>
+<code>False</code>. Applied once, on the first fit, which calibrates the
+flow: a later phase of a schedule continues training rather than
+resetting those intercepts.</p>
               </div>
             </td>
             <td>
@@ -2579,9 +2579,9 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="sd">        (``CausalFlowDAG(spec, seed=...)``).</span>
 <span class="sd">    marginal_init : bool, optional</span>
 <span class="sd">        Start every simple intercept at its column's marginal, by default</span>
-<span class="sd">        ``False``. Passed to [`calibrate`][tramdag.flow.CausalFlowDAG.calibrate]</span>
-<span class="sd">        and so applied once, on the fit that calibrates: a later phase of a</span>
-<span class="sd">        schedule continues training rather than resetting those intercepts.</span>
+<span class="sd">        ``False``. Applied once, on the first fit, which calibrates the</span>
+<span class="sd">        flow: a later phase of a schedule continues training rather than</span>
+<span class="sd">        resetting those intercepts.</span>
 <span class="sd">    optimizer : torch.optim.Optimizer | None, optional</span>
 <span class="sd">        Any torch optimizer over ``flow.parameters()``; the default is</span>
 <span class="sd">        ``Adam(lr=learning_rate)``. Build it yourself to attach a</span>
@@ -2623,7 +2623,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
     <span class="p">)</span>
     <span class="c1"># validate BEFORE calibrate: a malformed frame must not half-mutate the flow</span>
     <span class="n">side_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_side_columns</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
     <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="n">side_cols</span><span class="p">)</span>
     <span class="n">val_values</span> <span class="o">=</span> <span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">validation_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -3032,7 +3032,7 @@ the optimum; there the gradient norm is still large.</p>
             <span class="sa">f</span><span class="s2">"intercept and LS terms only; this spec has </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2"> terms. Use "</span>
             <span class="s2">"fit() for flexible models."</span>
         <span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>  <span class="c1"># parameters + buffers (xmin/xmax) -&gt; float64, one call</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>

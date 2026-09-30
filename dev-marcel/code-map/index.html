@@ -1671,10 +1671,6 @@ the same object, so <code>LS is LinearShift</code>.</p>
 <td>The flow: one <a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> per variable in topological order. Construction seeds the weights.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="calibrate" href="../api/flow/#tramdag.flow.CausalFlowDAG.calibrate"><code>calibrate()</code></a></td>
-<td>The data-dependent state of every term, taken once from the training rows; <code>marginal_init=True</code> also starts every simple intercept at its marginal (<a href="../fitting/">fitting.md</a>).</td>
-</tr>
-<tr>
 <td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a></td>
 <td>Joint maximum likelihood by one minibatch Adam loop, with <code>validation_data=</code>/<code>validation_split=</code>, <code>verbose=</code>, <code>optimizer=</code> and <code>callbacks=</code>; <code>history</code> holds <code>train</code>, <code>val</code> and <code>lr</code> per epoch. A second call continues training. The mechanics are in <a href="../fitting/">fitting.md</a>.</td>
 </tr>
@@ -1905,7 +1901,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../api/callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a></td>
-<td>Per-node early stopping: a node freezes after <code>patience</code> flat epochs and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones); <code>lr_patience=</code> decays the rate on the way. Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>.</td>
+<td><code>EarlyStopping</code> per node, with the same options: a node freezes after <code>patience</code> flat epochs (<code>None</code> never freezes) and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones). Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="per_node_adam" href="../api/callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam()</code></a></td>
@@ -1980,8 +1976,8 @@ default you can read at the call site. Nothing numeric is buried.</p>
 </tr>
 <tr>
 <td>calibrated init</td>
-<td><code>fit(marginal_init=)</code>, <code>calibrate(marginal_init=)</code></td>
-<td>False: zuko's zero start; applied once, on the calibrating fit</td>
+<td><code>fit(marginal_init=)</code></td>
+<td>False: zuko's zero start; applied once, on the first fit</td>
 </tr>
 <tr>
 <td>VC stage-1 propensities</td>

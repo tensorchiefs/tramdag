@@ -519,10 +519,65 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-effect-modifier-scan" class="md-nav__link">
+  <a href="#the-idea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The effect-modifier scan
+        The idea
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-the-running-sum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the running sum
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-statistic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The statistic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-it-as-screening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read it as screening
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-scores-are-computed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the scores are computed
       
     </span>
   </a>
@@ -1278,10 +1333,65 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-effect-modifier-scan" class="md-nav__link">
+  <a href="#the-idea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The effect-modifier scan
+        The idea
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-the-running-sum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading the running sum
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-statistic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The statistic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-it-as-screening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read it as screening
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-scores-are-computed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the scores are computed
       
     </span>
   </a>
@@ -1309,48 +1419,173 @@
 
 
 <h1 id="per-observation-scores-and-the-effect-modifier-scan">Per-observation scores and the effect-modifier scan<a class="headerlink" href="#per-observation-scores-and-the-effect-modifier-scan" title="Permanent link">&para;</a></h1>
-<p><code>flow.scores(df, node)</code> returns the score
-<span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \theta\)</span> of each observation for the
-node's interpretable shift coefficients: every <code>LS</code> weight and every <code>VC</code>
-term's <span class="arithmatex">\(\beta_0\)</span>. An <code>LS</code> weight gives one column per continuous parent and
-one per one-hot level of an ordinal parent; the <span class="arithmatex">\(\beta_0\)</span> column is named
-after the treatment.</p>
-<p>The computation is analytic, with no autograd. Shifts enter the latent
-additively, so <span class="arithmatex">\(\partial \ell_i / \partial \beta = (\partial \ell_i /
-\partial s_i)\, x_i\)</span> with <span class="arithmatex">\(\partial \ell_i / \partial s\)</span> in closed form. The
-function is a pure read-out that touches neither fitting nor sampling. At a
-fitted MLE each column sums to about zero, which the tests pin together with
-a float64 finite-difference check.</p>
-<h2 id="the-effect-modifier-scan">The effect-modifier scan<a class="headerlink" href="#the-effect-modifier-scan" title="Permanent link">&para;</a></h2>
-<p><code>flow.effect_modifier_scan(df, node, t=)</code> is the cheapest effect-modifier
-detector available. It applies the structural-change logic of model-based
-recursive partitioning (Zeileis &amp; Hornik; Dandl et al. 2024) to the
-treatment-coefficient scores of a cheap all-<code>LS</code> fit, which <code>fit_classical</code>
-delivers in seconds.</p>
-<p>For each candidate covariate the scan orders the scores by that covariate and
-forms the scaled cumulative sum <span class="arithmatex">\(B_j = \sum_{i \le j} \psi_{(i)} /
-(\mathrm{sd}(\psi)\sqrt{n})\)</span>. Under a stable coefficient <span class="arithmatex">\(B\)</span> is a Brownian
-bridge, so <span class="arithmatex">\(\sup |B|\)</span> has the Kolmogorov distribution, with the 5 % critical
-value 1.358. A coefficient that varies with the covariate makes the ordered
-scores drift. The result is one row per candidate with the statistic, its
-p-value, the critical value and a flag; the flagged covariates are the
-shortlist of <code>VC</code> modifiers to measure
-(<a href="../varying-coefficients/">varying-coefficients.md</a>).</p>
-<p><strong>Read it as screening, not as a test of effect modification.</strong> The statistic
-measures how unstable the cheap model is along a covariate, and instability
-has two sources: a coefficient that genuinely varies, and a prognostic part
-the cheap model gets wrong. A prognostic-only covariate with a linear effect
-stays unflagged; give it a quadratic effect and it flags as strongly as the
-true modifiers. A flag therefore means "look here", and what you find is a
-modifier or a misspecification, both worth knowing.
+<p>A treatment effect is often not the same for every patient. A covariate that
+changes the effect is an effect modifier. A <code>VC</code> term models an effect
+<span class="arithmatex">\(\beta(x)\)</span> that changes with the modifiers, but you must tell it which
+covariates they are. The effect-modifier scan finds candidates for that list.
+It uses a simple model that takes seconds to fit, before you fit the flexible
+one. <a href="../varying-coefficients/">varying-coefficients.md</a> covers the <code>VC</code> term
+itself.</p>
+<h2 id="the-idea">The idea<a class="headerlink" href="#the-idea" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Fit a simple model.</strong> It assumes one constant effect <span class="arithmatex">\(\beta\)</span> for
+   everyone. Every parent enters as a linear shift (<code>LS</code>), and
+   <code>fit_classical</code> fits this all-<code>LS</code> model in seconds.</li>
+<li><strong>Ask each row which way <span class="arithmatex">\(\beta\)</span> should move.</strong> The score of row <span class="arithmatex">\(i\)</span> is
+   <span class="arithmatex">\(\psi_i = \partial \ell_i / \partial \beta\)</span>, the slope of that row's
+   log-likelihood <span class="arithmatex">\(\ell_i\)</span>. A positive score means the row fits better with a
+   larger <span class="arithmatex">\(\beta\)</span>. A negative score means it fits better with a smaller one.</li>
+<li><strong>Check that the answers cancel in every group.</strong> At the fitted <span class="arithmatex">\(\beta\)</span>
+   the scores sum to about zero, because <span class="arithmatex">\(\beta\)</span> is the best compromise. If
+   the effect is really constant, the scores of any group of rows also sum to
+   about zero, apart from noise.</li>
+<li><strong>Sort and add up.</strong> Sort the rows by a candidate covariate, for example
+   age. The sum of the first <span class="arithmatex">\(j\)</span> scores is the score sum of the group "age up
+   to the <span class="arithmatex">\(j\)</span>-th value". So the running sum checks all these groups at once.</li>
+</ol>
+<p>Plotted over the sorted rows, the running sum forms a path. Suppose young
+patients all ask for a larger <span class="arithmatex">\(\beta\)</span> and old patients for a smaller one.
+The path then climbs first and falls back later. A large swing of the path
+along a covariate means that one constant <span class="arithmatex">\(\beta\)</span> hides a pattern along that
+covariate.</p>
+<h2 id="reading-the-running-sum">Reading the running sum<a class="headerlink" href="#reading-the-running-sum" title="Permanent link">&para;</a></h2>
+<p>Section 2 of
 <a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>
-shows both cases side by side.</p>
-<p>Details: for a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
-level-1-against-0 contrast, and for a <code>VC</code> treatment to <span class="arithmatex">\(\beta_0\)</span>. Candidates
-default to every column of <code>df</code> except the node and <code>t</code>, and need not be
-parents. For few-level, heavily tied candidates the ordering is only partial,
-so read the scan as a ranking diagnostic rather than an exact-size test. The
-scores also serve influence-function analyses and robust standard errors.</p>
+draws the running sum for three covariates. The true effect changes with <code>X2</code>
+and <code>X3</code> and not with <code>X1</code>. The figure has two panels with the same effect.
+In the left panel <code>X1</code> has a quadratic effect on the outcome, and in the
+right panel a linear one.</p>
+<p>The figure plots the running sum after a scaling, and the grey band spans
+<span class="arithmatex">\(\pm 1.358\)</span> on that scale (<a href="#the-statistic">The statistic</a> explains both). If
+a path leaves the band, the scan flags its covariate.</p>
+<ul>
+<li>The paths of <code>X2</code> and <code>X3</code> swing far out of the band and come back. They
+  flag in both panels.</li>
+<li>In the right panel the path of <code>X1</code> stays in the band. The simple model
+  describes the linear effect of <code>X1</code> correctly, and <code>X1</code> does not flag.</li>
+<li>In the left panel the path of <code>X1</code> swings out as well. The simple model
+  cannot describe the quadratic effect, and <code>X1</code> flags although it does not
+  change the treatment effect. The section
+  <a href="#read-it-as-screening">Read it as screening</a> explains why.</li>
+</ul>
+<h2 id="the-statistic">The statistic<a class="headerlink" href="#the-statistic" title="Permanent link">&para;</a></h2>
+<p>The scan is the structural-change test (Zeileis &amp; Hornik 2007) behind
+model-based recursive partitioning (Zeileis, Hothorn &amp; Hornik 2008; Dandl et
+al. 2024). That method is a tree that splits the data where the coefficients
+of a model change. The scan applies its test to the treatment coefficient of
+a TRAM-DAG.</p>
+<p>For one candidate, the scan sorts the <span class="arithmatex">\(n\)</span> rows by that candidate. It then
+forms the scaled running sum, also called a CUSUM (cumulative sum):</p>
+<div class="arithmatex">\[
+B_j = \frac{1}{\mathrm{sd}(\psi)\sqrt{n}} \sum_{i \le j} \psi_{(i)},
+\qquad j = 1, \dots, n,
+\]</div>
+<p>with <span class="arithmatex">\(\psi_{(i)}\)</span> the score of the <span class="arithmatex">\(i\)</span>-th row in the sorted order. The
+statistic <code>stat</code> is <span class="arithmatex">\(\max_j |B_j|\)</span>, the largest distance of the path from
+zero.</p>
+<ul>
+<li>The path ends near 0, because the scores sum to about zero. It starts near
+  0, because one score divided by <span class="arithmatex">\(\sqrt{n}\)</span> is small.</li>
+<li>The scaling by <span class="arithmatex">\(\mathrm{sd}(\psi)\sqrt{n}\)</span> makes the distribution of
+  <code>stat</code> approximately independent of the sample size and of the size of
+  the scores.</li>
+<li>With a constant effect, <span class="arithmatex">\(B\)</span> behaves approximately like a Brownian bridge: a
+  random path that starts and ends at 0.</li>
+<li>The largest distance of a Brownian bridge from zero has a known
+  distribution, the Kolmogorov distribution. It gives the <code>p_value</code> without
+  simulation.</li>
+<li>A <code>stat</code> above 1.358, the 5 % critical value, sets <code>flag</code>.</li>
+</ul>
+<p>The p-value is approximate. The scan uses the raw treatment score. The full
+test of Zeileis &amp; Hornik removes its correlation with the scores of the
+other fitted coefficients, and the scan does not.</p>
+<p>The error has a direction. For a candidate that is also an <code>LS</code> parent of
+the node, the fitted <code>LS</code> weight already removes part of the pattern. The
+scan then flags too rarely. In 100 simulated data sets of 2000 rows, from
+the notebook's linear model with the constant effect <span class="arithmatex">\(\beta = -1\)</span>, each of
+the three parents flagged in 1 % of them or fewer. An independent covariate
+that is not a parent flagged in 4 %, close to the nominal 5 %. Read
+the p-value as a guide, not as an exact error rate.</p>
+<h2 id="read-it-as-screening">Read it as screening<a class="headerlink" href="#read-it-as-screening" title="Permanent link">&para;</a></h2>
+<p>A flag means that one constant <span class="arithmatex">\(\beta\)</span> does not fit all rows along the
+covariate. Two causes give this:</p>
+<ul>
+<li>The effect really changes with the covariate.</li>
+<li>The simple model describes the covariate's own effect on the outcome, the
+  prognostic part, wrongly.</li>
+</ul>
+<p>The second cause works through the score. The treatment score of row <span class="arithmatex">\(i\)</span> is
+<span class="arithmatex">\(\psi_i = r_i \, t_i\)</span>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row, and
+<span class="arithmatex">\(r_i = \partial \ell_i / \partial s_i\)</span> is the derivative of <span class="arithmatex">\(\ell_i\)</span> with
+respect to the row's total shift <span class="arithmatex">\(s_i\)</span>. The factor <span class="arithmatex">\(r_i\)</span>
+acts like a residual. If the simple model gets the prognostic effect
+of <code>X1</code> wrong, <span class="arithmatex">\(r_i\)</span> follows a pattern in <code>X1</code>. The treatment score takes on
+that pattern, so the path of <code>X1</code> swings.</p>
+<p>So a flag means "look here". What you find is a modifier or a
+misspecification, and both are worth knowing.</p>
+<p>Two cases make the p-value less reliable:</p>
+<ul>
+<li><strong>Few distinct values.</strong> A binary or three-level candidate gives many tied
+  rows. Inside a tie the order is arbitrary, and the path depends on it.
+  Read the p-value as a ranking, not as an exact test.</li>
+<li><strong>No converged fit.</strong> The scores sum to zero only at the optimum. Scan an
+  all-<code>LS</code> model whose <code>fit_classical</code> report says <code>converged</code>. The scan
+  also takes the <span class="arithmatex">\(\beta_0\)</span> of a <code>VC</code> term, but a <code>VC</code> model stopped at its
+  best-validation weights is not at the optimum. Read such a scan with more
+  care.</li>
+</ul>
+<h2 id="using-it">Using it<a class="headerlink" href="#using-it" title="Permanent link">&para;</a></h2>
+<p><code>flow.effect_modifier_scan(df, node, t=)</code> runs the scan for the treatment
+<code>t</code> of <code>node</code>. It returns one row per candidate with <code>stat</code>, <code>p_value</code>,
+<code>crit_5pct</code> and <code>flag</code>, sorted by <code>stat</code>.</p>
+<ul>
+<li><code>candidates=</code> lists the covariates to scan. By default it is every column
+  of <code>df</code> except <code>node</code> and <code>t</code>. A candidate does not have to be a parent.</li>
+<li>For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
+  contrast of level 1 against level 0. For a <code>VC</code> treatment it resolves to
+  <span class="arithmatex">\(\beta_0\)</span>, the constant part of <span class="arithmatex">\(\beta(x)\)</span>.</li>
+<li><code>column=</code> picks one score column by name, for example one level contrast
+  <code>"t[2]"</code> of a treatment with more than two levels.</li>
+</ul>
+<p><code>flow.scores(df, node)</code> returns the scores themselves: one row for each row
+of <code>df</code>, and one column per interpretable shift coefficient of the node.</p>
+<ul>
+<li>A continuous <code>LS</code> parent gives one column, named after the parent.</li>
+<li>An ordinal <code>LS</code> parent gives one column per level of its one-hot
+  encoding, named <code>"t[0]"</code>, <code>"t[1]"</code> and so on. A row's score goes to the
+  column of the level that the row has.</li>
+<li>A <code>VC</code> term gives one column for its <span class="arithmatex">\(\beta_0\)</span>, named after the
+  treatment.</li>
+<li>A <code>CS</code> term is a network with no single coefficient, so it has no column.</li>
+</ul>
+<p>The scores also serve influence analyses and robust standard errors.</p>
+<h2 id="how-the-scores-are-computed">How the scores are computed<a class="headerlink" href="#how-the-scores-are-computed" title="Permanent link">&para;</a></h2>
+<p>Every shift coefficient <span class="arithmatex">\(\gamma\)</span> adds <span class="arithmatex">\(\gamma z\)</span> to the node's total shift
+<span class="arithmatex">\(s\)</span>. Here <span class="arithmatex">\(z\)</span> is the value of a parent, or one column of its one-hot
+encoding. The chain rule therefore gives</p>
+<div class="arithmatex">\[
+\frac{\partial \ell_i}{\partial \gamma}
+= \frac{\partial \ell_i}{\partial s_i}\, z_i = r_i \, z_i,
+\]</div>
+<p>so one derivative <span class="arithmatex">\(r_i\)</span> per row serves every coefficient. The derivative has
+a closed form for both node kinds, and the computation uses no autograd. Below,
+<span class="arithmatex">\(h\)</span> is the fitted monotone transformation and <span class="arithmatex">\(\sigma\)</span> the logistic
+function.</p>
+<ul>
+<li><strong>Continuous node.</strong> For the node value <span class="arithmatex">\(y\)</span> the latent value is
+  <span class="arithmatex">\(u = h(y) + s\)</span> and <span class="arithmatex">\(\ell = \log f(u) + \log h'(y)\)</span>, with <span class="arithmatex">\(f\)</span> the
+  standard-logistic density. So <span class="arithmatex">\(\partial \ell / \partial s = 1 - 2\sigma(u)\)</span>.</li>
+<li><strong>Ordinal node.</strong> <span class="arithmatex">\(P(Y = y) = \sigma(b) - \sigma(a)\)</span> with the shifted
+  cutpoints <span class="arithmatex">\(a = \vartheta_{y-1} - s\)</span> and <span class="arithmatex">\(b = \vartheta_y - s\)</span>, as in
+  <a href="../model/#ordinal-nodes">model.md</a>. So
+  <span class="arithmatex">\(\partial \ell / \partial s = \bigl(\sigma'(a) - \sigma'(b)\bigr) /
+  \bigl(\sigma(b) - \sigma(a)\bigr)\)</span>, with <span class="arithmatex">\(\sigma' = \sigma(1 - \sigma)\)</span>.
+  For the first and last class the outer cutpoint is <span class="arithmatex">\(\mp\infty\)</span> and its
+  <span class="arithmatex">\(\sigma'\)</span> is zero.</li>
+</ul>
+<p>The function only reads the fitted model. It changes neither fitting nor
+sampling. The tests check that each column sums to about zero at a fitted
+optimum, and that the scores agree with float64 finite differences.</p>
 
 
 

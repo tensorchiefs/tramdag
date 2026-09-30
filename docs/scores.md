@@ -61,14 +61,14 @@ zero.
 
 - The path starts and ends near 0, because the scores sum to about zero.
 - The scaling by $\mathrm{sd}(\psi)\sqrt{n}$ makes the distribution of
-  `stat` independent of the sample size and of the size of the scores.
+  `stat` approximately independent of the sample size and of the size of the scores.
 - With a constant effect, $B$ behaves approximately like a Brownian bridge: a
   random path that starts and ends at 0. So `stat` approximately follows the
   Kolmogorov distribution, which gives the `p_value` without simulation.
-- The approximation is not exact. The scan uses the raw treatment score and
-  does not remove its correlation with the scores of the other fitted
-  coefficients, as the full test of Zeileis & Hornik does. Read the p-value
-  as a guide, not as an exact size.
+- The approximation is not exact. The scan uses the raw treatment score. The
+  full test of Zeileis & Hornik removes its correlation with the scores of
+  the other fitted coefficients, and the scan does not. Read the p-value as a
+  guide, not as an exact size.
 - A `stat` above 1.358, the 5 % critical value, sets `flag`.
 
 This is the structural-change test of model-based recursive partitioning

@@ -59,7 +59,7 @@ SPEC = {
     "x2": ContinuousNode(I("x1")),
     "x3": ContinuousNode(I("x1", "x2")),
 }
-CEILING = 300  # epoch ceiling for every recipe below
+CEILING = 600  # epoch ceiling for every recipe below
 scoreboard = []
 
 

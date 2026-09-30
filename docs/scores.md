@@ -91,9 +91,10 @@ other fitted coefficients, and the scan does not.
 
 The error has a direction. For a candidate that is also an `LS` parent of
 the node, the fitted `LS` weight already removes part of the pattern. The
-scan then flags too rarely. In 100 simulated data sets of the notebook's
-linear model with a constant effect, each of the three parents flagged in
-1 % of them or fewer. A covariate that is not a parent flagged in 4 %. Read
+scan then flags too rarely. In 100 simulated data sets of 2000 rows, from
+the notebook's linear model with the constant effect $\beta = -1$, each of
+the three parents flagged in 1 % of them or fewer. An independent covariate
+that is not a parent flagged in 4 %, close to the nominal 5 %. Read
 the p-value as a guide, not as an exact error rate.
 
 ## Read it as screening
@@ -156,13 +157,13 @@ The scores also serve influence analyses and robust standard errors.
 
 ## How the scores are computed
 
-Every shift coefficient $\gamma$ adds $\gamma x_j$ to the node's total shift
-$s$. Here $x_j$ is the value of a parent, or one column of its one-hot
+Every shift coefficient $\gamma$ adds $\gamma z$ to the node's total shift
+$s$. Here $z$ is the value of a parent, or one column of its one-hot
 encoding. The chain rule therefore gives
 
 $$
 \frac{\partial \ell_i}{\partial \gamma}
-= \frac{\partial \ell_i}{\partial s_i}\, x_{ij} = r_i \, x_{ij},
+= \frac{\partial \ell_i}{\partial s_i}\, z_i = r_i \, z_i,
 $$
 
 so one derivative $r_i$ per row serves every coefficient. The derivative has

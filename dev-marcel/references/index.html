@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/interpretation/">
+        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/dev-marcel/references/">
       
       
-        <link rel="prev" href="../notation/">
+        <link rel="prev" href="../zuko-upstream/">
       
       
-        <link rel="next" href="../fitting/">
+        <link rel="next" href="../notebooks/demo_tram_dag_colab/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Interpretation - tramdag</title>
+        <title>References - tramdag</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#reading-a-fitted-tram-dag" class="md-skip">
+        <a href="#references" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Interpretation
+              References
             
           </span>
         </div>
@@ -400,37 +400,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Interpretation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
         
   
   
@@ -446,92 +419,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#which-term-owns-which-edge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Which term owns which edge
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#a-linear-shift-is-a-log-odds-ratio" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A linear shift is a log-odds ratio
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ordinal nodes: cutpoints and the interventional PMF
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#continuous-nodes-density-and-one-fitted-shift" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Continuous nodes: density and one fitted shift
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-price-of-a-complex-intercept" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The price of a complex intercept
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#an-effect-that-varies-with-a-covariate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        An effect that varies with a covariate
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -737,10 +624,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../references/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -756,6 +652,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1354,80 +1251,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#which-term-owns-which-edge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Which term owns which edge
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#a-linear-shift-is-a-log-odds-ratio" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A linear shift is a log-odds ratio
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ordinal nodes: cutpoints and the interventional PMF
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#continuous-nodes-density-and-one-fitted-shift" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Continuous nodes: density and one fitted shift
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-price-of-a-complex-intercept" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The price of a complex intercept
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#an-effect-that-varies-with-a-covariate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        An effect that varies with a covariate
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1446,97 +1269,53 @@
   
 
 
-<h1 id="reading-a-fitted-tram-dag">Reading a fitted TRAM-DAG<a class="headerlink" href="#reading-a-fitted-tram-dag" title="Permanent link">&para;</a></h1>
-<p>A TRAM-DAG is a normalizing flow, but it is built so that parts of it stay
-readable. This page collects the read-outs and says what each number means.
-For the model itself see <a href="../model/">model.md</a>, and for the symbols see
-<a href="../notation/">notation.md</a>.</p>
-<p>Every claim on this page is checked somewhere that runs. The links say where,
-so nothing here is a number typed into prose.</p>
-<h2 id="which-term-owns-which-edge">Which term owns which edge<a class="headerlink" href="#which-term-owns-which-edge" title="Permanent link">&para;</a></h2>
-<p><code>flow.to_matrix()</code> gives the labelled adjacency matrix of the model. Rows are
-parents and columns are children. A cell holds the term tag: <code>LS</code>, <code>CS</code>, <code>CI</code>,
-<code>VC</code> for a treatment edge, or <code>VCm</code> for a varying-coefficient modifier. An
-empty cell means no edge. A multi-parent term carries its parent group as a
-suffix, and several terms in one cell join with <code>+</code>.</p>
-<p>This is the meta-adjacency view of the paper. It is also the fastest way to
-confirm that the model you wrote is the model you meant.
-<code>plot_dag(spec)</code> draws the same thing, with one edge style per term.</p>
-<p>Exercised in the <a href="../notebooks/varying_coefficients/">varying-coefficients notebook</a>.</p>
-<h2 id="a-linear-shift-is-a-log-odds-ratio">A linear shift is a log-odds ratio<a class="headerlink" href="#a-linear-shift-is-a-log-odds-ratio" title="Permanent link">&para;</a></h2>
-<p><code>flow.ls_coefficients()</code> gives <code>{node: {parent: weights}}</code> for the <code>LS</code> terms
-only. A <code>CS</code> or <code>VC</code> shift is a network and has no single weight, so those are
-skipped.</p>
-<p>Two things decide how to read a weight.</p>
-<p><strong>The sign follows the latent-scale convention</strong> of
-<a href="../notation/">notation.md</a>. A continuous node adds its shift, so a parent that
-raises the child gets a <em>negative</em> weight. An ordinal node subtracts its
-shift, so the sign is the one you expect there.</p>
-<p><strong>The scale is the latent scale, not the data scale.</strong> For a continuous node
-the weights carry the transform's scaling. A single weight is therefore not
-comparable to a regression coefficient. Their <em>ratio</em> is comparable, because
-the scaling cancels. An ordinal node has no such scaling, so <span class="arithmatex">\(\exp(\beta)\)</span> is
-an odds ratio directly.</p>
-<p><strong>An ordinal parent gives one weight per level</strong>, from its one-hot encoding.
-Those weights are identified only up to a common constant. The one-hot columns
-sum to one in every row. Adding a constant to all of them, and subtracting it
-from the intercept, leaves the likelihood unchanged. Read them as
-differences.
-<code>w[k] - w[0]</code> is the level-k-against-level-0 log-odds ratio, and it is the
-column that <code>flow.design_matrix(df, node, drop_first=True)</code> drops.</p>
-<p>Checked in <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
-which compares the weights against <code>statsmodels</code> and R, and pinned in
-continuous integration by <code>experiments/triangle_mixed.py</code>, whose
-odds-ratio check is in <a href="../paper-replication/">paper-replication.md</a>.</p>
-<h2 id="ordinal-nodes-cutpoints-and-the-interventional-pmf">Ordinal nodes: cutpoints and the interventional PMF<a class="headerlink" href="#ordinal-nodes-cutpoints-and-the-interventional-pmf" title="Permanent link">&para;</a></h2>
-<p>An ordinal node's intercept is its cutpoint vector, not a transform
-(<a href="../model/#ordinal-nodes">model.md</a>). <code>tramdag.transforms.ordinal_cutpoints</code>
-turns the unconstrained parameters into the increasing cutpoints, which is how
-you read a fitted baseline.</p>
-<p><code>flow.pmf(df, node, do=...)</code> gives the class probabilities per row, in closed
-form. It needs no sampling, and <code>do=</code> makes it interventional by overriding
-columns before the parents are read. That combination is what lets a
-treatment-effect question be answered exactly rather than by Monte Carlo.</p>
-<p>Exercised in the <a href="../notebooks/classical_fit_tram_dag/">classical-fitting notebook</a>,
-and under <code>do=</code> in <code>experiments/triangle_mixed.py</code>, which is checked against
-committed ground truth on every run.</p>
-<h2 id="continuous-nodes-density-and-one-fitted-shift">Continuous nodes: density and one fitted shift<a class="headerlink" href="#continuous-nodes-density-and-one-fitted-shift" title="Permanent link">&para;</a></h2>
-<p><code>flow.density(df, node, grid, do=...)</code> is the continuous counterpart of
-<code>pmf</code>. For every row it evaluates <span class="arithmatex">\(p(\text{node} = g \mid \mathrm{pa})\)</span> at
-each grid value, in closed form from the transform. Use it to look at a fitted
-conditional without sampling it.</p>
-<p><code>flow.shift_curve(node, parent, grid)</code> evaluates one fitted shift term along a
-grid of parent values. Use it to plot a <code>CS</code> term against the function it was
-supposed to learn. It goes through the term's own evaluation, so a custom term
-works too.</p>
-<p>A caution on both: a <code>CS</code> term is identified only up to a constant, because
-that constant can move into the intercept. Compare a fitted curve to the truth
-after mean-centring both, not point by point.</p>
-<h2 id="the-price-of-a-complex-intercept">The price of a complex intercept<a class="headerlink" href="#the-price-of-a-complex-intercept" title="Permanent link">&para;</a></h2>
-<p><code>I(...)</code> with parents is the flexible end of the family. The parents control
-the transform parameters, so the node can bend in ways no additive shift can
-express. The cost is that there is no single coefficient to read.</p>
-<p><a href="../paper-replication/">paper-replication.md</a> measures that trade-off on the
-paper's triangle process, fitted once with an <code>LS</code> edge and once with a <code>CS</code>
-edge.</p>
-<p>A middle option exists. <code>I("a", "b", allow_interaction=False)</code> builds one
-network per parent and sums their parameter vectors, so the parents act
-additively on the transform. <code>flow.intercept_contributions(df, node)</code> then
-decomposes that sum into mean-centred per-term parts, using the usual additive
-model convention, so the parts become comparable. This is a post-hoc read-out
-and changes nothing about the fitted model.</p>
-<p>Worked through in the <a href="../notebooks/additive_vs_joint_ci/">intercept notebook</a>.</p>
-<h2 id="an-effect-that-varies-with-a-covariate">An effect that varies with a covariate<a class="headerlink" href="#an-effect-that-varies-with-a-covariate" title="Permanent link">&para;</a></h2>
-<p><code>VC(*modifiers, t=...)</code> fits <span class="arithmatex">\(\beta(\text{modifiers}) \cdot x_t\)</span>, and
-<code>flow.varying_coef(df, node)</code> reads the fitted <span class="arithmatex">\(\beta\)</span> back in closed form.</p>
-<p><code>flow.scores(df, node)</code> and <code>flow.effect_modifier_scan(df, node, t=...)</code> come
-before that decision rather than after it. They rank candidate modifiers by
-how much the treatment coefficient's per-observation scores drift when the
-rows are ordered by each candidate. A cheap all-<code>LS</code> fit is enough, so the
-shortlist is measured rather than guessed.</p>
-<p>See <a href="../varying-coefficients/">varying-coefficients.md</a> and
-<a href="../scores/">scores.md</a>, and
-<a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>.</p>
+<h1 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h1>
+<p>This page lists every work that the guides cite. Each guide also lists its
+own citations at the foot of the page. The entries come from
+<a href="../references.bib"><code>references.bib</code></a>, and <a href="../apa.csl"><code>apa.csl</code></a> sets the
+author-year style of the site and the PDF. On GitHub this page does not
+render, so read <code>references.bib</code> there.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:athey2019grf">
+<p>Athey, S., Tibshirani, J., &amp; Wager, S. (2019). Generalized random forests. <em>The Annals of Statistics</em>, <em>47</em>(2). <a href="https://doi.org/10.1214/18-AOS1709">https://doi.org/10.1214/18-AOS1709</a>&#160;</p>
+</li>
+<li id="fn:chernozhukov2018dml">
+<p>Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., &amp; Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. <em>The Econometrics Journal</em>, <em>21</em>(1), C1&ndash;C68. <a href="https://doi.org/10.1111/ectj.12097">https://doi.org/10.1111/ectj.12097</a>&#160;</p>
+</li>
+<li id="fn:dandl2024forest">
+<p>Dandl, S., Haslinger, C., Hothorn, T., Seibold, H., Sverdrup, E., Wager, S., &amp; Zeileis, A. (2024). What makes forest-based heterogeneous treatment effect estimators work? <em>The Annals of Applied Statistics</em>, <em>18</em>(1). <a href="https://doi.org/10.1214/23-AOAS1799">https://doi.org/10.1214/23-AOAS1799</a>&#160;</p>
+</li>
+<li id="fn:javaloy2023causalflows">
+<p>Javaloy, A., Sánchez-Martín, P., &amp; Valera, I. (2023). Causal normalizing flows: From theory to practice. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. <a href="https://arxiv.org/abs/2306.05415">https://arxiv.org/abs/2306.05415</a>&#160;</p>
+</li>
+<li id="fn:khemakhem2021carefl">
+<p>Khemakhem, I., Monti, R. P., Leech, R., &amp; Hyvärinen, A. (2021). Causal autoregressive flows. <em>Proceedings of the 24th International Conference on Artificial Intelligence and Statistics (AISTATS), Proceedings of Machine Learning Research</em>, <em>130</em>, 3520&ndash;3528. <a href="https://arxiv.org/abs/2011.02268">https://arxiv.org/abs/2011.02268</a>&#160;</p>
+</li>
+<li id="fn:nie2021quasioracle">
+<p>Nie, X., &amp; Wager, S. (2021). Quasi-oracle estimation of heterogeneous treatment effects. <em>Biometrika</em>, <em>108</em>(2), 299&ndash;319. <a href="https://doi.org/10.1093/biomet/asaa076">https://doi.org/10.1093/biomet/asaa076</a>&#160;</p>
+</li>
+<li id="fn:pearl2009causality">
+<p>Pearl, J. (2009). <em>Causality: Models, reasoning, and inference</em> (2nd ed.). Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511803161">https://doi.org/10.1017/CBO9780511803161</a>&#160;</p>
+</li>
+<li id="fn:robinson1988root">
+<p>Robinson, P. M. (1988). Root-N-consistent semiparametric regression. <em>Econometrica</em>, <em>56</em>(4). <a href="https://doi.org/10.2307/1912705">https://doi.org/10.2307/1912705</a>&#160;</p>
+</li>
+<li id="fn:sanchezmartin2022vaca">
+<p>Sánchez-Martín, P., Rateike, M., &amp; Valera, I. (2022). VACA: Designing variational graph autoencoders for causal queries. <em>Proceedings of the AAAI Conference on Artificial Intelligence</em>, <em>36</em>, 8159&ndash;8168. <a href="https://doi.org/10.1609/aaai.v36i7.20789">https://doi.org/10.1609/aaai.v36i7.20789</a>&#160;</p>
+</li>
+<li id="fn:sick2025tramdag">
+<p>Sick, B., &amp; Dürr, O. (2025). Interpretable neural causal models with TRAM-DAGs. <em>Proceedings of the 4th Conference on Causal Learning and Reasoning (CLeaR), Proceedings of Machine Learning Research</em>, <em>275</em>, 606&ndash;630. <a href="https://arxiv.org/abs/2503.16206">https://arxiv.org/abs/2503.16206</a>&#160;</p>
+</li>
+<li id="fn:zeileis2007fluctuation">
+<p>Zeileis, A., &amp; Hornik, K. (2007). Generalized M-fluctuation tests for parameter instability. <em>Statistica Neerlandica</em>, <em>61</em>(4), 488&ndash;508. <a href="https://doi.org/10.1111/j.1467-9574.2007.00371.x">https://doi.org/10.1111/j.1467-9574.2007.00371.x</a>&#160;</p>
+</li>
+<li id="fn:zeileis2008mob">
+<p>Zeileis, A., Hothorn, T., &amp; Hornik, K. (2008). Model-based recursive partitioning. <em>Journal of Computational and Graphical Statistics</em>, <em>17</em>(2), 492&ndash;514. <a href="https://doi.org/10.1198/106186008X319331">https://doi.org/10.1198/106186008X319331</a>&#160;</p>
+</li>
+</ol>
+</div>
 
 
 

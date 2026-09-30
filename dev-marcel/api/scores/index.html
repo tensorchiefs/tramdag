@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1836,7 +1864,9 @@ contrast of level 1 against level 0.</p>
     <div class="doc doc-contents ">
 
         <p>Scan the <code>t</code>-coefficient scores for effect-modifier drift.</p>
-<p>For each candidate covariate the scan orders the treatment coefficient's
+<p>This is the M-fluctuation test of Zeileis &amp; Hornik (2007) on the raw
+treatment score, without the decorrelation from the other coefficients.
+For each candidate covariate the scan orders the treatment coefficient's
 scores by it, forms the scaled cumulative sum
 <span class="arithmatex">\(B_j = \sum_{i \le j} \psi_{(i)} / (\mathrm{sd}(\psi)\sqrt{n})\)</span> and reports
 <span class="arithmatex">\(\sup_j |B_j|\)</span> with its Kolmogorov p-value and the 5% critical value.</p>
@@ -2112,7 +2142,9 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
-<span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -2124,6 +2156,8 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Scan the ``t``-coefficient scores for effect-modifier drift.</span>
 
+<span class="sd">    This is the M-fluctuation test of Zeileis &amp; Hornik (2007) on the raw</span>
+<span class="sd">    treatment score, without the decorrelation from the other coefficients.</span>
 <span class="sd">    For each candidate covariate the scan orders the treatment coefficient's</span>
 <span class="sd">    scores by it, forms the scaled cumulative sum</span>
 <span class="sd">    $B_j = \sum_{i \le j} \psi_{(i)} / (\mathrm{sd}(\psi)\sqrt{n})$ and reports</span>

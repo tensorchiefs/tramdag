@@ -272,7 +272,7 @@ u0 = flow.abduct(test.assign(T=0.0), seed=0)["Y"].to_numpy()
 print(f"max |beta(x) - (u(T=1) - u(T=0))| = {np.abs(beta_hat - (u1 - u0)).max():.2e}")
 
 # %% [markdown]
-# ## 6. Confounding: why `center=` exists
+# ## 6. Confounding: why `propensity=` exists
 #
 # Everything above had a prognostic part flexible enough to absorb $g$. Real
 # models are misspecified, and when the misfit correlates with **treatment
@@ -281,7 +281,7 @@ print(f"max |beta(x) - (u(T=1) - u(T=0))| = {np.abs(beta_hat - (u1 - u0)).max():
 # The configuration where this bites hardest is deliberately simple: one
 # covariate, a strong propensity $e(x)=\sigma(2x)$, a constant true effect
 # $\tau = -1$, and a quadratic prognostic part fitted with a linear term.
-# `center="ps"` replaces $t$ by $t - \hat e(x)$ with out-of-fold propensities
+# `propensity="ps"` replaces $t$ by $t - \hat e(x)$ with out-of-fold propensities
 # from the training-frame column `ps`; the guide says why they must be out of
 # fold. Stage 1, the propensities, is yours. Here, five classical fits of the
 # treatment spec.
@@ -314,17 +314,17 @@ for j in range(5):
     e_oof[fold_id == j] = proxy.pmf(c_train.iloc[fold_id == j], "T")[:, 1]
 
 mae = {}
-for center in (None, "ps"):
+for propensity in (None, "ps"):
     spec_c = {
         "X": ContinuousNode(I(transform="affine")),
         "T": OrdinalNode(2, LS("X")),
         # linear prognostic term, though the truth is quadratic
-        "Y": ContinuousNode(LS("X") + VC("X", center=center, t="T")),
+        "Y": ContinuousNode(LS("X") + VC("X", propensity=propensity, t="T")),
     }
     fc = CausalFlowDAG(spec_c, seed=0)
     fc.fit(
-        # the out-of-fold propensities ride the frame as the column center= names
-        c_train.assign(ps=e_oof) if center else c_train,
+        # the out-of-fold propensities ride the frame as the column propensity= names
+        c_train.assign(ps=e_oof) if propensity else c_train,
         epochs=250,
         learning_rate=1e-2,
         batch_size=512,
@@ -333,9 +333,10 @@ for center in (None, "ps"):
         callbacks=EarlyStopping(),  # keep the best-validation weights
     )
     b = fc.varying_coef(c_test, "Y")
-    mae[bool(center)] = float(np.abs(b - TAU).mean())
+    centered = propensity is not None
+    mae[centered] = float(np.abs(b - TAU).mean())
     print(
-        f"center={bool(center)!s:5s}  mean |beta - tau| = {mae[bool(center)]:.3f}"
+        f"centered={centered!s:5s}  mean |beta - tau| = {mae[centered]:.3f}"
         f"   mean beta = {b.mean():+.3f}  (true tau {TAU:+.1f})"
     )
 ratio = mae[False] / mae[True]
@@ -354,7 +355,7 @@ assert ratio >= 2, f"centering should at least halve the bias: {ratio:.2f}"
 # |---|---|---|
 # | one interpretable effect | `LS("T")` | `ls_coefficients()` |
 # | an effect that varies with covariates | `VC(*modifiers, t="T")` | `varying_coef(df, node)` |
-# | the same under confounding + a misspecified prognostic part | `VC(..., center="ps")` | the same read-out |
+# | the same under confounding + a misspecified prognostic part | `VC(..., propensity="ps")` | the same read-out |
 # | a shortlist of modifiers before you commit | `effect_modifier_scan` on a cheap all-`ls` fit | its `flag` column, read as screening |
 #
 # Why not a joint `CS` over treatment and modifiers, and what the penalty and

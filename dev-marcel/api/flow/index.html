@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1789,11 +1817,9 @@
 
         <p>CausalFlowDAG — a single triangular normalizing flow on a user-defined DAG.</p>
 <p>The flow maps iid standard-logistic latents <code>U</code> to the observed variables <code>X</code>
-in topological order; its Jacobian sparsity is exactly the DAG adjacency. The
-joint log-likelihood decomposes per node, so one optimizer fits all nodes at once.
-<code>sample</code>, <code>abduct</code>, <code>pmf</code> and <code>density</code> answer the observational,
-interventional (<code>do=</code>) and counterfactual queries; the read-outs that only
-read fitted weights live in <code>readouts.py</code>.</p>
+in topological order. <code>sample</code>, <code>abduct</code>, <code>pmf</code> and <code>density</code> answer the
+observational, interventional (<code>do=</code>) and counterfactual queries; the read-outs
+that only read fitted weights live in <code>readouts.py</code>.</p>
 
 
 
@@ -1929,7 +1955,9 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
 <span class="normal"> 58</span>
 <span class="normal"> 59</span>
 <span class="normal"> 60</span>
@@ -2619,11 +2647,7 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 <span class="normal">744</span>
 <span class="normal">745</span>
 <span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
-<span class="normal">750</span>
-<span class="normal">751</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">747</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A causal normalizing flow defined by a DAG specification.</span>
 
 <span class="sd">    Parameters</span>
@@ -2846,14 +2870,12 @@ output layer stays zero either way. Stored in the checkpoint.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_side_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Check the terms' side columns in the frame; give their names.</span>
 
-<span class="sd">        A centered ``VC`` needs its propensity column: $P(t = 1 \mid \mathrm{pa}_t)$</span>
-<span class="sd">        per training row, computed **out of fold** (the cross-fitting</span>
-<span class="sd">        requirement of the DML design; in-sample values reintroduce the</span>
-<span class="sd">        own-observation bias). How it is computed is the caller's choice —</span>
-<span class="sd">        a ``fit_classical`` on the treatment spec per fold, or any</span>
-<span class="sd">        classifier — merged into ``train_df`` as an ordinary column. The</span>
-<span class="sd">        training loss uses the frozen column; every query after the fit</span>
-<span class="sd">        recomputes the value live from the treatment node.</span>
+<span class="sd">        A centered ``VC`` needs its propensity column</span>
+<span class="sd">        $P(t = 1 \mid \mathrm{pa}_t)$ per training row, merged into</span>
+<span class="sd">        ``train_df`` as an ordinary column. The training loss uses the frozen</span>
+<span class="sd">        column; every query after the fit recomputes the value live from the</span>
+<span class="sd">        treatment node. ``docs/varying-coefficients.md`` says how to compute</span>
+<span class="sd">        the column out of fold.</span>
 <span class="sd">        """</span>
         <span class="n">cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
@@ -3052,8 +3074,8 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 <span class="sd">            clamped and its parent dependence removed (graph mutilation).</span>
 <span class="sd">        u : pd.DataFrame | None, optional</span>
 <span class="sd">            Latent variables, as returned by [`abduct`][]. If given,</span>
-<span class="sd">            they are pushed through the flow. Together with ``do`` this</span>
-<span class="sd">            yields counterfactuals: Pearl's abduction, action, prediction.</span>
+<span class="sd">            they are pushed through the flow. With ``do``, this gives a</span>
+<span class="sd">            counterfactual.</span>
 <span class="sd">        seed : int | None, optional</span>
 <span class="sd">            If given, seeds the latent draw. Ignored if ``u`` is given.</span>
 
@@ -3099,7 +3121,7 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Recover the latent variables ``u`` from observations (Pearl step 1).</span>
+<span class="w">        </span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
 
 <span class="sd">        A continuous node inverts exactly: $u = h(x) + s$. For an</span>
 <span class="sd">        ordinal node the latent is only interval-identified, so it is</span>
@@ -3424,7 +3446,11 @@ are independent. <code>None</code> (default) computes every node.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">392</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
 <span class="normal">393</span>
 <span class="normal">394</span>
 <span class="normal">395</span>
@@ -3448,11 +3474,7 @@ are independent. <code>None</code> (default) computes every node.</p>
 <span class="normal">413</span>
 <span class="normal">414</span>
 <span class="normal">415</span>
-<span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">node_log_prob</span><span class="p">(</span>
+<span class="normal">416</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">node_log_prob</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3579,7 +3601,11 @@ underflows in the tail). <code>None</code> (default) is the joint.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">422</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
 <span class="normal">425</span>
@@ -3600,11 +3626,7 @@ underflows in the tail). <code>None</code> (default) is the joint.</p>
 <span class="normal">440</span>
 <span class="normal">441</span>
 <span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">443</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute the joint log-likelihood per row.</span>
 
@@ -3708,7 +3730,11 @@ underflows in the tail). <code>None</code> (default) is the joint.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">449</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
 <span class="normal">450</span>
 <span class="normal">451</span>
 <span class="normal">452</span>
@@ -3717,11 +3743,7 @@ underflows in the tail). <code>None</code> (default) is the joint.</p>
 <span class="normal">455</span>
 <span class="normal">456</span>
 <span class="normal">457</span>
-<span class="normal">458</span>
-<span class="normal">459</span>
-<span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">node_negative_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="normal">458</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">node_negative_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute the mean negative log-likelihood per node (a diagnostic).</span>
 
 <span class="sd">    Parameters</span>
@@ -3811,8 +3833,8 @@ clamped and its parent dependence removed (graph mutilation).</p>
             <td>
               <div class="doc-md-description">
                 <p>Latent variables, as returned by <a class="autorefs autorefs-internal" title="abduct" href="#tramdag.flow.CausalFlowDAG.abduct"><code>abduct</code></a>. If given,
-they are pushed through the flow. Together with <code>do</code> this
-yields counterfactuals: Pearl's abduction, action, prediction.</p>
+they are pushed through the flow. With <code>do</code>, this gives a
+counterfactual.</p>
               </div>
             </td>
             <td>
@@ -3887,7 +3909,11 @@ yields counterfactuals: Pearl's abduction, action, prediction.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">466</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
 <span class="normal">467</span>
 <span class="normal">468</span>
 <span class="normal">469</span>
@@ -3946,11 +3972,7 @@ yields counterfactuals: Pearl's abduction, action, prediction.</p>
 <span class="normal">522</span>
 <span class="normal">523</span>
 <span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">525</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3970,8 +3992,8 @@ yields counterfactuals: Pearl's abduction, action, prediction.</p>
 <span class="sd">        clamped and its parent dependence removed (graph mutilation).</span>
 <span class="sd">    u : pd.DataFrame | None, optional</span>
 <span class="sd">        Latent variables, as returned by [`abduct`][]. If given,</span>
-<span class="sd">        they are pushed through the flow. Together with ``do`` this</span>
-<span class="sd">        yields counterfactuals: Pearl's abduction, action, prediction.</span>
+<span class="sd">        they are pushed through the flow. With ``do``, this gives a</span>
+<span class="sd">        counterfactual.</span>
 <span class="sd">    seed : int | None, optional</span>
 <span class="sd">        If given, seeds the latent draw. Ignored if ``u`` is given.</span>
 
@@ -4033,7 +4055,7 @@ yields counterfactuals: Pearl's abduction, action, prediction.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Recover the latent variables <code>u</code> from observations (Pearl step 1).</p>
+        <p>Recover the latent variables <code>u</code> from observations (the abduction step).</p>
 <p>A continuous node inverts exactly: <span class="arithmatex">\(u = h(x) + s\)</span>. For an
 ordinal node the latent is only interval-identified, so it is
 sampled from the standard logistic truncated to the observed
@@ -4113,7 +4135,11 @@ level's interval.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">531</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
 <span class="normal">532</span>
 <span class="normal">533</span>
 <span class="normal">534</span>
@@ -4140,13 +4166,9 @@ level's interval.</p>
 <span class="normal">555</span>
 <span class="normal">556</span>
 <span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">558</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Recover the latent variables ``u`` from observations (Pearl step 1).</span>
+<span class="w">    </span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
 
 <span class="sd">    A continuous node inverts exactly: $u = h(x) + s$. For an</span>
 <span class="sd">    ordinal node the latent is only interval-identified, so it is</span>
@@ -4309,7 +4331,11 @@ level's interval.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">564</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
 <span class="normal">565</span>
 <span class="normal">566</span>
 <span class="normal">567</span>
@@ -4335,11 +4361,7 @@ level's interval.</p>
 <span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
-<span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span>
-<span class="normal">593</span>
-<span class="normal">594</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">pmf</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">do</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -4522,7 +4544,11 @@ closed form from the transform — no sampling.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">596</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span>
 <span class="normal">599</span>
@@ -4564,11 +4590,7 @@ closed form from the transform — no sampling.</p>
 <span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">638</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">density</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4641,14 +4663,14 @@ documents the arguments and the column naming.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">644</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
 <span class="normal">645</span>
 <span class="normal">646</span>
-<span class="normal">647</span>
-<span class="normal">648</span>
-<span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">647</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the scores $\psi_i = \partial \ell_i / \partial \beta$.</span>
 
@@ -4685,7 +4707,11 @@ documents the method, the arguments and the result columns.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">653</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
 <span class="normal">654</span>
 <span class="normal">655</span>
 <span class="normal">656</span>
@@ -4699,11 +4725,7 @@ documents the method, the arguments and the result columns.</p>
 <span class="normal">664</span>
 <span class="normal">665</span>
 <span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">667</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4780,7 +4802,11 @@ device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">673</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
 <span class="normal">674</span>
 <span class="normal">675</span>
 <span class="normal">676</span>
@@ -4814,11 +4840,7 @@ device.</p>
 <span class="normal">704</span>
 <span class="normal">705</span>
 <span class="normal">706</span>
-<span class="normal">707</span>
-<span class="normal">708</span>
-<span class="normal">709</span>
-<span class="normal">710</span>
-<span class="normal">711</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">707</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write the model, its history and its provenance to a checkpoint.</span>
 
 <span class="sd">    The file holds the spec and the weights, the training ``history``,</span>
@@ -4956,7 +4978,11 @@ device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">713</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
 <span class="normal">714</span>
 <span class="normal">715</span>
 <span class="normal">716</span>
@@ -4990,11 +5016,7 @@ device.</p>
 <span class="normal">744</span>
 <span class="normal">745</span>
 <span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
-<span class="normal">750</span>
-<span class="normal">751</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">747</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cpu"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Restore a model from a checkpoint.</span>
 
@@ -6016,11 +6038,9 @@ parameter space, before the monotonicity constraint.</p>
 ordinal parent becomes one column per level, named
 <code>"{parent}[{k}]"</code> — the same one-hot the flow builds internally.</p>
 <p>Use <code>drop_first=True</code> to get the design a classical reference
-expects (<code>statsmodels</code> <code>OrderedModel</code>, R <code>polr</code>): with
-cutpoints the full one-hot is unidentified, so each ordinal parent's
-level-0 column drops out and its remaining coefficients read as
-differences against level 0 — exactly what <code>w[k] - w[0]</code> gives on
-the flow side.</p>
+expects (<code>statsmodels</code> <code>OrderedModel</code>, R <code>polr</code>). It drops the
+level-0 column of each ordinal parent, so the remaining coefficients
+match <code>w[k] - w[0]</code> on the flow side.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6150,9 +6170,7 @@ the flow side.</p>
 <span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">design_matrix</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">drop_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -6163,11 +6181,9 @@ the flow side.</p>
 <span class="sd">    ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.</span>
 
 <span class="sd">    Use ``drop_first=True`` to get the design a classical reference</span>
-<span class="sd">    expects (``statsmodels`` ``OrderedModel``, R ``polr``): with</span>
-<span class="sd">    cutpoints the full one-hot is unidentified, so each ordinal parent's</span>
-<span class="sd">    level-0 column drops out and its remaining coefficients read as</span>
-<span class="sd">    differences against level 0 — exactly what ``w[k] - w[0]`` gives on</span>
-<span class="sd">    the flow side.</span>
+<span class="sd">    expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the</span>
+<span class="sd">    level-0 column of each ordinal parent, so the remaining coefficients</span>
+<span class="sd">    match ``w[k] - w[0]`` on the flow side.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -6227,8 +6243,7 @@ the flow side.</p>
     <div class="doc doc-contents ">
 
         <p>Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</p>
-<p>The joint NLL decomposes per node, so one optimizer over all
-parameters fits every node at once. The loop keeps the <strong>final</strong>
+<p>One optimizer covers all parameters. The loop keeps the <strong>final</strong>
 weights, and a second <code>fit</code> call continues the training. Validation
 monitoring, learning-rate schedules, early stopping, best-weight
 restoration and logging are the caller's, through <code>optimizer</code> and
@@ -6669,8 +6684,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">323</span>
 <span class="normal">324</span>
 <span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">326</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -6687,8 +6701,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</span>
 
-<span class="sd">    The joint NLL decomposes per node, so one optimizer over all</span>
-<span class="sd">    parameters fits every node at once. The loop keeps the **final**</span>
+<span class="sd">    One optimizer covers all parameters. The loop keeps the **final**</span>
 <span class="sd">    weights, and a second ``fit`` call continues the training. Validation</span>
 <span class="sd">    monitoring, learning-rate schedules, early stopping, best-weight</span>
 <span class="sd">    restoration and logging are the caller's, through ``optimizer`` and</span>
@@ -6845,9 +6858,9 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <p>The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
 line search. There are no minibatches, no schedule and no early
 stopping, so the fit is deterministic; the report says whether it
-reached the maximum-likelihood estimate. It is valid only when every
-term is a simple intercept or an <code>LS</code>, because each node-conditional
-is then an ordered logit or a Colr model; any other spec raises.</p>
+reached the maximum-likelihood estimate. It takes only simple
+intercepts and <code>LS</code> terms; any other spec raises.
+<code>docs/fitting.md</code> says why.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6979,14 +6992,13 @@ closure calls, line searches included) ran out first.
 <p><code>converged</code> needs BOTH: the run stopped on its own AND the gradient
 norm is at most <code>GRAD_TOL</code> (1e-2). The objective is a sum of per-node
 mean NLLs, so its gradient does not scale with the number of rows and
-an absolute bound is meaningful. Stopping on its own is not enough,
-because the same tolerance fires when the line search stalls far from
-the optimum; there the gradient norm is still large.</p>
+an absolute bound is meaningful.</p>
 </details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">328</span>
+<span class="normal">329</span>
 <span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
@@ -7111,10 +7123,7 @@ the optimum; there the gradient norm is still large.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -7126,9 +7135,9 @@ the optimum; there the gradient norm is still large.</p>
 <span class="sd">    The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
 <span class="sd">    line search. There are no minibatches, no schedule and no early</span>
 <span class="sd">    stopping, so the fit is deterministic; the report says whether it</span>
-<span class="sd">    reached the maximum-likelihood estimate. It is valid only when every</span>
-<span class="sd">    term is a simple intercept or an ``LS``, because each node-conditional</span>
-<span class="sd">    is then an ordered logit or a Colr model; any other spec raises.</span>
+<span class="sd">    reached the maximum-likelihood estimate. It takes only simple</span>
+<span class="sd">    intercepts and ``LS`` terms; any other spec raises.</span>
+<span class="sd">    ``docs/fitting.md`` says why.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -7171,9 +7180,7 @@ the optimum; there the gradient norm is still large.</p>
 <span class="sd">    ``converged`` needs BOTH: the run stopped on its own AND the gradient</span>
 <span class="sd">    norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node</span>
 <span class="sd">    mean NLLs, so its gradient does not scale with the number of rows and</span>
-<span class="sd">    an absolute bound is meaningful. Stopping on its own is not enough,</span>
-<span class="sd">    because the same tolerance fires when the line search stalls far from</span>
-<span class="sd">    the optimum; there the gradient norm is still large.</span>
+<span class="sd">    an absolute bound is meaningful.</span>
 <span class="sd">    """</span>
     <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>

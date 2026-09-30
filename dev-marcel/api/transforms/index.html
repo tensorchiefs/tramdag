@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2542,8 +2570,7 @@ flow from the standard-logistic latent to the observed variables.</p>
 <span class="normal">598</span>
 <span class="normal">599</span>
 <span class="normal">600</span>
-<span class="normal">601</span>
-<span class="normal">602</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BernsteinUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="normal">601</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BernsteinUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""TRAM-style Bernstein polynomial transform (zuko ``BernsteinTransform``).</span>
 
 <span class="sd">    Parameters</span>
@@ -2573,8 +2600,7 @@ flow from the standard-logistic latent to the observed variables.</p>
 <span class="sd">        marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the</span>
 <span class="sd">        value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so</span>
 <span class="sd">        the polynomial starts as the Bernstein approximation of</span>
-<span class="sd">        $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal</span>
-<span class="sd">        cutpoints' class log-odds. Without it the control points are</span>
+<span class="sd">        $\operatorname{logit} \hat F(y)$. Without it the control points are</span>
 <span class="sd">        equally spaced, the plain linear map from the pre-scaled domain</span>
 <span class="sd">        $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with</span>
 <span class="sd">        $q$ = ``range_q``.</span>
@@ -2703,8 +2729,7 @@ flow from the standard-logistic latent to the observed variables.</p>
 marginal</strong>: control point <span class="arithmatex">\(k\)</span> is <span class="arithmatex">\(\operatorname{logit} \hat F(y_k)\)</span> at the
 value <span class="arithmatex">\(y_k\)</span> sitting at <span class="arithmatex">\(k/\text{order}\)</span> of the pre-scaled domain, so
 the polynomial starts as the Bernstein approximation of
-<span class="arithmatex">\(\operatorname{logit} \hat F(y)\)</span> — the continuous counterpart of the ordinal
-cutpoints' class log-odds. Without it the control points are
+<span class="arithmatex">\(\operatorname{logit} \hat F(y)\)</span>. Without it the control points are
 equally spaced, the plain linear map from the pre-scaled domain
 <span class="arithmatex">\([-B, B]\)</span> onto <span class="arithmatex">\([\operatorname{logit} q, \operatorname{logit}(1-q)]\)</span> with
 <span class="arithmatex">\(q\)</span> = <code>range_q</code>.</p>
@@ -2859,16 +2884,14 @@ hence the two averaged pairs below).</p>
 <span class="normal">580</span>
 <span class="normal">581</span>
 <span class="normal">582</span>
-<span class="normal">583</span>
-<span class="normal">584</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="normal">583</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">marginal_init_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the unconstrained Bernstein coefficients of the marginal start.</span>
 
 <span class="sd">    With ``column`` the control points follow the node's **empirical</span>
 <span class="sd">    marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the</span>
 <span class="sd">    value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so</span>
 <span class="sd">    the polynomial starts as the Bernstein approximation of</span>
-<span class="sd">    $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal</span>
-<span class="sd">    cutpoints' class log-odds. Without it the control points are</span>
+<span class="sd">    $\operatorname{logit} \hat F(y)$. Without it the control points are</span>
 <span class="sd">    equally spaced, the plain linear map from the pre-scaled domain</span>
 <span class="sd">    $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with</span>
 <span class="sd">    $q$ = ``range_q``.</span>
@@ -3010,7 +3033,8 @@ hence the two averaged pairs below).</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">605</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">604</span>
+<span class="normal">605</span>
 <span class="normal">606</span>
 <span class="normal">607</span>
 <span class="normal">608</span>
@@ -3036,8 +3060,7 @@ hence the two averaged pairs below).</p>
 <span class="normal">628</span>
 <span class="normal">629</span>
 <span class="normal">630</span>
-<span class="normal">631</span>
-<span class="normal">632</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SplineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="normal">631</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SplineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Monotone rational-quadratic spline (zuko ``MonotonicRQSTransform``).</span>
 
 <span class="sd">    Parameters</span>
@@ -3141,7 +3164,8 @@ hence the two averaged pairs below).</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/transforms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">635</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">634</span>
+<span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
 <span class="normal">638</span>
@@ -3149,8 +3173,7 @@ hence the two averaged pairs below).</p>
 <span class="normal">640</span>
 <span class="normal">641</span>
 <span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AffineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
+<span class="normal">643</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AffineUT</span><span class="p">(</span><span class="n">_ScaledUT</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Monotone affine transform: the node-conditional is a logistic GLM."""</span>
 
     <span class="nd">@property</span>
@@ -4140,7 +4163,7 @@ in float32, and a node stuck there never recovers.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Abduct the latent of an ordinal node (Pearl step 1).</p>
+        <p>Abduct the latent of an ordinal node (the abduction step).</p>
 <p>The latent is drawn from the standard logistic, truncated to the
 interval that is consistent with the observed level.</p>
 
@@ -4287,7 +4310,7 @@ interval that is consistent with the observed level.</p>
     <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">generator</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Abduct the latent of an ordinal node (Pearl step 1).</span>
+<span class="w">    </span><span class="sd">"""Abduct the latent of an ordinal node (the abduction step).</span>
 
 <span class="sd">    The latent is drawn from the standard logistic, truncated to the</span>
 <span class="sd">    interval that is consistent with the observed level.</span>

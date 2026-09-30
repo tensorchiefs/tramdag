@@ -788,6 +788,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1570,7 +1598,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="VaryingCoefficient" href="../api/spec/#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> / <code>VC</code></td>
-<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span> — the penalized treatment-effect head. <code>center=</code> adds propensity centering.</td>
+<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span> — the penalized treatment-effect head. <code>propensity=</code> adds propensity centering.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ContinuousNode" href="../api/spec/#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a></td>
@@ -1641,7 +1669,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_pmf" href="../api/transforms/#tramdag.transforms.ordinal_pmf"><code>ordinal_pmf()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_sample" href="../api/transforms/#tramdag.transforms.ordinal_sample"><code>ordinal_sample()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_abduct" href="../api/transforms/#tramdag.transforms.ordinal_abduct"><code>ordinal_abduct()</code></a></td>
-<td>Class probabilities / latent → level / truncated-logistic latent recovery (Pearl step 1) for ordinal nodes.</td>
+<td>Class probabilities / latent → level / truncated-logistic latent recovery (abduction) for ordinal nodes.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ordinal_marginal_init_theta" href="../api/transforms/#tramdag.transforms.ordinal_marginal_init_theta"><code>ordinal_marginal_init_theta()</code></a></td>
@@ -1684,7 +1712,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="abduct" href="../api/flow/#tramdag.flow.CausalFlowDAG.abduct"><code>abduct()</code></a></td>
-<td>Pearl step 1: recover the latents.</td>
+<td>Abduction: recover the latents.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="pmf" href="../api/flow/#tramdag.flow.CausalFlowDAG.pmf"><code>pmf()</code></a></td>
@@ -1981,13 +2009,13 @@ default you can read at the call site. Nothing numeric is buried.</p>
 </tr>
 <tr>
 <td>VC stage-1 propensities</td>
-<td>the training-frame column <code>VC(center=)</code> names</td>
+<td>the training-frame column <code>VC(propensity=)</code> names</td>
 <td>required for a centered VC term (<a href="../varying-coefficients/">varying-coefficients.md</a>)</td>
 </tr>
 <tr>
 <td>VC penalty and centering</td>
-<td><code>VC(penalty=, center=)</code></td>
-<td>1.0 / False (<code>center="col"</code> names the propensity column)</td>
+<td><code>VC(penalty=, propensity=)</code></td>
+<td>1.0 / None (<code>propensity="col"</code> names the propensity column)</td>
 </tr>
 <tr>
 <td>L-BFGS budget</td>

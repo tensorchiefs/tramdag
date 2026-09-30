@@ -739,6 +739,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1611,7 +1639,9 @@ that starts there never recovers.</p>
 column; an ordinal parent one-hot, in one column per level. Abduction is exact
 for continuous nodes and truncated-logistic for ordinal ones, so
 <code>flow.sample(u=flow.abduct(df))</code> reproduces <code>df</code> exactly, level-exactly for
-ordinal nodes.</p>
+ordinal nodes. A counterfactual takes three steps: abduction, action and
+prediction (Pearl, 2009)<sup id="fnref:pearl2009causality"><a class="footnote-ref" href="#fn:pearl2009causality">1</a></sup>. <code>abduct</code> gives the latents, <code>do=</code> sets the
+intervention, and <code>sample(u=..., do=...)</code> predicts.</p>
 <h2 id="what-the-model-cannot-do">What the model cannot do<a class="headerlink" href="#what-the-model-cannot-do" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The latent distribution is fixed to standard logistic. It is not learned.</li>
@@ -1623,6 +1653,14 @@ ordinal nodes.</p>
 <li>Identification is the usual causal one. No hidden confounding, and the graph
   has to be right.</li>
 </ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:pearl2009causality">
+<p>Pearl, J. (2009). <em>Causality: Models, reasoning, and inference</em> (2nd ed.). Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511803161">https://doi.org/10.1017/CBO9780511803161</a>&#160;<a class="footnote-backref" href="#fnref:pearl2009causality" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 

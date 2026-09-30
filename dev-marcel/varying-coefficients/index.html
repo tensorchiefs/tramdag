@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center" class="md-skip">
+        <a href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity" class="md-skip">
           Skip to content
         </a>
       
@@ -569,10 +569,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#propensity-centering-centercol" class="md-nav__link">
+  <a href="#propensity-centering-propensitycol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Propensity centering: center="col"
+        Propensity centering: propensity="col"
       
     </span>
   </a>
@@ -698,6 +698,34 @@
     
   
     Zuko upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
   
 
     
@@ -1333,10 +1361,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#propensity-centering-centercol" class="md-nav__link">
+  <a href="#propensity-centering-propensitycol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Propensity centering: center="col"
+        Propensity centering: propensity="col"
       
     </span>
   </a>
@@ -1374,7 +1402,7 @@
   
 
 
-<h1 id="varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center">Varying-coefficient treatment effects: <code>VC(*modifiers, t=, penalty=, center=)</code><a class="headerlink" href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-center" title="Permanent link">&para;</a></h1>
+<h1 id="varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity">Varying-coefficient treatment effects: <code>VC(*modifiers, t=, penalty=, propensity=)</code><a class="headerlink" href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity" title="Permanent link">&para;</a></h1>
 <p>A <code>VC</code> term gives a node a treatment-effect head with its own bias-variance
 budget. It contributes <span class="arithmatex">\(\beta(x)\, x_t\)</span> with
 <span class="arithmatex">\(\beta(x) = \beta_0 + b_\Theta(x)\)</span> to the node's shift, where <span class="arithmatex">\(b_\Theta\)</span> is a
@@ -1398,7 +1426,7 @@ unregularized networks and amplifies noise. On the <code>vc_hetero</code> proces
 function even though the model is in-class; the <code>VC</code> term reaches about 0.99
 on the same protocol. Causal
 forests and R-learners work not because they target the effect but because
-they regularize it (Nie &amp; Wager 2021; Athey, Tibshirani &amp; Wager 2019). <code>VC</code>
+they regularize it (Athey et al., 2019; Nie &amp; Wager, 2021)<sup id="fnref:athey2019grf"><a class="footnote-ref" href="#fn:athey2019grf">1</a></sup> <sup id="fnref:nie2021quasioracle"><a class="footnote-ref" href="#fn:nie2021quasioracle">2</a></sup>. <code>VC</code>
 brings that ingredient into the TRAM framework.</p>
 <h2 id="semantics">Semantics<a class="headerlink" href="#semantics" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1428,13 +1456,15 @@ brings that ingredient into the TRAM framework.</p>
   equals the abduction difference <span class="arithmatex">\(u(x,1,y) - u(x,0,y)\)</span> identically, which a
   test pins.</li>
 </ul>
-<h2 id="propensity-centering-centercol">Propensity centering: <code>center="col"</code><a class="headerlink" href="#propensity-centering-centercol" title="Permanent link">&para;</a></h2>
-<p>With <code>center=</code> the term contributes <span class="arithmatex">\(\beta(x)\,(t - \hat e(x))\)</span> instead of
-<span class="arithmatex">\(\beta(x)\, t\)</span>. This is Robinson's R-learner orthogonalization inside the
-likelihood, the ingredient Dandl et al. (2024) found decisive for effect
-estimation under confounding in model-based forests. The finding reproduces
-here on the <code>confounded</code> process, where the model deliberately
-under-specifies its prognostic part: the uncentered <span class="arithmatex">\(\hat\beta\)</span> absorbs the
+<h2 id="propensity-centering-propensitycol">Propensity centering: <code>propensity="col"</code><a class="headerlink" href="#propensity-centering-propensitycol" title="Permanent link">&para;</a></h2>
+<p>With a <code>propensity=</code> column, the term contributes
+<span class="arithmatex">\(\beta(x)\,(t - \hat e(x))\)</span> instead of <span class="arithmatex">\(\beta(x)\, t\)</span>. This is Robinson's
+R-learner orthogonalization
+(Nie &amp; Wager, 2021; Robinson, 1988)<sup id="fnref2:nie2021quasioracle"><a class="footnote-ref" href="#fn:nie2021quasioracle">2</a></sup> <sup id="fnref:robinson1988root"><a class="footnote-ref" href="#fn:robinson1988root">3</a></sup> inside the likelihood. In
+model-based forests, this ingredient is decisive for effect estimation under
+confounding (Dandl et al., 2024)<sup id="fnref:dandl2024forest"><a class="footnote-ref" href="#fn:dandl2024forest">4</a></sup>. That finding reproduces here on the
+<code>confounded</code> process, where the model deliberately under-specifies its
+prognostic part: the uncentered <span class="arithmatex">\(\hat\beta\)</span> absorbs the
 confounded misfit, and centering brings it back near the truth. The notebook
 reports the measured reduction and <code>tests/test_vc_centered.py</code> requires at
 least a factor of two. If the prognostic part is correctly specified,
@@ -1443,9 +1473,10 @@ not know you have.</p>
 <p>The design is two-stage and frozen, because the naive versions are wrong.</p>
 <ul>
 <li><strong>Training</strong> uses out-of-fold propensities that you compute and pass as the
-  training-frame column <code>center=</code> names, one value per row. Any propensity
+  training-frame column <code>propensity=</code> names, one value per row. Any propensity
   model works as long as each fold is predicted by a fit that never saw it,
-  the cross-fitting requirement of double machine learning. In-sample
+  the cross-fitting requirement of double machine learning
+  (Chernozhukov et al., 2018)<sup id="fnref:chernozhukov2018dml"><a class="footnote-ref" href="#fn:chernozhukov2018dml">5</a></sup>. In-sample
   propensities reintroduce the own-observation bias and can be worse than no
   centering. The values enter the loss as frozen data, so no gradient reaches
   the treatment node and the per-node factorization stays intact. <code>fit</code>
@@ -1469,6 +1500,26 @@ correlation of at least 0.9 at <span class="arithmatex">\(n = 5000\)</span>, a f
 centering claims are measured on the <code>confounded</code> process in the same file.
 <a href="../scores/">scores.md</a> covers the scan that shortlists modifiers before a <code>VC</code>
 term is declared.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:athey2019grf">
+<p>Athey, S., Tibshirani, J., &amp; Wager, S. (2019). Generalized random forests. <em>The Annals of Statistics</em>, <em>47</em>(2). <a href="https://doi.org/10.1214/18-AOS1709">https://doi.org/10.1214/18-AOS1709</a>&#160;<a class="footnote-backref" href="#fnref:athey2019grf" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:nie2021quasioracle">
+<p>Nie, X., &amp; Wager, S. (2021). Quasi-oracle estimation of heterogeneous treatment effects. <em>Biometrika</em>, <em>108</em>(2), 299&ndash;319. <a href="https://doi.org/10.1093/biomet/asaa076">https://doi.org/10.1093/biomet/asaa076</a>&#160;<a class="footnote-backref" href="#fnref:nie2021quasioracle" title="Jump back to footnote 2 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:nie2021quasioracle" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:robinson1988root">
+<p>Robinson, P. M. (1988). Root-N-consistent semiparametric regression. <em>Econometrica</em>, <em>56</em>(4). <a href="https://doi.org/10.2307/1912705">https://doi.org/10.2307/1912705</a>&#160;<a class="footnote-backref" href="#fnref:robinson1988root" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:dandl2024forest">
+<p>Dandl, S., Haslinger, C., Hothorn, T., Seibold, H., Sverdrup, E., Wager, S., &amp; Zeileis, A. (2024). What makes forest-based heterogeneous treatment effect estimators work? <em>The Annals of Applied Statistics</em>, <em>18</em>(1). <a href="https://doi.org/10.1214/23-AOAS1799">https://doi.org/10.1214/23-AOAS1799</a>&#160;<a class="footnote-backref" href="#fnref:dandl2024forest" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:chernozhukov2018dml">
+<p>Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., &amp; Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. <em>The Econometrics Journal</em>, <em>21</em>(1), C1&ndash;C68. <a href="https://doi.org/10.1111/ectj.12097">https://doi.org/10.1111/ectj.12097</a>&#160;<a class="footnote-backref" href="#fnref:chernozhukov2018dml" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 

@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1744,10 +1772,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
+<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
@@ -1767,8 +1792,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</span>
 
-<span class="sd">        The joint NLL decomposes per node, so one optimizer over all</span>
-<span class="sd">        parameters fits every node at once. The loop keeps the **final**</span>
+<span class="sd">        One optimizer covers all parameters. The loop keeps the **final**</span>
 <span class="sd">        weights, and a second ``fit`` call continues the training. Validation</span>
 <span class="sd">        monitoring, learning-rate schedules, early stopping, best-weight</span>
 <span class="sd">        restoration and logging are the caller's, through ``optimizer`` and</span>
@@ -1915,9 +1939,9 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
 <span class="sd">        line search. There are no minibatches, no schedule and no early</span>
 <span class="sd">        stopping, so the fit is deterministic; the report says whether it</span>
-<span class="sd">        reached the maximum-likelihood estimate. It is valid only when every</span>
-<span class="sd">        term is a simple intercept or an ``LS``, because each node-conditional</span>
-<span class="sd">        is then an ordered logit or a Colr model; any other spec raises.</span>
+<span class="sd">        reached the maximum-likelihood estimate. It takes only simple</span>
+<span class="sd">        intercepts and ``LS`` terms; any other spec raises.</span>
+<span class="sd">        ``docs/fitting.md`` says why.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1960,9 +1984,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        ``converged`` needs BOTH: the run stopped on its own AND the gradient</span>
 <span class="sd">        norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node</span>
 <span class="sd">        mean NLLs, so its gradient does not scale with the number of rows and</span>
-<span class="sd">        an absolute bound is meaningful. Stopping on its own is not enough,</span>
-<span class="sd">        because the same tolerance fires when the line search stalls far from</span>
-<span class="sd">        the optimum; there the gradient norm is still large.</span>
+<span class="sd">        an absolute bound is meaningful.</span>
 <span class="sd">        """</span>
         <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>
@@ -2075,8 +2097,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
     <div class="doc doc-contents ">
 
         <p>Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</p>
-<p>The joint NLL decomposes per node, so one optimizer over all
-parameters fits every node at once. The loop keeps the <strong>final</strong>
+<p>One optimizer covers all parameters. The loop keeps the <strong>final</strong>
 weights, and a second <code>fit</code> call continues the training. Validation
 monitoring, learning-rate schedules, early stopping, best-weight
 restoration and logging are the caller's, through <code>optimizer</code> and
@@ -2517,8 +2538,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">323</span>
 <span class="normal">324</span>
 <span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">326</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2535,8 +2555,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.</span>
 
-<span class="sd">    The joint NLL decomposes per node, so one optimizer over all</span>
-<span class="sd">    parameters fits every node at once. The loop keeps the **final**</span>
+<span class="sd">    One optimizer covers all parameters. The loop keeps the **final**</span>
 <span class="sd">    weights, and a second ``fit`` call continues the training. Validation</span>
 <span class="sd">    monitoring, learning-rate schedules, early stopping, best-weight</span>
 <span class="sd">    restoration and logging are the caller's, through ``optimizer`` and</span>
@@ -2693,9 +2712,9 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <p>The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
 line search. There are no minibatches, no schedule and no early
 stopping, so the fit is deterministic; the report says whether it
-reached the maximum-likelihood estimate. It is valid only when every
-term is a simple intercept or an <code>LS</code>, because each node-conditional
-is then an ordered logit or a Colr model; any other spec raises.</p>
+reached the maximum-likelihood estimate. It takes only simple
+intercepts and <code>LS</code> terms; any other spec raises.
+<code>docs/fitting.md</code> says why.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2827,14 +2846,13 @@ closure calls, line searches included) ran out first.
 <p><code>converged</code> needs BOTH: the run stopped on its own AND the gradient
 norm is at most <code>GRAD_TOL</code> (1e-2). The objective is a sum of per-node
 mean NLLs, so its gradient does not scale with the number of rows and
-an absolute bound is meaningful. Stopping on its own is not enough,
-because the same tolerance fires when the line search stalls far from
-the optimum; there the gradient norm is still large.</p>
+an absolute bound is meaningful.</p>
 </details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">328</span>
+<span class="normal">329</span>
 <span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
@@ -2959,10 +2977,7 @@ the optimum; there the gradient norm is still large.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2974,9 +2989,9 @@ the optimum; there the gradient norm is still large.</p>
 <span class="sd">    The fit uses full batches, float64, and L-BFGS with a strong-Wolfe</span>
 <span class="sd">    line search. There are no minibatches, no schedule and no early</span>
 <span class="sd">    stopping, so the fit is deterministic; the report says whether it</span>
-<span class="sd">    reached the maximum-likelihood estimate. It is valid only when every</span>
-<span class="sd">    term is a simple intercept or an ``LS``, because each node-conditional</span>
-<span class="sd">    is then an ordered logit or a Colr model; any other spec raises.</span>
+<span class="sd">    reached the maximum-likelihood estimate. It takes only simple</span>
+<span class="sd">    intercepts and ``LS`` terms; any other spec raises.</span>
+<span class="sd">    ``docs/fitting.md`` says why.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -3019,9 +3034,7 @@ the optimum; there the gradient norm is still large.</p>
 <span class="sd">    ``converged`` needs BOTH: the run stopped on its own AND the gradient</span>
 <span class="sd">    norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node</span>
 <span class="sd">    mean NLLs, so its gradient does not scale with the number of rows and</span>
-<span class="sd">    an absolute bound is meaningful. Stopping on its own is not enough,</span>
-<span class="sd">    because the same tolerance fires when the line search stalls far from</span>
-<span class="sd">    the optimum; there the gradient norm is still large.</span>
+<span class="sd">    an absolute bound is meaningful.</span>
 <span class="sd">    """</span>
     <span class="n">other</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">terms</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">t</span><span class="o">.</span><span class="n">classical</span><span class="p">}</span>

@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2301,9 +2329,7 @@ freezes (rate 0) once its best is that many epochs old, and the fit stops
 when every node has frozen; without it (the default) no node freezes and
 the fit runs its full epoch budget. With <code>restore_best</code> (the default) a
 node loads the weights of its best epoch back when it freezes, and every
-node loads them in <code>on_fit_end</code>, before the VC re-centering. The joint
-NLL is a sum of per-node terms and a node's parameters enter only its own
-term, so each node restores its own optimum.</p>
+node loads them in <code>on_fit_end</code>, before the VC re-centering.</p>
 <p>Build the optimizer with <a class="autorefs autorefs-internal" title="per_node_adam" href="#tramdag.callbacks.per_node_adam"><code>per_node_adam</code></a>
 (one <code>node</code>-tagged group per node), and give <code>fit</code> a validation set
 (the callback reads <code>flow.history["val"]</code>). Do not attach a torch lr
@@ -2554,9 +2580,7 @@ figure can mark the freezes.</p>
 <span class="normal">305</span>
 <span class="normal">306</span>
 <span class="normal">307</span>
-<span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">308</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Early stopping per node: ``EarlyStopping`` on each node's own NLL.</span>
 
 <span class="sd">    Tracks every node's validation NLL; an epoch improves a node when it beats</span>
@@ -2565,9 +2589,7 @@ figure can mark the freezes.</p>
 <span class="sd">    when every node has frozen; without it (the default) no node freezes and</span>
 <span class="sd">    the fit runs its full epoch budget. With ``restore_best`` (the default) a</span>
 <span class="sd">    node loads the weights of its best epoch back when it freezes, and every</span>
-<span class="sd">    node loads them in ``on_fit_end``, before the VC re-centering. The joint</span>
-<span class="sd">    NLL is a sum of per-node terms and a node's parameters enter only its own</span>
-<span class="sd">    term, so each node restores its own optimum.</span>
+<span class="sd">    node loads them in ``on_fit_end``, before the VC re-centering.</span>
 
 <span class="sd">    Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]</span>
 <span class="sd">    (one ``node``-tagged group per node), and give ``fit`` a validation set</span>
@@ -2725,12 +2747,12 @@ figure can mark the freezes.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">244</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""</span>
     <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
@@ -2760,9 +2782,9 @@ figure can mark the freezes.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -2791,15 +2813,15 @@ buffers move after the freeze; this final restore resets them too.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load every node's best weights again (``restore_best``).</span>
 
 <span class="sd">    A frozen node still runs forward in training mode, so its batch-norm</span>

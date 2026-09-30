@@ -618,6 +618,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1822,9 +1850,7 @@ the meta-adjacency view (<code>to_matrix</code>) and the classical design matrix
 <span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutsMixin</span><span class="p">:</span>
+<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutsMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The stateless read-outs, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
@@ -2066,11 +2092,9 @@ the meta-adjacency view (<code>to_matrix</code>) and the classical design matrix
 <span class="sd">        ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.</span>
 
 <span class="sd">        Use ``drop_first=True`` to get the design a classical reference</span>
-<span class="sd">        expects (``statsmodels`` ``OrderedModel``, R ``polr``): with</span>
-<span class="sd">        cutpoints the full one-hot is unidentified, so each ordinal parent's</span>
-<span class="sd">        level-0 column drops out and its remaining coefficients read as</span>
-<span class="sd">        differences against level 0 — exactly what ``w[k] - w[0]`` gives on</span>
-<span class="sd">        the flow side.</span>
+<span class="sd">        expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the</span>
+<span class="sd">        level-0 column of each ordinal parent, so the remaining coefficients</span>
+<span class="sd">        match ``w[k] - w[0]`` on the flow side.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -3090,11 +3114,9 @@ parameter space, before the monotonicity constraint.</p>
 ordinal parent becomes one column per level, named
 <code>"{parent}[{k}]"</code> — the same one-hot the flow builds internally.</p>
 <p>Use <code>drop_first=True</code> to get the design a classical reference
-expects (<code>statsmodels</code> <code>OrderedModel</code>, R <code>polr</code>): with
-cutpoints the full one-hot is unidentified, so each ordinal parent's
-level-0 column drops out and its remaining coefficients read as
-differences against level 0 — exactly what <code>w[k] - w[0]</code> gives on
-the flow side.</p>
+expects (<code>statsmodels</code> <code>OrderedModel</code>, R <code>polr</code>). It drops the
+level-0 column of each ordinal parent, so the remaining coefficients
+match <code>w[k] - w[0]</code> on the flow side.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3224,9 +3246,7 @@ the flow side.</p>
 <span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">design_matrix</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">drop_first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -3237,11 +3257,9 @@ the flow side.</p>
 <span class="sd">    ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.</span>
 
 <span class="sd">    Use ``drop_first=True`` to get the design a classical reference</span>
-<span class="sd">    expects (``statsmodels`` ``OrderedModel``, R ``polr``): with</span>
-<span class="sd">    cutpoints the full one-hot is unidentified, so each ordinal parent's</span>
-<span class="sd">    level-0 column drops out and its remaining coefficients read as</span>
-<span class="sd">    differences against level 0 — exactly what ``w[k] - w[0]`` gives on</span>
-<span class="sd">    the flow side.</span>
+<span class="sd">    expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the</span>
+<span class="sd">    level-0 column of each ordinal parent, so the remaining coefficients</span>
+<span class="sd">    match ``w[k] - w[0]`` on the flow side.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>

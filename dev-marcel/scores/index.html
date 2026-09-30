@@ -733,6 +733,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1469,9 +1497,9 @@ a path leaves the band, the scan flags its covariate.</p>
   <a href="#read-it-as-screening">Read it as screening</a> explains why.</li>
 </ul>
 <h2 id="the-statistic">The statistic<a class="headerlink" href="#the-statistic" title="Permanent link">&para;</a></h2>
-<p>The scan is the structural-change test (Zeileis &amp; Hornik 2007) behind
-model-based recursive partitioning (Zeileis, Hothorn &amp; Hornik 2008; Dandl et
-al. 2024). That method is a tree that splits the data where the coefficients
+<p>The scan is the structural-change test (Zeileis &amp; Hornik, 2007)<sup id="fnref:zeileis2007fluctuation"><a class="footnote-ref" href="#fn:zeileis2007fluctuation">1</a></sup> behind
+model-based recursive partitioning (Dandl et al., 2024; Zeileis et al., 2008)<sup id="fnref:dandl2024forest"><a class="footnote-ref" href="#fn:dandl2024forest">2</a></sup> <sup id="fnref:zeileis2008mob"><a class="footnote-ref" href="#fn:zeileis2008mob">3</a></sup>. That
+method is a tree that splits the data where the coefficients
 of a model change. The scan applies its test to the treatment coefficient of
 a TRAM-DAG.</p>
 <p>For one candidate, the scan sorts the <span class="arithmatex">\(n\)</span> rows by that candidate. It then
@@ -1497,7 +1525,7 @@ zero.</p>
 <li>A <code>stat</code> above 1.358, the 5 % critical value, sets <code>flag</code>.</li>
 </ul>
 <p>The p-value is approximate. The scan uses the raw treatment score. The full
-test of Zeileis &amp; Hornik removes its correlation with the scores of the
+test (Zeileis &amp; Hornik, 2007)<sup id="fnref2:zeileis2007fluctuation"><a class="footnote-ref" href="#fn:zeileis2007fluctuation">1</a></sup> removes its correlation with the scores of the
 other fitted coefficients, and the scan does not.</p>
 <p>The error has a direction. For a candidate that is also an <code>LS</code> parent of
 the node, the fitted <code>LS</code> weight already removes part of the pattern. The
@@ -1586,6 +1614,20 @@ function.</p>
 <p>The function only reads the fitted model. It changes neither fitting nor
 sampling. The tests check that each column sums to about zero at a fitted
 optimum, and that the scores agree with float64 finite differences.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:zeileis2007fluctuation">
+<p>Zeileis, A., &amp; Hornik, K. (2007). Generalized M-fluctuation tests for parameter instability. <em>Statistica Neerlandica</em>, <em>61</em>(4), 488&ndash;508. <a href="https://doi.org/10.1111/j.1467-9574.2007.00371.x">https://doi.org/10.1111/j.1467-9574.2007.00371.x</a>&#160;<a class="footnote-backref" href="#fnref:zeileis2007fluctuation" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:zeileis2007fluctuation" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:dandl2024forest">
+<p>Dandl, S., Haslinger, C., Hothorn, T., Seibold, H., Sverdrup, E., Wager, S., &amp; Zeileis, A. (2024). What makes forest-based heterogeneous treatment effect estimators work? <em>The Annals of Applied Statistics</em>, <em>18</em>(1). <a href="https://doi.org/10.1214/23-AOAS1799">https://doi.org/10.1214/23-AOAS1799</a>&#160;<a class="footnote-backref" href="#fnref:dandl2024forest" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:zeileis2008mob">
+<p>Zeileis, A., Hothorn, T., &amp; Hornik, K. (2008). Model-based recursive partitioning. <em>Journal of Computational and Graphical Statistics</em>, <em>17</em>(2), 492&ndash;514. <a href="https://doi.org/10.1198/106186008X319331">https://doi.org/10.1198/106186008X319331</a>&#160;<a class="footnote-backref" href="#fnref:zeileis2008mob" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 

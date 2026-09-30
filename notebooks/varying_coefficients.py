@@ -134,6 +134,60 @@ screen2.fit_classical(well_specified)
 print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
 
 # %% [markdown]
+# What the scan computes, drawn. For one candidate it sorts the rows by that
+# candidate and adds up the treatment scores in that order. The scaled running
+# sum $B_j$ starts at 0 and ends at 0, because the scores of a fitted model sum
+# to zero. With a constant effect the path only wiggles around 0. With an
+# effect that changes along the candidate, rows on one side all ask for a
+# larger coefficient and rows on the other side for a smaller one, so the path
+# swings away and comes back. `stat` is the height of the largest swing, the
+# dot on each line. A swing that leaves the grey band flags.
+
+# %%
+CANDIDATES = {"X1": "#2a78d6", "X2": "#eb6834", "X3": "#1baf7a"}
+
+
+def plot_cusum(ax, flow, df, title):
+    """Draw each candidate's scaled running sum of the T scores, as the scan forms it."""
+    psi = flow.scores(df, "Y")["T[1]"].to_numpy()
+    n, scan = len(psi), flow.effect_modifier_scan(df, "Y", t="T")
+    crit = scan["crit_5pct"].iloc[0]
+    ax.axhspan(
+        -crit, crit, color="0.93", lw=0, label=f"$|B_j| < {crit:.3f}$: no flag at 5%"
+    )
+    for c in (-crit, crit):
+        ax.axhline(c, color="0.55", lw=1, ls="--")
+    ax.axhline(0, color="0.75", lw=0.8)
+    frac = np.arange(1, n + 1) / n
+    for name, color in CANDIDATES.items():
+        b = np.cumsum(psi[np.argsort(df[name].to_numpy(), kind="stable")])
+        b /= psi.std() * np.sqrt(n)
+        j = np.abs(b).argmax()
+        ax.plot(frac, b, color=color, lw=2, label=name)
+        ax.plot(frac[j], b[j], "o", ms=8, color=color, mec="white", mew=2)
+        ax.annotate(
+            f"{name}: stat {scan.loc[name, 'stat']:.2f}",
+            (frac[j], b[j]),
+            xytext=(0, 10 if b[j] > 0 else -16),
+            textcoords="offset points",
+            ha="center",
+            color="0.2",
+        )
+    ax.set(
+        title=title, xlabel="fraction of rows, sorted by the candidate", ylim=(-6, 5)
+    )
+
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
+plot_cusum(axes[0], screen, train, "prognostic X1 quadratic: X1 flags too")
+plot_cusum(axes[1], screen2, well_specified, "prognostic X1 linear: only X2, X3 flag")
+axes[0].set_ylabel("scaled running sum $B_j$ of the T scores")
+fig.legend(
+    *axes[1].get_legend_handles_labels(), loc="lower center", ncol=4, frameon=False
+)
+fig.tight_layout(rect=(0, 0.07, 1, 1))
+
+# %% [markdown]
 # ## 3. The spec: prognostic part and effect head are separate
 #
 # `CS("X1", "X2", "X3")` absorbs the prognostic signal — as flexible as you

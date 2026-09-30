@@ -167,9 +167,9 @@ Parents enter every network as features: a continuous parent raw, in one
 column; an ordinal parent one-hot, in one column per level. Abduction is exact
 for continuous nodes and truncated-logistic for ordinal ones, so
 `flow.sample(u=flow.abduct(df))` reproduces `df` exactly, level-exactly for
-ordinal nodes. A counterfactual takes the three steps of abduction, action
-and prediction [@pearl2009causality]: `abduct` gives the latents, `do=` sets
-the intervention, and `sample(u=..., do=...)` predicts.
+ordinal nodes. A counterfactual takes three steps: abduction, action and
+prediction [@pearl2009causality]. `abduct` gives the latents, `do=` sets the
+intervention, and `sample(u=..., do=...)` predicts.
 
 ## What the model cannot do
 

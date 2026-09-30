@@ -26,7 +26,7 @@ unregularized networks and amplifies noise. On the `vc_hetero` process the
 function even though the model is in-class; the `VC` term reaches about 0.99
 on the same protocol. Causal
 forests and R-learners work not because they target the effect but because
-they regularize it [@nie2021quasioracle; @athey2019grf]. `VC`
+they regularize it [@athey2019grf; @nie2021quasioracle]. `VC`
 brings that ingredient into the TRAM framework.
 
 ## Semantics
@@ -61,10 +61,11 @@ brings that ingredient into the TRAM framework.
 
 With `center=` the term contributes $\beta(x)\,(t - \hat e(x))$ instead of
 $\beta(x)\, t$. This is Robinson's R-learner orthogonalization
-[@robinson1988root; @nie2021quasioracle] inside the likelihood. Model-based
-forests need this ingredient for effect estimation under confounding
-[@dandl2024forest]. The finding reproduces here on the `confounded`
-process, where the model deliberately under-specifies its prognostic part: the uncentered $\hat\beta$ absorbs the
+[@nie2021quasioracle; @robinson1988root] inside the likelihood. In
+model-based forests, this ingredient is decisive for effect estimation under
+confounding [@dandl2024forest]. That finding reproduces here on the
+`confounded` process, where the model deliberately under-specifies its
+prognostic part: the uncentered $\hat\beta$ absorbs the
 confounded misfit, and centering brings it back near the truth. The notebook
 reports the measured reduction and `tests/test_vc_centered.py` requires at
 least a factor of two. If the prognostic part is correctly specified,
@@ -76,7 +77,8 @@ The design is two-stage and frozen, because the naive versions are wrong.
 - **Training** uses out-of-fold propensities that you compute and pass as the
   training-frame column `center=` names, one value per row. Any propensity
   model works as long as each fold is predicted by a fit that never saw it,
-  the cross-fitting requirement of double machine learning. In-sample
+  the cross-fitting requirement of double machine learning
+  [@chernozhukov2018dml]. In-sample
   propensities reintroduce the own-observation bias and can be worse than no
   centering. The values enter the loss as frozen data, so no gradient reaches
   the treatment node and the per-node factorization stays intact. `fit`

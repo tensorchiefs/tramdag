@@ -139,7 +139,7 @@ pinned flow value.
 | \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.096 |
 | \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.080 |
 | \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.022 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted (the default CNF [@javaloy2023causalflows] fails) | 2.036, error 0.040 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.036, error 0.040 |
 | val NLL x3 | — | 1.4427 |
 
 The result is seed-sensitive at the off-manifold point do(x2 = −3), where the

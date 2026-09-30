@@ -56,7 +56,7 @@ a path leaves the band, the scan flags its covariate.
 ## The statistic
 
 The scan is the structural-change test [@zeileis2007fluctuation] behind
-model-based recursive partitioning [@zeileis2008mob; @dandl2024forest]. That
+model-based recursive partitioning [@dandl2024forest; @zeileis2008mob]. That
 method is a tree that splits the data where the coefficients
 of a model change. The scan applies its test to the treatment coefficient of
 a TRAM-DAG.

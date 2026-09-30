@@ -100,14 +100,24 @@ before you change anything in `src/tramdag/`.
 ## Citations
 
 Every cited work has one entry in
-[`docs/references.bib`](docs/references.bib), with its DOI or arXiv link.
-The guides cite with `[@key]` in brackets. A bare `@key` renders the whole
-entry inline, so do not use it. The site and the PDF format both with
-[`docs/apa.csl`](docs/apa.csl), the author-year style. Code, notebooks and
-tests cite only where they implement the cited work, as plain text in the
-same form, for example "Robinson (1988)" or "(Dandl et al., 2024)".
-Configurations carry no citations. Background belongs in the guides, not in
-docstrings.
+[`docs/references.bib`](docs/references.bib), with its DOI or arXiv link
+and the metadata of a primary source such as Crossref or the proceedings
+page. Keep the file sorted by first author. Name the key
+`<firstauthor><year><word>`, for example `pearl2009causality`. The
+References page lists every entry by itself.
+
+- The guides cite with `[@key]` in brackets. Add a locator after a comma,
+  as in `[@key, App. E.1]`.
+- Separate several keys with semicolons, in alphabetical order, as in
+  `[@a; @b]`. The site numbers its footnote links in source order and sorts
+  the text, so any other order mismatches the two.
+- Do not use a bare `@key`, because it renders the whole entry inline.
+- The site and the PDF both format with [`docs/apa.csl`](docs/apa.csl), an
+  author-year style. `uv run mkdocs build --strict` fails on an unknown key.
+- Code, notebooks and tests cite only where they implement the cited work,
+  as plain text in the same form, for example "Robinson (1988)" or
+  "(Dandl et al., 2024)". Configurations carry no citations.
+- Background belongs in the guides, not in docstrings.
 
 ## Releasing
 

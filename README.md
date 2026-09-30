@@ -57,6 +57,7 @@ one guide, and its worked example is one notebook.
 | The API, every default and where it lives | [`docs/code-map.md`](docs/code-map.md) | |
 | How the package is built inside | [`docs/architecture.md`](docs/architecture.md) | |
 | zuko, and what tramdag would upstream | [`docs/zuko-upstream.md`](docs/zuko-upstream.md) | |
+| The cited literature | [`docs/references.md`](docs/references.md) | |
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, linting and
 releases; [`notebooks/README.md`](notebooks/README.md) how the notebooks are

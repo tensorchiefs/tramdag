@@ -97,6 +97,18 @@ likelihood ([`docs/model.md`](docs/model.md)), and the seeding
 ([`docs/code-map.md`](docs/code-map.md)). Read [`docs/architecture.md`](docs/architecture.md)
 before you change anything in `src/tramdag/`.
 
+## Citations
+
+Every cited work has one entry in
+[`docs/references.bib`](docs/references.bib), with its DOI or arXiv link.
+The guides cite with `[@key]` in brackets. A bare `@key` renders the whole
+entry inline, so do not use it. The site and the PDF format both with
+[`docs/apa.csl`](docs/apa.csl), the author-year style. Code, notebooks and
+tests cite only where they implement the cited work, as plain text in the
+same form, for example "Robinson (1988)" or "(Dandl et al., 2024)".
+Configurations carry no citations. Background belongs in the guides, not in
+docstrings.
+
 ## Releasing
 
 The version is the git tag, through hatch-vcs. `cz bump` derives the next tag

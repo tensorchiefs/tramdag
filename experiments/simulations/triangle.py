@@ -1,4 +1,4 @@
-"""The TRAM-DAG paper's triangle DGPs (Sick & Duerr, CLeaR 2025, arXiv:2503.16206).
+"""The TRAM-DAG paper's triangle DGPs (Sick & Dürr, 2025).
 
 Two families over the same DAG ``x1 -> x2 -> x3 <- x1``, built *as TRAMs* with
 standard-logistic latents (paper Section 6; original code

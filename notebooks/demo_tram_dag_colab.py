@@ -67,8 +67,8 @@ print(f"torch {torch.__version__}  device: {DEVICE}")
 # %% [markdown]
 # ## 1. The benchmark process
 #
-# The process comes from Sánchez-Martín et al. 2022, App. E.1, and from App.
-# C.1 of the TRAM-DAG paper:
+# The process comes from Sánchez-Martín et al. (2022, App. E.1) and from App.
+# C.1 of Sick & Dürr (2025):
 #
 # $$
 # \begin{aligned}

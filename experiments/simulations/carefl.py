@@ -1,6 +1,6 @@
-"""The CAREFL counterfactual benchmark DGP (TRAM-DAG paper App. C.2).
+"""The CAREFL counterfactual benchmark DGP (Sick & Dürr, 2025, App. C.2).
 
-Originally from Khemakhem et al. (2021, CAREFL Fig. 5), used in the paper to
+Originally from Khemakhem et al. (2021, Fig. 5), used in the paper to
 benchmark TRAM-DAG's L3 (counterfactual) queries (Fig. 6):
 
 ```

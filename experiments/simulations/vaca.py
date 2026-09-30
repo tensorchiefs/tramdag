@@ -1,7 +1,7 @@
-"""The VACA / CNF benchmark DGP (TRAM-DAG paper App. C.1, arXiv:2503.16206).
+"""The VACA / CNF benchmark DGP (Sick & Dürr, 2025, App. C.1).
 
-Originally from Sanchez-Martin et al. (2022, VACA App. E.1), used in the paper to
-benchmark TRAM-DAG against Causal Normalizing Flows (Javaloy et al. 2024) on L1
+Originally from Sánchez-Martín et al. (2022, App. E.1), used in the paper to
+benchmark TRAM-DAG against Causal Normalizing Flows (Javaloy et al., 2023) on L1
 (observational fit, Fig. 4) and L2 (interventional distributions, Fig. 5):
 
 ```

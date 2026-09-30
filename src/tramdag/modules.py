@@ -632,7 +632,7 @@ class VaryingCoefficientModule(ShiftModule):
 
         The one-hot level-1 indicator for a binary ordinal treatment, the
         value itself for a continuous one; a centered term subtracts its
-        propensity column (the Robinson regressor ``t - e_hat(x)``). It is
+        propensity column (the regressor ``t - e_hat(x)`` of Robinson, 1988). It is
         also the score of ``beta0``, so ``score_columns`` reads it here.
         """
         if self.center_col and self.center_col not in feats:

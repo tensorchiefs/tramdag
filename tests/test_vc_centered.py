@@ -216,7 +216,7 @@ def test_do_recomputes_centered_regressor(confounded):
 
 
 def test_dandl_centering_reduces_bias(confounded):
-    """THE reason the feature exists (Dandl et al. 2024): under
+    """THE reason the feature exists (Dandl et al., 2024): under
     strong confounding + a deliberately under-specified prognostic part, the
     centered VC must show materially lower bias in beta_hat than the uncentered
     one. Measured on this protocol (seeds 0/1/2): uncentered mean|beta_hat-tau|

@@ -55,9 +55,9 @@ a path leaves the band, the scan flags its covariate.
 
 ## The statistic
 
-The scan is the structural-change test (Zeileis & Hornik 2007) behind
-model-based recursive partitioning (Zeileis, Hothorn & Hornik 2008; Dandl et
-al. 2024). That method is a tree that splits the data where the coefficients
+The scan is the structural-change test [@zeileis2007fluctuation] behind
+model-based recursive partitioning [@zeileis2008mob; @dandl2024forest]. That
+method is a tree that splits the data where the coefficients
 of a model change. The scan applies its test to the treatment coefficient of
 a TRAM-DAG.
 
@@ -86,7 +86,7 @@ zero.
 - A `stat` above 1.358, the 5 % critical value, sets `flag`.
 
 The p-value is approximate. The scan uses the raw treatment score. The full
-test of Zeileis & Hornik removes its correlation with the scores of the
+test [@zeileis2007fluctuation] removes its correlation with the scores of the
 other fitted coefficients, and the scan does not.
 
 The error has a direction. For a candidate that is also an `LS` parent of

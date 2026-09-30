@@ -1,7 +1,7 @@
 # Paper replication: protocol, hyperparameters and results, per experiment
 
 The eight variants under `experiments/` replicate the TRAM-DAG paper
-(Sick & Dürr, CLeaR 2025, arXiv:2503.16206) against its own R code
+[@sick2025tramdag] against its own R code
 (`tensorchiefs/tram-dag`). For each experiment this page lists the DGP, the
 model, every hyperparameter with its source, what deviates from the paper and
 why, and the numbers. The paper states four training numbers: n = 40000,
@@ -108,7 +108,7 @@ with sigmoid.
 
 ## VACA / CNF benchmark (`vaca.py`): paper Sec. 5.1–5.2, App. C.1
 
-**DGP** (Sanchez-Martin et al. 2022, App. E.1): x1 ~ 0.5 N(−2, 1.5) + 0.5
+**DGP** [@sanchezmartin2022vaca, App. E.1]: x1 ~ 0.5 N(−2, 1.5) + 0.5
 N(1.5, 1), x2 = −x1 + N(0, 1), x3 = x1 + 0.25 x2 + N(0, 1). The noise is
 Gaussian, outside the logistic-latent family, and the all-`CI` flow must fit
 it. The analytic target is E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's
@@ -139,7 +139,7 @@ pinned flow value.
 | \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.096 |
 | \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.080 |
 | \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.022 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted (the default CNF fails) | 2.036, error 0.040 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted (the default CNF [@javaloy2023causalflows] fails) | 2.036, error 0.040 |
 | val NLL x3 | — | 1.4427 |
 
 The result is seed-sensitive at the off-manifold point do(x2 = −3), where the
@@ -183,7 +183,7 @@ the analytic truth curves and its own predictions on the grid
 Fig. 6 curves are comparable point by point and every metric is in the
 reference's standardized units.
 
-**DGP** (Khemakhem et al. 2021): x1, x2 ~ Laplace(0, 1/√2),
+**DGP** [@khemakhem2021carefl]: x1, x2 ~ Laplace(0, 1/√2),
 x3 = x1 + 0.5 x2³ + ε, x4 = −x2 + 0.5 x1² + ε with ε ~ Laplace(0, 1/√2),
 x3/x4 divided by their sample sds. Counterfactuals are analytic by noise
 abduction. The observation is `xObs.csv` = (2, 1.5, 0.8465, −0.2616); the

@@ -26,7 +26,7 @@ unregularized networks and amplifies noise. On the `vc_hetero` process the
 function even though the model is in-class; the `VC` term reaches about 0.99
 on the same protocol. Causal
 forests and R-learners work not because they target the effect but because
-they regularize it (Nie & Wager 2021; Athey, Tibshirani & Wager 2019). `VC`
+they regularize it [@nie2021quasioracle; @athey2019grf]. `VC`
 brings that ingredient into the TRAM framework.
 
 ## Semantics
@@ -60,11 +60,11 @@ brings that ingredient into the TRAM framework.
 ## Propensity centering: `center="col"`
 
 With `center=` the term contributes $\beta(x)\,(t - \hat e(x))$ instead of
-$\beta(x)\, t$. This is Robinson's R-learner orthogonalization inside the
-likelihood, the ingredient Dandl et al. (2024) found decisive for effect
-estimation under confounding in model-based forests. The finding reproduces
-here on the `confounded` process, where the model deliberately
-under-specifies its prognostic part: the uncentered $\hat\beta$ absorbs the
+$\beta(x)\, t$. This is Robinson's R-learner orthogonalization
+[@robinson1988root; @nie2021quasioracle] inside the likelihood. Model-based
+forests need this ingredient for effect estimation under confounding
+[@dandl2024forest]. The finding reproduces here on the `confounded`
+process, where the model deliberately under-specifies its prognostic part: the uncentered $\hat\beta$ absorbs the
 confounded misfit, and centering brings it back near the truth. The notebook
 reports the measured reduction and `tests/test_vc_centered.py` requires at
 least a factor of two. If the prognostic part is correctly specified,

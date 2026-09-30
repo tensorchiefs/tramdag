@@ -1,50 +1,145 @@
 # Per-observation scores and the effect-modifier scan
 
-`flow.scores(df, node)` returns the score
-$\psi_i = \partial \ell_i / \partial \theta$ of each observation for the
-node's interpretable shift coefficients: every `LS` weight and every `VC`
-term's $\beta_0$. An `LS` weight gives one column per continuous parent and
-one per one-hot level of an ordinal parent; the $\beta_0$ column is named
-after the treatment.
+A treatment effect is often not the same for every patient. A `VC` term
+models an effect $\beta(x)$ that changes with covariates, but you must tell
+it which covariates. The effect-modifier scan finds candidates for that list.
+It uses a simple model that takes seconds to fit, before you fit the flexible
+one. [varying-coefficients.md](varying-coefficients.md) covers the `VC` term
+itself.
 
-The computation is analytic, with no autograd. Shifts enter the latent
-additively, so $\partial \ell_i / \partial \beta = (\partial \ell_i /
-\partial s_i)\, x_i$ with $\partial \ell_i / \partial s$ in closed form. The
-function is a pure read-out that touches neither fitting nor sampling. At a
-fitted MLE each column sums to about zero, which the tests pin together with
-a float64 finite-difference check.
+## The idea
 
-## The effect-modifier scan
+1. **Fit a simple model.** It assumes one constant effect $\beta$ for
+   everyone: an all-`LS` model, which `fit_classical` fits in seconds.
+2. **Ask each row which way $\beta$ should move.** The score of row $i$ is
+   $\psi_i = \partial \ell_i / \partial \beta$, the slope of that row's
+   log-likelihood $\ell_i$. A positive score means the row fits better with a
+   larger $\beta$. A negative score means it fits better with a smaller one.
+3. **Check that the answers cancel everywhere.** At the fitted $\beta$ the
+   scores sum to about zero, because $\beta$ is the best compromise. If the
+   effect is really constant, they also cancel within every group of rows.
+   Now sort the rows by a candidate covariate, for example age, and add up
+   the scores in that order. Suppose young patients all ask for a larger
+   $\beta$ and old patients for a smaller one. The running sum then climbs
+   first and falls back later.
 
-`flow.effect_modifier_scan(df, node, t=)` is the cheapest effect-modifier
-detector available. It applies the structural-change logic of model-based
-recursive partitioning (Zeileis & Hornik; Dandl et al. 2024) to the
-treatment-coefficient scores of a cheap all-`LS` fit, which `fit_classical`
-delivers in seconds.
+A large swing of the running sum along a covariate means that one constant
+$\beta$ hides a pattern along that covariate.
 
-For each candidate covariate the scan orders the scores by that covariate and
-forms the scaled cumulative sum $B_j = \sum_{i \le j} \psi_{(i)} /
-(\mathrm{sd}(\psi)\sqrt{n})$. Under a stable coefficient $B$ is a Brownian
-bridge, so $\sup |B|$ has the Kolmogorov distribution, with the 5 % critical
-value 1.358. A coefficient that varies with the covariate makes the ordered
-scores drift. The result is one row per candidate with the statistic, its
-p-value, the critical value and a flag; the flagged covariates are the
-shortlist of `VC` modifiers to measure
-([varying-coefficients.md](varying-coefficients.md)).
+## Reading the running sum
 
-**Read it as screening, not as a test of effect modification.** The statistic
-measures how unstable the cheap model is along a covariate, and instability
-has two sources: a coefficient that genuinely varies, and a prognostic part
-the cheap model gets wrong. A prognostic-only covariate with a linear effect
-stays unflagged; give it a quadratic effect and it flags as strongly as the
-true modifiers. A flag therefore means "look here", and what you find is a
-modifier or a misspecification, both worth knowing.
+Section 2 of
 [`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py)
-shows both cases side by side.
+draws the running sum for three covariates. The true effect changes with `X2`
+and `X3` and not with `X1`:
 
-Details: for a binary ordinal `LS` treatment, `t` resolves to the identified
-level-1-against-0 contrast, and for a `VC` treatment to $\beta_0$. Candidates
-default to every column of `df` except the node and `t`, and need not be
-parents. For few-level, heavily tied candidates the ordering is only partial,
-so read the scan as a ranking diagnostic rather than an exact-size test. The
-scores also serve influence-function analyses and robust standard errors.
+- The paths of `X2` and `X3` swing far out of the grey band and come back.
+  They flag.
+- The path of `X1` stays in the band when the simple model describes `X1`
+  correctly. It does not flag.
+- When `X1` has a quadratic effect on the outcome, which the simple model
+  cannot describe, the path of `X1` swings out as well. It flags although
+  `X1` does not change the effect. The section
+  [Read it as screening](#read-it-as-screening) explains this.
+
+## The statistic
+
+For one candidate the scan sorts the $n$ rows by that candidate and forms the
+scaled running sum
+
+$$
+B_j = \frac{1}{\mathrm{sd}(\psi)\sqrt{n}} \sum_{i \le j} \psi_{(i)},
+\qquad j = 1, \dots, n,
+$$
+
+with $\psi_{(i)}$ the score of the $i$-th row in the sorted order. The
+statistic `stat` is $\sup_j |B_j|$, the largest distance of the path from
+zero.
+
+- The path starts at 0 and ends near 0, because the scores sum to about zero.
+- The scaling by $\mathrm{sd}(\psi)\sqrt{n}$ makes the statistic independent
+  of the sample size and of the size of the scores.
+- With a constant effect, $B$ behaves like a Brownian bridge. So `stat` has a
+  known distribution, the Kolmogorov distribution. It gives the `p_value`
+  without simulation.
+- A `stat` above 1.358, the 5 % critical value, sets `flag`.
+
+This is the structural-change test of model-based recursive partitioning
+(Zeileis & Hornik; Dandl et al. 2024), applied to the treatment coefficient
+of a TRAM-DAG.
+
+## Read it as screening
+
+A flag means that the simple model is unstable along the covariate. Two
+causes give this:
+
+- the effect really changes with the covariate, or
+- the simple model describes the covariate's own effect on the outcome
+  (the prognostic part) wrongly.
+
+A covariate with a linear prognostic effect stays unflagged. Give it a
+quadratic prognostic effect and it flags as strongly as the true modifiers.
+So a flag means "look here". What you find is a modifier or a
+misspecification, and both are worth knowing.
+
+The scan is less exact in two cases:
+
+- **Few distinct values.** A binary or three-level candidate sorts the rows
+  only partly, because many rows tie. Read the p-value as a ranking, not as
+  an exact test.
+- **No converged fit.** The scores sum to zero only at the optimum. Scan an
+  all-`LS` model that `fit_classical` reports as converged.
+
+## Using it
+
+`flow.effect_modifier_scan(df, node, t=)` runs the scan for the treatment
+`t` of `node`. It returns one row per candidate with `stat`, `p_value`,
+`crit_5pct` and `flag`, sorted by `stat`.
+
+- `candidates=` lists the covariates to scan. By default it is every column
+  of `df` except `node` and `t`. A candidate does not have to be a parent.
+- For a binary ordinal `LS` treatment, `t` resolves to the identified
+  contrast of level 1 against level 0. For a `VC` treatment it resolves to
+  $\beta_0$.
+- `column=` picks one score column by name, for example one level contrast
+  `"t[2]"` of a treatment with more than two levels.
+
+`flow.scores(df, node)` returns the scores themselves: one row per
+observation and one column per interpretable shift coefficient of the node.
+
+- A continuous `LS` parent gives one column, named after the parent.
+- An ordinal `LS` parent gives one column per level of its one-hot
+  encoding, named `"t[0]"`, `"t[1]"` and so on. A row's score goes to the
+  column of the level that the row has.
+- A `VC` term gives one column for its $\beta_0$, named after the
+  treatment.
+- A `CS` term is a network with no single coefficient, so it has no column.
+
+The scores also serve influence analyses and robust standard errors.
+
+## How the scores are computed
+
+Every shift coefficient adds $\beta x$ to the node's total shift $s$. The
+chain rule therefore gives
+
+$$
+\frac{\partial \ell_i}{\partial \beta}
+= \frac{\partial \ell_i}{\partial s_i}\, x_i ,
+$$
+
+so one derivative per row serves every coefficient. The derivative has a
+closed form for both node kinds, and the computation uses no autograd.
+
+- **Continuous node.** The latent is $z = h(x) + s$ and
+  $\ell = \log f(z) + \log h'(x)$, with $f$ the standard-logistic density.
+  So $\partial \ell / \partial s = 1 - 2\sigma(z)$.
+- **Ordinal node.** $P(Y = y) = \sigma(u) - \sigma(l)$ with the shifted
+  cutpoints $l = \vartheta_y - s$ and $u = \vartheta_{y+1} - s$. So
+  $\partial \ell / \partial s = \bigl(\sigma'(l) - \sigma'(u)\bigr) /
+  \bigl(\sigma(u) - \sigma(l)\bigr)$, with $\sigma' = \sigma(1 - \sigma)$.
+  At the first and last class the outer cutpoint is infinite and its
+  $\sigma'$ is zero.
+
+The function only reads the fitted model. It changes neither fitting nor
+sampling. The tests check that each column sums to about zero at a fitted
+optimum, and that the scores agree with float64 finite differences.

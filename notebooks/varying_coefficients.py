@@ -134,14 +134,10 @@ screen2.fit_classical(well_specified)
 print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
 
 # %% [markdown]
-# What the scan computes, drawn. For one candidate it sorts the rows by that
-# candidate and adds up the treatment scores in that order. The scaled running
-# sum $B_j$ starts at 0 and ends at 0, because the scores of a fitted model sum
-# to zero. With a constant effect the path only wiggles around 0. With an
-# effect that changes along the candidate, rows on one side all ask for a
-# larger coefficient and rows on the other side for a smaller one, so the path
-# swings away and comes back. `stat` is the height of the largest swing, the
-# dot on each line. A swing that leaves the grey band flags.
+# The figure draws the scaled running sum $B_j$ that the scan forms for each
+# candidate ([`docs/scores.md`](../docs/scores.md) explains it). `stat` is the
+# height of the largest swing, the dot on each line. A path that leaves the
+# grey band flags.
 
 # %%
 CANDIDATES = {"X1": "#2a78d6", "X2": "#eb6834", "X3": "#1baf7a"}
@@ -150,7 +146,8 @@ CANDIDATES = {"X1": "#2a78d6", "X2": "#eb6834", "X3": "#1baf7a"}
 def plot_cusum(ax, flow, df, title):
     """Draw each candidate's scaled running sum of the T scores, as the scan forms it."""
     psi = flow.scores(df, "Y")["T[1]"].to_numpy()
-    n, scan = len(psi), flow.effect_modifier_scan(df, "Y", t="T")
+    n = len(psi)
+    scan = flow.effect_modifier_scan(df, "Y", t="T")
     crit = scan["crit_5pct"].iloc[0]
     ax.axhspan(
         -crit, crit, color="0.93", lw=0, label=f"$|B_j| < {crit:.3f}$: no flag at 5%"
@@ -179,8 +176,10 @@ def plot_cusum(ax, flow, df, title):
 
 
 fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
-plot_cusum(axes[0], screen, train, "prognostic X1 quadratic: X1 flags too")
-plot_cusum(axes[1], screen2, well_specified, "prognostic X1 linear: only X2, X3 flag")
+plot_cusum(axes[0], screen, train, "X1 quadratic in the outcome: X1 flags too")
+plot_cusum(
+    axes[1], screen2, well_specified, "X1 linear in the outcome: only X2, X3 flag"
+)
 axes[0].set_ylabel("scaled running sum $B_j$ of the T scores")
 fig.legend(
     *axes[1].get_legend_handles_labels(), loc="lower center", ncol=4, frameon=False

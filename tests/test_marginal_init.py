@@ -2,11 +2,12 @@
 intercept's transform to the empirical marginal.
 
 What it guarantees:
-- Bernstein roots start at the Bernstein approximation of logit(F_hat(y)), the
-  empirical marginal, with the domain ends on the standard-logistic 5%/95%
-  quantiles (±2.944) — not zuko's ~2.5×-too-steep zero θ. Without a column the
-  start is the plain linear map between those ends.
-- Ordinal roots start with cutpoints reproducing the empirical class frequencies.
+- Bernstein simple intercepts start at the Bernstein approximation of
+  logit(F_hat(y)), the empirical marginal, with the domain ends on the
+  standard-logistic 5%/95% quantiles (±2.944) — not zuko's ~2.5×-too-steep
+  zero θ. Without a column the start is the plain linear map between those ends.
+- Ordinal simple intercepts start with cutpoints reproducing the empirical class
+  frequencies.
 - It only touches `SimpleInterceptModule` intercepts — parented `I` terms are
   left alone.
 - It is a *pure init* for an all-`LS` model: a marginal-init fit and a default fit

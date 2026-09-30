@@ -87,12 +87,10 @@ weights.
 
 ### The marginal start
 
-`marginal_init=True` sets the $\theta$ of each simple intercept so that the
-node's distribution at shift $s = 0$ is the empirical marginal $\hat F$ of its
-training column. `Node.marginal_theta` computes the start.
-`SimpleInterceptModule.marginal_start` copies it into the weights. An
-intercept with parents (`I("x1")`) has no single $\theta$ and keeps its
-initialization.
+`marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each simple
+intercept. At shift $s = 0$, the node then has the empirical marginal
+$\hat F$ of its training column. An intercept with parents (`I("x1")`) has no
+single $\boldsymbol{\vartheta}$ and keeps its initialization.
 
 **Why logit.** The latent $U$ is standard logistic, so its CDF is the
 sigmoid $\sigma$ and its quantile function is $\operatorname{logit}$. At
@@ -103,8 +101,8 @@ $$
 h(x) = \operatorname{logit} \hat F(x) = \log \hat F(x) - \log\bigl(1 - \hat F(x)\bigr).
 $$
 
-This is the probability integral transform in reverse. The code evaluates
-$\log(1 - p)$ as `log1p(-p)`, which stays accurate for $p$ near 0.
+The code evaluates $\log(1 - p)$ as `log1p(-p)`, which stays accurate for
+$p$ near 0.
 
 **Ordinal node.** `ordinal_marginal_init_theta` takes the class counts. The
 model is $P(X \le k) = \sigma(\vartheta_k - s)$, so the targets are the
@@ -116,17 +114,20 @@ $s = 0$ the class probabilities are the empirical frequencies. For counts
 
 **Continuous node.** `BernsteinUT.marginal_init_theta` takes the column. A
 Bernstein polynomial of order $M$ with control points $\vartheta_k$ is close
-to the function whose values at $k/M$ are $\vartheta_k$. The start uses this:
+to the function whose values at $k/M$ are $\vartheta_k$. zuko turns
+`n_coeffs` parameters into $M + 1$ control points, with $M$ =
+`n_coeffs + 1`. The start uses this:
 
 1. It places $M + 1$ equally spaced points $x_k$ on the calibrated range,
    from the `range_q` quantile to the `1 - range_q` quantile of the column.
-   With `n_coeffs = 20` there are 22 points.
+   With `n_coeffs = 20`, $M = 21$ and there are 22 points.
 2. It sets each control point to $\operatorname{logit} \hat F(x_k)$, with
    $\hat F(x_k)$ the fraction of rows at or below $x_k$.
 3. It inverts zuko's parameterization. zuko builds the control points as a
    cumulative sum of softplus steps and ties the first two and the last two
    steps. The start averages each tied pair and inverts the softplus with
-   $\log(e^d - 1)$.
+   $\log(e^d - 1)$. It adds zuko's centering offset $n \log 2 / 2$, with
+   $n$ = `n_coeffs`, to the first parameter.
 
 The polynomial then starts as the Bernstein approximation of
 $\operatorname{logit} \hat F$. The approximation smooths $\hat F$. On 4000
@@ -135,33 +136,34 @@ normal column, 0.080 for a lognormal column and 0.103 for a bimodal column.
 
 The ends of the range carry the empirical quantiles `range_q` and
 `1 - range_q`, so the end control points are close to
-$\pm\operatorname{logit} q$ with $q$ = `range_q`. At the default
-$q = 0.05$ this is $\pm 2.944$. Without a column, and for a constant column, the start is the
-straight line between these two values. A transform with fewer than 3
-coefficients also takes the straight line, because its tied steps leave no
-shape to fit. zuko's zero start maps the same range onto about
-$[-6.9, 7.6]$, which is 2.5 times too steep.
+$\pm\operatorname{logit} q$ with $q$ = `range_q`. At the default $q = 0.05$
+this is $\pm 2.944$. A transform with fewer than 3 coefficients ignores the
+column and takes the straight line between these two values, because its
+tied steps leave no shape to fit. zuko's zero start puts the control points
+on about $[-6.9, 7.6]$. That line is 2.5 times steeper than the
+$\pm 2.944$ line.
 
 **Guards.** Two floors keep the start finite and increasing:
 
-- $\hat F$ is clipped to $[10^{-3}, 1 - 10^{-3}]$, so a control point or a
-  cutpoint stays within $\pm 6.9$.
-- Each step between neighbouring points is at least $10^{-3}$. The softplus
-  and log inverses need strictly increasing points. An empty class or a gap
-  in the data therefore gets a small but nonzero probability: an empty middle
-  class starts at about $2 \cdot 10^{-4}$.
+- The start clips $\hat F$ to $[10^{-3}, 1 - 10^{-3}]$, so a control point
+  or a cutpoint stays within about $\pm 6.9$.
+- Each step between adjacent points is at least $10^{-3}$, because the
+  softplus and log inverses need strictly increasing points. An empty class
+  or a gap in the data therefore gets a small but nonzero probability. An
+  empty middle class starts at $2.5 \cdot 10^{-4}$ or less.
 
 **Where it does not apply.** The spline and affine transforms have no
-marginal start, and the flag skips them. A `range_q=0` transform maps the
-data minimum and maximum onto the range ends, whose target
-$\operatorname{logit} 0$ does not exist, so `fit` raises. Fit such a model
-with `marginal_init=False`.
+marginal start, and the flag skips them. A `range_q=0` Bernstein transform
+maps the data minimum and maximum onto the range ends. Their target
+$\operatorname{logit} 0$ does not exist, so `fit` raises. It also raises when
+this transform belongs to an intercept with parents. Fit such a model with
+`marginal_init=False`.
 
 **What it changes.** The start moves only the initial point. For the three
-columns above, the per-row NLL at the start drops from 2.35, 4.15 and 5.52
-at zuko's zero to 1.42, 1.51 and 1.34. An all-`LS` model reaches the same
-optimum with or without the start. A model with a network shift or a
-learning-rate anneal can end in a different basin; D4 in
+columns above, zuko's zero start gives a per-row NLL of 2.35, 4.15 and 5.52.
+The marginal start gives 1.42, 1.51 and 1.34. An all-`LS` model reaches the
+same optimum with or without the start. A model with a network shift or a
+learning-rate anneal can end in a different basin. D4 in
 [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
 measures this per variant.
 
@@ -169,9 +171,9 @@ measures this per variant.
 one optimum, so a start would change how far the line search travels and
 nothing else.
 
-The flag rides on calibration's guard, so it applies once, on the fit that
-calibrates. That is what a schedule needs: a second `fit` continues training
-rather than discarding the intercepts the first one trained.
+`fit` applies the start only on the call that calibrates. A second `fit`
+therefore continues from the trained intercepts and does not reset them. A
+multi-phase schedule depends on this.
 
 ### Which recipe
 

@@ -231,10 +231,9 @@ the Fig. 6 x3 error 5.9 against the full-batch 2.7).
 
 ## D4: the marginal start, measured per variant
 
-`marginal_init` sets every simple intercept to its column's empirical
-marginal before the first epoch (Bernstein: the control points follow
-$\operatorname{logit}\hat F$; ordinal: the class log-odds). The reference
-starts `bernp$beta` at zero. Measured on this machine at the CI protocol, one
+`marginal_init` starts every simple intercept at its column's empirical
+marginal ([fitting.md](fitting.md#the-marginal-start)). The reference starts
+`bernp$beta` at zero. Measured on this machine at the CI protocol, one
 run per variant with the start off and on, seeds unchanged:
 
 | variant | epochs to within 0.01 of the final train NLL, off → on | endpoint, off → on | verdict |

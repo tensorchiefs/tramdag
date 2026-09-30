@@ -228,8 +228,8 @@ assert spent - stopper.best_epoch >= 25
 # score ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when
 # the last node freezes.
 #
-# Do not attach a torch scheduler to the same optimizer. Two controllers would
-# steer the same group rates against each other.
+# Do not attach a torch scheduler to the same optimizer. It could set a frozen
+# node's rate above 0 again.
 
 # %%
 flow = build()

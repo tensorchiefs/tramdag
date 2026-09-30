@@ -2,6 +2,11 @@
 
 ### BREAKING CHANGE
 
+- CausalFlowDAG.calibrate is private (_calibrate). Pass
+marginal_init to fit instead of calibrate.
+- PerNodeEarlyStopping takes no lr_patience, its patience
+is optional, and its min_delta defaults to 0.0 (was 1e-4). EarlyStopping
+gains min_delta (0.0 keeps its strict improvement rule).
 - PerNodePlateau is gone. PerNodePlateau(patience=p,
 freeze=f) becomes PerNodeEarlyStopping(patience=max(4 * p, f),
 lr_patience=p) for the same freeze point, now with the best weights
@@ -145,6 +150,9 @@ package states a reason.
 
 ### Refactor
 
+- **flow**: calibration is private; fit calibrates on its first run
+- **callbacks**: EarlyStopping and PerNodeEarlyStopping take the same options
+- **callbacks**: PerNodeEarlyStopping steps privately, names follow
 - **flow**: calibrate sets the marginal start in its node loop
 - **spec**: the term lookup imports a dotted path itself
 - the marginal start is the marginal_init flag only

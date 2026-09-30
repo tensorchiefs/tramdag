@@ -34,6 +34,7 @@ nav:
   - Architecture: architecture.md
   - Code map: code-map.md
   - Zuko upstream: zuko-upstream.md
+  - References: references.md
 - Notebooks:
   - Introduction and demo (Colab): notebooks/demo_tram_dag_colab.py
   - Training strategies: notebooks/training_strategies.py
@@ -57,6 +58,9 @@ hooks: [docs/hooks.py]
 
 plugins:
 - search
+- bibtex:
+    bib_file: docs/references.bib
+    csl_file: docs/apa.csl
 - autorefs
 - mkdocstrings:
     handlers:
@@ -82,6 +86,11 @@ plugins:
 
 markdown_extensions:
 - admonition
+# mkdocs-bibtex writes citations and bibliography entries through pandoc's
+# ASCII markdown, so a page range arrives as "488--508"; smarty turns the
+# dashes back into typographic ones and leaves quotes and ellipses alone
+- footnotes
+- smarty: {smart_quotes: false, smart_angled_quotes: false, smart_ellipses: false}
 - tables
 - toc: {permalink: true}
 # the mermaid fence renders the architecture diagrams; Material ships the

@@ -27,7 +27,9 @@ docs = [
   "mkdocstrings[python]",  # API pages from the numpy docstrings
   "mkdocs-jupyter",  # executes and renders the jupytext notebooks
   "mike",  # one site version per branch on gh-pages
-  "nbconvert"  # notebooks -> markdown for the pandoc PDF
+  "nbconvert",  # notebooks -> markdown for the pandoc PDF
+  "mkdocs-bibtex",  # [@key] citations from docs/references.bib
+  "pypandoc-binary"  # the pandoc that mkdocs-bibtex formats with
 ]
 experiments = [
   "matplotlib",

@@ -54,7 +54,8 @@ weights.
   `seed=`, which seeds the shuffle only and not the weight init.
 - **Epochs.** `epochs` has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
-- **Calibration.** The first `fit` calibrates the flow on `train_df`. Every term
+- **Calibration.** The first `fit` or `fit_classical` calibrates the flow on
+  `train_df`. Every term
   freezes its data-dependent state there, the intercept its `range_q`
   quantiles and each `input_transform=` its statistics. A loaded checkpoint is
   never recalibrated.
@@ -78,10 +79,11 @@ weights.
   `on_fit_begin`, `on_epoch_end` and `on_fit_end`; a bare callable is an
   `on_epoch_end` hook `cb(flow, epoch, optimizer)`, and any `True` return
   stops the fit. `on_fit_end` runs before the `VC` re-centering. The shipped
-  callbacks are `EarlyStopping`, which restores the best-validation weights
-  and takes an optional `patience` and `min_delta`, and `PerNodeEarlyStopping`
-  with `per_node_adam`, the same per node: a node freezes after `patience`
-  flat epochs and loads its best weights back. `fit` refuses two callbacks
+  callbacks are `EarlyStopping` and `PerNodeEarlyStopping`. `EarlyStopping`
+  restores the best-validation weights and takes an optional `patience` and
+  `min_delta`. `PerNodeEarlyStopping` with `per_node_adam` does the same per
+  node: a node freezes after `patience` flat epochs and loads its best
+  weights back. `fit` refuses two callbacks
   that restore weights. Both read
   `history["val"]`.
 - **Centered `VC` propensities** ride the training frame as the column that
@@ -131,7 +133,7 @@ to the function whose values at $k/M$ are $\vartheta_k$. The transform
 pre-scales the calibrated range onto the domain of the polynomial
 ([model.md](model.md#the-three-knobs-on-a-term)). The point $k/M$ of the
 domain then belongs to a data value $x_k$. zuko turns `n_coeffs` parameters
-into $M + 1$ control points, with $M$ = `n_coeffs + 1`; step 3 explains the
+into $M + 1$ control points, with $M$ = `n_coeffs + 1`. Step 3 explains the
 two extra points. The start uses the closeness property in three steps:
 
 1. It places $M + 1$ equally spaced points $x_k$ on the calibrated range,

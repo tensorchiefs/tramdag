@@ -18,7 +18,7 @@ the same object, so `LS is LinearShift`.
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
 | [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift $\beta x$ — the interpretable log-odds coefficient. Exactly one parent. |
 | [`ComplexShift`][tramdag.spec.ComplexShift] / `CS` | Complex shift: an NN `g(x)`, additive on the latent scale. Several parents form one joint network. |
-| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$ — the penalized treatment-effect head. `propensity=` adds propensity centering. |
+| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$, the penalized treatment-effect head. `propensity=` names the propensity column for centering. |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] | Continuous variable: monotone 1-D transform plus shifts. `terms` is the first positional argument. |
 | [`OrdinalNode`][tramdag.spec.OrdinalNode] | Ordinal variable with `levels` classes: ordered logit (cutpoints) plus shifts. |
 | [`node_parents()`][tramdag.spec.node_parents] | Ordered de-duplicated parent names of a node (the canonical term list is `node.terms`). |
@@ -123,7 +123,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the fit. |
+| [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the fit, and `min_delta=` sets the smallest gain that counts. |
 | [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] | `EarlyStopping` per node, with the same options: a node freezes after `patience` flat epochs (`None` never freezes) and loads its best-epoch weights back (`restore_best=False` keeps the last ones). Stops the fit once every node froze and records `best_epoch` and `frozen` as `{node: epoch}`. |
 | [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodeEarlyStopping` needs. |
 
@@ -159,7 +159,7 @@ default you can read at the call site. Nothing numeric is buried.
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodeEarlyStopping`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
-| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied once, on the first fit |
+| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied only by the fit that calibrates, so a flow that `fit_classical` calibrated ignores it |
 | VC stage-1 propensities | the training-frame column `VC(propensity=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, propensity=)` | 1.0 / None (`propensity="col"` names the propensity column) |
 | L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |

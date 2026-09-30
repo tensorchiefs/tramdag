@@ -66,8 +66,8 @@ verbose, so one variant reads top to bottom:
   `input_transform`.
 - `flow_kwargs:` go verbatim to `CausalFlowDAG(spec, **flow_kwargs)`: `seed`
   and `init`.
-- `marginal_init:` says whether calibration also starts the simple intercepts
-  at their empirical marginals (`flow.calibrate(train, marginal_init=True)`); the
+- `marginal_init:` says whether the fit also starts the simple intercepts at
+  their empirical marginals (`flow.fit(..., marginal_init=True)`); the
   reference has no such start ([`docs/paper-replication.md`](../docs/paper-replication.md)).
 - `fit_kwargs:` go verbatim to `flow.fit(train, **fit_kwargs)`: `epochs`,
   `batch_size` and `seed`. `learning_rate`, `schedule` and the `plateau_*`

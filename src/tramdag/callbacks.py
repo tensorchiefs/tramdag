@@ -59,7 +59,7 @@ def per_node_adam(flow, lr: float = 1e-2) -> torch.optim.Adam:
     return torch.optim.Adam(
         [
             # initial_lr (torch's scheduler convention) lets PerNodeEarlyStopping
-            # restore a decayed group to its start at the next fit begin
+            # restore a frozen group to its start at the next fit begin
             {
                 "params": list(flow.nodes[n].parameters()),
                 "lr": lr,
@@ -188,7 +188,9 @@ class PerNodeEarlyStopping(Callback):
 
     Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]
     (one ``node``-tagged group per node), and give ``fit`` a validation set
-    (the callback reads ``flow.history["val"]``). With ``restore_best``,
+    (the callback reads ``flow.history["val"]``). Do not attach a torch lr
+    scheduler to the same optimizer: it could set a frozen node's rate above
+    0 again. With ``restore_best``,
     ``fit`` refuses it beside another restoring callback, such as
     ``EarlyStopping(restore_best=True)``.
 
@@ -270,7 +272,7 @@ class PerNodeEarlyStopping(Callback):
                     "PerNodeEarlyStopping needs the 'initial_lr' stamp on every "
                     "parameter group — build the optimizer with "
                     "per_node_adam(flow, lr); a bare group's current rate may "
-                    "already be decayed and would silently become the baseline"
+                    "already be zero and would silently become the baseline"
                 )
             lr0 = self.lr0.setdefault(g["node"], g["initial_lr"])
             if lr0 == 0.0:

@@ -170,7 +170,7 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     """A loaded model is trained, so re-fitting must not re-initialize it.
 
     The ``calibrated`` flag is a buffer, so it travels in the checkpoint; a
-    second ``fit`` (or an explicit ``calibrate``) is a no-op on the start.
+    second ``fit`` is a no-op on the start.
     """
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"y": rng.integers(0, 4, 400).astype(float)})

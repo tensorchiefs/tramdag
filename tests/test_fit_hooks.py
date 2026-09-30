@@ -270,7 +270,7 @@ def test_per_node_early_stopping_stops_early_and_keeps_the_mle(ls_chain):
 
 def test_per_node_early_stopping_reuse_restores_the_optimizer_rates(ls_chain):
     """A reused instance with a reused optimizer must not re-baseline on the
-    decayed (or zeroed) rates — fit begin restores each node's start rate.
+    zeroed rates — fit begin restores each node's start rate.
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)

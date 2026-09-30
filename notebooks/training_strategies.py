@@ -252,7 +252,7 @@ assert len(flow.history["train"]) < CEILING, "the per-node stop did not self-sto
 
 # %% [markdown]
 # `history["lr"]` holds one dict per epoch, keyed by the node tags here, so the
-# decay of each node is on record without a callback of your own.
+# freeze of each node is on record without a callback of your own.
 # `plot_training` marks the freeze epochs.
 
 # %%

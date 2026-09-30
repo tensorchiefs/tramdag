@@ -48,7 +48,7 @@ __all__ = [
 # and the quantile pre-map makes one canonical domain work for any data scale.
 BOUND = 5.0
 
-# quantile level of the range pre-map. ``CausalFlowDAG.calibrate`` scales the
+# quantile level of the range pre-map. The flow's calibration scales the
 # train q/1-q quantiles onto [-BOUND, BOUND], and ``marginal_init_theta`` maps
 # that domain onto the latent's q/1-q quantiles -- one constant, because the two
 # only calibrate each other if they use the same level.
@@ -367,7 +367,7 @@ class _ScaledUT(torch.nn.Module, ABC):
     def set_range(self, xmin: float, xmax: float) -> None:
         """Set the data range that maps onto the pre-scaled domain.
 
-        ``CausalFlowDAG.calibrate`` calls this once with the train
+        The flow's calibration calls this once with the train
         ``range_q``/``1 - range_q`` quantiles (default 5%/95%; ``range_q=0``
         is the min/max).
 

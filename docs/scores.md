@@ -25,10 +25,11 @@ itself.
    age. The sum of the first $j$ scores is the score sum of the group "age up
    to the $j$-th value". So the running sum checks all these groups at once.
 
-Suppose young patients all ask for a larger $\beta$ and old patients for a
-smaller one. The running sum then climbs first and falls back later. A large
-swing of the running sum along a covariate means that one constant $\beta$
-hides a pattern along that covariate.
+Plotted over the sorted rows, the running sum forms a path. Suppose young
+patients all ask for a larger $\beta$ and old patients for a smaller one.
+The path then climbs first and falls back later. A large swing of the path
+along a covariate means that one constant $\beta$ hides a pattern along that
+covariate.
 
 ## Reading the running sum
 
@@ -39,8 +40,9 @@ and `X3` and not with `X1`. The figure has two panels with the same effect.
 In the left panel `X1` has a quadratic effect on the outcome, and in the
 right panel a linear one.
 
-The grey band marks the 5 % critical value. With a constant effect, a path
-leaves the band in about 5 % of data sets. A path that leaves the band flags.
+The figure plots the running sum after a scaling, and the grey band spans
+$\pm 1.358$ on that scale ([The statistic](#the-statistic) explains both). If
+a path leaves the band, the scan flags its covariate.
 
 - The paths of `X2` and `X3` swing far out of the band and come back. They
   flag in both panels.
@@ -53,13 +55,14 @@ leaves the band in about 5 % of data sets. A path that leaves the band flags.
 
 ## The statistic
 
-The scan is the structural-change test of model-based recursive partitioning
-(Zeileis & Hornik; Dandl et al. 2024). That method is a tree that splits the
-data where the coefficients of a model change. The scan applies its test to
-the treatment coefficient of a TRAM-DAG.
+The scan is the structural-change test (Zeileis & Hornik 2007) behind
+model-based recursive partitioning (Zeileis, Hothorn & Hornik 2008; Dandl et
+al. 2024). That method is a tree that splits the data where the coefficients
+of a model change. The scan applies its test to the treatment coefficient of
+a TRAM-DAG.
 
-For one candidate the scan sorts the $n$ rows by that candidate and forms the
-scaled running sum, also called a CUSUM (cumulative sum)
+For one candidate, the scan sorts the $n$ rows by that candidate. It then
+forms the scaled running sum, also called a CUSUM (cumulative sum):
 
 $$
 B_j = \frac{1}{\mathrm{sd}(\psi)\sqrt{n}} \sum_{i \le j} \psi_{(i)},
@@ -84,8 +87,14 @@ zero.
 
 The p-value is approximate. The scan uses the raw treatment score. The full
 test of Zeileis & Hornik removes its correlation with the scores of the
-other fitted coefficients, and the scan does not. Read the p-value as a
-guide, not as an exact error rate.
+other fitted coefficients, and the scan does not.
+
+The error has a direction. For a candidate that is also an `LS` parent of
+the node, the fitted `LS` weight already removes part of the pattern. The
+scan then flags too rarely. In 100 simulated data sets of the notebook's
+linear model with a constant effect, each of the three parents flagged in
+1 % of them or fewer. A covariate that is not a parent flagged in 4 %. Read
+the p-value as a guide, not as an exact error rate.
 
 ## Read it as screening
 
@@ -97,9 +106,10 @@ covariate. Two causes give this:
   prognostic part, wrongly.
 
 The second cause works through the score. The treatment score of row $i$ is
-$\psi_i = r_i \, t_i$, with $t_i$ the treatment of the row and $r_i$ the
-derivative of $\ell_i$ with respect to the row's total shift. The factor
-$r_i$ acts like a residual. If the simple model gets the prognostic effect
+$\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row, and
+$r_i = \partial \ell_i / \partial s_i$ is the derivative of $\ell_i$ with
+respect to the row's total shift $s_i$. The factor $r_i$
+acts like a residual. If the simple model gets the prognostic effect
 of `X1` wrong, $r_i$ follows a pattern in `X1`. The treatment score takes on
 that pattern, so the path of `X1` swings.
 
@@ -112,7 +122,10 @@ Two cases make the p-value less reliable:
   rows. Inside a tie the order is arbitrary, and the path depends on it.
   Read the p-value as a ranking, not as an exact test.
 - **No converged fit.** The scores sum to zero only at the optimum. Scan an
-  all-`LS` model that `fit_classical` reports as converged.
+  all-`LS` model whose `fit_classical` report says `converged`. The scan
+  also takes the $\beta_0$ of a `VC` term, but a `VC` model stopped at its
+  best-validation weights is not at the optimum. Read such a scan with more
+  care.
 
 ## Using it
 
@@ -149,11 +162,11 @@ encoding. The chain rule therefore gives
 
 $$
 \frac{\partial \ell_i}{\partial \gamma}
-= \frac{\partial \ell_i}{\partial s_i}\, x_{ij} ,
+= \frac{\partial \ell_i}{\partial s_i}\, x_{ij} = r_i \, x_{ij},
 $$
 
-so one derivative per row serves every coefficient. The derivative has a
-closed form for both node kinds, and the computation uses no autograd. Below,
+so one derivative $r_i$ per row serves every coefficient. The derivative has
+a closed form for both node kinds, and the computation uses no autograd. Below,
 $h$ is the fitted monotone transformation and $\sigma$ the logistic
 function.
 

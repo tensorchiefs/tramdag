@@ -6,7 +6,7 @@ rather than a notebook, belongs in `experiments/data/` instead.
 ## `birthwt.csv`
 
 Five columns of `MASS::birthwt`, the low-birth-weight study of Hosmer and
-Lemeshow (1989). It holds 189 births at Baystate Medical Center.
+Lemeshow. It holds 189 births at Baystate Medical Center.
 `classical_fit_tram_dag.py` uses it as a logistic-regression example that a
 reader can re-fit in R.
 

@@ -1,5 +1,7 @@
 """MkDocs hooks: make the repository's relative links work on the site.
 
+They also drop the dead footnote back-links of the References page.
+
 README.md is the landing page and the guides link to source files, tests and
 experiments. A link to another docs page becomes a page link; a link into the
 repository becomes a GitHub URL for the ref being built (``REF``, default

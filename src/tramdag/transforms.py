@@ -258,7 +258,7 @@ def ordinal_abduct(
     y: Tensor,
     generator: torch.Generator | None = None,
 ) -> Tensor:
-    """Abduct the latent of an ordinal node (Pearl step 1).
+    """Abduct the latent of an ordinal node (the abduction step).
 
     The latent is drawn from the standard logistic, truncated to the
     interval that is consistent with the observed level.

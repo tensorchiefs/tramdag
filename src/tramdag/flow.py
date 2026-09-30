@@ -526,7 +526,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @torch.no_grad()
     def abduct(self, df: pd.DataFrame, *, seed: int | None = None) -> pd.DataFrame:
-        """Recover the latent variables ``u`` from observations (Pearl step 1).
+        """Recover the latent variables ``u`` from observations (the abduction step).
 
         A continuous node inverts exactly: $u = h(x) + s$. For an
         ordinal node the latent is only interval-identified, so it is

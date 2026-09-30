@@ -1,8 +1,8 @@
 # Experiments: the TRAM-DAG paper replications
 
 This directory holds research code. The installed `tramdag` package does not
-contain it. It replicates [arXiv:2503.16206](https://arxiv.org/abs/2503.16206)
-against the paper's own R code: four scripts, their SCM generators under
+contain it. It replicates the TRAM-DAG paper
+([Sick & Dürr, 2025](https://arxiv.org/abs/2503.16206)) against the paper's own R code: four scripts, their SCM generators under
 `simulations/`, the frozen datasets under `data/`, and the expected results
 under `ground_truth/`. [`common.py`](common.py) holds the output layout that
 the workflow reads and [`check.py`](check.py) the ground-truth comparison.

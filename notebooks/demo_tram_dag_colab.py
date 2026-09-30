@@ -16,7 +16,7 @@
 #
 # [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 #
-# A TRAM-DAG ([Sick & Dürr, CLeaR 2025](https://arxiv.org/abs/2503.16206)) is
+# A TRAM-DAG ([Sick & Dürr, 2025](https://arxiv.org/abs/2503.16206)) is
 # one normalizing flow wired like the adjacency matrix of a causal DAG. Fit it
 # once on observational data. Then answer all three rungs of Pearl's ladder
 # with the same fitted model:

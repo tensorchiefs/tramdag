@@ -74,6 +74,7 @@ def _write_variant(cls, out_dir: Path, f: str, seed: int, n_obs: int) -> None:
     obs.to_csv(vdir / "obs.csv", index=False)
 
     truth = {
+        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 Sec. 6 (Sick & Duerr, CLeaR 2025)",
         "family": gen.family,
         "f": f,

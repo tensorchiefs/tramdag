@@ -1,7 +1,7 @@
 """The VACA / CNF benchmark DGP (Sick & Dürr, 2025, App. C.1).
 
 Originally from Sánchez-Martín et al. (2022, App. E.1), used in the paper to
-benchmark TRAM-DAG against Causal Normalizing Flows (Javaloy et al., 2023) on L1
+benchmark TRAM-DAG against Causal Normalizing Flows on L1
 (observational fit, Fig. 4) and L2 (interventional distributions, Fig. 5):
 
 ```
@@ -66,6 +66,7 @@ def main(argv: list[str] | None = None) -> None:
     obs.to_csv(args.out / "obs.csv", index=False)
 
     truth = {
+        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 App. C.1 (orig. Sanchez-Martin 2022 E.1)",
         "seed": args.seed,
         "n_obs": args.n_obs,

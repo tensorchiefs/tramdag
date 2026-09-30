@@ -140,6 +140,8 @@ def effect_modifier_scan(
 ) -> pd.DataFrame:
     r"""Scan the ``t``-coefficient scores for effect-modifier drift.
 
+    This is the M-fluctuation test of Zeileis & Hornik (2007) on the raw
+    treatment score, without the decorrelation from the other coefficients.
     For each candidate covariate the scan orders the treatment coefficient's
     scores by it, forms the scaled cumulative sum
     $B_j = \sum_{i \le j} \psi_{(i)} / (\mathrm{sd}(\psi)\sqrt{n})$ and reports

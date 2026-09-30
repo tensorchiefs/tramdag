@@ -73,6 +73,7 @@ def main(argv: list[str] | None = None) -> None:
     obs.to_csv(args.out / "obs.csv", index=False)
 
     truth = {
+        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 App. C.2 (orig. Khemakhem 2021 Fig. 5)",
         "seed": args.seed,
         "n_obs": args.n_obs,

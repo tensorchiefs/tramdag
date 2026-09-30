@@ -66,8 +66,12 @@ jobs:
         done
         # pandoc's own `markdown` reader, not `gfm`: only it derives the table
         # column widths from the separator row, so a wide table wraps inside
-        # p{} columns instead of running off the page in l columns
+        # p{} columns instead of running off the page in l columns. citeproc
+        # resolves the guides' [@key] citations with the site's .bib and CSL
+        # and appends one bibliography at the end.
         pandoc -f markdown+tex_math_dollars --pdf-engine=xelatex \
+          --citeproc --bibliography=docs/references.bib --csl=docs/apa.csl \
+          --metadata reference-section-title=References \
           --resource-path=.:docs:build/pdf:build/pdf/nb -V mainfont="DejaVu Serif" -V monofont="DejaVu Sans Mono" \
           -V geometry:margin=2.2cm --toc --toc-depth=2 --metadata title="tramdag documentation" \
           build/pdf/README.md build/pdf/model.md build/pdf/notation.md build/pdf/interpretation.md \

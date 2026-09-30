@@ -137,8 +137,8 @@ print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
 # The figure draws the scaled running sum $B_j$ of the scan for each candidate
 # ([`docs/scores.md`](../docs/scores.md) explains it). The left panel uses the
 # quadratic `X1`, the right panel the linear `X1`. `stat` is the largest
-# distance of the path from zero, the dot on each line. A path that leaves the
-# grey band flags.
+# distance of the path from zero, the dot on each line. If a path leaves the
+# grey band, the scan flags its covariate.
 
 # %%
 CANDIDATES = {"X1": "#2a78d6", "X2": "#eb6834", "X3": "#1baf7a"}

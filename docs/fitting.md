@@ -85,7 +85,7 @@ weights.
   that restore weights. Both read
   `history["val"]`.
 - **Centered `VC` propensities** ride the training frame as the column that
-  `VC(center=)` names, and split and minibatch with it.
+  `VC(propensity=)` names, and split and minibatch with it.
   [varying-coefficients.md](varying-coefficients.md) is the guide.
 
 ### The marginal start

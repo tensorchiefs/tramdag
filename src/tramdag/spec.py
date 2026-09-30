@@ -724,10 +724,10 @@ class VaryingCoefficient(Term):
     penalty : float, optional
         L2 weight on the ``b_theta`` weights, on the total-NLL scale, by
         default 1.0. Must be >= 0.
-    center : str | None, optional
-        Propensity centering, by default ``None`` (none). A string names the
-        training-frame column holding the out-of-fold propensities
-        $P(t = 1 \mid \mathrm{pa}_t)$ per row; the regressor becomes
+    propensity : str | None, optional
+        The training-frame column holding the out-of-fold propensities
+        $P(t = 1 \mid \mathrm{pa}_t)$ per row, by default ``None`` (no
+        centering). With a column the regressor becomes
         $\beta(x)\,(x_t - \hat e(\mathrm{pa}_t))$. Training reads the column as
         frozen data; every query after the fit recomputes $\hat e$ from the
         flow's own treatment node. Requires a binary ordinal ``t``.
@@ -755,7 +755,7 @@ class VaryingCoefficient(Term):
         *modifiers: str,
         t: str,
         penalty: float = 1.0,
-        center: str | None = None,
+        propensity: str | None = None,
         units: tuple[int, ...] | list[int] = (16,),
         activation: str = "relu",
         batch_norm: bool = False,
@@ -766,7 +766,7 @@ class VaryingCoefficient(Term):
         # the treatment leads the parents: it is the one that owns an edge
         super().__init__(t, *modifiers)
         self.penalty = float(penalty)
-        self.center = center
+        self.propensity = propensity
         self.units = tuple(units)
         self.activation = activation
         self.batch_norm = batch_norm
@@ -793,16 +793,17 @@ class VaryingCoefficient(Term):
         """
         t = self.parents[0]
         t_node = spec[t]
-        if self.center is not None and not isinstance(self.center, str):
+        if self.propensity is not None and not isinstance(self.propensity, str):
             raise ValueError(
-                f"node {name!r}: VC(center=) names the propensity COLUMN of "
+                f"node {name!r}: VC(propensity=) names the propensity COLUMN of "
                 "the training frame (out-of-fold P(t=1|pa_t) per row), or is "
-                f"None — got {self.center!r}. Cross-fit the propensities "
-                "outside and merge them as a column."
+                f"None — got {self.propensity!r}. Cross-fit the propensities "
+                "outside, merge them as a column and pass "
+                "propensity='<column>'."
             )
-        if self.center and self.center in spec:
+        if self.propensity and self.propensity in spec:
             raise ValueError(
-                f"node {name!r}: the propensity column {self.center!r} "
+                f"node {name!r}: the propensity column {self.propensity!r} "
                 "collides with a node name"
             )
         if t_node.kind == "ordinal" and t_node.levels != 2:
@@ -811,13 +812,13 @@ class VaryingCoefficient(Term):
                 f"{t_node.levels} levels. Only a 2-level (binary) ordinal "
                 "treatment is supported."
             )
-        if self.center and t_node.kind != "ordinal":
+        if self.propensity and t_node.kind != "ordinal":
             raise ValueError(
-                f"node {name!r}: VC(center=...) needs a binary ordinal "
+                f"node {name!r}: VC(propensity=...) needs a binary ordinal "
                 f"treatment, and {t!r} is continuous"
             )
-        if self.center and any(
-            isinstance(term, VaryingCoefficient) and term.center
+        if self.propensity and any(
+            isinstance(term, VaryingCoefficient) and term.propensity
             for term in t_node.terms
         ):
             raise ValueError(

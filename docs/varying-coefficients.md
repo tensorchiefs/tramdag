@@ -1,4 +1,4 @@
-# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=, center=)`
+# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=, propensity=)`
 
 A `VC` term gives a node a treatment-effect head with its own bias-variance
 budget. It contributes $\beta(x)\, x_t$ with
@@ -57,10 +57,11 @@ brings that ingredient into the TRAM framework.
   equals the abduction difference $u(x,1,y) - u(x,0,y)$ identically, which a
   test pins.
 
-## Propensity centering: `center="col"`
+## Propensity centering: `propensity="col"`
 
-With `center=` the term contributes $\beta(x)\,(t - \hat e(x))$ instead of
-$\beta(x)\, t$. This is Robinson's R-learner orthogonalization
+With a `propensity=` column, the term contributes
+$\beta(x)\,(t - \hat e(x))$ instead of $\beta(x)\, t$. This is Robinson's
+R-learner orthogonalization
 [@nie2021quasioracle; @robinson1988root] inside the likelihood. In
 model-based forests, this ingredient is decisive for effect estimation under
 confounding [@dandl2024forest]. That finding reproduces here on the
@@ -75,7 +76,7 @@ not know you have.
 The design is two-stage and frozen, because the naive versions are wrong.
 
 - **Training** uses out-of-fold propensities that you compute and pass as the
-  training-frame column `center=` names, one value per row. Any propensity
+  training-frame column `propensity=` names, one value per row. Any propensity
   model works as long as each fold is predicted by a fit that never saw it,
   the cross-fitting requirement of double machine learning
   [@chernozhukov2018dml]. In-sample

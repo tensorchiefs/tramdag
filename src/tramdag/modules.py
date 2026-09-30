@@ -239,7 +239,7 @@ class ShiftModule(TermModule, ABC):
     ``__init__(term, spec)`` builds the network from the term's options and the
     parents' widths in the spec, and sets ``key`` (the node's ModuleDict key)
     and ``parents`` (the term's written parents); a subclass may keep more
-    (``VaryingCoefficientModule`` keeps ``mods``/``t_is_ord``/``center_col``).
+    (``VaryingCoefficientModule`` keeps ``mods``/``t_is_ord``/``propensity_col``).
     Layers are built in a fixed order under fixed attribute names, so
     state-dict paths and the seeded RNG stream stay bit-stable.
     """
@@ -582,7 +582,7 @@ class VaryingCoefficientModule(ShiftModule):
         self.parents = tuple(term.parents)
         self.mods = mods
         self.t_is_ord = spec[t].kind == "ordinal"
-        self.center_col = term.center
+        self.propensity_col = term.propensity
         _attach_input_transform(self, term, spec, mods)
 
     def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
@@ -634,15 +634,15 @@ class VaryingCoefficientModule(ShiftModule):
         propensity column (the regressor ``t - e_hat(x)`` of Robinson, 1988). It is
         also the score of ``beta0``, so ``score_columns`` reads it here.
         """
-        if self.center_col and self.center_col not in feats:
+        if self.propensity_col and self.propensity_col not in feats:
             raise RuntimeError(
                 f"centered VC term on {self.key!r} needs its propensity "
-                f"column {self.center_col!r}. Internal callers inject it; "
+                f"column {self.propensity_col!r}. Internal callers inject it; "
                 "never evaluate a centered term without its propensity."
             )
         t = feats[self.key][:, -1:] if self.t_is_ord else feats[self.key]
-        if self.center_col:
-            t = t - feats[self.center_col].view(-1, 1)
+        if self.propensity_col:
+            t = t - feats[self.propensity_col].view(-1, 1)
         return t
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
@@ -681,7 +681,7 @@ class VaryingCoefficientModule(ShiftModule):
 
     def side_columns(self) -> tuple[str, ...]:
         """Name the propensity column a centered term reads from the frame."""
-        return (self.center_col,) if self.center_col else ()
+        return (self.propensity_col,) if self.propensity_col else ()
 
     def check_column(self, node_name: str, col: str, values) -> None:
         """Propensities are probabilities."""
@@ -699,11 +699,11 @@ class VaryingCoefficientModule(ShiftModule):
         ``do``-mutilated sampling centers with the intervened ``t``. Training
         uses the frozen column.
         """
-        if not self.center_col:
+        if not self.propensity_col:
             return {}
         p1 = flow._propensity(flow.nodes[self.key], values, n).detach()
-        return {self.center_col: p1}
+        return {self.propensity_col: p1}
 
     def extra_columns(self, flow) -> list[str]:
         """Give the treatment's parents (a treatment cannot be centered itself)."""
-        return list(flow.nodes[self.key].parents) if self.center_col else []
+        return list(flow.nodes[self.key].parents) if self.propensity_col else []

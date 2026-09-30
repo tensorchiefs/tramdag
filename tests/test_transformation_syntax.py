@@ -188,7 +188,7 @@ def test_every_option_survives_the_roundtrip():
         "y": ContinuousNode(
             [
                 I("a", "b", allow_interaction=False, units=[4, 4]),
-                VC("b", t="t", penalty=2.5, center="ps_b"),
+                VC("b", t="t", penalty=2.5, propensity="ps_b"),
             ]
         ),
     }
@@ -196,7 +196,7 @@ def test_every_option_survives_the_roundtrip():
     assert back == spec
     i_term, vc_term = back["y"].terms
     assert (i_term.allow_interaction, i_term.units) == (False, (4, 4))
-    assert (vc_term.penalty, vc_term.center) == (2.5, "ps_b")
+    assert (vc_term.penalty, vc_term.propensity) == (2.5, "ps_b")
     assert back["a"].transform_kwargs == {"bins": 6}
 
 

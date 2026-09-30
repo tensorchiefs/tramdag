@@ -18,7 +18,7 @@ the same object, so `LS is LinearShift`.
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
 | [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift $\beta x$ — the interpretable log-odds coefficient. Exactly one parent. |
 | [`ComplexShift`][tramdag.spec.ComplexShift] / `CS` | Complex shift: an NN `g(x)`, additive on the latent scale. Several parents form one joint network. |
-| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$ — the penalized treatment-effect head. `center=` adds propensity centering. |
+| [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$ — the penalized treatment-effect head. `propensity=` adds propensity centering. |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] | Continuous variable: monotone 1-D transform plus shifts. `terms` is the first positional argument. |
 | [`OrdinalNode`][tramdag.spec.OrdinalNode] | Ordinal variable with `levels` classes: ordered logit (cutpoints) plus shifts. |
 | [`node_parents()`][tramdag.spec.node_parents] | Ordered de-duplicated parent names of a node (the canonical term list is `node.terms`). |
@@ -160,8 +160,8 @@ default you can read at the call site. Nothing numeric is buried.
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodeEarlyStopping`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
 | calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied once, on the first fit |
-| VC stage-1 propensities | the training-frame column `VC(center=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
-| VC penalty and centering | `VC(penalty=, center=)` | 1.0 / False (`center="col"` names the propensity column) |
+| VC stage-1 propensities | the training-frame column `VC(propensity=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
+| VC penalty and centering | `VC(penalty=, propensity=)` | 1.0 / None (`propensity="col"` names the propensity column) |
 | L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
 | training budget | `fit(epochs=)` | **required** ([fitting.md](fitting.md)) |
 | network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64) — parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |

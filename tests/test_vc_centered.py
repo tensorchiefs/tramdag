@@ -1,10 +1,10 @@
 """Tests for the propensity-centered VC term:
 beta(x) * (t - e_hat(x)) with cross-fitted (out-of-fold) e_hat.
 
-The stage-1 propensities are the caller's: ``VC(center="col")`` names a
+The stage-1 propensities are the caller's: ``VC(propensity="col")`` names a
 column of the training frame holding one out-of-fold value per row, and fit
 refuses a centered spec whose frame lacks it.
-Acceptance: center=None is bit-identical to the plain VC (regression guard);
+Acceptance: propensity=None is bit-identical to the plain VC (regression guard);
 gradient isolation (no gradient reaches the treatment node from the outcome
 loss); the Dandl reproduction (confounded DGP + deliberately under-specified
 prognostic part: centering must materially reduce the bias of beta_hat —
@@ -29,14 +29,16 @@ def _misspecified_spec(center) -> dict:
     return {
         **T_SPEC,
         # prognostic part deliberately under-specified (linear vs true x^2)
-        "Y": ContinuousNode(LS("X") + VC("X", center="ps" if center else None, t="T")),
+        "Y": ContinuousNode(
+            LS("X") + VC("X", propensity="ps" if center else None, t="T")
+        ),
     }
 
 
 def _oof_propensity(df, folds=5, seed=0) -> tuple[np.ndarray, np.ndarray]:
     """Cross-fitted P(T=1|X) from the classical fit of the treatment spec.
 
-    Six lines — what a user merges into the frame for ``VC(center=)``; each
+    Six lines — what a user merges into the frame for ``VC(propensity=)``; each
     fold's rows are predicted by a model that never saw them.
     """
     fold_id = np.random.default_rng(seed).permutation(len(df)) % folds
@@ -50,7 +52,7 @@ def _oof_propensity(df, folds=5, seed=0) -> tuple[np.ndarray, np.ndarray]:
 
 def _fit(spec, df, epochs=250):
     train = df.iloc[:5400]
-    if any(t.name == "VC" and t.center for t in spec["Y"].terms):
+    if any(t.name == "VC" and t.propensity for t in spec["Y"].terms):
         train = train.assign(ps=_oof_propensity(train)[0])
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(train, epochs=epochs, learning_rate=1e-2, batch_size=512, seed=0)
@@ -59,29 +61,29 @@ def _fit(spec, df, epochs=250):
 
 # %% public functions ------------------------------------------------------------------
 def test_center_validation():
-    spec = {"D": ContinuousNode(), "Y": ContinuousNode(VC(center="ps", t="D"))}
+    spec = {"D": ContinuousNode(), "Y": ContinuousNode(VC(propensity="ps", t="D"))}
     with pytest.raises(ValueError, match="binary ordinal"):
         validate_and_sort(spec)  # continuous treatment cannot center
     chained = {
         "X": ContinuousNode(),
         "A": OrdinalNode(2, LS("X")),
-        "T": OrdinalNode(2, VC("X", center="ps_a", t="A")),
-        "Y": ContinuousNode(VC("X", center="ps_t", t="T")),
+        "T": OrdinalNode(2, VC("X", propensity="ps_a", t="A")),
+        "Y": ContinuousNode(VC("X", propensity="ps_t", t="T")),
     }
     with pytest.raises(ValueError, match="chained"):
         validate_and_sort(chained)
-    # center names a COLUMN now: the pre-column spelling refuses loudly
+    # propensity names a COLUMN: a bool refuses loudly
     legacy = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
-        "Y": ContinuousNode(VC("X", center=True, t="T")),
+        "Y": ContinuousNode(VC("X", propensity=True, t="T")),
     }
     with pytest.raises(ValueError, match="COLUMN"):
         validate_and_sort(legacy)
     collides = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
-        "Y": ContinuousNode(VC("X", center="X", t="T")),
+        "Y": ContinuousNode(VC("X", propensity="X", t="T")),
     }
     with pytest.raises(ValueError, match="collides"):
         validate_and_sort(collides)
@@ -91,16 +93,16 @@ def test_center_serialization_roundtrip():
     spec = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
-        "Y": ContinuousNode(VC("X", center="ps", t="T")),
+        "Y": ContinuousNode(VC("X", propensity="ps", t="T")),
     }
     round_tripped = spec_from_dict(spec_to_dict(spec))
     t = next(t for t in round_tripped["Y"].terms if t.name == "VC")
-    assert t.center == "ps"
+    assert t.propensity == "ps"
 
 
 def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
     """The default must preserve the plain VC's behavior exactly: a VC term written
-    without the kwarg and one with center=None produce bit-identical fits.
+    without the kwarg and one with propensity=None produce bit-identical fits.
     """
     df = vc_hetero["draw"](1200, 100)
 
@@ -117,8 +119,8 @@ def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
         return flow
 
     a = fit_with(VC("X2", "X3", t="T"))
-    b = fit_with(VC("X2", "X3", center=None, t="T"))
-    assert VC("X2", t="T") == VC("X2", center=None, t="T")  # Term equality
+    b = fit_with(VC("X2", "X3", propensity=None, t="T"))
+    assert VC("X2", t="T") == VC("X2", propensity=None, t="T")  # Term equality
     for (ka, pa), (kb, pb) in zip(
         a.state_dict().items(), b.state_dict().items(), strict=True
     ):
@@ -153,7 +155,7 @@ def test_oof_helper_is_genuinely_out_of_fold(confounded):
 
 
 def test_gradient_isolation(confounded):
-    """With center=True the treatment node's parameters receive ZERO gradient
+    """With a propensity column the treatment node's parameters receive ZERO gradient
     from the outcome-node loss — on the live (inference) e_hat path and, a
     fortiori, on the frozen-OOF training path.
     """
@@ -247,7 +249,7 @@ def test_centered_save_load_and_queries(tmp_path, confounded):
     flow.save(p)
     flow2 = CausalFlowDAG.load(p)
     t = next(t for t in flow2.spec["Y"].terms if t.name == "VC")
-    assert t.center == "ps"
+    assert t.propensity == "ps"
     with torch.no_grad():
         np.testing.assert_allclose(
             flow2.log_prob(df.head(50)).numpy(),
@@ -294,8 +296,8 @@ def test_centered_fit_with_managed_validation(confounded):
 def test_stray_propensity_column_is_ignored_on_an_uncentered_fit(confounded):
     """Pin: a stray 'ps' column on an UNCENTERED spec is silently ignored.
 
-    Frames often carry extra columns; only a declared center= reads one.
-    Forgetting center= therefore fits uncentered — documented behavior.
+    Frames often carry extra columns; only a declared propensity= reads one.
+    Forgetting propensity= therefore fits uncentered — documented behavior.
     """
     df = confounded["draw"](400, 5)
     plain = CausalFlowDAG(_misspecified_spec(False), seed=0)

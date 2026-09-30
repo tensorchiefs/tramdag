@@ -140,8 +140,8 @@ normal column, 0.080 for a lognormal column and 0.103 for a bimodal column.
 
 The ends of the range carry the empirical quantiles `range_q` and
 `1 - range_q`, so the end control points are close to
-$\pm\operatorname{logit} q$ with $q$ = `range_q`. At the default $q = 0.05$
-this is $\pm 2.944$. A transform with fewer than 3 coefficients ignores the
+$\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$ with $q$ =
+`range_q`. At the default $q = 0.05$ these are $-2.944$ and $2.944$. A transform with fewer than 3 coefficients ignores the
 column and takes the straight line between these two values. Its tied steps
 leave no shape to fit. At `n_coeffs = 20`, zuko's zero start is also close
 to a straight line, on about $[-6.9, 7.6]$, and 2.5 times steeper.

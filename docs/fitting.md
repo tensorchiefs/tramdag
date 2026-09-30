@@ -55,17 +55,17 @@ weights.
 - **Epochs.** `epochs` has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
 - **Calibration.** The first `fit` or `fit_classical` calibrates the flow on
-  `train_df`. Every term
-  freezes its data-dependent state there, the intercept its `range_q`
-  quantiles and each `input_transform=` its statistics. A loaded checkpoint is
-  never recalibrated.
+  `train_df`. Every term freezes its data-dependent state there, the
+  intercept its `range_q` quantiles and each `input_transform=` its
+  statistics. A loaded checkpoint is never recalibrated.
 - **Marginal start.** Off by default: every simple intercept starts with all
   its parameters at zero, the zero start. `fit(marginal_init=True)` starts
   each Bernstein or ordinal simple intercept at the empirical distribution of
   its column instead. At shift zero the untrained model then already fits
-  each marginal, and the fit needs fewer epochs.
-  [The marginal start](#the-marginal-start) says how, and when the endpoint
-  changes.
+  each marginal, and the fit needs fewer epochs. Only the fit that
+  calibrates the flow applies it, so a flow that `fit_classical` calibrated
+  ignores the flag. [The marginal start](#the-marginal-start) says how, and
+  when the endpoint changes.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
   a float and uses the last fraction of `train_df` unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With
@@ -83,8 +83,7 @@ weights.
   restores the best-validation weights and takes an optional `patience` and
   `min_delta`. `PerNodeEarlyStopping` with `per_node_adam` does the same per
   node: a node freezes after `patience` flat epochs and loads its best
-  weights back. `fit` refuses two callbacks
-  that restore weights. Both read
+  weights back. `fit` refuses two callbacks that restore weights. Both read
   `history["val"]`.
 - **Centered `VC` propensities** ride the training frame as the column that
   `VC(propensity=)` names, and split and minibatch with it.

@@ -86,10 +86,11 @@ plugins:
 
 markdown_extensions:
 - admonition
+# mkdocs-bibtex links each citation to its entry as a footnote
+- footnotes
 # mkdocs-bibtex writes citations and bibliography entries through pandoc's
 # ASCII markdown, so a page range arrives as "488--508"; smarty turns the
 # dashes back into typographic ones and leaves quotes and ellipses alone
-- footnotes
 - smarty: {smart_quotes: false, smart_angled_quotes: false, smart_ellipses: false}
 - tables
 - toc: {permalink: true}

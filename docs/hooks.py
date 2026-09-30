@@ -14,6 +14,9 @@ import re
 
 # %% global variables ------------------------------------------------------------------
 REPO = "https://github.com/tensorchiefs/tramdag"
+# mkdocs-bibtex renders the full bibliography as footnotes whose back-links
+# point at citations that page does not have
+_BACKREF = re.compile(r'<a class="footnote-backref"[^>]*>[^<]*</a>')
 # markdown links in the guides, href attributes in the rendered notebooks
 _LINK = re.compile(r"(\]\(|href=\")([^)\s#\"][^)\s\"]*)(\)|\")")
 
@@ -43,9 +46,11 @@ def on_page_markdown(markdown, page, config, files):
 
 
 def on_page_content(html, page, config, files):
-    """Rewrite the ``href`` attributes of a rendered notebook to final page URLs."""
+    """Rewrite a notebook's ``href`` attributes; drop the References back-links."""
     if page.file.src_uri.startswith("notebooks/"):
         html = _rewrite(html, page, files)
+    if page.file.src_uri == "references.md":
+        html = _BACKREF.sub("", html)
     return html
 
 

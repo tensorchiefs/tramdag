@@ -190,8 +190,7 @@ class FitMixin:
     ) -> CausalFlowDAG:
         """Fit all nodes jointly by maximum likelihood — one minibatch Adam loop.
 
-        The joint NLL decomposes per node, so one optimizer over all
-        parameters fits every node at once. The loop keeps the **final**
+        One optimizer covers all parameters. The loop keeps the **final**
         weights, and a second ``fit`` call continues the training. Validation
         monitoring, learning-rate schedules, early stopping, best-weight
         restoration and logging are the caller's, through ``optimizer`` and
@@ -338,9 +337,9 @@ class FitMixin:
         The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
         line search. There are no minibatches, no schedule and no early
         stopping, so the fit is deterministic; the report says whether it
-        reached the maximum-likelihood estimate. It is valid only when every
-        term is a simple intercept or an ``LS``, because each node-conditional
-        is then an ordered logit or a Colr model; any other spec raises.
+        reached the maximum-likelihood estimate. It takes only simple
+        intercepts and ``LS`` terms; any other spec raises.
+        ``docs/fitting.md`` says why.
 
         Parameters
         ----------
@@ -383,9 +382,7 @@ class FitMixin:
         ``converged`` needs BOTH: the run stopped on its own AND the gradient
         norm is at most ``GRAD_TOL`` (1e-2). The objective is a sum of per-node
         mean NLLs, so its gradient does not scale with the number of rows and
-        an absolute bound is meaningful. Stopping on its own is not enough,
-        because the same tolerance fires when the line search stalls far from
-        the optimum; there the gradient norm is still large.
+        an absolute bound is meaningful.
         """
         other = sorted(
             {t.name for nd in self.spec.values() for t in nd.terms if not t.classical}

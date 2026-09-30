@@ -182,9 +182,7 @@ class PerNodeEarlyStopping(Callback):
     when every node has frozen; without it (the default) no node freezes and
     the fit runs its full epoch budget. With ``restore_best`` (the default) a
     node loads the weights of its best epoch back when it freezes, and every
-    node loads them in ``on_fit_end``, before the VC re-centering. The joint
-    NLL is a sum of per-node terms and a node's parameters enter only its own
-    term, so each node restores its own optimum.
+    node loads them in ``on_fit_end``, before the VC re-centering.
 
     Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]
     (one ``node``-tagged group per node), and give ``fit`` a validation set

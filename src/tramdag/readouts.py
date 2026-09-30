@@ -262,11 +262,9 @@ class ReadoutsMixin:
         ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.
 
         Use ``drop_first=True`` to get the design a classical reference
-        expects (``statsmodels`` ``OrderedModel``, R ``polr``): with
-        cutpoints the full one-hot is unidentified, so each ordinal parent's
-        level-0 column drops out and its remaining coefficients read as
-        differences against level 0 — exactly what ``w[k] - w[0]`` gives on
-        the flow side.
+        expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the
+        level-0 column of each ordinal parent, so the remaining coefficients
+        match ``w[k] - w[0]`` on the flow side.
 
         Parameters
         ----------

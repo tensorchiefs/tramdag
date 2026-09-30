@@ -528,8 +528,7 @@ class BernsteinUT(_ScaledUT):
         marginal**: control point $k$ is $\operatorname{logit} \hat F(y_k)$ at the
         value $y_k$ sitting at $k/\text{order}$ of the pre-scaled domain, so
         the polynomial starts as the Bernstein approximation of
-        $\operatorname{logit} \hat F(y)$ — the continuous counterpart of the ordinal
-        cutpoints' class log-odds. Without it the control points are
+        $\operatorname{logit} \hat F(y)$. Without it the control points are
         equally spaced, the plain linear map from the pre-scaled domain
         $[-B, B]$ onto $[\operatorname{logit} q, \operatorname{logit}(1-q)]$ with
         $q$ = ``range_q``.

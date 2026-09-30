@@ -456,8 +456,7 @@ class AdditiveInterceptModule(InterceptModule):
 class LinearShiftModule(ShiftModule):
     r"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
 
-    For an ordinal child, $\exp(\beta)$ is an odds ratio. Keyed by the parent's
-    name.
+    Keyed by the parent's name.
 
     Parameters
     ----------
@@ -697,8 +696,8 @@ class VaryingCoefficientModule(ShiftModule):
 
         Detached — no gradient reaches the treatment node from this node's
         loss — and derived from the current parent values, so
-        ``do``-mutilated sampling centers with the intervened ``t`` (the DML
-        prediction convention; training uses the frozen out-of-fold column).
+        ``do``-mutilated sampling centers with the intervened ``t``. Training
+        uses the frozen column.
         """
         if not self.center_col:
             return {}

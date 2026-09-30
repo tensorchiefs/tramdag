@@ -1,11 +1,9 @@
 """CausalFlowDAG — a single triangular normalizing flow on a user-defined DAG.
 
 The flow maps iid standard-logistic latents ``U`` to the observed variables ``X``
-in topological order; its Jacobian sparsity is exactly the DAG adjacency. The
-joint log-likelihood decomposes per node, so one optimizer fits all nodes at once.
-``sample``, ``abduct``, ``pmf`` and ``density`` answer the observational,
-interventional (``do=``) and counterfactual queries; the read-outs that only
-read fitted weights live in ``readouts.py``.
+in topological order. ``sample``, ``abduct``, ``pmf`` and ``density`` answer the
+observational, interventional (``do=``) and counterfactual queries; the read-outs
+that only read fitted weights live in ``readouts.py``.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -277,14 +275,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
         r"""Check the terms' side columns in the frame; give their names.
 
-        A centered ``VC`` needs its propensity column: $P(t = 1 \mid \mathrm{pa}_t)$
-        per training row, computed **out of fold** (the cross-fitting
-        requirement of the DML design; in-sample values reintroduce the
-        own-observation bias). How it is computed is the caller's choice —
-        a ``fit_classical`` on the treatment spec per fold, or any
-        classifier — merged into ``train_df`` as an ordinary column. The
-        training loss uses the frozen column; every query after the fit
-        recomputes the value live from the treatment node.
+        A centered ``VC`` needs its propensity column
+        $P(t = 1 \mid \mathrm{pa}_t)$ per training row, merged into
+        ``train_df`` as an ordinary column. The training loss uses the frozen
+        column; every query after the fit recomputes the value live from the
+        treatment node. ``docs/varying-coefficients.md`` says how to compute
+        the column out of fold.
         """
         cols: list[str] = []
         for name in self.order:
@@ -483,8 +479,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             clamped and its parent dependence removed (graph mutilation).
         u : pd.DataFrame | None, optional
             Latent variables, as returned by [`abduct`][]. If given,
-            they are pushed through the flow. Together with ``do`` this
-            yields counterfactuals: Pearl's abduction, action, prediction.
+            they are pushed through the flow. With ``do``, this gives a
+            counterfactual.
         seed : int | None, optional
             If given, seeds the latent draw. Ignored if ``u`` is given.
 

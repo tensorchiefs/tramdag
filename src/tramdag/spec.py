@@ -284,9 +284,8 @@ def validate_and_sort(spec: dict[str, NodeSpec]) -> list[str]:
 
     Edge ownership: every parent must enter through exactly one
     edge-owning term. Edge-owning are all parents of I/LS/CS terms and
-    the ``t`` of a VC term. VC *modifiers* are exempt — they can repeat
-    across terms, because a modifier typically also acts prognostically
-    through a CS or LS term.
+    the ``t`` of a VC term. VC *modifiers* are exempt and can repeat
+    across terms.
 
     Parameters
     ----------

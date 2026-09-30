@@ -366,47 +366,47 @@ flowchart LR
     n12["_split_validation"]
   end
   subgraph flow
-    n28["CausalFlowDAG._check_columns"]
-    n29["CausalFlowDAG._check_level_values"]
-    n13["CausalFlowDAG._check_side_columns"]
-    n30["CausalFlowDAG._dtype"]
-    n23["CausalFlowDAG._features"]
-    n14["CausalFlowDAG._mean_nll"]
-    n15["CausalFlowDAG._recenter_vc"]
-    n27["CausalFlowDAG._side_feats"]
-    n16["CausalFlowDAG._tensorize"]
-    n31["CausalFlowDAG._theta_shift"]
-    n17["CausalFlowDAG._calibrate"]
+    n13["CausalFlowDAG._calibrate"]
+    n21["CausalFlowDAG._check_columns"]
+    n22["CausalFlowDAG._check_level_values"]
+    n14["CausalFlowDAG._check_side_columns"]
+    n32["CausalFlowDAG._dtype"]
+    n27["CausalFlowDAG._features"]
+    n15["CausalFlowDAG._mean_nll"]
+    n16["CausalFlowDAG._recenter_vc"]
+    n31["CausalFlowDAG._side_feats"]
+    n17["CausalFlowDAG._tensorize"]
+    n33["CausalFlowDAG._theta_shift"]
     n20["CausalFlowDAG.node_log_prob"]
   end
   subgraph modules
     n37["ComplexShiftModule.forward"]
     n36["ComplexShiftModule.shift_value"]
-    n33["InterceptModule.calibrate_intercept"]
+    n23["InterceptModule.calibrate_intercept"]
     n41["LinearShiftModule.forward"]
     n40["LinearShiftModule.shift_value"]
-    n25["ShiftModule.finalize"]
+    n29["ShiftModule.finalize"]
     n18["ShiftModule.regularizer"]
-    n21["ShiftModule.side_columns"]
+    n25["ShiftModule.side_columns"]
     n43["SimpleInterceptModule.forward"]
     n42["SimpleInterceptModule.theta_value"]
-    n34["TermModule.calibrate"]
+    n24["TermModule.calibrate"]
     n44["TermModule.input_transform"]
     n47["VaryingCoefficientModule.beta"]
-    n26["VaryingCoefficientModule.finalize"]
+    n30["VaryingCoefficientModule.finalize"]
     n46["VaryingCoefficientModule.forward"]
     n48["VaryingCoefficientModule.l2"]
     n45["VaryingCoefficientModule.recenter"]
     n50["VaryingCoefficientModule.regressor"]
     n19["VaryingCoefficientModule.regularizer"]
     n49["VaryingCoefficientModule.shift_value"]
-    n22["VaryingCoefficientModule.side_columns"]
+    n26["VaryingCoefficientModule.side_columns"]
   end
   subgraph nodes
-    n24["Node.encode"]
+    n28["Node.encode"]
     n35["Node.log_prob"]
     n38["Node.net_input"]
-    n32["Node.theta_shift"]
+    n34["Node.theta_shift"]
   end
   subgraph transforms
     n54["BernsteinUT._build"]
@@ -433,44 +433,44 @@ flowchart LR
     n5 --> n11
     n5 --> n12
     n5 --> n13
-    n5 -- "3x" --> n14
-    n5 --> n15
-    n5 -- "2x" --> n16
-    n5 --> n17
+    n5 --> n14
+    n5 -- "3x" --> n15
+    n5 --> n16
+    n5 -- "2x" --> n17
     n5 -- "2x" --> n18
     n5 --> n19
     n8 -- "6x" --> n20
     n8 -- "6x" --> n19
-    n13 -- "2x" --> n21
+    n13 --> n21
     n13 --> n22
-    n23 -- "30x" --> n24
-    n14 -- "3x" --> n20
-    n15 --> n23
-    n15 -- "2x" --> n25
-    n15 --> n26
-    n27 -- "18x" --> n21
-    n27 -- "9x" --> n22
-    n16 -- "2x" --> n28
+    n13 -- "3x" --> n23
+    n13 -- "3x" --> n24
+    n14 -- "2x" --> n25
+    n14 --> n26
+    n27 -- "30x" --> n28
+    n15 -- "3x" --> n20
+    n16 --> n27
     n16 -- "2x" --> n29
-    n16 -- "6x" --> n30
-    n31 -- "27x" --> n27
-    n31 -- "27x" --> n32
-    n17 --> n28
-    n17 --> n29
-    n17 -- "3x" --> n33
-    n17 -- "3x" --> n34
-    n20 -- "9x" --> n23
-    n20 -- "27x" --> n31
+    n16 --> n30
+    n31 -- "18x" --> n25
+    n31 -- "9x" --> n26
+    n17 -- "2x" --> n21
+    n17 -- "2x" --> n22
+    n17 -- "6x" --> n32
+    n33 -- "27x" --> n31
+    n33 -- "27x" --> n34
+    n20 -- "9x" --> n27
+    n20 -- "27x" --> n33
     n20 -- "27x" --> n35
     n36 -- "9x" --> n37
     n36 -- "9x" --> n38
-    n33 -- "3x" --> n34
-    n33 -- "2x" --> n39
+    n23 -- "3x" --> n24
+    n23 -- "2x" --> n39
     n40 -- "9x" --> n41
     n42 -- "27x" --> n43
-    n34 -- "6x" --> n44
-    n26 --> n45
-    n26 --> n38
+    n24 -- "6x" --> n44
+    n30 --> n45
+    n30 --> n38
     n46 -- "9x" --> n47
     n19 -- "7x" --> n48
     n49 -- "9x" --> n46
@@ -480,10 +480,10 @@ flowchart LR
     n35 -- "18x" --> n52
     n35 -- "9x" --> n53
     n38 -- "19x" --> n44
-    n32 -- "9x" --> n36
-    n32 -- "9x" --> n40
-    n32 -- "27x" --> n42
-    n32 -- "9x" --> n49
+    n34 -- "9x" --> n36
+    n34 -- "9x" --> n40
+    n34 -- "27x" --> n42
+    n34 -- "9x" --> n49
     n52 -- "18x" --> n54
     n52 -- "18x" --> n55
     n52 -- "18x" --> n56

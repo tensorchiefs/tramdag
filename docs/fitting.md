@@ -58,10 +58,13 @@ weights.
   freezes its data-dependent state there, the intercept its `range_q`
   quantiles and each `input_transform=` its statistics. A loaded checkpoint is
   never recalibrated.
-- **Marginal start.** Off by default; every simple intercept starts at zuko's
-  zero. `fit(marginal_init=True)` starts every Bernstein or ordinal simple
-  intercept at the empirical marginal of its column instead.
-  [The marginal start](#the-marginal-start) below says how.
+- **Marginal start.** Off by default: every simple intercept starts with all
+  its parameters at zero, the zero start. `fit(marginal_init=True)` starts
+  each Bernstein or ordinal simple intercept at the empirical distribution of
+  its column instead. The untrained model then already fits each marginal,
+  and the fit needs fewer epochs.
+  [The marginal start](#the-marginal-start) says how, and when the endpoint
+  changes.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
   a float and uses the last fraction of `train_df` unshuffled, so shuffle the
   frame first if its row order means anything; only the head calibrates. With
@@ -87,11 +90,16 @@ weights.
 
 ### The marginal start
 
-`marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each simple
-intercept. At shift $s = 0$, the node then has the empirical marginal
-$\hat F$ of its training column: exactly for an ordinal node, as a smooth
-approximation for a continuous node. An intercept with parents (`I("x1")`) has no
-single $\boldsymbol{\vartheta}$ and keeps its initialization.
+The marginal start puts the optimizer near the data before the first step.
+It changes the parameters the optimizer starts from, not the model or the
+loss.
+
+`marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each Bernstein or
+ordinal simple intercept. At shift $s = 0$, the node's CDF then equals the
+empirical marginal $\hat F$ of its training column: exactly for an ordinal
+node, as a smooth approximation for a continuous node. An intercept with
+parents (`I("x1")`) has no single $\boldsymbol{\vartheta}$ and keeps the
+zero start.
 
 **Why logit.** The latent $U$ is standard logistic, so its CDF is the
 sigmoid $\sigma$ and its quantile function is $\operatorname{logit}$. At
@@ -105,20 +113,26 @@ $$
 The code evaluates $\log(1 - p)$ as `log1p(-p)`, which stays accurate for
 $p$ near 0.
 
-**Ordinal node.** `ordinal_marginal_init_theta` takes the class counts. The
-model is $P(X \le k) = \sigma(\vartheta_k - s)$, so the targets are the
-cumulative class log-odds $c_k = \operatorname{logit} \hat F(k)$ for
-$k = 0, \dots, K-2$. The function inverts `ordinal_cutpoints` and gives the unconstrained
-parameters $\tilde\vartheta_0 = c_0$ and
-$\tilde\vartheta_k = \log(c_k - c_{k-1})$. At
-$s = 0$ the class probabilities are the empirical frequencies. For counts
+**Ordinal node.** `ordinal_marginal_init_theta` takes the counts of the $K$
+classes $0, \dots, K-1$. The model is $P(X \le k) = \sigma(\vartheta_k - s)$,
+so the targets are the cumulative class log-odds
+$c_k = \operatorname{logit} \hat F(k)$ for $k = 0, \dots, K-2$.
+`ordinal_cutpoints` builds increasing cutpoints from unconstrained
+parameters: $\vartheta_0 = \tilde\vartheta_0$ and
+$\vartheta_k = \vartheta_{k-1} + e^{\tilde\vartheta_k}$. The start inverts
+this map. It sets $\tilde\vartheta_0 = c_0$ and
+$\tilde\vartheta_k = \log(c_k - c_{k-1})$. At $s = 0$ the class
+probabilities are then the empirical frequencies. For counts
 `[50, 30, 15, 5]` the start gives the PMF `[0.50, 0.30, 0.15, 0.05]`.
 
 **Continuous node.** `BernsteinUT.marginal_init_theta` takes the column. A
 Bernstein polynomial of order $M$ with control points $\vartheta_k$ is close
-to the function whose values at $k/M$ are $\vartheta_k$. zuko turns
-`n_coeffs` parameters into $M + 1$ control points, with $M$ =
-`n_coeffs + 1`. The start uses this:
+to the function whose values at $k/M$ are $\vartheta_k$. The transform
+pre-scales the calibrated range onto the domain of the polynomial
+([model.md](model.md#the-three-knobs-on-a-term)). The point $k/M$ of the
+domain then belongs to a data value $x_k$. zuko turns `n_coeffs` parameters
+into $M + 1$ control points, with $M$ = `n_coeffs + 1`; step 3 explains the
+two extra points. The start uses the closeness property in three steps:
 
 1. It places $M + 1$ equally spaced points $x_k$ on the calibrated range,
    from the `range_q` quantile to the `1 - range_q` quantile of the column.
@@ -134,40 +148,51 @@ to the function whose values at $k/M$ are $\vartheta_k$. zuko turns
    lists the zuko internals this relies on.
 
 The polynomial then starts as the Bernstein approximation of
-$\operatorname{logit} \hat F$. The approximation smooths $\hat F$. On 4000
-rows, the largest gap between the start's CDF and $\hat F$ is 0.010 for a
-normal column, 0.080 for a lognormal column and 0.103 for a bimodal column.
+$\operatorname{logit} \hat F$. The approximation smooths $\hat F$, and a
+sharp feature such as the dip between two modes smooths most. On 4000 rows,
+the largest gap between the start's CDF and $\hat F$ is 0.010 for a normal
+column, 0.080 for a lognormal column and 0.103 for a bimodal column.
 
 The ends of the range carry the empirical quantiles `range_q` and
 `1 - range_q`, so the end control points are close to
 $\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$ with $q$ =
-`range_q`. At the default $q = 0.05$ these are $-2.944$ and $2.944$. A transform with fewer than 3 coefficients ignores the
-column and takes the straight line between these two values. Its tied steps
-leave no shape to fit. At `n_coeffs = 20`, zuko's zero start is also close
-to a straight line, on about $[-6.9, 7.6]$, and 2.5 times steeper.
+`range_q`. At the default $q = 0.05$ these are $-2.944$ and $2.944$. With
+fewer than 3 coefficients, the tied steps use all the parameters and leave
+only a straight line. The start then takes the line between these two end
+values.
 
-**Guards.** Two floors keep the start finite and increasing:
+**Guards.** Two limits keep the start finite and increasing:
 
 - The start clips $\hat F$ to $[10^{-3}, 1 - 10^{-3}]$, so a control point
   or a cutpoint stays within about $\pm 6.9$.
-- Each step between adjacent points is at least $10^{-3}$, because the
-  softplus and log inverses need strictly increasing points. An empty class
-  or a gap in the data therefore gets a small but nonzero probability. An
-  empty middle class starts at $2.5 \cdot 10^{-4}$ or less.
+- Each step between adjacent control points or cutpoints is at least
+  $10^{-3}$, because the softplus and log inverses need strictly increasing
+  points. An empty class or a gap in the data therefore gets a small but
+  nonzero probability. An empty middle class starts at $2.5 \cdot 10^{-4}$
+  or less.
 
 **Where it does not apply.** The spline and affine transforms have no
 marginal start, and the flag skips them. A `range_q=0` Bernstein transform
-maps the data minimum and maximum onto the range ends. Their target
-$\operatorname{logit} 0$ does not exist, so `fit` raises. It also raises when
-this transform belongs to an intercept with parents. Fit such a model with
-`marginal_init=False`.
+maps the data minimum and maximum onto the range ends. The start ties the
+range ends to $\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$,
+which are infinite for $q = 0$. So `fit` raises before it reads the column.
+It raises for such a transform also in an intercept with parents, which does
+not use the start. Fit such a model with `marginal_init=False`.
 
-**What it changes.** The start moves only the initial point. For the three
-columns above, zuko's zero start gives a per-row NLL of 2.35, 4.15 and 5.52.
-The marginal start gives 1.42, 1.51 and 1.34. The likelihood of an all-`LS`
-model has one optimum, which the fit reaches with or without the start.
-`fit_classical` therefore takes no such flag. A model with a network shift or a
-learning-rate anneal can end in a different basin. D4 in
+**What it changes.** For the three columns above, the zero start gives a
+per-row NLL of 2.35, 4.15 and 5.52. The marginal start gives 1.42, 1.51 and
+1.34. At `n_coeffs = 20` the zero start is close to a straight line too. Its
+control points run from about $-6.9$ to $7.6$, so it is 2.5 times steeper
+than the line from $-2.944$ to $2.944$. A steeper $h$ gives a narrower
+distribution than the data, which explains the higher NLL.
+
+The likelihood of an all-`LS` model has one optimum, which the fit reaches
+with or without the start. The start only shortens the way. The triangle
+`linear-ls` variant comes within 0.01 of its final NLL in 5 epochs instead
+of 28. `fit_classical`
+therefore takes no such flag. A model with a network shift or a
+learning-rate anneal can reach a different local optimum. For such a model
+the start can improve or worsen the causal estimate. D4 in
 [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
 measures this per variant.
 

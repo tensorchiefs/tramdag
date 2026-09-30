@@ -96,10 +96,10 @@ loss.
 
 `marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each Bernstein or
 ordinal simple intercept. At shift $s = 0$, the node's CDF then equals the
-empirical marginal $\hat F$ of its training column: exactly for an ordinal
-node, as a smooth approximation for a continuous node. An intercept with
-parents (`I("x1")`) has no single $\boldsymbol{\vartheta}$ and keeps the
-zero start.
+empirical marginal $\hat F$ of its training column. The match is exact for
+an ordinal node and a smooth approximation for a continuous node. An
+intercept with parents (`I("x1")`) has no single $\boldsymbol{\vartheta}$.
+The flag leaves it at the seeded initialization of its network.
 
 **Why logit.** The latent $U$ is standard logistic, so its CDF is the
 sigmoid $\sigma$ and its quantile function is $\operatorname{logit}$. At
@@ -163,8 +163,8 @@ values.
 
 **Guards.** Two limits keep the start finite and increasing:
 
-- The start clips $\hat F$ to $[10^{-3}, 1 - 10^{-3}]$, so a control point
-  or a cutpoint stays within about $\pm 6.9$.
+- The start clips $\hat F$ to $[10^{-3}, 1 - 10^{-3}]$. A control point or
+  a cutpoint then stays within about $\pm 6.9$.
 - Each step between adjacent control points or cutpoints is at least
   $10^{-3}$, because the softplus and log inverses need strictly increasing
   points. An empty class or a gap in the data therefore gets a small but
@@ -186,13 +186,14 @@ control points run from about $-6.9$ to $7.6$, so it is 2.5 times steeper
 than the line from $-2.944$ to $2.944$. A steeper $h$ gives a narrower
 distribution than the data, which explains the higher NLL.
 
-The likelihood of an all-`LS` model has one optimum, which the fit reaches
-with or without the start. The start only shortens the way. The triangle
-`linear-ls` variant comes within 0.01 of its final NLL in 5 epochs instead
-of 28. `fit_classical`
-therefore takes no such flag. A model with a network shift or a
-learning-rate anneal can reach a different local optimum. For such a model
-the start can improve or worsen the causal estimate. D4 in
+The likelihood of an all-`LS` model has one optimum, and the fit reaches it
+with or without the start. So the start only shortens the way, and
+`fit_classical` takes no such flag. The triangle `linear-ls` variant comes
+within 0.01 of its final NLL in 5 epochs instead of 28.
+
+A model with a network shift or a learning-rate anneal can reach a
+different local optimum. For such a model the start can improve or worsen
+the causal estimate. D4 in
 [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
 measures this per variant.
 

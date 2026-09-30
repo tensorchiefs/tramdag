@@ -89,7 +89,8 @@ weights.
 
 `marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each simple
 intercept. At shift $s = 0$, the node then has the empirical marginal
-$\hat F$ of its training column. An intercept with parents (`I("x1")`) has no
+$\hat F$ of its training column: exactly for an ordinal node, as a smooth
+approximation for a continuous node. An intercept with parents (`I("x1")`) has no
 single $\boldsymbol{\vartheta}$ and keeps its initialization.
 
 **Why logit.** The latent $U$ is standard logistic, so its CDF is the
@@ -107,8 +108,9 @@ $p$ near 0.
 **Ordinal node.** `ordinal_marginal_init_theta` takes the class counts. The
 model is $P(X \le k) = \sigma(\vartheta_k - s)$, so the targets are the
 cumulative class log-odds $c_k = \operatorname{logit} \hat F(k)$ for
-$k = 0, \dots, K-2$. The function inverts `ordinal_cutpoints`:
-$\tilde\vartheta_0 = c_0$ and $\tilde\vartheta_k = \log(c_k - c_{k-1})$. At
+$k = 0, \dots, K-2$. The function inverts `ordinal_cutpoints` and gives the unconstrained
+parameters $\tilde\vartheta_0 = c_0$ and
+$\tilde\vartheta_k = \log(c_k - c_{k-1})$. At
 $s = 0$ the class probabilities are the empirical frequencies. For counts
 `[50, 30, 15, 5]` the start gives the PMF `[0.50, 0.30, 0.15, 0.05]`.
 
@@ -128,6 +130,8 @@ to the function whose values at $k/M$ are $\vartheta_k$. zuko turns
    steps. The start averages each tied pair and inverts the softplus with
    $\log(e^d - 1)$. It adds zuko's centering offset $n \log 2 / 2$, with
    $n$ = `n_coeffs`, to the first parameter.
+   [zuko-upstream.md](zuko-upstream.md#3-public-inverse-of-_constrain_theta)
+   lists the zuko internals this relies on.
 
 The polynomial then starts as the Bernstein approximation of
 $\operatorname{logit} \hat F$. The approximation smooths $\hat F$. On 4000
@@ -138,10 +142,9 @@ The ends of the range carry the empirical quantiles `range_q` and
 `1 - range_q`, so the end control points are close to
 $\pm\operatorname{logit} q$ with $q$ = `range_q`. At the default $q = 0.05$
 this is $\pm 2.944$. A transform with fewer than 3 coefficients ignores the
-column and takes the straight line between these two values, because its
-tied steps leave no shape to fit. zuko's zero start puts the control points
-on about $[-6.9, 7.6]$. That line is 2.5 times steeper than the
-$\pm 2.944$ line.
+column and takes the straight line between these two values. Its tied steps
+leave no shape to fit. At `n_coeffs = 20`, zuko's zero start is also close
+to a straight line, on about $[-6.9, 7.6]$, and 2.5 times steeper.
 
 **Guards.** Two floors keep the start finite and increasing:
 
@@ -161,15 +164,12 @@ this transform belongs to an intercept with parents. Fit such a model with
 
 **What it changes.** The start moves only the initial point. For the three
 columns above, zuko's zero start gives a per-row NLL of 2.35, 4.15 and 5.52.
-The marginal start gives 1.42, 1.51 and 1.34. An all-`LS` model reaches the
-same optimum with or without the start. A model with a network shift or a
+The marginal start gives 1.42, 1.51 and 1.34. The likelihood of an all-`LS`
+model has one optimum, which the fit reaches with or without the start.
+`fit_classical` therefore takes no such flag. A model with a network shift or a
 learning-rate anneal can end in a different basin. D4 in
 [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
 measures this per variant.
-
-`fit_classical` takes no such flag. The likelihood of an all-`LS` model has
-one optimum, so a start would change how far the line search travels and
-nothing else.
 
 `fit` applies the start only on the call that calibrates. A second `fit`
 therefore continues from the trained intercepts and does not reset them. A

@@ -131,10 +131,11 @@ class EarlyStopping(Callback):
         min_delta: float = 0.0,
     ):
         if patience is not None and patience < 1:
-            raise ValueError(f"patience must be at least 1, got {patience}")
+            raise ValueError(f"patience must be at least 1, got {patience!r}")
         if patience is None and not restore_best:
             raise ValueError(
-                "patience=None and restore_best=False is a no-op — set at least one"
+                "patience=None and restore_best=False is a no-op; pass patience= "
+                "or restore_best=True"
             )
         self.patience = patience
         self.restore_best = restore_best
@@ -219,10 +220,11 @@ class PerNodeEarlyStopping(Callback):
         min_delta: float = 0.0,
     ):
         if patience is not None and patience < 1:
-            raise ValueError(f"patience must be at least 1, got {patience}")
+            raise ValueError(f"patience must be at least 1, got {patience!r}")
         if patience is None and not restore_best:
             raise ValueError(
-                "patience=None and restore_best=False is a no-op — set at least one"
+                "patience=None and restore_best=False is a no-op; pass patience= "
+                "or restore_best=True"
             )
         self.patience = patience
         self.restore_best = restore_best

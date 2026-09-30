@@ -54,13 +54,12 @@ weights.
   `seed=`, which seeds the shuffle only and not the weight init.
 - **Epochs.** `epochs` has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
-- **Calibration.** The first `fit` calls `calibrate(train_df)`. Every term
+- **Calibration.** The first `fit` calibrates the flow on `train_df`. Every term
   freezes its data-dependent state there, the intercept its `range_q`
   quantiles and each `input_transform=` its statistics. A loaded checkpoint is
   never recalibrated.
 - **Marginal start.** Off by default; every simple intercept starts at zuko's
-  zero. `fit(marginal_init=True)` and `calibrate(train_df, marginal_init=True)`
-  set it instead: every Bernstein
+  zero. `fit(marginal_init=True)` sets it instead: every Bernstein
   or ordinal simple intercept starts at the empirical marginal of its column,
   as `logit(F_hat)` in control points or cutpoints. The spline, the affine and
   the `range_q=0` transforms have no such start. It is a pure initialization

@@ -48,7 +48,6 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one [`Node`][tramdag.nodes.Node] per variable in topological order. Construction seeds the weights. |
-| [`calibrate()`][tramdag.flow.CausalFlowDAG.calibrate] | The data-dependent state of every term, taken once from the training rows; `marginal_init=True` also starts every simple intercept at its marginal ([fitting.md](fitting.md)). |
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Joint maximum likelihood by one minibatch Adam loop, with `validation_data=`/`validation_split=`, `verbose=`, `optimizer=` and `callbacks=`; `history` holds `train`, `val` and `lr` per epoch. A second call continues training. The mechanics are in [fitting.md](fitting.md). |
 | [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Float64 full-batch L-BFGS for all-`ls` specs; refuses flexible specs. |
 | [`sample()`][tramdag.flow.CausalFlowDAG.sample] | Observational, interventional (`do=`, graph mutilation) and counterfactual (`u=`) sampling. |
@@ -160,7 +159,7 @@ default you can read at the call site. Nothing numeric is buried.
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodeEarlyStopping`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
-| calibrated init | `fit(marginal_init=)`, `calibrate(marginal_init=)` | False: zuko's zero start; applied once, on the calibrating fit |
+| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied once, on the first fit |
 | VC stage-1 propensities | the training-frame column `VC(center=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, center=)` | 1.0 / False (`center="col"` names the propensity column) |
 | L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |

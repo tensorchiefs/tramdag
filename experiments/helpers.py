@@ -81,7 +81,6 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
         wall-clock of the ``fit`` call alone, the CI runtime tripwire.
     """
     flow = CausalFlowDAG(spec_from_dict(config["spec"]), **config["flow_kwargs"])
-    flow.calibrate(train, marginal_init=config["marginal_init"])
     opt = torch.optim.Adam(flow.parameters(), lr=config["learning_rate"])
     plateau = None
     if config["schedule"] == "plateau":
@@ -110,6 +109,7 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
         validation_data=val if plateau is not None else None,
         optimizer=opt,
         callbacks=epoch_end,
+        marginal_init=config["marginal_init"],
         **config["fit_kwargs"],
     )
     fit_seconds = round(time.perf_counter() - t0, 1)

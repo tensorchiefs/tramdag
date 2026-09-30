@@ -39,7 +39,7 @@ def _additive_ci_flow():
 def test_baseline_plus_contributions_reproduces_theta():
     flow = _additive_ci_flow()
     df = _data()
-    flow.calibrate(df)  # not needed for theta, but exercises the realistic path
+    flow._calibrate(df)  # not needed for theta, but exercises the realistic path
 
     res = flow.intercept_contributions(df, "x3")
     # reconstruct theta from the centered components + baseline

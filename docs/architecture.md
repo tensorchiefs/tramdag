@@ -15,7 +15,7 @@ graph TD
         modules["modules.py<br/>one nn.Module per term, built from (term, spec):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
         nodes["nodes.py<br/>Node: intercept + shifts,<br/>encode, log_prob, sample,<br/>abduct, marginal_theta"]
-        flow["flow.py<br/>CausalFlowDAG: construct, calibrate,<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
+        flow["flow.py<br/>CausalFlowDAG: construct, calibrate (private),<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
     end
     subgraph functions["flow behavior by concern"]
         fitting["fitting.py<br/>FitMixin: fit (Adam loop, callbacks),<br/>fit_classical (L-BFGS)"]
@@ -376,7 +376,7 @@ flowchart LR
     n27["CausalFlowDAG._side_feats"]
     n16["CausalFlowDAG._tensorize"]
     n31["CausalFlowDAG._theta_shift"]
-    n17["CausalFlowDAG.calibrate"]
+    n17["CausalFlowDAG._calibrate"]
     n20["CausalFlowDAG.node_log_prob"]
   end
   subgraph modules

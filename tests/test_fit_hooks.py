@@ -41,7 +41,7 @@ def _ls_spec():
 def test_fit_improves_and_records_train_nll(ls_chain):
     df = ls_chain["draw"](800, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     nll0 = sum(flow.nll(df).values())
     flow.fit(df, epochs=60, learning_rate=1e-2)
     nll1 = sum(flow.nll(df).values())
@@ -93,7 +93,7 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
     """
     df = ls_chain["draw"](400, 1)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     opt = torch.optim.SGD(flow.parameters(), lr=0.0)  # a zero step: nothing moves
     before = copy.deepcopy(flow.state_dict())
     flow.fit(df, epochs=2, learning_rate=1e-2, optimizer=opt)
@@ -329,7 +329,7 @@ def test_per_node_early_stopping_rejects_a_zero_start_rate(ls_chain):
     """
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     groups = [
         {"params": list(flow.nodes[n].parameters()), "lr": 0.0, "node": n}
         for n in flow.order
@@ -347,7 +347,7 @@ def test_per_node_early_stopping_rejects_an_untagged_optimizer(ls_chain):
     """A plain optimizer (one group, no ``node`` tag) is refused loudly."""
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     opt = torch.optim.Adam(flow.parameters(), lr=1e-2)
     with pytest.raises(ValueError, match="per_node_adam"):
         PerNodeEarlyStopping(patience=10)._step(flow, flow.nll(df), opt, 1)

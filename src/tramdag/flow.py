@@ -99,7 +99,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        # calibrate() takes the data-dependent state once; a buffer, not a Python
+        # _calibrate() takes the data-dependent state once; a buffer, not a Python
         # bool, so the flag rides in the state dict and a loaded flow does not
         # recalibrate on its next fit
         self.register_buffer("calibrated", torch.tensor(False))
@@ -334,7 +334,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """Give the per-node mean NLL of already tensorized columns."""
         return {k: float(-v.mean()) for k, v in self.node_log_prob(values).items()}
 
-    def calibrate(
+    def _calibrate(
         self, train_df: pd.DataFrame, *, marginal_init: bool = False
     ) -> CausalFlowDAG:
         r"""Take the data-dependent state from the training rows, once.

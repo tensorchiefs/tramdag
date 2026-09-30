@@ -237,7 +237,7 @@ def test_log_prob_names_an_unknown_node_and_refuses_an_empty_list(ls_chain):
     flow = CausalFlowDAG(
         {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
     )
-    flow.calibrate(df)
+    flow._calibrate(df)
     with pytest.raises(KeyError, match="unknown node 'nope'"):
         flow.log_prob(df, nodes=["nope"])
     with pytest.raises(ValueError, match="sums nothing"):

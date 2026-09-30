@@ -83,7 +83,7 @@ def test_marginal_init_only_touches_unconditional_roots():
         for k, v in flow.nodes["x2"].intercept.state_dict().items()
     }
 
-    assert flow.calibrate(df, marginal_init=True) is flow
+    assert flow._calibrate(df, marginal_init=True) is flow
 
     # the two roots are now calibrated (changed from their zero init)...
     assert not torch.allclose(flow.nodes["x1"].intercept.theta.detach(), root_x1_before)
@@ -100,7 +100,7 @@ def test_marginal_init_only_touches_unconditional_roots():
 
 def test_calibrate_leaves_the_weights_alone_unless_asked():
     flow, df = _mixed_flow_and_df()
-    flow.calibrate(df)  # zuko's zero start: the marginal start is opt-in
+    flow._calibrate(df)  # zuko's zero start: the marginal start is opt-in
     assert torch.allclose(
         flow.nodes["x1"].intercept.theta.detach(),
         torch.zeros_like(flow.nodes["x1"].intercept.theta),
@@ -109,7 +109,7 @@ def test_calibrate_leaves_the_weights_alone_unless_asked():
 
 def test_calibrate_sets_the_marginal_start_when_asked():
     flow, df = _mixed_flow_and_df()
-    flow.calibrate(df, marginal_init=True)
+    flow._calibrate(df, marginal_init=True)
     np.testing.assert_allclose(
         flow.nodes["x1"].intercept.theta.detach().numpy(),
         flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
@@ -159,7 +159,7 @@ def test_marginal_init_is_pure_init_same_optimum(ls_chain):
 
     def converged_nll(marginal_init):
         flow = CausalFlowDAG(spec, seed=0)
-        flow.calibrate(obs, marginal_init=marginal_init)
+        flow._calibrate(obs, marginal_init=marginal_init)
         flow.fit(obs, epochs=1500, learning_rate=1e-2, batch_size=512)
         return sum(flow.nll(obs).values())
 
@@ -180,7 +180,7 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     loaded = CausalFlowDAG.load(tmp_path / "m.pt")
 
     before = loaded.nodes["y"].intercept.theta.detach().clone()
-    loaded.calibrate(df)  # no-op: the calibrated flag traveled in the checkpoint
+    loaded._calibrate(df)  # no-op: the calibrated flag traveled in the checkpoint
     # lr 0: the epoch runs (and would recalibrate, if the flag were lost)
     # without moving any weight
     loaded.fit(df, epochs=1, learning_rate=0.0, batch_size=128)
@@ -202,13 +202,13 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
     for name, column in columns.items():
         df = pd.DataFrame({"x": column})
         flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
-        flow.calibrate(df)
+        flow._calibrate(df)
         linear = flow.nodes["x"].ut.marginal_init_theta(None)
         flow.nodes["x"].intercept.marginal_start(linear)
         nll_linear = float(sum(flow.nll(df).values()))
 
         flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
-        flow.calibrate(df, marginal_init=True)  # the empirical start
+        flow._calibrate(df, marginal_init=True)  # the empirical start
         empirical = flow.nodes["x"].intercept.theta.detach()
         assert float(sum(flow.nll(df).values())) < nll_linear - 0.2, name
         assert not torch.allclose(empirical, linear)

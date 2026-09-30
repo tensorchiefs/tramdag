@@ -215,7 +215,7 @@ class TermModule(nn.Module):
     def calibrate(self, train_df: pd.DataFrame) -> None:
         """Freeze this term's data-dependent state: the input-transform stats.
 
-        ``CausalFlowDAG.calibrate`` calls this once per term; a term without
+        ``CausalFlowDAG._calibrate`` calls this once per term; a term without
         an ``input_transform`` has nothing to freeze. The intercept slot has a
         second step on top of this one — see
         [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].

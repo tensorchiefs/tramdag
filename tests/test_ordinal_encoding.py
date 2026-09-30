@@ -70,7 +70,7 @@ def test_design_matrix_drops_the_flat_direction():
     """``drop_first`` removes exactly one column per ordinal parent."""
     spec, df = _ordinal_parent_frame(n=50)
     flow = CausalFlowDAG(spec, seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     full = flow.design_matrix(df, "y")
     reduced = flow.design_matrix(df, "y", drop_first=True)
     assert list(full.columns) == [f"p[{k}]" for k in range(4)]

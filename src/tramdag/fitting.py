@@ -233,9 +233,10 @@ class FitMixin:
             (``CausalFlowDAG(spec, seed=...)``).
         marginal_init : bool, optional
             Start every simple intercept at its column's marginal, by default
-            ``False``. Applied once, on the first fit, which calibrates the
-            flow: a later phase of a schedule continues training rather than
-            resetting those intercepts.
+            ``False``. Applied only by the fit that calibrates the flow, so a
+            flow that ``fit_classical`` already calibrated ignores it. A later
+            phase of a schedule continues training rather than resetting those
+            intercepts.
         optimizer : torch.optim.Optimizer | None, optional
             Any torch optimizer over ``flow.parameters()``; the default is
             ``Adam(lr=learning_rate)``. Build it yourself to attach a

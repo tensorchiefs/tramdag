@@ -61,8 +61,8 @@ weights.
 - **Marginal start.** Off by default: every simple intercept starts with all
   its parameters at zero, the zero start. `fit(marginal_init=True)` starts
   each Bernstein or ordinal simple intercept at the empirical distribution of
-  its column instead. The untrained model then already fits each marginal,
-  and the fit needs fewer epochs.
+  its column instead. At shift zero the untrained model then already fits
+  each marginal, and the fit needs fewer epochs.
   [The marginal start](#the-marginal-start) says how, and when the endpoint
   changes.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes

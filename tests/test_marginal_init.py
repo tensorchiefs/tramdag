@@ -1,5 +1,5 @@
-"""Tests for ``marginal_init`` — the calibrated start of each
-*unconditional* (root) node's transform to the empirical marginal.
+"""Tests for ``marginal_init`` — the calibrated start of each simple
+intercept's transform to the empirical marginal.
 
 What it guarantees:
 - Bernstein roots start at the Bernstein approximation of logit(F_hat(y)), the
@@ -7,10 +7,10 @@ What it guarantees:
   quantiles (±2.944) — not zuko's ~2.5×-too-steep zero θ. Without a column the
   start is the plain linear map between those ends.
 - Ordinal roots start with cutpoints reproducing the empirical class frequencies.
-- It only touches unconditional `SimpleInterceptModule` roots — parented `I` terms are
+- It only touches `SimpleInterceptModule` intercepts — parented `I` terms are
   left alone.
-- It is a *pure init*: a marginal-init fit and a default fit converge to the same
-  optimum.
+- It is a *pure init* for an all-`LS` model: a marginal-init fit and a default fit
+  converge to the same optimum.
 """
 
 # %% imports ---------------------------------------------------------------------------

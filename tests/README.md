@@ -107,7 +107,7 @@ acceptance bars.
 | [`test_vc_term.py`](test_vc_term.py) | the VC effect head — spec, penalty, recovery of `beta(x)` |
 | [`test_vc_centered.py`](test_vc_centered.py) | propensity-centered VC — out-of-fold structure, zero-gradient freeze, bias reduction |
 | [`test_scores.py`](test_scores.py) | analytic scores vs finite differences, the effect-modifier scan |
-| [`test_marginal_init.py`](test_marginal_init.py) | calibrated marginal initialization — pure-init property |
+| [`test_marginal_init.py`](test_marginal_init.py) | calibrated marginal initialization — pure-init property of an all-`LS` model |
 | [`test_ordinal_encoding.py`](test_ordinal_encoding.py) | the one-hot parent encoding — level-index validation at every entry point, and the one flat direction it costs per ordinal `LS` parent |
 | [`test_api_papercuts.py`](test_api_papercuts.py) | error messages, `save`/`load` meta, small API contracts |
 | [`test_custom_terms.py`](test_custom_terms.py) | the two-class term contract: a `Term` plus `ShiftModule` subclass, a custom `regularizer`, and the refusals for an unknown or orphan term |

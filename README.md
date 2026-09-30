@@ -92,11 +92,14 @@ If you use `tramdag`, please cite the method paper:
 
 ```bibtex
 @inproceedings{sick2025tramdag,
-  title     = {Interpretable Neural Causal Models with TRAM-DAGs},
+  title     = {Interpretable Neural Causal Models with {TRAM-DAGs}},
   author    = {Sick, Beate and D{\"u}rr, Oliver},
   booktitle = {Proceedings of the 4th Conference on Causal Learning and Reasoning (CLeaR)},
   series    = {Proceedings of Machine Learning Research},
   volume    = {275},
+  pages     = {606-630},
   year      = {2025},
+  eprint    = {2503.16206},
+  url       = {https://arxiv.org/abs/2503.16206},
 }
 ```

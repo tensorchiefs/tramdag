@@ -247,12 +247,12 @@ run per variant with the start off and on, seeds unchanged:
 | VACA | within 0.5: 2245 → 168 | val NLL 1.4496 → 1.4348; do(x2 = 0) err 0.019 → 0.101, past the 0.044 bound | off: the plateau anneal fires elsewhere and freezes a different point |
 | CAREFL | — | — | impossible: `range_q: 0` has no marginal start |
 
-The start is a pure initialization, so where the optimizer reaches the same
-basin the endpoint is identical and only the epoch count changes. Where the
+The start is only an initialization. Where the optimizer reaches the same
+basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
-off. The pinned ground truth
-of the four variants that switched on is unchanged: every metric stays
+off. The pinned ground truth of the four variants that switched on is
+unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
 listed for the next deliberate re-pin.
 

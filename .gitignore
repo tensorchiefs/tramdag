@@ -6,10 +6,8 @@ __pycache__/
 .coverage
 *.egg-info/
 
-# Experiment outputs — regenerable, and (for the clinical 'magic' source) derived
-# from patient data, so never committed. The synthetic data lives per area
-# under experiments/<area>/data/ and IS tracked.
-# run outputs of any experiment area, at any depth
+# Experiment outputs are regenerable and never committed. The frozen input
+# data under experiments/data/ IS tracked.
 results/
 
 # R
@@ -26,8 +24,6 @@ notebooks/*.ipynb
 # build artifacts
 dist/
 
-# machine-benchmark outputs (collected manually per machine)
-perf_*.json
 
 # jupyter runtime litter
 .ipynb_checkpoints/
@@ -40,8 +36,6 @@ build/
 texfrag/
 docs/*.html
 
-# working ledger of the 2026-08 review — local only
-REVIEW.md
 
 # emacs lock files
 .#*
@@ -51,3 +45,7 @@ scratch/
 .DS_Store
 site/
 .cache/
+architecture-overview.html
+
+# local review ledger
+REVIEW.md

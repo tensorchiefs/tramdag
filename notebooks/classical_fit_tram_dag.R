@@ -35,6 +35,12 @@ cat("logLik", sprintf("%.4f", as.numeric(logLik(m1))), "\n")
 #  -0.021971  -0.010233   0.668698
 # logLik -1499.6678
 
+# the notebook compares its Wald standard errors against these, so they have to
+# come from here rather than from a number someone once pasted into prose
+print(round(sqrt(diag(vcov(m1)))[names(coef(m1))], 6))
+#       age       lwt     smoke
+#  0.025305  0.004116  0.260131
+
 # glm cannot fit the model above: `binomial` needs a binary outcome, and there
 # is no family for "flexible monotone h, logistic latent". `gaussian` is lm --
 # h forced linear, latent normal -- so its coefficients are in GRAMS and only

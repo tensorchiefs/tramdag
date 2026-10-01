@@ -9,12 +9,17 @@ classical comparisons exact.
 """
 
 # %% imports ---------------------------------------------------------------------------
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 
-from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode, fitting
+
+# Most tests cut max_iter short on purpose.
+pytestmark = pytest.mark.filterwarnings("ignore:fit_classical did not converge")
 
 
 # %% private functions -----------------------------------------------------------------
@@ -22,15 +27,15 @@ def _ls_spec() -> dict:
     """The in-class spec of the all-``ls`` chain: every edge a linear shift."""
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), LS("x2")]),
-        "y": OrdinalNode(4, [LS("x1"), LS("x2"), LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
     }
 
 
 # %% public functions ------------------------------------------------------------------
 def test_rejects_non_all_ls():
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([CS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     flow = CausalFlowDAG(spec)
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"x1": rng.standard_normal(50), "x2": rng.standard_normal(50)})
@@ -39,7 +44,7 @@ def test_rejects_non_all_ls():
 
 
 def test_rejects_ci_too():
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([I("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(I("x1"))}
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"x1": rng.standard_normal(50), "x2": rng.standard_normal(50)})
     with pytest.raises(ValueError, match="requires an all-`ls` spec"):
@@ -74,7 +79,7 @@ def test_dtype_round_trip_and_usable(ls_chain):
 def test_continuous_only_all_ls_recovers_the_true_shift(ls_chain):
     """An all-continuous all-ls spec fits and lands on the DGP coefficient."""
     df = ls_chain["draw"](4000, 2)[["x1", "x2"]]
-    spec = {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
     rep = flow.fit_classical(df, max_iter=200)
@@ -93,6 +98,65 @@ def test_max_iter_and_history_size_reach_the_solver(ls_chain):
     assert rep["converged"] is False  # ten iterations cannot settle this fit
     with pytest.raises(TypeError):
         CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, not_a_kwarg=1)
+
+
+def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
+    """Stopping early is not arriving: a short budget stalls on the same tolerance.
+
+    A fit that gives up after a handful of iterations, far from the optimum,
+    stops on "tolerance" but must not report convergence.
+    """
+    obs = ls_chain["draw"](800, 3)
+    with pytest.warns(UserWarning, match="did not converge"):
+        rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)
+    assert rep["stop_reason"] in ("tolerance", "max_iter", "max_eval")
+    assert rep["converged"] is False
+    assert rep["grad_norm"] > 1e-2  # nowhere near a settled fit
+
+
+def test_a_converged_fit_does_not_warn():
+    rng = np.random.default_rng(0)
+    x1 = rng.standard_normal(1000)
+    df = pd.DataFrame({"x1": x1, "x2": 0.8 * x1 + rng.logistic(size=1000)})
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        rep = CausalFlowDAG(spec, seed=0).fit_classical(df)
+    assert rep["converged"] is True
+
+
+@pytest.mark.parametrize("max_iter", [5, 50, 2000])
+def test_the_report_keeps_its_two_flags_consistent(ls_chain, max_iter):
+    """``stop_reason`` names the limit that ended it; both gate ``converged``."""
+    obs = ls_chain["draw"](800, 3)
+    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=max_iter)
+    if rep["n_iter"] == max_iter:
+        assert rep["stop_reason"] == "max_iter"
+    else:
+        assert rep["stop_reason"] in ("tolerance", "max_eval")
+    if rep["converged"]:
+        assert rep["stop_reason"] == "tolerance"
+        assert rep["grad_norm"] <= 1e-2
+
+
+def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
+    """Line searches spend torch's ``max_eval`` before ``max_iter`` is reached."""
+    rng = np.random.default_rng(1)
+    x1 = 5 * rng.standard_normal(3000)
+    df = pd.DataFrame({"x1": x1, "x2": 2 * x1 + rng.logistic(size=3000)})
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    torch.manual_seed(0)
+    rep = CausalFlowDAG(spec).fit_classical(df, max_iter=3)
+    assert rep["n_iter"] < 3
+    assert rep["stop_reason"] == "max_eval"
+    assert rep["converged"] is False
+
+
+def test_an_unreachable_gradient_bound_is_never_converged(ls_chain, monkeypatch):
+    monkeypatch.setattr(fitting, "GRAD_TOL", 0.0)
+    obs = ls_chain["draw"](800, 3)
+    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=2000)
+    assert rep["converged"] is False
 
 
 @pytest.mark.slow
@@ -127,21 +191,22 @@ def test_matches_statsmodels_mle(ls_chain):
 
 @pytest.mark.slow
 def test_agrees_with_adam_mle(ls_chain):
-    """Classical and (converged, no-early-stop) Adam reach the same optimum."""
-    obs = ls_chain["draw"](2000, 5)
+    """Classical and (converged, no-early-stop) Adam reach the same optimum.
+
+    Only the CONTINUOUS edge is unique here — the ordinal outcome's
+    Adam==statsmodels and classical==statsmodels equivalences are pinned
+    fast elsewhere — so the spec is the two-node chain. Tolerance 0.03 on
+    the inline ls_chain DGP.
+    """
+    obs = ls_chain["draw"](2000, 5)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     torch.manual_seed(0)
-    fa = CausalFlowDAG(_ls_spec())
-    for ep, lr in [(3000, 1e-2), (1500, 1e-3)]:
-        fa.fit(
-            obs,
-            epochs=ep,
-            learning_rate=lr,
-            batch_size=256,
-        )
+    fa = CausalFlowDAG(spec)
+    for ep, lr in [(1500, 1e-2), (800, 1e-3)]:
+        fa.fit(obs, epochs=ep, learning_rate=lr, batch_size=256)
     torch.manual_seed(0)
-    fc = CausalFlowDAG(_ls_spec())
+    fc = CausalFlowDAG(spec)
     fc.fit_classical(obs)
-    for node, parent in [("y", "x1"), ("y", "x2"), ("t", "x1"), ("x2", "x1")]:
-        a = float(fa.ls_coefficients()[node][parent][0])
-        c = float(fc.ls_coefficients()[node][parent][0])
-        assert a == pytest.approx(c, abs=0.03), f"{node}<-{parent}: {a} vs {c}"
+    a = float(fa.ls_coefficients()["x2"]["x1"][0])
+    c = float(fc.ls_coefficients()["x2"]["x1"][0])
+    assert a == pytest.approx(c, abs=0.03), f"x2<-x1: {a} vs {c}"

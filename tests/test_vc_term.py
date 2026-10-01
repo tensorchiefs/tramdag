@@ -1,11 +1,11 @@
-"""Tests for the varying-coefficient shift term VC(on, *modifiers, penalty=)
-(issue #28) — construction/validation, the LS nesting (exact and fitted), the
+"""Tests for the varying-coefficient shift term VC(*modifiers, t=, penalty=)
+— construction/validation, the LS nesting (exact and fitted), the
 recovery acceptance bar on the heterogeneous-effect DGP, the read-out
 identities, warm start, and serialization.
 
 The recovery bar (corr(beta_hat, beta_true) >= 0.9) is the regression guard
 against "expressive but unestimated": the unregularized ``CS(on, x...)``
-reduced form measures ~0.5 on this task class (tramdag-simu PR #21), so the
+reduced form measures ~0.5 on this task class, so the
 bar is what the term exists to clear.
 """
 
@@ -25,12 +25,12 @@ def _vc_spec(penalty: float = 1.0) -> dict:
     irrelevant to Y's conditional because the joint NLL decomposes per node).
     """
     return {
-        "X1": ContinuousNode([I(transform="affine")]),
-        "X2": ContinuousNode([I(transform="affine")]),
-        "X3": ContinuousNode([I(transform="affine")]),
-        "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
+        "X1": ContinuousNode(I(transform="affine")),
+        "X2": ContinuousNode(I(transform="affine")),
+        "X3": ContinuousNode(I(transform="affine")),
+        "T": OrdinalNode(2, LS("X1") + LS("X2")),
         "Y": ContinuousNode(
-            [CS("X1", "X2", "X3"), VC("X2", "X3", penalty=penalty, t="T")]
+            CS("X1", "X2", "X3") + VC("X2", "X3", penalty=penalty, t="T")
         ),
     }
 
@@ -55,8 +55,11 @@ def small_fitted(vc_hetero):
 
 def test_vc_constructor():
     t = VC("X2", "X3", penalty=2.5, t="T")
-    assert (t.effect, t.parents, t.penalty) == ("VC", ("T", "X2", "X3"), 2.5)
+    # internal layout: treatment first, modifiers positional
+    assert (t.name, t.parents, t.penalty) == ("VC", ("T", "X2", "X3"), 2.5)
     assert VC(t="T").penalty == 1.0  # the documented default
+    with pytest.raises(TypeError):
+        VC("T", "X2")  # the treatment is the keyword t=
     with pytest.raises(
         ValueError, match=r"cannot be both the treatment \(t\) and a modifier"
     ):
@@ -70,21 +73,21 @@ def test_vc_modifier_may_repeat_but_on_owns_its_edge():
     ok = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([CS("X2"), VC("X2", t="T")]),
+        "Y": ContinuousNode(CS("X2") + VC("X2", t="T")),
     }
     assert validate_and_sort(ok)[-1] == "Y"
     # a second edge-owning term for T -> invalid (beta0 vs main effect unidentified)
     bad = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([LS("T"), VC("X2", t="T")]),
+        "Y": ContinuousNode(LS("T") + VC("X2", t="T")),
     }
     with pytest.raises(ValueError, match="more than one"):
         validate_and_sort(bad)
 
 
 def test_vc_rejects_multilevel_ordinal_treatment():
-    spec = {"T": OrdinalNode(levels=4), "Y": ContinuousNode([VC(t="T")])}
+    spec = {"T": OrdinalNode(levels=4), "Y": ContinuousNode(VC(t="T"))}
     with pytest.raises(ValueError, match="2-level"):
         validate_and_sort(spec)
 
@@ -93,7 +96,7 @@ def test_vc_modifiers_are_real_dag_edges():
     """Modifiers must topologically precede the node (they are parents)."""
     spec = {
         "T": OrdinalNode(levels=2),
-        "Y": ContinuousNode([VC("M", t="T")]),
+        "Y": ContinuousNode(VC("M", t="T")),
         "M": ContinuousNode(),
     }
     order = validate_and_sort(spec)
@@ -108,15 +111,15 @@ def test_to_matrix_vc_labels():
 
 
 def test_vc_without_modifiers_equals_ls_exactly():
-    """VC(on) has no net — with beta0 set to the LS weight the two models give
-    bit-identical log-probs (the nesting is exact, not approximate).
+    """VC(t=) without modifiers has no net — with beta0 set to the LS weight the
+    two models give bit-identical log-probs (the nesting is exact, not approximate).
     """
     rng = np.random.default_rng(3)
     t = rng.integers(0, 2, 200).astype(float)
     y = 0.7 * t + rng.logistic(size=200)
     df = pd.DataFrame({"T": t, "Y": y})
-    spec_vc = {"T": OrdinalNode(levels=2), "Y": ContinuousNode([VC(t="T")])}
-    spec_ls = {"T": OrdinalNode(levels=2), "Y": ContinuousNode([LS("T")])}
+    spec_vc = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(VC(t="T"))}
+    spec_ls = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(LS("T"))}
     fv, fl = CausalFlowDAG(spec_vc, seed=0), CausalFlowDAG(spec_ls, seed=0)
     with torch.no_grad():
         # LS enters via the 2-column one-hot; only w[1]-w[0] is identified.
@@ -144,7 +147,7 @@ def test_varying_coef_deterministic_and_y_free(small_fitted):
 
 def test_varying_coef_equals_abduct_difference(small_fitted):
     """For a binary treatment, beta(x) must equal the abduct-difference
-    u(x, T=1, y) - u(x, T=0, y) identically (issue #28 identity check).
+    u(x, T=1, y) - u(x, T=0, y) identically (the VC identity check).
     """
     flow, dgp = small_fitted
     new = dgp["draw"](300, 901)
@@ -169,7 +172,7 @@ def test_save_load_roundtrip_vc(tmp_path, small_fitted):
     p = tmp_path / "vc.pt"
     flow.save(p)
     flow2 = CausalFlowDAG.load(p)
-    vc = next(t for t in flow2.spec["Y"].terms if t.effect == "VC")
+    vc = next(t for t in flow2.spec["Y"].terms if t.name == "VC")
     assert vc.penalty == 1.0
     np.testing.assert_allclose(
         flow2.varying_coef(new, "Y"), flow.varying_coef(new, "Y"), atol=1e-7
@@ -179,20 +182,21 @@ def test_save_load_roundtrip_vc(tmp_path, small_fitted):
 
 def test_serialization_roundtrip_spec():
     spec2 = spec_from_dict(spec_to_dict(_vc_spec(penalty=3.0)))
-    t = next(t for t in spec2["Y"].terms if t.effect == "VC")
+    t = next(t for t in spec2["Y"].terms if t.name == "VC")
     assert t == VC("X2", "X3", penalty=3.0, t="T")
 
 
+@pytest.mark.slow
 def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
-    """Acceptance (issue #28): with `penalty` large the head is shrunk to the
+    """Acceptance: with `penalty` large the head is shrunk to the
     zero function and the fitted beta0 matches the fit_classical LS coefficient.
     """
     df = vc_hetero["draw"](4000, 100)
     spec = {
-        **{k: ContinuousNode([I(transform="affine")]) for k in ("X1", "X2", "X3")},
-        "T": OrdinalNode(2, [LS("X1"), LS("X2")]),
+        **{k: ContinuousNode(I(transform="affine")) for k in ("X1", "X2", "X3")},
+        "T": OrdinalNode(2, LS("X1") + LS("X2")),
         "Y": ContinuousNode(
-            [LS("X1"), LS("X2"), LS("X3"), VC("X2", "X3", penalty=1e7, t="T")]
+            LS("X1") + LS("X2") + LS("X3") + VC("X2", "X3", penalty=1e7, t="T")
         ),
     }
     flow = CausalFlowDAG(spec, seed=0)
@@ -209,7 +213,7 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
 
     ls_spec = {
         **spec,
-        "Y": ContinuousNode([LS("X1"), LS("X2"), LS("X3"), LS("T")]),
+        "Y": ContinuousNode(LS("X1") + LS("X2") + LS("X3") + LS("T")),
     }
     ref = CausalFlowDAG(ls_spec, seed=0)
     ref.fit_classical(df)
@@ -219,7 +223,7 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
 
 
 def test_recovery_bar_on_hetero_dgp(vc_hetero):
-    """THE acceptance bar (issue #28): corr(beta_hat, beta_true) >= 0.9 at
+    """THE acceptance bar: corr(beta_hat, beta_true) >= 0.9 at
     n = 5000 on the heterogeneous-effect DGP, default penalty. The
     unregularized CS(on, x...) workaround measures ~0.5 on this task class —
     this test is the regression guard against 'expressive but unestimated'.
@@ -253,9 +257,9 @@ def test_vc_continuous_treatment():
     y = 0.5 * m + (0.3 + 0.2 * m) * d + rng.logistic(size=n)
     df = pd.DataFrame({"M": m, "D": d, "Y": y})
     spec = {
-        "M": ContinuousNode([I(transform="affine")]),
-        "D": ContinuousNode([I(transform="affine")]),
-        "Y": ContinuousNode([CS("M"), VC("M", t="D")]),
+        "M": ContinuousNode(I(transform="affine")),
+        "D": ContinuousNode(I(transform="affine")),
+        "Y": ContinuousNode(CS("M") + VC("M", t="D")),
     }
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=30, seed=0)

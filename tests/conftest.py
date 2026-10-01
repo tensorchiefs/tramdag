@@ -25,7 +25,7 @@ import pytest
 from tramdag import CausalFlowDAG, ContinuousNode
 
 # %% global variables ------------------------------------------------------------------
-# Every conditional is an exact linear-shift transformation model, so the
+# Every conditional is an exact linear-shift flow, so the
 # outcome node is a proportional-odds model and the flow's MLE must equal
 # the classical one (statsmodels / R polr).
 LS_CHAIN_TRUTH = {
@@ -40,7 +40,7 @@ LS_CHAIN_TRUTH = {
     "cutpoints_y": (-1.5, 0.0, 1.5),  # 4 ordinal levels
 }
 
-# The outcome conditional is exactly a transformation model with a
+# The outcome conditional is exactly a logistic-latent flow with a
 # treatment effect that varies with the covariates, so a VC term is
 # in-class and its read-out is scorable against beta(x). X2 is
 # deliberately both a confounder and an effect modifier — the case where

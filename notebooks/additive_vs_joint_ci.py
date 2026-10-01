@@ -14,28 +14,12 @@
 # %% [markdown]
 # # Additive vs joint complex intercept — interpreting per-parent effects
 #
-# A node whose transform parameters depend on its parents (a **complex
-# intercept**, `CI`) can group those parents two ways:
+# A complex intercept groups its parents jointly, `CI("x1", "x2")`, or
+# additively, `CI("x1", "x2", allow_interaction=False)`.
+# [`docs/model.md`](../docs/model.md) states the rule, and
+# [`docs/interpretation.md`](../docs/interpretation.md) why the additive form
+# needs `flow.intercept_contributions(data, node)` to be read.
 #
-# - **joint** — `CI("x1", "x2")`: *one* network over both parents. It can
-#   represent **interactions** (the effect of `x1` may depend on `x2`), but the
-#   two parents are entangled in one black box. This is the default.
-# - **additive** — `CI("x1", "x2", allow_interaction=False)`: *one network per
-#   parent*, summed in unconstrained parameter space,
-#   `theta(pa) = net_1(x1) + net_2(x2)`. Each parent reshapes the transform
-#   **independently** — a separable, GAM-like structure.
-#
-# The grouping is said with the flag, not by writing two terms: a node takes at
-# most **one** intercept term with parents, so `[CI("x1"), CI("x2")]` is an
-# error. That keeps a term list purely additive on the latent scale.
-#
-# The additive form is the interpretable one: you can ask "what does `x1`
-# *alone* do?". The catch (issue #20) is that the additive sum is identified only
-# up to a constant moving between the nets, so the **raw** per-parent outputs are
-# not comparable. `flow.intercept_contributions(data, node)` resolves this with a
-# sum-to-zero (mean-centering) constraint and returns each parent's centered
-# contribution.
-
 # This notebook fits both models and shows the interpretability difference. The
 # punchline is perhaps surprising: the two models fit the **data** almost
 # identically — the difference is **structural**, visible only in parameter
@@ -85,7 +69,7 @@ def make_flow(joint: bool):
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
         "x3": ContinuousNode(
-            [CI("x1", "x2")] if joint else [CI("x1", "x2", allow_interaction=False)]
+            CI("x1", "x2") if joint else CI("x1", "x2", allow_interaction=False)
         ),
     }
     return CausalFlowDAG(spec, seed=0)
@@ -179,12 +163,8 @@ plt.show()
 # | a per-parent partial-effect plot ("what does `x1` do?") | **additive** `CI("x1", "x2", allow_interaction=False)` | `intercept_contributions` → exact, mean-centered, **separable** components |
 # | interactions between parents in the transform | **joint** `CI("x1", "x2")` | one entangled network — flexible, **not** separable |
 #
-# Both give correct likelihoods and L1/L2/L3 causal queries — the choice is about
-# *interpretability*, not correctness, and (as the near-equal NLLs show) you
-# usually can't distinguish them from the fitted distribution alone. The
-# separability that makes per-parent effects well-defined is a property of the
-# **parameter space**, and `intercept_contributions` is what surfaces it. It is
-# post-hoc: it reads the fitted weights and changes nothing about the model.
+# The choice is about *interpretability*, not correctness: as the near-equal
+# NLLs show, the fitted distribution alone does not distinguish them.
 #
 # *Caveat:* contributions live in the transform's **unconstrained** parameter
 # space (where the additive terms are summed, before the monotonicity

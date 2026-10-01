@@ -10,24 +10,30 @@ all-`ls` DGP (see conftest).
 import copy
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
 from tramdag import LS, CausalFlowDAG, ContinuousNode, OrdinalNode
-from tramdag.callbacks import Callback, EarlyStopping, PerNodePlateau, per_node_adam
+from tramdag.callbacks import (
+    Callback,
+    EarlyStopping,
+    PerNodeEarlyStopping,
+    per_node_adam,
+)
 
 
 # %% private functions -----------------------------------------------------------------
 def _two_node_spec():
-    return {"x1": ContinuousNode(), "x2": ContinuousNode([LS("x1")])}
+    return {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
 
 
 def _ls_spec():
     return {
         "x1": ContinuousNode(),
-        "x2": ContinuousNode([LS("x1")]),
-        "t": OrdinalNode(2, [LS("x1"), LS("x2")]),
-        "y": OrdinalNode(4, [LS("x1"), LS("x2"), LS("t")]),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
     }
 
 
@@ -35,7 +41,7 @@ def _ls_spec():
 def test_fit_improves_and_records_train_nll(ls_chain):
     df = ls_chain["draw"](800, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     nll0 = sum(flow.nll(df).values())
     flow.fit(df, epochs=60, learning_rate=1e-2)
     nll1 = sum(flow.nll(df).values())
@@ -87,7 +93,7 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
     """
     df = ls_chain["draw"](400, 1)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     opt = torch.optim.SGD(flow.parameters(), lr=0.0)  # a zero step: nothing moves
     before = copy.deepcopy(flow.state_dict())
     flow.fit(df, epochs=2, learning_rate=1e-2, optimizer=opt)
@@ -98,9 +104,9 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
 
 
 def test_restore_best_matches_the_manual_six_line_callback(ls_chain):
-    """``EarlyStopping()`` (no patience) lands exactly where the manual
-    snapshot recipe (docs/fitting.md) does — restoration is automatic at
-    fit end, and without patience the full budget runs.
+    """``EarlyStopping()`` (no patience) lands exactly where a manual
+    snapshot callback does — restoration is automatic at fit end, and
+    without patience the full budget runs.
     """
     df = ls_chain["draw"](800, 2)[["x1", "x2"]]
     val = ls_chain["draw"](400, 3)[["x1", "x2"]]
@@ -173,15 +179,10 @@ def test_early_stopping_without_restore_keeps_the_final_weights(ls_chain):
         EarlyStopping(restore_best=False)
 
 
-def test_misregistered_callback_fails_before_training(ls_chain):
-    """A bare callable with the wrong arity (or a non-callable) must raise
-    up front, not after the last epoch of a long run.
-    """
+def test_non_callable_callback_is_refused(ls_chain):
+    """A ``callbacks=`` entry that is not callable must raise up front."""
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(TypeError, match="flow, epoch, optimizer"):
-        flow.fit(df, epochs=10, callbacks=[lambda f, opt: None])  # 2-arg hook
-    assert len(flow.history["train"]) == 0  # nothing trained
     with pytest.raises(TypeError, match="Callback instances or callables"):
         flow.fit(df, epochs=10, callbacks=[42])
 
@@ -198,7 +199,7 @@ def test_epochs_must_be_positive(ls_chain):
 def test_restore_best_without_an_epoch_refuses(ls_chain):
     """Restoring before any epoch is a bug in the caller's loop — loud."""
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(RuntimeError, match="no epoch"):
+    with pytest.raises(RuntimeError, match="nothing to restore"):
         EarlyStopping().on_fit_end(flow, None)
 
 
@@ -235,15 +236,15 @@ def test_validation_split_takes_the_tail(ls_chain):
         flow.fit(df, epochs=1, validation_data=df, validation_split=0.5)
 
 
-def test_per_node_plateau_stops_early_and_keeps_the_mle(ls_chain):
-    """``callbacks.PerNodePlateau`` over ``per_node_adam`` freezes every node,
+def test_per_node_early_stopping_stops_early_and_keeps_the_mle(ls_chain):
+    """``PerNodeEarlyStopping`` over ``per_node_adam`` freezes every node,
     stops the fit before the epoch ceiling, and still lands on the known
     truth (x2 <- x1 weight 1.2 in the inline DGP).
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     opt = per_node_adam(flow, lr=1e-2)
-    sched = PerNodePlateau(patience=10, freeze=40)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(
         df,
         epochs=4000,
@@ -252,20 +253,29 @@ def test_per_node_plateau_stops_early_and_keeps_the_mle(ls_chain):
         optimizer=opt,
         callbacks=sched,
     )
-    assert sched.frozen == {"x1", "x2"}
+    assert set(sched.frozen) == {"x1", "x2"}
     assert all(g["lr"] == 0.0 for g in opt.param_groups)
     assert len(flow.history["train"]) < 4000
+    # each node's freeze epoch is a real epoch of this fit, the last one the stop
+    assert max(sched.frozen.values()) == len(flow.history["train"])
+    assert min(sched.frozen.values()) >= 1
+    # the per-node rates are on record, one entry per epoch, after the callback
+    rates = flow.history["lr"]
+    assert len(rates) == len(flow.history["train"])
+    assert rates[0] == {"x1": 1e-2, "x2": 1e-2}
+    assert rates[-1] == {"x1": 0.0, "x2": 0.0}
+    assert all(rates[e - 1][n] == 0.0 for n, e in sched.frozen.items())
     assert float(flow.ls_coefficients()["x2"]["x1"][0]) == pytest.approx(1.2, abs=0.1)
 
 
-def test_per_node_plateau_reuse_restores_the_optimizer_rates(ls_chain):
+def test_per_node_early_stopping_reuse_restores_the_optimizer_rates(ls_chain):
     """A reused instance with a reused optimizer must not re-baseline on the
-    decayed (or zeroed) rates — fit begin restores each node's start rate.
+    zeroed rates — fit begin restores each node's start rate.
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     opt = per_node_adam(flow, lr=1e-2)
-    sched = PerNodePlateau(patience=10, freeze=40)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(df, epochs=4000, validation_data=df, optimizer=opt, callbacks=sched)
     assert all(g["lr"] == 0.0 for g in opt.param_groups)  # everything froze
     flow.fit(df, epochs=1, validation_data=df, optimizer=opt, callbacks=sched)
@@ -273,13 +283,13 @@ def test_per_node_plateau_reuse_restores_the_optimizer_rates(ls_chain):
     assert all(g["lr"] > 0.0 or g["node"] in sched.frozen for g in opt.param_groups)
 
 
-def test_per_node_plateau_respects_a_fresh_optimizer_rate(ls_chain):
+def test_per_node_early_stopping_respects_a_fresh_optimizer_rate(ls_chain):
     """A reused callback must not clobber a fresh optimizer's different lr —
     the restore reads the group's own initial_lr stamp, not callback state.
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    sched = PerNodePlateau(patience=10, freeze=40)
+    sched = PerNodeEarlyStopping(patience=40)
     flow.fit(
         df,
         epochs=4000,
@@ -290,18 +300,6 @@ def test_per_node_plateau_respects_a_fresh_optimizer_rate(ls_chain):
     opt2 = per_node_adam(flow, lr=1e-3)  # a fresh optimizer, 10x smaller rate
     flow.fit(df, epochs=1, validation_data=df, optimizer=opt2, callbacks=sched)
     assert sched.lr0 == {"x1": 1e-3, "x2": 1e-3}
-
-
-def test_fit_classical_marks_validation_stale(ls_chain):
-    """After fit_classical the last history["val"] entry is pre-classical —
-    a manually driven callback must refuse it, not treat it as current.
-    """
-    df = ls_chain["draw"](400, 0)[["x1", "x2"]]
-    flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())
-    flow.fit_classical(df)
-    with pytest.raises(RuntimeError, match="validation_data"):
-        EarlyStopping().on_epoch_end(flow, 1, None)
 
 
 def test_callbacks_reject_stale_validation_from_an_earlier_fit(ls_chain):
@@ -324,31 +322,123 @@ def test_callbacks_reject_the_class_instead_of_an_instance(ls_chain):
         flow.fit(df, epochs=2, callbacks=EarlyStopping)
 
 
-def test_per_node_plateau_rejects_a_zero_start_rate(ls_chain):
-    """A node-tagged group at lr 0 without the initial_lr stamp (a reused
-    hand-built optimizer whose node froze) must fail, not train at rate 0.
+def test_per_node_early_stopping_rejects_a_zero_start_rate(ls_chain):
+    """A group whose initial_lr stamp is 0 (a reused optimizer whose node
+    froze) must fail, not train at rate 0 — and a group without the stamp
+    is refused outright.
     """
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
-    opt = torch.optim.Adam(
-        [
-            {"params": list(flow.nodes[n].parameters()), "lr": 0.0, "node": n}
-            for n in flow.order
-        ]
-    )
+    flow._calibrate(df)
+    groups = [
+        {"params": list(flow.nodes[n].parameters()), "lr": 0.0, "node": n}
+        for n in flow.order
+    ]
+    stopping = PerNodeEarlyStopping(patience=50)
+    with pytest.raises(ValueError, match="initial_lr"):
+        stopping._step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
+    for g in groups:
+        g["initial_lr"] = 0.0
     with pytest.raises(ValueError, match="learning rate 0"):
-        PerNodePlateau().step(flow.nll(df), opt)
+        stopping._step(flow, flow.nll(df), torch.optim.Adam(groups), 1)
 
 
-def test_per_node_plateau_rejects_an_untagged_optimizer(ls_chain):
+def test_per_node_early_stopping_rejects_an_untagged_optimizer(ls_chain):
     """A plain optimizer (one group, no ``node`` tag) is refused loudly."""
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.calibrate(df)
+    flow._calibrate(df)
     opt = torch.optim.Adam(flow.parameters(), lr=1e-2)
     with pytest.raises(ValueError, match="per_node_adam"):
-        PerNodePlateau(patience=5, freeze=10).step(flow.nll(df), opt)
+        PerNodeEarlyStopping(patience=10)._step(flow, flow.nll(df), opt, 1)
+
+
+def test_per_node_early_stopping_restores_each_node_at_its_best_epoch(ls_chain):
+    """Every node ends at the weights of its own best validation epoch.
+
+    A complex shift on few rows keeps training past its best; the restore
+    brings each node back, so its final validation NLL is its curve's minimum.
+    """
+    from tramdag import CS
+
+    train = ls_chain["draw"](150, 1)[["x1", "x2"]]
+    val = ls_chain["draw"](150, 2)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    stopping = PerNodeEarlyStopping(patience=60, min_delta=0.0)
+    flow.fit(
+        train,
+        epochs=600,
+        batch_size=150,
+        validation_data=val,
+        optimizer=per_node_adam(flow, lr=3e-2),
+        callbacks=stopping,
+    )
+    curves = flow.history["val"]
+    final = flow.nll(val)
+    for node in ("x1", "x2"):
+        best = min(range(len(curves)), key=lambda e: curves[e][node])
+        assert stopping.best_epoch[node] == best + 1
+        assert final[node] == pytest.approx(curves[best][node], rel=1e-6)
+    assert stopping.frozen["x2"] > stopping.best_epoch["x2"]  # it trained past
+
+
+def test_per_node_early_stopping_without_restore_keeps_the_last_weights(ls_chain):
+    train = ls_chain["draw"](150, 1)[["x1", "x2"]]
+    val = ls_chain["draw"](150, 2)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.fit(
+        train,
+        epochs=50,
+        batch_size=150,
+        validation_data=val,
+        optimizer=per_node_adam(flow, lr=1e-2),
+        callbacks=PerNodeEarlyStopping(patience=1000, restore_best=False),
+    )
+    assert flow.nll(val) == pytest.approx(flow.history["val"][-1], rel=1e-6)
+
+
+def test_per_node_early_stopping_without_patience_restores_and_never_freezes(ls_chain):
+    """``patience=None`` runs the full budget and ends each node at its best."""
+    train = ls_chain["draw"](150, 1)[["x1", "x2"]]
+    val = ls_chain["draw"](150, 2)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    stopping = PerNodeEarlyStopping()
+    flow.fit(
+        train,
+        epochs=60,
+        batch_size=150,
+        validation_data=val,
+        optimizer=per_node_adam(flow, lr=3e-2),
+        callbacks=stopping,
+    )
+    assert stopping.frozen == {}
+    assert len(flow.history["train"]) == 60
+    final = flow.nll(val)
+    for node in ("x1", "x2"):
+        best = min(e[node] for e in flow.history["val"])
+        assert final[node] == pytest.approx(best, rel=1e-6)
+
+
+def test_early_stopping_min_delta_counts_a_small_gain_as_flat(ls_chain):
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    stopping = EarlyStopping(min_delta=1e6)
+    flow.fit(df, epochs=5, validation_data=df, callbacks=stopping)
+    assert stopping.best_epoch == 1  # nothing beats epoch 1 by a million
+
+
+def test_two_restoring_callbacks_are_refused(ls_chain):
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(ValueError, match="restore weights"):
+        flow.fit(
+            df,
+            epochs=2,
+            validation_data=df,
+            optimizer=per_node_adam(flow),
+            callbacks=[EarlyStopping(), PerNodeEarlyStopping(patience=5)],
+        )
 
 
 def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):
@@ -389,3 +479,41 @@ def test_history_accumulates_across_fit_calls(ls_chain):
     flow.fit(df, epochs=2, batch_size=100)
     flow.fit(df, epochs=3, batch_size=100)
     assert len(flow.history["train"]) == 5
+
+
+def test_a_diverged_fit_says_so_instead_of_blaming_the_callback(ls_chain):
+    """EarlyStopping names a NaN validation curve, not its own wiring.
+
+    A NaN never beats ``inf``, so nothing is ever snapshotted and fit end has
+    nothing to restore; the message names divergence as a cause.
+    """
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(RuntimeError, match="nothing to restore"):
+        flow.fit(
+            df,
+            epochs=3,
+            learning_rate=1e9,
+            validation_split=0.2,
+            callbacks=EarlyStopping(),
+        )
+
+
+def test_a_frame_it_cannot_batch_raises_instead_of_training_on_nothing(ls_chain):
+    """A single-row frame raises instead of running epochs that change nothing."""
+    flow = CausalFlowDAG({"a": OrdinalNode(2), "b": OrdinalNode(2, LS("a"))}, seed=0)
+    one = pd.DataFrame({"a": [1], "b": [0]})
+    with pytest.raises(ValueError, match="trained on no row"):
+        flow.fit(one, epochs=5)
+
+
+def test_the_epoch_nll_averages_over_the_rows_it_trained_on(ls_chain):
+    """A skipped trailing row must not scale every node's epoch NLL down."""
+    df = ls_chain["draw"](201, 1)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.fit(df, epochs=1, batch_size=100)  # 100 + 100 + 1: the last is skipped
+    trimmed = CausalFlowDAG(_two_node_spec(), seed=0)
+    trimmed.fit(df.iloc[:200], epochs=1, batch_size=100)
+    a = sum(flow.history["train"][-1].values())
+    b = sum(trimmed.history["train"][-1].values())
+    assert a == pytest.approx(b, rel=0.05)

@@ -2647,7 +2647,9 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 <span class="normal">744</span>
 <span class="normal">745</span>
 <span class="normal">746</span>
-<span class="normal">747</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A causal normalizing flow defined by a DAG specification.</span>
 
 <span class="sd">    Parameters</span>
@@ -3121,9 +3123,11 @@ output layer stays zero either way. Stored in the checkpoint.</p>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
 
-<span class="sd">        A continuous node inverts exactly: $u = h(x) + s$. For an</span>
+<span class="sd">        A continuous node inverts exactly: $u = h(x) + s$. This is</span>
+<span class="sd">        $\\operatorname{logit} P(X \\le x \\mid \text{parents})$, an</span>
+<span class="sd">        interventional quantity at the given parent values. For an</span>
 <span class="sd">        ordinal node the latent is only interval-identified, so it is</span>
 <span class="sd">        sampled from the standard logistic truncated to the observed</span>
 <span class="sd">        level's interval.</span>
@@ -4056,7 +4060,9 @@ counterfactual.</p>
     <div class="doc doc-contents ">
 
         <p>Recover the latent variables <code>u</code> from observations (the abduction step).</p>
-<p>A continuous node inverts exactly: <span class="arithmatex">\(u = h(x) + s\)</span>. For an
+<p>A continuous node inverts exactly: <span class="arithmatex">\(u = h(x) + s\)</span>. This is
+<span class="arithmatex">\(\\operatorname{logit} P(X \\le x \\mid \text{parents})\)</span>, an
+interventional quantity at the given parent values. For an
 ordinal node the latent is only interval-identified, so it is
 sampled from the standard logistic truncated to the observed
 level's interval.</p>
@@ -4166,11 +4172,15 @@ level's interval.</p>
 <span class="normal">555</span>
 <span class="normal">556</span>
 <span class="normal">557</span>
-<span class="normal">558</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">abduct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Recover the latent variables ``u`` from observations (the abduction step).</span>
 
-<span class="sd">    A continuous node inverts exactly: $u = h(x) + s$. For an</span>
+<span class="sd">    A continuous node inverts exactly: $u = h(x) + s$. This is</span>
+<span class="sd">    $\\operatorname{logit} P(X \\le x \\mid \text{parents})$, an</span>
+<span class="sd">    interventional quantity at the given parent values. For an</span>
 <span class="sd">    ordinal node the latent is only interval-identified, so it is</span>
 <span class="sd">    sampled from the standard logistic truncated to the observed</span>
 <span class="sd">    level's interval.</span>
@@ -4331,9 +4341,7 @@ level's interval.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">562</span>
 <span class="normal">563</span>
 <span class="normal">564</span>
 <span class="normal">565</span>
@@ -4361,7 +4369,9 @@ level's interval.</p>
 <span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
-<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">pmf</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">do</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -4544,9 +4554,7 @@ closed form from the transform — no sampling.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
-<span class="normal">593</span>
-<span class="normal">594</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">594</span>
 <span class="normal">595</span>
 <span class="normal">596</span>
 <span class="normal">597</span>
@@ -4590,7 +4598,9 @@ closed form from the transform — no sampling.</p>
 <span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
-<span class="normal">638</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">density</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4663,14 +4673,14 @@ documents the arguments and the column naming.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">642</span>
 <span class="normal">643</span>
 <span class="normal">644</span>
 <span class="normal">645</span>
 <span class="normal">646</span>
-<span class="normal">647</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the scores $\psi_i = \partial \ell_i / \partial \beta$.</span>
 
@@ -4707,9 +4717,7 @@ documents the method, the arguments and the result columns.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">651</span>
 <span class="normal">652</span>
 <span class="normal">653</span>
 <span class="normal">654</span>
@@ -4725,7 +4733,9 @@ documents the method, the arguments and the result columns.</p>
 <span class="normal">664</span>
 <span class="normal">665</span>
 <span class="normal">666</span>
-<span class="normal">667</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4802,9 +4812,7 @@ device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">671</span>
 <span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
@@ -4840,7 +4848,9 @@ device.</p>
 <span class="normal">704</span>
 <span class="normal">705</span>
 <span class="normal">706</span>
-<span class="normal">707</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write the model, its history and its provenance to a checkpoint.</span>
 
 <span class="sd">    The file holds the spec and the weights, the training ``history``,</span>
@@ -4978,9 +4988,7 @@ device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">709</span>
-<span class="normal">710</span>
-<span class="normal">711</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">711</span>
 <span class="normal">712</span>
 <span class="normal">713</span>
 <span class="normal">714</span>
@@ -5016,7 +5024,9 @@ device.</p>
 <span class="normal">744</span>
 <span class="normal">745</span>
 <span class="normal">746</span>
-<span class="normal">747</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cpu"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Restore a model from a checkpoint.</span>
 
@@ -6535,8 +6545,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
-<span class="normal">177</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
@@ -6686,7 +6695,8 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">324</span>
 <span class="normal">325</span>
 <span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">327</span>
+<span class="normal">328</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -6852,7 +6862,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 
 
 <a href="#tramdag.flow.CausalFlowDAG.fit_classical" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">history_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">history_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6902,11 +6912,11 @@ intercepts and <code>LS</code> terms; any other spec raises.
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Upper limit on L-BFGS iterations, by default 400.</p>
+                <p>Upper limit on L-BFGS iterations, by default 5000.</p>
               </div>
             </td>
             <td>
-                  <code>400</code>
+                  <code>5000</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -6948,6 +6958,30 @@ intercepts and <code>LS</code> terms; any other spec raises.
 <code>final_nll</code>, <code>grad_norm</code>, <code>seconds</code>, and the fitted
 <code>coefficients</code> from
 <a class="autorefs autorefs-internal" title="ls_coefficients" href="#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Warns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UserWarning">UserWarning</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the report is not <code>converged</code>, with its <code>stop_reason</code> and
+<code>grad_norm</code>.</p>
               </div>
             </td>
           </tr>
@@ -7000,8 +7034,7 @@ an absolute bound is meaningful.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
-<span class="normal">330</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
 <span class="normal">333</span>
@@ -7126,11 +7159,26 @@ an absolute bound is meaningful.</p>
 <span class="normal">452</span>
 <span class="normal">453</span>
 <span class="normal">454</span>
-<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
     <span class="n">history_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Fit an all-``ls`` model the classical way.</span>
@@ -7147,7 +7195,7 @@ an absolute bound is meaningful.</p>
 <span class="sd">    train_df : pd.DataFrame</span>
 <span class="sd">        Training data, one column per node.</span>
 <span class="sd">    max_iter : int, optional</span>
-<span class="sd">        Upper limit on L-BFGS iterations, by default 400.</span>
+<span class="sd">        Upper limit on L-BFGS iterations, by default 5000.</span>
 <span class="sd">    history_size : int, optional</span>
 <span class="sd">        L-BFGS memory, by default 50.</span>
 
@@ -7158,6 +7206,12 @@ an absolute bound is meaningful.</p>
 <span class="sd">        ``final_nll``, ``grad_norm``, ``seconds``, and the fitted</span>
 <span class="sd">        ``coefficients`` from</span>
 <span class="sd">        [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+
+<span class="sd">    Warns</span>
+<span class="sd">    -----</span>
+<span class="sd">    UserWarning</span>
+<span class="sd">        If the report is not ``converged``, with its ``stop_reason`` and</span>
+<span class="sd">        ``grad_norm``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -7244,6 +7298,14 @@ an absolute bound is meaningful.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"fit_classical did not converge: stop_reason=</span><span class="si">{</span><span class="n">stop_reason</span><span class="si">!r}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"after </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations, grad_norm=</span><span class="si">{</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> (bound "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">GRAD_TOL</span><span class="si">}</span><span class="s2">). Raise max_iter or read the report."</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
         <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">stop_reason</span><span class="p">,</span>

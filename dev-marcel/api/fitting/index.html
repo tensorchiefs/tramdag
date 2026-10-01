@@ -1491,8 +1491,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">173</span>
-<span class="normal">174</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
 <span class="normal">177</span>
@@ -1773,7 +1772,22 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="normal">452</span>
 <span class="normal">453</span>
 <span class="normal">454</span>
-<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FitMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The two fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG]."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
@@ -1933,7 +1947,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
         <span class="n">history_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Fit an all-``ls`` model the classical way.</span>
@@ -1950,7 +1964,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        train_df : pd.DataFrame</span>
 <span class="sd">            Training data, one column per node.</span>
 <span class="sd">        max_iter : int, optional</span>
-<span class="sd">            Upper limit on L-BFGS iterations, by default 400.</span>
+<span class="sd">            Upper limit on L-BFGS iterations, by default 5000.</span>
 <span class="sd">        history_size : int, optional</span>
 <span class="sd">            L-BFGS memory, by default 50.</span>
 
@@ -1961,6 +1975,12 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">            ``final_nll``, ``grad_norm``, ``seconds``, and the fitted</span>
 <span class="sd">            ``coefficients`` from</span>
 <span class="sd">            [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+
+<span class="sd">        Warns</span>
+<span class="sd">        -----</span>
+<span class="sd">        UserWarning</span>
+<span class="sd">            If the report is not ``converged``, with its ``stop_reason`` and</span>
+<span class="sd">            ``grad_norm``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -2047,6 +2067,14 @@ exact-MLE route for all-<code>ls</code> specs.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"fit_classical did not converge: stop_reason=</span><span class="si">{</span><span class="n">stop_reason</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"after </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations, grad_norm=</span><span class="si">{</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> (bound "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">GRAD_TOL</span><span class="si">}</span><span class="s2">). Raise max_iter or read the report."</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
             <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">stop_reason</span><span class="p">,</span>
@@ -2391,8 +2419,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
-<span class="normal">177</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
@@ -2542,7 +2569,8 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="normal">324</span>
 <span class="normal">325</span>
 <span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+<span class="normal">327</span>
+<span class="normal">328</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2708,7 +2736,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 
 
 <a href="#tramdag.fitting.FitMixin.fit_classical" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">history_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">fit_classical</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">history_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2758,11 +2786,11 @@ intercepts and <code>LS</code> terms; any other spec raises.
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Upper limit on L-BFGS iterations, by default 400.</p>
+                <p>Upper limit on L-BFGS iterations, by default 5000.</p>
               </div>
             </td>
             <td>
-                  <code>400</code>
+                  <code>5000</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2804,6 +2832,30 @@ intercepts and <code>LS</code> terms; any other spec raises.
 <code>final_nll</code>, <code>grad_norm</code>, <code>seconds</code>, and the fitted
 <code>coefficients</code> from
 <a class="autorefs autorefs-internal" title="ls_coefficients" href="../flow/#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Warns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UserWarning">UserWarning</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the report is not <code>converged</code>, with its <code>stop_reason</code> and
+<code>grad_norm</code>.</p>
               </div>
             </td>
           </tr>
@@ -2856,8 +2908,7 @@ an absolute bound is meaningful.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
-<span class="normal">330</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
 <span class="normal">333</span>
@@ -2982,11 +3033,26 @@ an absolute bound is meaningful.</p>
 <span class="normal">452</span>
 <span class="normal">453</span>
 <span class="normal">454</span>
-<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
     <span class="n">history_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Fit an all-``ls`` model the classical way.</span>
@@ -3003,7 +3069,7 @@ an absolute bound is meaningful.</p>
 <span class="sd">    train_df : pd.DataFrame</span>
 <span class="sd">        Training data, one column per node.</span>
 <span class="sd">    max_iter : int, optional</span>
-<span class="sd">        Upper limit on L-BFGS iterations, by default 400.</span>
+<span class="sd">        Upper limit on L-BFGS iterations, by default 5000.</span>
 <span class="sd">    history_size : int, optional</span>
 <span class="sd">        L-BFGS memory, by default 50.</span>
 
@@ -3014,6 +3080,12 @@ an absolute bound is meaningful.</p>
 <span class="sd">        ``final_nll``, ``grad_norm``, ``seconds``, and the fitted</span>
 <span class="sd">        ``coefficients`` from</span>
 <span class="sd">        [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].</span>
+
+<span class="sd">    Warns</span>
+<span class="sd">    -----</span>
+<span class="sd">    UserWarning</span>
+<span class="sd">        If the report is not ``converged``, with its ``stop_reason`` and</span>
+<span class="sd">        ``grad_norm``.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -3100,6 +3172,14 @@ an absolute bound is meaningful.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># restore canonical float32 (lossy ~1e-7, harmless)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"fit_classical did not converge: stop_reason=</span><span class="si">{</span><span class="n">stop_reason</span><span class="si">!r}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"after </span><span class="si">{</span><span class="n">n_iter</span><span class="si">}</span><span class="s2"> iterations, grad_norm=</span><span class="si">{</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> (bound "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">GRAD_TOL</span><span class="si">}</span><span class="s2">). Raise max_iter or read the report."</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"converged"</span><span class="p">:</span> <span class="n">converged</span><span class="p">,</span>
         <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">stop_reason</span><span class="p">,</span>

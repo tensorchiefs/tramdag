@@ -1529,11 +1529,8 @@ test (Zeileis &amp; Hornik, 2007)<sup id="fnref2:zeileis2007fluctuation"><a clas
 other fitted coefficients, and the scan does not.</p>
 <p>The error has a direction. For a candidate that is also an <code>LS</code> parent of
 the node, the fitted <code>LS</code> weight already removes part of the pattern. The
-scan then flags too rarely. In 100 simulated data sets of 2000 rows, from
-the notebook's linear model with the constant effect <span class="arithmatex">\(\beta = -1\)</span>, each of
-the three parents flagged in 1 % of them or fewer. An independent covariate
-that is not a parent flagged in 4 %, close to the nominal 5 %. Read
-the p-value as a guide, not as an exact error rate.</p>
+scan then flags too rarely for that candidate. Read the p-value as a guide,
+not as an exact error rate.</p>
 <h2 id="read-it-as-screening">Read it as screening<a class="headerlink" href="#read-it-as-screening" title="Permanent link">&para;</a></h2>
 <p>A flag means that one constant <span class="arithmatex">\(\beta\)</span> does not fit all rows along the
 covariate. Two causes give this:</p>
@@ -1543,10 +1540,9 @@ covariate. Two causes give this:</p>
   prognostic part, wrongly.</li>
 </ul>
 <p>The second cause works through the score. The treatment score of row <span class="arithmatex">\(i\)</span> is
-<span class="arithmatex">\(\psi_i = r_i \, t_i\)</span>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row, and
+<span class="arithmatex">\(\psi_i = r_i \, t_i\)</span>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row. The factor
 <span class="arithmatex">\(r_i = \partial \ell_i / \partial s_i\)</span> is the derivative of <span class="arithmatex">\(\ell_i\)</span> with
-respect to the row's total shift <span class="arithmatex">\(s_i\)</span>. The factor <span class="arithmatex">\(r_i\)</span>
-acts like a residual. If the simple model gets the prognostic effect
+respect to the row's total shift <span class="arithmatex">\(s_i\)</span>, and it acts like a residual. If the simple model gets the prognostic effect
 of <code>X1</code> wrong, <span class="arithmatex">\(r_i\)</span> follows a pattern in <code>X1</code>. The treatment score takes on
 that pattern, so the path of <code>X1</code> swings.</p>
 <p>So a flag means "look here". What you find is a modifier or a

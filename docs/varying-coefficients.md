@@ -53,9 +53,13 @@ brings that ingredient into the TRAM framework.
   that $\beta$ is the identified level-1-against-0 contrast. The term is
   linear in the treatment.
 - **Read-out.** `flow.varying_coef(df, node)` evaluates $\beta(x)$ in closed
-  form, deterministic and free of the outcome. For a binary treatment it
-  equals the abduction difference $u(x,1,y) - u(x,0,y)$ identically, which a
-  test pins.
+  form, deterministic and free of the outcome. For a continuous outcome,
+  $\beta(x) = \operatorname{logit} P(Y \le y \mid x, do(T=1)) -
+  \operatorname{logit} P(Y \le y \mid x, do(T=0))$ at every $y$. This is an
+  interventional quantity and needs no counterfactual. Because `abduct`
+  inverts a continuous node exactly, $\beta(x)$ also equals the abduction
+  difference $u(x,1,y) - u(x,0,y)$, which a test pins. For an ordinal outcome
+  `abduct` samples the latent, so this identity does not apply.
 
 ## Propensity centering: `propensity="col"`
 
@@ -66,12 +70,17 @@ R-learner orthogonalization
 model-based forests, this ingredient is decisive for effect estimation under
 confounding [@dandl2024forest]. That finding reproduces here on the
 `confounded` process, where the model deliberately under-specifies its
-prognostic part. The uncentered $\hat\beta$ absorbs the confounded misfit,
-and centering brings it back near the truth. The notebook
-reports the measured reduction and `tests/test_vc_centered.py` requires at
-least a factor of two. If the prognostic part is correctly specified,
-centering changes little. It is insurance against the misspecification you do
-not know you have.
+prognostic part. The uncentered $\hat\beta$ absorbs the misfit, and
+centering brings it back near the truth. `tests/test_vc_centered.py` requires
+at least a factor of two. If the prognostic part is correctly specified,
+centering changes little.
+
+Centering guards against a misspecified prognostic part. This also applies to
+randomized data: with $\hat e = 0.5$ the regressor is $\pm\tfrac12$, and a
+misfit that both arms share cannot follow it. Centering does not guard
+against unmeasured confounding. The propensity uses only the observed parents
+of the treatment, so a hidden common cause of $T$ and $Y$ biases $\beta(x)$
+with or without centering.
 
 The design is two-stage and frozen, because the naive versions are wrong.
 
@@ -88,9 +97,10 @@ The design is two-stage and frozen, because the naive versions are wrong.
   recomputes $\hat e$ from the flow's own fitted treatment node on the current
   parent values, detached. Under `do(T=t)` the regressor becomes
   $t - \hat e(x)$. Nothing is cached.
-- **Interpretation.** With centering, $\beta_0$ is the effect at the
-  treatment margin. `varying_coef` is unchanged, because centering moves the
-  regressor and not $\beta$. Centering requires a binary ordinal treatment.
+- **Interpretation.** $\beta_0$ is the mean of $\beta(x)$ over the training
+  rows, with or without centering, because `fit` re-centers the head in both
+  cases. `varying_coef` is unchanged, because centering moves the regressor
+  and not $\beta$. Centering requires a binary ordinal treatment.
 
 ## Validation
 
@@ -99,8 +109,9 @@ logistic-shift SCM with a known $\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3$, a
 nonlinear prognostic part and confounded assignment, where $X_2$ is
 confounder and modifier at once. That is the configuration in which the `CS`
 reduced form fails hardest. `tests/test_vc_term.py` requires a recovery
-correlation of at least 0.9 at $n = 5000$, a fitted $\beta_0$ that matches
-`fit_classical` under a large penalty, and the read-out identities. The
-centering claims are measured on the `confounded` process in the same file.
+correlation of at least 0.9 with 4500 training rows, a fitted $\beta_0$ that
+matches `fit_classical` under a large penalty, and the read-out identities.
+`tests/test_vc_centered.py` tests the centering claims on the `confounded`
+process.
 [scores.md](scores.md) covers the scan that shortlists modifiers before a `VC`
 term is declared.

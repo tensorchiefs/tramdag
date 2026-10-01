@@ -184,7 +184,7 @@ def run(variant: str) -> dict:
     write_report(
         out,
         "CAREFL counterfactual benchmark",
-        "Paper Sec. 5.3 and App. C.2: the Laplace SCM of Khemakhem et al., "
+        "Paper Sec. 5.3 and App. C.2: the Laplace SCM of Khemakhem et al. (2021), "
         "trained on CAREFL's own 2500 rows so that Fig. 6 is comparable point "
         "by point. Every error metric is an exact deviation from the DGP truth.",
         metrics,

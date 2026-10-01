@@ -179,8 +179,8 @@ It raises for such a transform also in an intercept with parents, which does
 not use the start. Fit such a model with `marginal_init=False`.
 
 **What it changes.** At `n_coeffs = 20` the zero start is close to a
-straight line too, but its control points span a wider range than the line
-from $-2.944$ to $2.944$. A steeper $h$ gives a narrower distribution than
+straight line too. Its control points span a wider range than the line from
+$-2.944$ to $2.944$. A steeper $h$ gives a narrower distribution than
 the data, so the zero start has the higher NLL at shift zero.
 
 The likelihood of an all-`LS` model has one optimum, and the fit reaches it
@@ -228,7 +228,7 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
 - **Budget.** `max_iter=5000` is a default, not a promise. Torch ends the run
   when the NLL or the parameters move by less than 1e-9. A model with several
   nodes can need thousands of iterations to stop on that rule. A report that
-  is not `converged` raises a `UserWarning`.
+  is not `converged` issues a `UserWarning`.
 - **The report.** `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
   (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
   both: the run stopped on its own AND `grad_norm` is at most

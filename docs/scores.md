@@ -106,8 +106,9 @@ covariate. Two causes give this:
 The second cause works through the score. The treatment score of row $i$ is
 $\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row. The factor
 $r_i = \partial \ell_i / \partial s_i$ is the derivative of $\ell_i$ with
-respect to the row's total shift $s_i$, and it acts like a residual. If the simple model gets the prognostic effect
-of `X1` wrong, $r_i$ follows a pattern in `X1`. The treatment score takes on
+respect to the row's total shift $s_i$, and it acts like a residual. If the
+simple model gets the prognostic effect of `X1` wrong, $r_i$ follows a
+pattern in `X1`. The treatment score takes on
 that pattern, so the path of `X1` swings.
 
 So a flag means "look here". What you find is a modifier or a

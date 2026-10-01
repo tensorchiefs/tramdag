@@ -162,7 +162,7 @@ default you can read at the call site. Nothing numeric is buried.
 | calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied only by the fit that calibrates, so a flow that `fit_classical` calibrated ignores it |
 | VC stage-1 propensities | the training-frame column `VC(propensity=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, propensity=)` | 1.0 / None (`propensity="col"` names the propensity column) |
-| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 400 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
+| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 5000 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
 | training budget | `fit(epochs=)` | **required** ([fitting.md](fitting.md)) |
 | network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64) — parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |
 | activation | `activation=` on `I`/`CS`/`VC` | `"relu"` (the reference default classes); `"sigmoid"` and `"tanh"` are the paper's |

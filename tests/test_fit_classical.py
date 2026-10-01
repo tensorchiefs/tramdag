@@ -9,12 +9,17 @@ classical comparisons exact.
 """
 
 # %% imports ---------------------------------------------------------------------------
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 
 from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode, fitting
+
+# Most tests cut max_iter short on purpose.
+pytestmark = pytest.mark.filterwarnings("ignore:fit_classical did not converge")
 
 
 # %% private functions -----------------------------------------------------------------
@@ -102,10 +107,22 @@ def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
     stops on "tolerance" but must not report convergence.
     """
     obs = ls_chain["draw"](800, 3)
-    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)
+    with pytest.warns(UserWarning, match="did not converge"):
+        rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)
     assert rep["stop_reason"] in ("tolerance", "max_iter", "max_eval")
     assert rep["converged"] is False
     assert rep["grad_norm"] > 1e-2  # nowhere near a settled fit
+
+
+def test_a_converged_fit_does_not_warn():
+    rng = np.random.default_rng(0)
+    x1 = rng.standard_normal(1000)
+    df = pd.DataFrame({"x1": x1, "x2": 0.8 * x1 + rng.logistic(size=1000)})
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        rep = CausalFlowDAG(spec, seed=0).fit_classical(df)
+    assert rep["converged"] is True
 
 
 @pytest.mark.parametrize("max_iter", [5, 50, 2000])

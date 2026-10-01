@@ -9,6 +9,7 @@ exact-MLE route for all-`ls` specs.
 from __future__ import annotations
 
 import time
+import warnings
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -330,7 +331,7 @@ class FitMixin:
         self,
         train_df: pd.DataFrame,
         *,
-        max_iter: int = 400,
+        max_iter: int = 5000,
         history_size: int = 50,
     ) -> dict:
         """Fit an all-``ls`` model the classical way.
@@ -347,7 +348,7 @@ class FitMixin:
         train_df : pd.DataFrame
             Training data, one column per node.
         max_iter : int, optional
-            Upper limit on L-BFGS iterations, by default 400.
+            Upper limit on L-BFGS iterations, by default 5000.
         history_size : int, optional
             L-BFGS memory, by default 50.
 
@@ -358,6 +359,12 @@ class FitMixin:
             ``final_nll``, ``grad_norm``, ``seconds``, and the fitted
             ``coefficients`` from
             [`ls_coefficients`][tramdag.flow.CausalFlowDAG.ls_coefficients].
+
+        Warns
+        -----
+        UserWarning
+            If the report is not ``converged``, with its ``stop_reason`` and
+            ``grad_norm``.
 
         Raises
         ------
@@ -444,6 +451,14 @@ class FitMixin:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
         self.eval()
 
+        if not converged:
+            warnings.warn(
+                f"fit_classical did not converge: stop_reason={stop_reason!r} "
+                f"after {n_iter} iterations, grad_norm={grad_norm:.2e} (bound "
+                f"{GRAD_TOL}). Raise max_iter or read the report.",
+                UserWarning,
+                stacklevel=2,
+            )
         return {
             "converged": converged,
             "stop_reason": stop_reason,

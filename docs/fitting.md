@@ -150,13 +150,11 @@ two extra points. The start uses the closeness property in three steps:
 
 The polynomial then starts as the Bernstein approximation of
 $\operatorname{logit} \hat F$. The approximation smooths $\hat F$, and a
-sharp feature such as the dip between two modes smooths most. On 4000 rows,
-the largest gap between the start's CDF and $\hat F$ is 0.010 for a normal
-column, 0.080 for a lognormal column and 0.103 for a bimodal column.
+sharp feature such as the dip between two modes smooths most.
 
 The ends of the range carry the empirical quantiles `range_q` and
-`1 - range_q`, so the end control points are close to
-$\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$ with $q$ =
+`1 - range_q`. The end control points are therefore close to
+$\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$, with $q$ =
 `range_q`. At the default $q = 0.05$ these are $-2.944$ and $2.944$. With
 fewer than 3 coefficients, the tied steps use all the parameters and leave
 only a straight line. The start then takes the line between these two end
@@ -180,27 +178,20 @@ which are infinite for $q = 0$. So `fit` raises before it reads the column.
 It raises for such a transform also in an intercept with parents, which does
 not use the start. Fit such a model with `marginal_init=False`.
 
-**What it changes.** For the three columns above, the zero start gives a
-per-row NLL of 2.35, 4.15 and 5.52. The marginal start gives 1.42, 1.51 and
-1.34. At `n_coeffs = 20` the zero start is close to a straight line too. Its
-control points run from about $-6.9$ to $7.6$, so it is 2.5 times steeper
-than the line from $-2.944$ to $2.944$. A steeper $h$ gives a narrower
-distribution than the data, which explains the higher NLL.
+**What it changes.** At `n_coeffs = 20` the zero start is close to a
+straight line too, but its control points span a wider range than the line
+from $-2.944$ to $2.944$. A steeper $h$ gives a narrower distribution than
+the data, so the zero start has the higher NLL at shift zero.
 
 The likelihood of an all-`LS` model has one optimum, and the fit reaches it
 with or without the start. So the start only shortens the way, and
-`fit_classical` takes no such flag. The triangle `linear-ls` variant comes
-within 0.01 of its final NLL in 5 epochs instead of 28.
+`fit_classical` takes no such flag.
 
 A model with a network shift or a learning-rate anneal can reach a
 different local optimum. For such a model the start can improve or worsen
 the causal estimate. D4 in
 [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
 measures this per variant.
-
-`fit` applies the start only on the call that calibrates. A second `fit`
-therefore continues from the trained intercepts and does not reset them. A
-multi-phase schedule depends on this.
 
 ### Which recipe
 
@@ -234,10 +225,10 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   minibatches, schedule or early stopping, so the same init gives
   bit-identical results. A converged fit matches `statsmodels` and R to about
   four decimals, where a converged Adam `fit` gets to about 1e-3.
-- **Budget.** `max_iter=400` is a default, not a promise. Torch ends the run
+- **Budget.** `max_iter=5000` is a default, not a promise. Torch ends the run
   when the NLL or the parameters move by less than 1e-9. A model with several
-  nodes can need thousands of iterations to stop on that rule. Give the
-  budget room and read the report.
+  nodes can need thousands of iterations to stop on that rule. A report that
+  is not `converged` raises a `UserWarning`.
 - **The report.** `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
   (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
   both: the run stopped on its own AND `grad_norm` is at most

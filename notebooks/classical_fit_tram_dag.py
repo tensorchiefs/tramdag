@@ -256,7 +256,7 @@ spec_bwt = {
 }
 
 flow_bwt = CausalFlowDAG(spec_bwt, seed=0)
-flow_bwt.fit_classical(bw, max_iter=800)
+flow_bwt.fit_classical(bw)
 
 w = flow_bwt.ls_coefficients()["bwt"]
 fitted = {

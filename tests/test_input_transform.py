@@ -3,7 +3,7 @@
 Only the term's own network (complex intercept, complex shift, VC modifiers)
 sees the transformed parents; a linear shift stays raw so its weight keeps
 its units. Named strategies freeze their statistics from the training rows at
-``calibrate``; a callable ``fn(x, train)`` receives the frozen raw train
+calibration; a callable ``fn(x, train)`` receives the frozen raw train
 column, never the batch's.
 """
 
@@ -216,7 +216,7 @@ def test_ordinal_parent_passes_through_one_hot():
 def test_degenerate_column_is_rejected():
     """A constant column has no transform domain and no statistics: fail loudly.
 
-    ``calibrate`` checks the node's own quantiles first, so that message wins
+    Calibration checks the node's own quantiles first, so that message wins
     over the input-transform one; either way nothing trains into NaN.
     """
     df = _frame().assign(x1=1.0)

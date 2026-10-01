@@ -221,7 +221,7 @@ class FitMixin:
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
-            train (and calibrate — no leakage into the frozen statistics).
+            train and calibrate, so no validation row reaches the frozen statistics.
             Mutually exclusive with ``validation_data``.
         verbose : int, optional
             0 (default) is silent. ``N >= 1`` prints one line every ``N``

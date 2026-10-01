@@ -10,27 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/main/perf/REPORT/">
+        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/main/references/">
       
       
+        <link rel="prev" href="../zuko-upstream/">
+      
+      
+        <link rel="next" href="../notebooks/demo_tram_dag_colab/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>tramdag cross-machine benchmark - tramdag</title>
+        <title>References - tramdag</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tramdag-cross-machine-benchmark" class="md-skip">
+        <a href="#references" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +100,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="tramdag" class="md-header__button md-logo" aria-label="tramdag" data-md-component="logo">
+    <a href=".." title="tramdag" class="md-header__button md-logo" aria-label="tramdag" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              tramdag cross-machine benchmark
+              References
             
           </span>
         </div>
@@ -232,7 +236,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="tramdag" class="md-nav__button md-logo" aria-label="tramdag" data-md-component="logo">
+    <a href=".." title="tramdag" class="md-nav__button md-logo" aria-label="tramdag" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -262,7 +266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -286,8 +290,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -298,11 +304,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -323,7 +329,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -341,7 +347,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notation/" class="md-nav__link">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notation/" class="md-nav__link">
         
   
   
@@ -369,7 +403,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fitting/" class="md-nav__link">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitting/" class="md-nav__link">
         
   
   
@@ -397,35 +459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training-speed/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../scores/" class="md-nav__link">
+      <a href="../scores/" class="md-nav__link">
         
   
   
@@ -453,7 +487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../varying-coefficients/" class="md-nav__link">
+      <a href="../varying-coefficients/" class="md-nav__link">
         
   
   
@@ -481,7 +515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../paper-replication/" class="md-nav__link">
+      <a href="../paper-replication/" class="md-nav__link">
         
   
   
@@ -509,7 +543,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../../code-map/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code-map/" class="md-nav__link">
         
   
   
@@ -537,7 +599,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zuko-upstream/" class="md-nav__link">
+      <a href="../zuko-upstream/" class="md-nav__link">
         
   
   
@@ -553,6 +615,44 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
     </li>
   
 
@@ -624,14 +724,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/demo_tram_dag_colab/" class="md-nav__link">
+      <a href="../notebooks/demo_tram_dag_colab/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -652,14 +752,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -680,7 +780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/additive_vs_joint_ci/" class="md-nav__link">
+      <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
   
@@ -708,7 +808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/varying_coefficients/" class="md-nav__link">
+      <a href="../notebooks/varying_coefficients/" class="md-nav__link">
         
   
   
@@ -736,7 +836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/classical_fit_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/classical_fit_tram_dag/" class="md-nav__link">
         
   
   
@@ -823,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/tramdag/" class="md-nav__link">
+      <a href="../api/tramdag/" class="md-nav__link">
         
   
   
@@ -851,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/spec/" class="md-nav__link">
+      <a href="../api/spec/" class="md-nav__link">
         
   
   
@@ -879,7 +979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/flow/" class="md-nav__link">
+      <a href="../api/flow/" class="md-nav__link">
         
   
   
@@ -907,7 +1007,119 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/transforms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/nodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/readouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    readouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/transforms/" class="md-nav__link">
         
   
   
@@ -935,35 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/conditioners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    conditioners
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/scores/" class="md-nav__link">
+      <a href="../api/scores/" class="md-nav__link">
         
   
   
@@ -991,7 +1175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/callbacks/" class="md-nav__link">
+      <a href="../api/callbacks/" class="md-nav__link">
         
   
   
@@ -999,6 +1183,34 @@
     
   
     callbacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plots
   
 
     
@@ -1039,25 +1251,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#add-your-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add your machine
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1076,135 +1269,53 @@
   
 
 
-<h1 id="tramdag-cross-machine-benchmark">tramdag cross-machine benchmark<a class="headerlink" href="#tramdag-cross-machine-benchmark" title="Permanent link">&para;</a></h1>
-<p>Fixed 200-epoch workloads (see <code>experiments/benchmarks/perf_machine.py</code>); <code>final_val_nll</code> must agree across machines (same seed &amp; data).</p>
-<table>
-<thead>
-<tr>
-<th>host</th>
-<th>chip</th>
-<th>gpu</th>
-<th>code</th>
-<th>workload</th>
-<th>device</th>
-<th>fit_s</th>
-<th>epochs_per_s</th>
-<th>sample_100k_s</th>
-<th>final_val_nll</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>MAC-MINI</td>
-<td>arm</td>
-<td>mps</td>
-<td>c9d84bf</td>
-<td>intro</td>
-<td>cpu</td>
-<td>6.52</td>
-<td>30.66</td>
-<td>1.8</td>
-<td>5.3741</td>
-</tr>
-<tr>
-<td>ios-nb-duerr</td>
-<td>arm</td>
-<td>mps</td>
-<td>0.2.0</td>
-<td>intro</td>
-<td>cpu</td>
-<td>10.72</td>
-<td>18.66</td>
-<td>2.38</td>
-<td>5.3737</td>
-</tr>
-<tr>
-<td>MAC-MINI</td>
-<td>arm</td>
-<td>mps</td>
-<td>c9d84bf</td>
-<td>intro</td>
-<td>mps</td>
-<td>20.03</td>
-<td>9.98</td>
-<td>0.91</td>
-<td>5.3736</td>
-</tr>
-<tr>
-<td>ios-nb-duerr</td>
-<td>arm</td>
-<td>mps</td>
-<td>0.2.0</td>
-<td>intro</td>
-<td>mps</td>
-<td>32.09</td>
-<td>6.23</td>
-<td>1.27</td>
-<td>5.3728</td>
-</tr>
-<tr>
-<td>MAC-MINI</td>
-<td>arm</td>
-<td>mps</td>
-<td>c9d84bf</td>
-<td>large</td>
-<td>cpu</td>
-<td>20.73</td>
-<td>9.65</td>
-<td>1.71</td>
-<td>4.9152</td>
-</tr>
-<tr>
-<td>MAC-MINI</td>
-<td>arm</td>
-<td>mps</td>
-<td>c9d84bf</td>
-<td>large</td>
-<td>mps</td>
-<td>31.6</td>
-<td>6.33</td>
-<td>0.89</td>
-<td>4.9132</td>
-</tr>
-<tr>
-<td>ios-nb-duerr</td>
-<td>arm</td>
-<td>mps</td>
-<td>0.2.0</td>
-<td>large</td>
-<td>mps</td>
-<td>38.87</td>
-<td>5.15</td>
-<td>0.74</td>
-<td>4.9129</td>
-</tr>
-<tr>
-<td>ios-nb-duerr</td>
-<td>arm</td>
-<td>mps</td>
-<td>0.2.0</td>
-<td>large</td>
-<td>cpu</td>
-<td>40.66</td>
-<td>4.92</td>
-<td>2.41</td>
-<td>4.9153</td>
-</tr>
-</tbody>
-</table>
-<h2 id="add-your-machine">Add your machine<a class="headerlink" href="#add-your-machine" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># on the new machine (no repo clone needed; GPU optional)</span>
-pip<span class="w"> </span>install<span class="w"> </span>tramdag
-curl<span class="w"> </span>-O<span class="w"> </span>https://raw.githubusercontent.com/tensorchiefs/tramdag/main/experiments/benchmarks/perf_machine.py
-python<span class="w"> </span>perf_machine.py<span class="w">            </span><span class="c1"># ~2-5 min -&gt; &lt;YYYY-MM-DD-HHMM&gt;_&lt;host&gt;.json</span>
-</code></pre></div>
-<p>Then copy the JSON into <code>docs/perf/</code> in the repo, commit it, and
-regenerate this file (or ask Claude to do it):</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>experiments/benchmarks/perf_machine.py<span class="w"> </span>--report<span class="w"> </span>docs/perf
-</code></pre></div>
-<p>Sanity check before committing: the new row's <code>final_val_nll</code> should
-match the existing rows to ~1e-3 — same seed and data everywhere.
-<em>(This file is auto-generated by <code>--report</code>; don't edit it by hand.)</em></p>
+<h1 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h1>
+<p>This page lists every work that the guides cite. Each guide also lists its
+own citations at the foot of the page. The entries come from
+<a href="../references.bib"><code>references.bib</code></a>, and <a href="../apa.csl"><code>apa.csl</code></a> sets the
+author-year style of the site and the PDF. On GitHub this page does not
+render, so read <code>references.bib</code> there.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:athey2019grf">
+<p>Athey, S., Tibshirani, J., &amp; Wager, S. (2019). Generalized random forests. <em>The Annals of Statistics</em>, <em>47</em>(2). <a href="https://doi.org/10.1214/18-AOS1709">https://doi.org/10.1214/18-AOS1709</a>&#160;</p>
+</li>
+<li id="fn:chernozhukov2018dml">
+<p>Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., &amp; Robins, J. (2018). Double/debiased machine learning for treatment and structural parameters. <em>The Econometrics Journal</em>, <em>21</em>(1), C1&ndash;C68. <a href="https://doi.org/10.1111/ectj.12097">https://doi.org/10.1111/ectj.12097</a>&#160;</p>
+</li>
+<li id="fn:dandl2024forest">
+<p>Dandl, S., Haslinger, C., Hothorn, T., Seibold, H., Sverdrup, E., Wager, S., &amp; Zeileis, A. (2024). What makes forest-based heterogeneous treatment effect estimators work? <em>The Annals of Applied Statistics</em>, <em>18</em>(1). <a href="https://doi.org/10.1214/23-AOAS1799">https://doi.org/10.1214/23-AOAS1799</a>&#160;</p>
+</li>
+<li id="fn:javaloy2023causalflows">
+<p>Javaloy, A., Sánchez-Martín, P., &amp; Valera, I. (2023). Causal normalizing flows: From theory to practice. <em>Advances in Neural Information Processing Systems (NeurIPS)</em>. <a href="https://arxiv.org/abs/2306.05415">https://arxiv.org/abs/2306.05415</a>&#160;</p>
+</li>
+<li id="fn:khemakhem2021carefl">
+<p>Khemakhem, I., Monti, R. P., Leech, R., &amp; Hyvärinen, A. (2021). Causal autoregressive flows. <em>Proceedings of the 24th International Conference on Artificial Intelligence and Statistics (AISTATS), Proceedings of Machine Learning Research</em>, <em>130</em>, 3520&ndash;3528. <a href="https://arxiv.org/abs/2011.02268">https://arxiv.org/abs/2011.02268</a>&#160;</p>
+</li>
+<li id="fn:nie2021quasioracle">
+<p>Nie, X., &amp; Wager, S. (2021). Quasi-oracle estimation of heterogeneous treatment effects. <em>Biometrika</em>, <em>108</em>(2), 299&ndash;319. <a href="https://doi.org/10.1093/biomet/asaa076">https://doi.org/10.1093/biomet/asaa076</a>&#160;</p>
+</li>
+<li id="fn:pearl2009causality">
+<p>Pearl, J. (2009). <em>Causality: Models, reasoning, and inference</em> (2nd ed.). Cambridge University Press. <a href="https://doi.org/10.1017/CBO9780511803161">https://doi.org/10.1017/CBO9780511803161</a>&#160;</p>
+</li>
+<li id="fn:robinson1988root">
+<p>Robinson, P. M. (1988). Root-N-consistent semiparametric regression. <em>Econometrica</em>, <em>56</em>(4). <a href="https://doi.org/10.2307/1912705">https://doi.org/10.2307/1912705</a>&#160;</p>
+</li>
+<li id="fn:sanchezmartin2022vaca">
+<p>Sánchez-Martín, P., Rateike, M., &amp; Valera, I. (2022). VACA: Designing variational graph autoencoders for causal queries. <em>Proceedings of the AAAI Conference on Artificial Intelligence</em>, <em>36</em>, 8159&ndash;8168. <a href="https://doi.org/10.1609/aaai.v36i7.20789">https://doi.org/10.1609/aaai.v36i7.20789</a>&#160;</p>
+</li>
+<li id="fn:sick2025tramdag">
+<p>Sick, B., &amp; Dürr, O. (2025). Interpretable neural causal models with TRAM-DAGs. <em>Proceedings of the 4th Conference on Causal Learning and Reasoning (CLeaR), Proceedings of Machine Learning Research</em>, <em>275</em>, 606&ndash;630. <a href="https://arxiv.org/abs/2503.16206">https://arxiv.org/abs/2503.16206</a>&#160;</p>
+</li>
+<li id="fn:zeileis2007fluctuation">
+<p>Zeileis, A., &amp; Hornik, K. (2007). Generalized M-fluctuation tests for parameter instability. <em>Statistica Neerlandica</em>, <em>61</em>(4), 488&ndash;508. <a href="https://doi.org/10.1111/j.1467-9574.2007.00371.x">https://doi.org/10.1111/j.1467-9574.2007.00371.x</a>&#160;</p>
+</li>
+<li id="fn:zeileis2008mob">
+<p>Zeileis, A., Hothorn, T., &amp; Hornik, K. (2008). Model-based recursive partitioning. <em>Journal of Computational and Graphical Statistics</em>, <em>17</em>(2), 492&ndash;514. <a href="https://doi.org/10.1198/106186008X319331">https://doi.org/10.1198/106186008X319331</a>&#160;</p>
+</li>
+</ol>
+</div>
 
 
 
@@ -1260,12 +1371,12 @@ match the existing rows to ~1e-3 — same seed and data everywhere.
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../../javascripts/mathjax.js"></script>
+        <script src="../javascripts/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
       

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/main/training-speed/">
+        <link rel="canonical" href="https://tensorchiefs.github.io/tramdag/main/architecture/">
       
       
-        <link rel="prev" href="../fitting/">
+        <link rel="prev" href="../paper-replication/">
       
       
-        <link rel="next" href="../scores/">
+        <link rel="next" href="../code-map/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Training speed - tramdag</title>
+        <title>Architecture - tramdag</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-fast-can-a-causalflowdag-train" class="md-skip">
+        <a href="#architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Training speed
+              Architecture
             
           </span>
         </div>
@@ -347,6 +347,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notation/" class="md-nav__link">
         
   
@@ -355,6 +383,34 @@
     
   
     Notation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interpretation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interpretation
   
 
     
@@ -391,136 +447,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Training speed
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-recipes-and-where-they-live-now" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The recipes, and where they live now
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#method-time-to-target-not-loss-go-down" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Method: time-to-target, not loss-go-down
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Results
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Findings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recommendation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recommendation
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -614,6 +540,186 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#module-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-term-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The term contract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node kinds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#guards-that-pin-all-of-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guards that pin all of this
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generated-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated views
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Generated views">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#package-uml-pyreverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package UML (pyreverse)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-uml-pyreverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class UML (pyreverse)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#call-graph-flow-construction-traced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call graph — flow construction (traced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#call-graph-one-fit-traced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call graph — one fit (traced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -653,6 +759,34 @@
     
   
     Zuko upstream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
   
 
     
@@ -739,7 +873,7 @@
   <span class="md-ellipsis">
     
   
-    TRAM-DAG in 5 minutes — one causal model, all three rungs of Pearl's ladder
+    TRAM-DAG: one causal model, all three rungs
   
 
     
@@ -760,14 +894,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../notebooks/intro_tram_dag/" class="md-nav__link">
+      <a href="../notebooks/training_strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    TRAM-DAG — a didactic introduction with
+    Training strategies: driving from the API side
   
 
     
@@ -1015,14 +1149,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/transforms/" class="md-nav__link">
+      <a href="../api/modules/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    transforms
+    modules
   
 
     
@@ -1043,14 +1177,98 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/conditioners/" class="md-nav__link">
+      <a href="../api/nodes/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    conditioners
+    nodes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/fitting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fitting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/readouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    readouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transforms
   
 
     
@@ -1120,6 +1338,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1154,10 +1400,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-recipes-and-where-they-live-now" class="md-nav__link">
+  <a href="#module-map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The recipes, and where they live now
+        Module map
       
     </span>
   </a>
@@ -1165,10 +1411,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#method-time-to-target-not-loss-go-down" class="md-nav__link">
+  <a href="#the-term-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method: time-to-target, not loss-go-down
+        The term contract
       
     </span>
   </a>
@@ -1176,10 +1422,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#results" class="md-nav__link">
+  <a href="#node-kinds" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Results
+        Node kinds
       
     </span>
   </a>
@@ -1187,10 +1433,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#findings" class="md-nav__link">
+  <a href="#guards-that-pin-all-of-this" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Findings
+        Guards that pin all of this
       
     </span>
   </a>
@@ -1198,13 +1444,63 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recommendation" class="md-nav__link">
+  <a href="#generated-views" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recommendation
+        Generated views
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Generated views">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#package-uml-pyreverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package UML (pyreverse)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-uml-pyreverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class UML (pyreverse)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#call-graph-flow-construction-traced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call graph — flow construction (traced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#call-graph-one-fit-traced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call graph — one fit (traced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1228,224 +1524,469 @@
   
 
 
-<h1 id="how-fast-can-a-causalflowdag-train">How fast can a CausalFlowDAG train?<a class="headerlink" href="#how-fast-can-a-causalflowdag-train" title="Permanent link">&para;</a></h1>
-<p>This document benchmarks learning-rate schedules, per-node freezing, batch sizes, devices,
-and LBFGS. The benchmark ran in June 2026 on an Apple-silicon Mac mini with torch 2.12
-(CPU unless noted). To reproduce it, run
-<a href="https://github.com/tensorchiefs/tramdag/blob/main/experiments/benchmarks/bench_training.py"><code>experiments/benchmarks/bench_training.py</code></a>
-(<code>cd experiments &amp;&amp; uv run python -m benchmarks.bench_training</code>, or <code>--quick</code> for
-one seed on cpu); the full grid takes ≈ 35 min. For a quick <strong>cross-machine</strong>
-comparison, use the self-contained
-<a href="https://github.com/tensorchiefs/tramdag/blob/main/experiments/benchmarks/perf_machine.py"><code>experiments/benchmarks/perf_machine.py</code></a>.
-It runs fixed 200-epoch workloads on all available devices and writes a machine
-fingerprint to JSON, and it needs nothing but <code>pip install tramdag</code>. The raw CSV
-is a local run artifact and is not committed.</p>
-<h2 id="the-recipes-and-where-they-live-now">The recipes, and where they live now<a class="headerlink" href="#the-recipes-and-where-they-live-now" title="Permanent link">&para;</a></h2>
-<p>The recipes this benchmark compares are <strong>callbacks</strong> since 0.4 — training
-strategies, not part of the model (see <a href="../fitting/">fitting.md</a>):</p>
-<table>
-<thead>
-<tr>
-<th>recipe</th>
-<th>behavior</th>
-<th>today</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>constant</td>
-<td>one lr for the whole run</td>
-<td><code>flow.fit(train, epochs=, learning_rate=)</code></td>
-</tr>
-<tr>
-<td>plateau+freeze</td>
-<td><strong>per-node</strong>: a node whose own validation NLL hasn't improved by <code>min_delta</code> (1e-4 default; the stroke run uses 1e-5, see the benchmark) for <code>patience</code> epochs gets its lr × 0.3, floored at 1e-3 × the start; once decayed ≥ 100× and flat for <code>freeze</code> epochs it leaves training (rate 0). Valid because the per-node losses have independent gradients.</td>
-<td><code>tramdag.callbacks.PerNodePlateau</code>, a callback over one parameter group per node (<code>per_node_adam</code>), measured in <code>experiments/benchmarks/bench_training.py</code></td>
-</tr>
-<tr>
-<td>global plateau</td>
-<td>torch's <code>ReduceLROnPlateau</code> on the summed validation NLL — the paper reference's rule</td>
-<td><code>experiments/paper/helpers.py::fit_paper</code></td>
-</tr>
-</tbody>
-</table>
-<p><code>"onecycle"</code> and <code>"cosine"</code> lost to <code>"plateau"</code> on every workload and were
-removed in 0.4; their measured rows below stay as the record.</p>
-<p><strong>The exact-MLE path</strong>: for an exact comparison with classical methods
-(<code>statsmodels</code>, R <code>polr</code>/<code>tram</code>) no recipe is needed —</p>
-<div class="highlight"><pre><span></span><code><span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>  <span class="c1"># constant lr</span>
-<span class="n">flow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>  <span class="c1"># 2nd phase</span>
-</code></pre></div>
-<p>is still the exact-MLE path (<code>experiments/misc/validate_ls.py</code> runs a three-phase variant
-of it, 800/700/500 epochs at 1e-2/1e-3/1e-4, batch 256 — cut from
-4000/2000/1000 in 2026-09: the same MLE, named-coef gap to statsmodels 1.6e-5
-vs 1.8e-5, ~3.5x less wall clock). <code>fit</code> keeps the
-final weights. The guard test
-<code>tests/test_fit_hooks.py::test_torch_plateau_scheduler_preserves_exact_mle</code> shows
-that a schedule through the hooks still lands the all-<code>ls</code> fit on the classical
-MLE within the usual tolerances.</p>
-<p><strong>LBFGS</strong> ships as its own method, <a href="../fitting/"><code>fit_classical</code></a>, which
-supersedes the hand-rolled recipe this report benchmarked. The float32 variant
-measured here was fast (&lt; 2 s) but seed-fragile (Finding #2); <code>fit_classical</code>'s
-float64 upcast fixed that.</p>
-<h2 id="method-time-to-target-not-loss-go-down">Method: time-to-target, not loss-go-down<a class="headerlink" href="#method-time-to-target-not-loss-go-down" title="Permanent link">&para;</a></h2>
-<p>Each config runs once. The benchmark's callback records per-epoch validation NLL <em>and</em> wall-clock time.
-From these records, we measure the seconds until the fit is within a fixed gap of a cached
-long-run reference (3 torch seeds, medians):</p>
-<table>
-<thead>
-<tr>
-<th>workload</th>
-<th>model / data</th>
-<th>reference NLL</th>
-<th>tight tol</th>
-<th>practical tol</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>stroke-ls</strong></td>
-<td>all-<code>ls</code> 5-node DAG, frozen <code>experiments/misc/data/magic-mrclean/ls</code> (n=1275, full-data MLE)</td>
-<td>10.3042 (train)</td>
-<td>+1e-3</td>
-<td>+5e-3</td>
-</tr>
-<tr>
-<td><strong>vaca-ci</strong></td>
-<td>all-<code>ci</code> flow, frozen <code>experiments/paper/data/vaca</code> (n=5000, 90/10 split)</td>
-<td>4.9632 (val)</td>
-<td>+2e-3</td>
-<td>+1e-2</td>
-</tr>
-</tbody>
-</table>
-<p><em>Tight</em> ≈ exact-MLE equivalence (statsmodels/R-polr match). <em>Practical</em> ≈
-coefficient-equivalent: a fit with gap ≈ 3e-3 already matches the R reference
-coefficients within the tolerances of
-<a href="https://github.com/tensorchiefs/tramdag/blob/main/experiments/misc/validate_ls.py"><code>experiments/misc/validate_ls.py</code></a>.
-The workloads are unchanged since the measurement (same frozen data, same
-specs); re-running reproduces the machine-independent stroke-ls reference NLL
-10.3042 exactly.</p>
-<h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
-<p><img alt="stroke-ls convergence" src="../img/nll_vs_time_stroke-ls.png" />
-<img alt="vaca-ci convergence" src="../img/nll_vs_time_vaca-ci.png" /></p>
-<p>The table shows median seconds to target (batch 512, cpu). A "—" entry means that the fit
-never reached the target within the budget.</p>
-<table>
-<thead>
-<tr>
-<th>config</th>
-<th>stroke-ls practical</th>
-<th>stroke-ls tight</th>
-<th>vaca-ci practical</th>
-<th>vaca-ci tight</th>
-<th>self-stops</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>baseline two-phase (old default)</td>
-<td>9.0</td>
-<td><strong>21.4</strong></td>
-<td>2.1</td>
-<td>2.8¹</td>
-<td>no (runs 40 s / 15 s)</td>
-</tr>
-<tr>
-<td>constant 1e-2</td>
-<td>9.1</td>
-<td>21.5³</td>
-<td>2.2</td>
-<td>2.8¹</td>
-<td>no</td>
-</tr>
-<tr>
-<td>onecycle (1500 / 300 ep)²</td>
-<td>—</td>
-<td>—</td>
-<td>3.5</td>
-<td>4.5</td>
-<td>no</td>
-</tr>
-<tr>
-<td>onecycle (3000 ep)²</td>
-<td>16.8</td>
-<td>— (gap 1–2e-3)</td>
-<td></td>
-<td></td>
-<td>no</td>
-</tr>
-<tr>
-<td>cosine²</td>
-<td>—</td>
-<td>—</td>
-<td>2.2</td>
-<td>3.5¹</td>
-<td>no</td>
-</tr>
-<tr>
-<td><strong>plateau + freeze</strong></td>
-<td><strong>8.9</strong></td>
-<td>— (gap 2e-3)</td>
-<td><strong>2.0</strong></td>
-<td>2.9</td>
-<td><strong>yes — 13 s / 4 s total</strong></td>
-</tr>
-<tr>
-<td>LBFGS (full-batch)</td>
-<td><strong>1.6</strong> (2/3 seeds)</td>
-<td>— (gap 4–8e-3)</td>
-<td>n/a</td>
-<td>n/a</td>
-<td>yes</td>
-</tr>
-</tbody>
-</table>
-<p>¹ transient: the val-NLL curve dips through the target and then drifts away. Stroke needs
-the 1e-3 phase to <em>stay</em>. Vaca shows mild overfitting. Final gap for the vaca baseline is
-0.037. The old 520-epoch budget <strong>underfits</strong> vaca by ~0.03 nats. Plateau+freeze <em>stays</em>
-at its target.
-² <code>onecycle</code> and <code>cosine</code> were removed from <code>fit()</code> in 0.4 — they lost to
-plateau on every workload here — so these three rows cannot be re-measured.
-³ constant lr at batch 512 stalls at gap 3–7e-3. Only the lr-decay phase closes the last
-decade. This is why the two-phase recipe existed.</p>
-<h2 id="findings">Findings<a class="headerlink" href="#findings" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Per-node plateau decay + freezing is the best default-style trainer.</strong> It has the
-   same time-to-accuracy as the hand-tuned two-phase schedule, but it needs <strong>no budget
-   tuning</strong>. It decays the lr of each node off its own validation curve. It freezes
-   converged nodes, which is a real FLOP saving because the per-node NLLs have
-   independent gradients. And it <strong>stops itself</strong>: 13 s total vs 40 s for the baseline on
-   stroke-ls, 4 s vs 15 s on vaca-ci, at equal or better final NLL.</li>
-<li><strong>LBFGS is spectacular but not robust.</strong> Full-batch LBFGS reaches coefficient-level
-   accuracy on the classical all-<code>ls</code> model in <strong>&lt; 2 s</strong> (vs 9 s for Adam) on 2/3 seeds.
-   The third seed stalls at gap 8e-3. An Adam warm start made it <em>worse</em> (different
-   basin) on every seed. Use it as a fast first shot with the plateau trainer as
-   fallback, not as the default.</li>
-<li><strong>OneCycle is a "spend exactly this budget" scheduler.</strong> Accuracy arrives only at the
-   end of its anneal. At 1500 epochs it misses everything. At 3000 epochs it lands gap
-   1–2e-3. But you must know the right budget in advance, and this requirement is the
-   problem that we try to remove.</li>
-<li><strong>Full-batch loses on time-to-target</strong> despite ~1.6× higher epoch throughput. It makes
-   too few optimizer steps per second of compute at these n. Batch 512 is a good default.
-   Very large batches (16k) only improved raw throughput at n=50k.</li>
-<li><strong>MPS (Apple GPU) is 3–4× slower than the M-series CPU</strong> at these model sizes
-   (verified correct: identical reconstruction). Kernel-launch overhead dominates
-   sub-millisecond ops. Stay on CPU locally. CUDA on Colab-class GPUs is a different
-   regime.</li>
-<li><strong>The old defaults waste or under-spend.</strong> Stroke: 4000 epochs budgeted, converged
-   work done after ~1500 (freezing recovers the difference automatically). Vaca: 520
-   epochs budgeted, ~0.03 nats short of converged. Fixed budgets are wrong in both
-   directions. Adaptive stopping fixes both.</li>
-</ol>
-<h2 id="recommendation">Recommendation<a class="headerlink" href="#recommendation" title="Permanent link">&para;</a></h2>
-<p>The everyday recipe is the global-plateau callback in
-<a href="../fitting/#training-strategies">fitting.md</a> with a generous <code>epochs</code>
-ceiling; the per-node self-stopping variant is
-<code>tramdag.callbacks.PerNodePlateau</code>. One finding became a package default:
-<code>epochs</code> has no default, because Finding 6 is precisely that a fixed budget
-cannot be right for every workload — every in-repo caller states its recipe in
-its own YAML.</p>
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>The package has ten modules and one rule. Term-specific behavior lives on the
+term's two classes: its <code>Term</code> subclass (the spec) and its module in
+<code>modules.py</code>. Node-kind behavior lives in five <code>Node</code> methods. Everything else
+is framework code.</p>
+<h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TD
+    subgraph data["spec"]
+        spec["spec.py&lt;br/&gt;DSL: Term + one subclass per term&lt;br/&gt;(Intercept LinearShift ComplexShift&lt;br/&gt;VaryingCoefficient = I LS CS VC),&lt;br/&gt;each holding its module class;&lt;br/&gt;nodes, normalization, Kahn sort, (de)serialization"]
+    end
+    subgraph torch["torch modules"]
+        modules["modules.py&lt;br/&gt;one nn.Module per term, built from (term, spec):&lt;br/&gt;ShiftModule/InterceptModule hooks,&lt;br/&gt;intercept_module, feat_width, _InputTransform;&lt;br/&gt;LinearShiftModule ComplexShiftModule&lt;br/&gt;VaryingCoefficientModule,&lt;br/&gt;SimpleInterceptModule ComplexInterceptModule&lt;br/&gt;AdditiveInterceptModule"]
+        transforms["transforms.py&lt;br/&gt;Bernstein/Spline/Affine,&lt;br/&gt;ordinal_* likelihood,&lt;br/&gt;StandardLogistic"]
+        nodes["nodes.py&lt;br/&gt;Node: intercept + shifts,&lt;br/&gt;encode, log_prob, sample,&lt;br/&gt;abduct, marginal_theta"]
+        flow["flow.py&lt;br/&gt;CausalFlowDAG: construct, calibrate (private),&lt;br/&gt;log_prob, sample/abduct/pmf/density,&lt;br/&gt;save/load; composes the mixins"]
+    end
+    subgraph functions["flow behavior by concern"]
+        fitting["fitting.py&lt;br/&gt;FitMixin: fit (Adam loop, callbacks),&lt;br/&gt;fit_classical (L-BFGS)"]
+        readouts["readouts.py&lt;br/&gt;ReadoutsMixin: ls_coefficients,&lt;br/&gt;varying_coef, to_matrix, contributions,&lt;br/&gt;design_matrix, shift_curve"]
+        scores["scores.py&lt;br/&gt;node_scores,&lt;br/&gt;effect_modifier_scan"]
+    end
+    callbacks["callbacks.py&lt;br/&gt;Callback, EarlyStopping,&lt;br/&gt;PerNodeEarlyStopping, per_node_adam"]
+    plots["plots.py&lt;br/&gt;plot_dag, plot_marginals,&lt;br/&gt;plot_training (matplotlib optional)"]
+
+    spec --&gt; modules
+    nodes --&gt; spec
+    nodes --&gt; transforms
+    flow --&gt; nodes
+    flow --&gt; modules
+    flow --&gt; spec
+    flow --&gt; transforms
+    flow --&gt; fitting
+    flow --&gt; readouts
+    flow --&gt; scores
+    fitting --&gt; callbacks
+    readouts --&gt; modules
+    readouts --&gt; spec
+    scores --&gt; spec
+    scores --&gt; transforms
+    plots --&gt; spec</code></pre>
+<p><code>modules.py</code> imports nothing from <code>spec.py</code>: it reads a spec node's <code>kind</code> and
+<code>levels</code> and a term's <code>parents</code> and options. That is what lets each term class
+hold its module class directly (<code>LinearShift.module is LinearShiftModule</code>).
+<code>fitting.py</code> and <code>readouts.py</code> are mixins that <code>CausalFlowDAG</code> composes;
+<code>fitting</code> imports <code>flow</code> under <code>TYPE_CHECKING</code> only. The graph is acyclic.</p>
+<h2 id="the-term-contract">The term contract<a class="headerlink" href="#the-term-contract" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>classDiagram
+    class Term {
+        &lt;&lt;spec.py, plain data&gt;&gt;
+        name: class attribute, the wire key
+        module: class attribute, the module class
+        parents
+        __init__(*parents): the base assigns the parents
+        options: each subclass's keyword arguments, assigned to self
+        __repr__(): the only one — every entry as name=value
+        check(name, spec)
+        edge_parents
+        cells()
+        classical
+        options() / from_serialized()
+    }
+    Term &lt;|-- Intercept : I
+    Term &lt;|-- LinearShift : LS
+    Term &lt;|-- ComplexShift : CS
+    Term &lt;|-- VaryingCoefficient : VC
+    class TermModule {
+        &lt;&lt;modules.py, nn.Module&gt;&gt;
+        input_transform / calibrate(train_df)
+    }
+    class ShiftModule {
+        __init__(term, spec): builds the net, sets key and parents
+        order
+        shift_value(node, feats)
+        post_init()
+        regularizer() -&gt; Tensor | None
+        finalize(node, feats)
+        score_columns(node, flow, feats, dlds)
+        side_columns() / check_column() / live_side() / extra_columns()
+    }
+    class InterceptModule {
+        __init__(term, spec, n_params): intercept_module picks the class
+        groups / ci_parents
+        calibrate_intercept(train_df, own, ut)
+        theta_value(node, feats, n)
+        marginal_start(theta)
+    }
+    TermModule &lt;|-- ShiftModule
+    TermModule &lt;|-- InterceptModule
+    ShiftModule &lt;|-- LinearShiftModule
+    ShiftModule &lt;|-- ComplexShiftModule
+    ShiftModule &lt;|-- VaryingCoefficientModule
+    InterceptModule &lt;|-- SimpleInterceptModule
+    InterceptModule &lt;|-- ComplexInterceptModule
+    InterceptModule &lt;|-- AdditiveInterceptModule</code></pre>
+<p>Each module builds its layers in a fixed order under fixed attribute names, so
+the state-dict paths (<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream are
+stable; <code>tests/test_statedict_stability.py</code> pins them.</p>
+<p>A custom term is two classes:</p>
+<ul>
+<li>a <code>ShiftModule</code> subclass with <code>__init__(term, spec)</code>, which builds the
+  network and sets <code>key</code> and <code>parents</code>, and <code>shift_value</code>;</li>
+<li>a <code>tramdag.Term</code> subclass with <code>name</code> and <code>module</code> as class attributes
+  (<code>__init_subclass__</code> refuses one without). Its options are the keyword
+  arguments of its <code>__init__</code>, assigned to <code>self</code> after
+  <code>super().__init__(*parents)</code>; its rules are the checks after that, plus
+  <code>check</code> and <code>edge_parents</code>.</li>
+</ul>
+<h2 id="node-kinds">Node kinds<a class="headerlink" href="#node-kinds" title="Permanent link">&para;</a></h2>
+<p>The two node kinds are continuous and ordinal. They stay an if/else in ONE
+place: the five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>,
+<code>marginal_theta</code> and <code>encode</code> in nodes.py.</p>
+<h2 id="guards-that-pin-all-of-this">Guards that pin all of this<a class="headerlink" href="#guards-that-pin-all-of-this" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>tests/tools/statedict_smoke.py</code> — seeded per-DGP state dicts, bit-compared.</li>
+<li>The inline DGP truths (<code>tests/conftest.py</code>) and 45+ regex-pinned refusals.</li>
+<li><code>experiments/ground_truth/*.json</code> — eight CI-checked replications with
+  wall-time tripwires. Centers move only with a documented reason.</li>
+</ul>
+<!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
+<h2 id="generated-views">Generated views<a class="headerlink" href="#generated-views" title="Permanent link">&para;</a></h2>
+<p>To regenerate this section, run <code>uv run python tools/gen_diagrams.py</code>.</p>
+<p>The package UML and the class UML come from pyreverse. The class diagram
+carries names and inheritance only. The call graphs come from a profile trace
+of one flow construction and one three-epoch <code>fit</code> on a 3-node SI/LS/CS/VC
+spec. The graphs keep tramdag-internal edges only, and <code>3x</code> means once per
+node.</p>
+<h3 id="package-uml-pyreverse">Package UML (pyreverse)<a class="headerlink" href="#package-uml-pyreverse" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>classDiagram
+  class tramdag {
+  }
+  class callbacks {
+  }
+  class fitting {
+  }
+  class flow {
+  }
+  class modules {
+  }
+  class nodes {
+  }
+  class plots {
+  }
+  class readouts {
+  }
+  class scores {
+  }
+  class spec {
+  }
+  class transforms {
+  }
+  tramdag --&gt; flow
+  tramdag --&gt; plots
+  tramdag --&gt; spec
+  fitting --&gt; callbacks
+  flow --&gt; fitting
+  flow --&gt; modules
+  flow --&gt; nodes
+  flow --&gt; readouts
+  flow --&gt; spec
+  flow --&gt; transforms
+  nodes --&gt; spec
+  nodes --&gt; transforms
+  plots --&gt; spec
+  readouts --&gt; modules
+  scores --&gt; transforms
+  spec --&gt; modules
+  fitting ..&gt; flow
+  modules ..&gt; nodes
+  modules ..&gt; spec</code></pre>
+<h3 id="class-uml-pyreverse">Class UML (pyreverse)<a class="headerlink" href="#class-uml-pyreverse" title="Permanent link">&para;</a></h3>
+<p>Each built-in term module holds its network and takes its contract from
+<code>ShiftModule</code>/<code>InterceptModule</code>.</p>
+<pre class="mermaid"><code>classDiagram
+  class AdditiveInterceptModule {
+  }
+  class AffineUT {
+  }
+  class BernsteinUT {
+  }
+  class Callback {
+  }
+  class CausalFlowDAG {
+  }
+  class ComplexInterceptModule {
+  }
+  class ComplexShift {
+  }
+  class ComplexShiftModule {
+  }
+  class ContinuousNode {
+  }
+  class EarlyStopping {
+  }
+  class FitMixin {
+  }
+  class Intercept {
+  }
+  class InterceptModule {
+  }
+  class LinearShift {
+  }
+  class LinearShiftModule {
+  }
+  class Node {
+  }
+  class OrdinalNode {
+  }
+  class PerNodeEarlyStopping {
+  }
+  class ReadoutsMixin {
+  }
+  class ShiftModule {
+  }
+  class SimpleInterceptModule {
+  }
+  class SplineUT {
+  }
+  class StandardLogistic {
+  }
+  class Term {
+  }
+  class TermModule {
+  }
+  class VaryingCoefficient {
+  }
+  class VaryingCoefficientModule {
+  }
+  class _FnCallback {
+  }
+  class _InputTransform {
+  }
+  class _ScaledUT {
+  }
+  EarlyStopping --|&gt; Callback
+  PerNodeEarlyStopping --|&gt; Callback
+  _FnCallback --|&gt; Callback
+  CausalFlowDAG --|&gt; FitMixin
+  CausalFlowDAG --|&gt; ReadoutsMixin
+  AdditiveInterceptModule --|&gt; InterceptModule
+  ComplexInterceptModule --|&gt; InterceptModule
+  ComplexShiftModule --|&gt; ShiftModule
+  InterceptModule --|&gt; TermModule
+  LinearShiftModule --|&gt; ShiftModule
+  ShiftModule --|&gt; TermModule
+  SimpleInterceptModule --|&gt; InterceptModule
+  VaryingCoefficientModule --|&gt; ShiftModule
+  ComplexShift --|&gt; Term
+  Intercept --|&gt; Term
+  LinearShift --|&gt; Term
+  VaryingCoefficient --|&gt; Term
+  AffineUT --|&gt; _ScaledUT
+  BernsteinUT --|&gt; _ScaledUT
+  SplineUT --|&gt; _ScaledUT
+  ComplexShiftModule --o ComplexShift : module
+  LinearShiftModule --o LinearShift : module
+  VaryingCoefficientModule --o VaryingCoefficient : module</code></pre>
+<h3 id="call-graph-flow-construction-traced">Call graph — flow construction (traced)<a class="headerlink" href="#call-graph-flow-construction-traced" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+  subgraph flow
+    n0["CausalFlowDAG.__init__"]
+    n1["CausalFlowDAG._apply_init"]
+  end
+  subgraph modules
+    n4["ComplexShiftModule.__init__"]
+    n8["LinearShiftModule.__init__"]
+    n11["SimpleInterceptModule.__init__"]
+    n9["VaryingCoefficientModule.__init__"]
+    n5["_attach_input_transform"]
+    n6["_nn"]
+    n7["feat_width"]
+    n10["intercept_module"]
+  end
+  subgraph nodes
+    n2["Node.__init__"]
+  end
+  subgraph spec
+    n16["Term.check"]
+    n17["Term.edge_parents"]
+    n18["VaryingCoefficient.check"]
+    n19["VaryingCoefficient.edge_parents"]
+    n15["_check_node"]
+    n20["_kahn_sort"]
+    n12["node_parents"]
+    n3["validate_and_sort"]
+  end
+  subgraph transforms
+    n21["BernsteinUT.__init__"]
+    n13["BernsteinUT.n_params"]
+    n22["_ScaledUT.__init__"]
+    n14["make_univariate_transform"]
+  end
+    n0 --&gt; n1
+    n0 -- "3x" --&gt; n2
+    n0 --&gt; n3
+    n4 --&gt; n5
+    n4 --&gt; n6
+    n4 --&gt; n7
+    n8 --&gt; n7
+    n9 --&gt; n5
+    n9 --&gt; n6
+    n9 --&gt; n7
+    n10 -- "3x" --&gt; n11
+    n2 --&gt; n4
+    n2 --&gt; n8
+    n2 --&gt; n9
+    n2 -- "3x" --&gt; n10
+    n2 -- "3x" --&gt; n12
+    n2 -- "2x" --&gt; n13
+    n2 -- "2x" --&gt; n14
+    n15 -- "5x" --&gt; n16
+    n15 -- "5x" --&gt; n17
+    n15 --&gt; n18
+    n15 --&gt; n19
+    n20 -- "3x" --&gt; n12
+    n3 -- "3x" --&gt; n15
+    n3 --&gt; n20
+    n21 -- "2x" --&gt; n22
+    n14 -- "2x" --&gt; n21</code></pre>
+<h3 id="call-graph-one-fit-traced">Call graph — one fit (traced)<a class="headerlink" href="#call-graph-one-fit-traced" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+  subgraph callbacks
+    n0["EarlyStopping.__init__"]
+    n1["EarlyStopping._reset"]
+    n2["EarlyStopping.on_epoch_end"]
+    n4["EarlyStopping.on_fit_begin"]
+    n6["EarlyStopping.on_fit_end"]
+    n3["_last_val"]
+  end
+  subgraph fitting
+    n5["FitMixin.fit"]
+    n7["_check_fit_sizes"]
+    n8["_fit_epoch"]
+    n9["_learning_rates"]
+    n10["_log_epoch"]
+    n11["_normalize_callbacks"]
+    n12["_split_validation"]
+  end
+  subgraph flow
+    n13["CausalFlowDAG._calibrate"]
+    n21["CausalFlowDAG._check_columns"]
+    n22["CausalFlowDAG._check_level_values"]
+    n14["CausalFlowDAG._check_side_columns"]
+    n32["CausalFlowDAG._dtype"]
+    n27["CausalFlowDAG._features"]
+    n15["CausalFlowDAG._mean_nll"]
+    n16["CausalFlowDAG._recenter_vc"]
+    n31["CausalFlowDAG._side_feats"]
+    n17["CausalFlowDAG._tensorize"]
+    n33["CausalFlowDAG._theta_shift"]
+    n20["CausalFlowDAG.node_log_prob"]
+  end
+  subgraph modules
+    n37["ComplexShiftModule.forward"]
+    n36["ComplexShiftModule.shift_value"]
+    n23["InterceptModule.calibrate_intercept"]
+    n41["LinearShiftModule.forward"]
+    n40["LinearShiftModule.shift_value"]
+    n29["ShiftModule.finalize"]
+    n18["ShiftModule.regularizer"]
+    n25["ShiftModule.side_columns"]
+    n43["SimpleInterceptModule.forward"]
+    n42["SimpleInterceptModule.theta_value"]
+    n24["TermModule.calibrate"]
+    n44["TermModule.input_transform"]
+    n47["VaryingCoefficientModule.beta"]
+    n30["VaryingCoefficientModule.finalize"]
+    n46["VaryingCoefficientModule.forward"]
+    n48["VaryingCoefficientModule.l2"]
+    n45["VaryingCoefficientModule.recenter"]
+    n50["VaryingCoefficientModule.regressor"]
+    n19["VaryingCoefficientModule.regularizer"]
+    n49["VaryingCoefficientModule.shift_value"]
+    n26["VaryingCoefficientModule.side_columns"]
+  end
+  subgraph nodes
+    n28["Node.encode"]
+    n35["Node.log_prob"]
+    n38["Node.net_input"]
+    n34["Node.theta_shift"]
+  end
+  subgraph transforms
+    n54["BernsteinUT._build"]
+    n51["StandardLogistic.log_prob"]
+    n55["_ScaledUT._log_dt_dx"]
+    n56["_ScaledUT._scale"]
+    n52["_ScaledUT.forward"]
+    n39["_ScaledUT.set_range"]
+    n59["_log1mexp"]
+    n57["ordinal_bounds"]
+    n58["ordinal_cutpoints"]
+    n53["ordinal_log_prob"]
+  end
+    n0 --&gt; n1
+    n2 -- "3x" --&gt; n3
+    n4 --&gt; n1
+    n5 -- "3x" --&gt; n2
+    n5 --&gt; n4
+    n5 --&gt; n6
+    n5 --&gt; n7
+    n5 -- "3x" --&gt; n8
+    n5 -- "3x" --&gt; n9
+    n5 -- "3x" --&gt; n10
+    n5 --&gt; n11
+    n5 --&gt; n12
+    n5 --&gt; n13
+    n5 --&gt; n14
+    n5 -- "3x" --&gt; n15
+    n5 --&gt; n16
+    n5 -- "2x" --&gt; n17
+    n5 -- "2x" --&gt; n18
+    n5 --&gt; n19
+    n8 -- "6x" --&gt; n20
+    n8 -- "6x" --&gt; n19
+    n13 --&gt; n21
+    n13 --&gt; n22
+    n13 -- "3x" --&gt; n23
+    n13 -- "3x" --&gt; n24
+    n14 -- "2x" --&gt; n25
+    n14 --&gt; n26
+    n27 -- "30x" --&gt; n28
+    n15 -- "3x" --&gt; n20
+    n16 --&gt; n27
+    n16 -- "2x" --&gt; n29
+    n16 --&gt; n30
+    n31 -- "18x" --&gt; n25
+    n31 -- "9x" --&gt; n26
+    n17 -- "2x" --&gt; n21
+    n17 -- "2x" --&gt; n22
+    n17 -- "6x" --&gt; n32
+    n33 -- "27x" --&gt; n31
+    n33 -- "27x" --&gt; n34
+    n20 -- "9x" --&gt; n27
+    n20 -- "27x" --&gt; n33
+    n20 -- "27x" --&gt; n35
+    n36 -- "9x" --&gt; n37
+    n36 -- "9x" --&gt; n38
+    n23 -- "3x" --&gt; n24
+    n23 -- "2x" --&gt; n39
+    n40 -- "9x" --&gt; n41
+    n42 -- "27x" --&gt; n43
+    n24 -- "6x" --&gt; n44
+    n30 --&gt; n45
+    n30 --&gt; n38
+    n46 -- "9x" --&gt; n47
+    n19 -- "7x" --&gt; n48
+    n49 -- "9x" --&gt; n46
+    n49 -- "9x" --&gt; n50
+    n49 -- "9x" --&gt; n38
+    n35 -- "18x" --&gt; n51
+    n35 -- "18x" --&gt; n52
+    n35 -- "9x" --&gt; n53
+    n38 -- "19x" --&gt; n44
+    n34 -- "9x" --&gt; n36
+    n34 -- "9x" --&gt; n40
+    n34 -- "27x" --&gt; n42
+    n34 -- "9x" --&gt; n49
+    n52 -- "18x" --&gt; n54
+    n52 -- "18x" --&gt; n55
+    n52 -- "18x" --&gt; n56
+    n57 -- "9x" --&gt; n58
+    n53 -- "9x" --&gt; n59
+    n53 -- "9x" --&gt; n57</code></pre>
+<!-- AUTOGEN:end -->
 
 
 

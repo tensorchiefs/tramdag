@@ -558,7 +558,7 @@ class Intercept(Term):
     input_transform : str | callable | None, optional
         ``"minmax"``, ``"standardize"`` or a callable ``fn(x, train)``
         applied per continuous parent column (``train`` is that column's
-        raw training data, frozen at ``calibrate``). Parents only.
+        raw training data, frozen at calibration). Parents only.
         ``None``, the default, applies no transform.
     **transform_options
         Any keyword that is not an option above goes straight to the

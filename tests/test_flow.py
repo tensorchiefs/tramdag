@@ -227,7 +227,7 @@ def test_affine_zero_theta_is_the_logistic_density():
     np.testing.assert_allclose(
         flow.log_prob(df).detach().numpy(), expected.numpy(), atol=1e-5
     )
-    # the transform ranges are the train 5%/95% quantiles, as calibrate documents
+    # the transform ranges are the train 5%/95% quantiles
     q = df["x"].quantile([0.05, 0.95])
     assert (xmin, xmax) == pytest.approx((q.iloc[0], q.iloc[1]))
 

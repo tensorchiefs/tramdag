@@ -529,7 +529,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         r"""Recover the latent variables ``u`` from observations (the abduction step).
 
         A continuous node inverts exactly: $u = h(x) + s$. This is
-        $\\operatorname{logit} P(X \\le x \\mid \text{parents})$, an
+        $\operatorname{logit} P(X \le x \mid \text{parents})$, an
         interventional quantity at the given parent values. For an
         ordinal node the latent is only interval-identified, so it is
         sampled from the standard logistic truncated to the observed

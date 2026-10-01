@@ -325,7 +325,7 @@ class _ScaledUT(torch.nn.Module, ABC):
     Parameters
     ----------
     range_q : float, optional
-        Quantile level of the domain pre-map: ``calibrate`` maps the train
+        Quantile level of the domain pre-map: the flow's calibration maps the train
         ``range_q``/``1 - range_q`` quantiles onto ``[-B, B]``, by default
         ``RANGE_Q`` (5%/95%); ``0.0`` maps the data min/max. An intercept
         option: ``SI(range_q=0.0)``.

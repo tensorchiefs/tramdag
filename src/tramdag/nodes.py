@@ -119,7 +119,7 @@ class Node(nn.Module):
         ``key`` names the term ("@I" for the intercept, the shift key
         otherwise); a term with an ``input_transform`` gets its continuous
         parent columns transformed with the statistics frozen at
-        ``calibrate``. Every network input goes through here — training and
+        calibration. Every network input goes through here — training and
         the read-outs (``varying_coef``, ``intercept_contributions``) alike —
         so the model seen at inference is the model that was fitted. Linear
         shifts and the VC treatment column are not network inputs and never

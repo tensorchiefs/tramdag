@@ -25,12 +25,12 @@ T_SPEC = {"X": ContinuousNode(I(transform="affine")), "T": OrdinalNode(2, LS("X"
 
 
 # %% private functions -----------------------------------------------------------------
-def _misspecified_spec(center) -> dict:
+def _misspecified_spec(centered) -> dict:
     return {
         **T_SPEC,
         # prognostic part deliberately under-specified (linear vs true x^2)
         "Y": ContinuousNode(
-            LS("X") + VC("X", propensity="ps" if center else None, t="T")
+            LS("X") + VC("X", propensity="ps" if centered else None, t="T")
         ),
     }
 
@@ -60,7 +60,7 @@ def _fit(spec, df, epochs=250):
 
 
 # %% public functions ------------------------------------------------------------------
-def test_center_validation():
+def test_propensity_validation():
     spec = {"D": ContinuousNode(), "Y": ContinuousNode(VC(propensity="ps", t="D"))}
     with pytest.raises(ValueError, match="binary ordinal"):
         validate_and_sort(spec)  # continuous treatment cannot center
@@ -73,13 +73,13 @@ def test_center_validation():
     with pytest.raises(ValueError, match="chained"):
         validate_and_sort(chained)
     # propensity names a COLUMN: a bool refuses loudly
-    legacy = {
+    as_bool = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
         "Y": ContinuousNode(VC("X", propensity=True, t="T")),
     }
     with pytest.raises(ValueError, match="COLUMN"):
-        validate_and_sort(legacy)
+        validate_and_sort(as_bool)
     collides = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
@@ -89,7 +89,7 @@ def test_center_validation():
         validate_and_sort(collides)
 
 
-def test_center_serialization_roundtrip():
+def test_propensity_serialization_roundtrip():
     spec = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
@@ -100,7 +100,7 @@ def test_center_serialization_roundtrip():
     assert t.propensity == "ps"
 
 
-def test_center_false_is_bit_identical_to_plain_vc(vc_hetero):
+def test_no_propensity_is_bit_identical_to_plain_vc(vc_hetero):
     """The default must preserve the plain VC's behavior exactly: a VC term written
     without the kwarg and one with propensity=None produce bit-identical fits.
     """

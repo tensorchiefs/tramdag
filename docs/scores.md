@@ -91,11 +91,8 @@ other fitted coefficients, and the scan does not.
 
 The error has a direction. For a candidate that is also an `LS` parent of
 the node, the fitted `LS` weight already removes part of the pattern. The
-scan then flags too rarely. In 100 simulated data sets of 2000 rows, from
-the notebook's linear model with the constant effect $\beta = -1$, each of
-the three parents flagged in 1 % of them or fewer. An independent covariate
-that is not a parent flagged in 4 %, close to the nominal 5 %. Read
-the p-value as a guide, not as an exact error rate.
+scan then flags too rarely for that candidate. Read the p-value as a guide,
+not as an exact error rate.
 
 ## Read it as screening
 
@@ -107,10 +104,9 @@ covariate. Two causes give this:
   prognostic part, wrongly.
 
 The second cause works through the score. The treatment score of row $i$ is
-$\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row, and
+$\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row. The factor
 $r_i = \partial \ell_i / \partial s_i$ is the derivative of $\ell_i$ with
-respect to the row's total shift $s_i$. The factor $r_i$
-acts like a residual. If the simple model gets the prognostic effect
+respect to the row's total shift $s_i$, and it acts like a residual. If the simple model gets the prognostic effect
 of `X1` wrong, $r_i$ follows a pattern in `X1`. The treatment score takes on
 that pattern, so the path of `X1` swings.
 

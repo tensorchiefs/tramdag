@@ -3226,7 +3226,7 @@ one of the keys of <code>modules.ACTIVATIONS</code>.</p>
               <div class="doc-md-description">
                 <p><code>"minmax"</code>, <code>"standardize"</code> or a callable <code>fn(x, train)</code>
 applied per continuous parent column (<code>train</code> is that column's
-raw training data, frozen at <code>calibrate</code>). Parents only.
+raw training data, frozen at calibration). Parents only.
 <code>None</code>, the default, applies no transform.</p>
               </div>
             </td>
@@ -3429,7 +3429,7 @@ interaction to disallow needs two).</p>
 <span class="sd">    input_transform : str | callable | None, optional</span>
 <span class="sd">        ``"minmax"``, ``"standardize"`` or a callable ``fn(x, train)``</span>
 <span class="sd">        applied per continuous parent column (``train`` is that column's</span>
-<span class="sd">        raw training data, frozen at ``calibrate``). Parents only.</span>
+<span class="sd">        raw training data, frozen at calibration). Parents only.</span>
 <span class="sd">        ``None``, the default, applies no transform.</span>
 <span class="sd">    **transform_options</span>
 <span class="sd">        Any keyword that is not an option above goes straight to the</span>

@@ -1837,7 +1837,7 @@ exact-MLE route for all-<code>ls</code> specs.</p>
 <span class="sd">        validation_split : float | None, optional</span>
 <span class="sd">            Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
 <span class="sd">            validation set, without shuffling, and only the remaining rows</span>
-<span class="sd">            train (and calibrate — no leakage into the frozen statistics).</span>
+<span class="sd">            train and calibrate, so no validation row reaches the frozen statistics.</span>
 <span class="sd">            Mutually exclusive with ``validation_data``.</span>
 <span class="sd">        verbose : int, optional</span>
 <span class="sd">            0 (default) is silent. ``N &gt;= 1`` prints one line every ``N``</span>
@@ -2245,7 +2245,7 @@ default optimizer).</p>
               <div class="doc-md-description">
                 <p>Keras' rule: the LAST fraction of <code>train_df</code> becomes the
 validation set, without shuffling, and only the remaining rows
-train (and calibrate — no leakage into the frozen statistics).
+train and calibrate, so no validation row reaches the frozen statistics.
 Mutually exclusive with <code>validation_data</code>.</p>
               </div>
             </td>
@@ -2617,7 +2617,7 @@ or is a <code>Callback</code> class instead of an instance.</p>
 <span class="sd">    validation_split : float | None, optional</span>
 <span class="sd">        Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
 <span class="sd">        validation set, without shuffling, and only the remaining rows</span>
-<span class="sd">        train (and calibrate — no leakage into the frozen statistics).</span>
+<span class="sd">        train and calibrate, so no validation row reaches the frozen statistics.</span>
 <span class="sd">        Mutually exclusive with ``validation_data``.</span>
 <span class="sd">    verbose : int, optional</span>
 <span class="sd">        0 (default) is silent. ``N &gt;= 1`` prints one line every ``N``</span>

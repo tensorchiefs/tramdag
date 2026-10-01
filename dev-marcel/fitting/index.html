@@ -1643,8 +1643,8 @@ which are infinite for <span class="arithmatex">\(q = 0\)</span>. So <code>fit</
 It raises for such a transform also in an intercept with parents, which does
 not use the start. Fit such a model with <code>marginal_init=False</code>.</p>
 <p><strong>What it changes.</strong> At <code>n_coeffs = 20</code> the zero start is close to a
-straight line too, but its control points span a wider range than the line
-from <span class="arithmatex">\(-2.944\)</span> to <span class="arithmatex">\(2.944\)</span>. A steeper <span class="arithmatex">\(h\)</span> gives a narrower distribution than
+straight line too. Its control points span a wider range than the line from
+<span class="arithmatex">\(-2.944\)</span> to <span class="arithmatex">\(2.944\)</span>. A steeper <span class="arithmatex">\(h\)</span> gives a narrower distribution than
 the data, so the zero start has the higher NLL at shift zero.</p>
 <p>The likelihood of an all-<code>LS</code> model has one optimum, and the fit reaches it
 with or without the start. So the start only shortens the way, and
@@ -1714,7 +1714,7 @@ node-conditional is an ordered logit or a Colr model. It raises on any <code>CS<
 <li><strong>Budget.</strong> <code>max_iter=5000</code> is a default, not a promise. Torch ends the run
   when the NLL or the parameters move by less than 1e-9. A model with several
   nodes can need thousands of iterations to stop on that rule. A report that
-  is not <code>converged</code> raises a <code>UserWarning</code>.</li>
+  is not <code>converged</code> issues a <code>UserWarning</code>.</li>
 <li><strong>The report.</strong> <code>stop_reason</code> is <code>"tolerance"</code>, <code>"max_iter"</code> or <code>"max_eval"</code>
   (torch's budget of closure calls, <code>max_iter * 5 // 4</code>). <code>converged</code> needs
   both: the run stopped on its own AND <code>grad_norm</code> is at most

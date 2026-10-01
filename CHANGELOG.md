@@ -1,7 +1,12 @@
-## Unreleased
+## v1.0.0rc1 (2026-10-01)
 
 ### BREAKING CHANGE
 
+- a flow saved with any VC term no longer loads, not only
+one with a centered term: every VC spec serializes the renamed option,
+an uncentered one as center=None. Refit and save again.
+- VC(center='<col>') must become VC(propensity='<col>');
+a flow saved with a centered VC term no longer loads.
 - CausalFlowDAG.calibrate is private (_calibrate). Pass
 marginal_init to fit instead of calibrate.
 - PerNodeEarlyStopping takes no lr_patience, its patience
@@ -91,6 +96,9 @@ package states a reason.
 
 ### Fix
 
+- **fitting**: warn when fit_classical does not converge
+- **callbacks**: the option errors say what to pass
+- **notebooks**: the strategy comparison ceiling leaves room for the per-node stop
 - **spec**: VC errors say what is supported, not what may come
 - **flow**: a frame column of object dtype reads as numbers again
 - **fit**: the classical report names the spent evaluation budget
@@ -150,6 +158,7 @@ package states a reason.
 
 ### Refactor
 
+- **spec**: VC(center=) becomes VC(propensity=)
 - **flow**: calibration is private; fit calibrates on its first run
 - **callbacks**: EarlyStopping and PerNodeEarlyStopping take the same options
 - **callbacks**: PerNodeEarlyStopping steps privately, names follow

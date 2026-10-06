@@ -690,15 +690,11 @@ class FitMixin:
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )
-        # every frame and node, before the first node fits: a bad input must not
-        # leave the flow half fitted
-        self._tensorize(train_df)
-        if validation_data is not None:
-            self._tensorize(validation_data)
-        for nd in self.nodes.values():
-            nd._check_side_columns(train_df)
+        self._check_frames(train_df, validation_data)
         if seed is None and n_jobs > 1:  # forked workers share the parent's RNG
             seed = int(torch.randint(2**62, ()))
+        if not callable(callbacks) or isinstance(callbacks, type):
+            callbacks = _normalize_callbacks(callbacks)  # one pass over an iterator
         jobs = {
             name: dict(
                 epochs=_per_node(epochs, name),
@@ -715,7 +711,7 @@ class FitMixin:
         }
         for kwargs in jobs.values():
             _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
-            _normalize_callbacks(kwargs["callbacks"])
+            kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
         self._calibrate(train_df, marginal_init=marginal_init)
         # a validation frame without a centered VC's propensity column gets the
         # live one from the fitted treatment node, so those nodes fit second
@@ -730,6 +726,16 @@ class FitMixin:
             jobs[name]["validation_data"] = self._with_live_side(name, validation_data)
         self._fit_nodes(train_df, {n: jobs[n] for n in later}, n_jobs)
         return self.eval()
+
+    def _check_frames(
+        self, train_df: pd.DataFrame, validation_data: pd.DataFrame | None
+    ) -> None:
+        """Check every frame for every node, so a bad one fails before any fit."""
+        self._tensorize(train_df)
+        if validation_data is not None:
+            self._tensorize(validation_data)
+        for nd in self.nodes.values():
+            nd._check_side_columns(train_df)
 
     def _fit_nodes(self, train_df: pd.DataFrame, jobs: dict, n_jobs: int) -> None:
         """Run ``Node.fit`` for each job, serially or in forked workers."""

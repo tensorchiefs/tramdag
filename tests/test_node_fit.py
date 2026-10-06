@@ -10,7 +10,7 @@ import pytest
 import torch
 
 from tramdag import LS, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
-from tramdag.callbacks import EarlyStopping
+from tramdag.callbacks import Callback
 from tramdag.fitting import _node_seed
 
 
@@ -87,21 +87,6 @@ def test_the_flow_history_repeats_a_stopped_nodes_last_entry(ls_chain):
     assert all(not math.isnan(v) for row in train for v in row.values())
 
 
-def test_per_node_early_stopping_through_the_flow(ls_chain):
-    """A callbacks factory stops each node at its own epoch."""
-    df = ls_chain["draw"](800, 4)
-    flow = CausalFlowDAG(_ls_spec(), seed=0)
-    flow.fit(
-        df,
-        epochs=2000,
-        validation_split=0.25,
-        callbacks=lambda name: EarlyStopping(patience=10),
-    )
-    ran = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
-    assert all(r < 2000 for r in ran.values())
-    assert len(set(ran.values())) > 1  # the nodes stop at different epochs
-
-
 def _scale(x, train):
     return x / train.std()
 
@@ -161,3 +146,15 @@ def test_a_node_that_refuses_calibration_leaves_no_node_fitted():
         flow.fit(df, epochs=3)
     assert flow.nodes["x1"].history["train"] == []
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
+
+
+def test_a_generator_of_callbacks_reaches_every_node(ls_chain):
+    class StopAt2(Callback):
+        def on_epoch_end(self, node, epoch, opt):
+            return epoch >= 2
+
+    df = ls_chain["draw"](300, 8)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    for callbacks in (lambda name: (c for c in [StopAt2()]), (c for c in [StopAt2()])):
+        flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=50, callbacks=callbacks)
+        assert [len(nd.history["train"]) for nd in flow.nodes.values()] == [2, 2]

@@ -22,6 +22,7 @@ import torch
 from scipy.stats import gaussian_kde
 
 from tramdag import CausalFlowDAG, spec_from_dict
+from tramdag.callbacks import Callback
 from tramdag.plots import plot_dag, plot_marginals, plot_training
 
 
@@ -48,18 +49,17 @@ def framework_figures(flow: CausalFlowDAG, df, out: Path, figs: dict, seed) -> l
 
 
 def fit_paper(train, val, config: dict, out: Path, record=None):
-    """Fit the way the paper's R code does: one run, one optimizer, per-epoch read-out.
+    """Fit the way the paper's R code does, node by node, with per-epoch read-out.
 
     ``summerof24/*.R`` calls Keras ``fit(epochs = 1)`` in a loop over one
-    compiled model and reads the ``beta`` layer after every epoch, so the
-    trajectory comes from a single continuous Adam run; ``comparison/utils.R``
-    takes one full-batch step per epoch and reduces the learning rate of that
-    one optimizer when the summed validation NLL plateaus
-    (``update_learning_rate``: factor, patience, min_lr, strict ``<``). Both
-    are one ``fit`` call here: the plateau rule is torch's own
-    ``ReduceLROnPlateau`` on the summed validation NLL — global, like the
-    reference — stepped from the epoch callback on ``history["val"]``
-    (fit computes it), which is also where the coefficients are read.
+    compiled model and reads the ``beta`` layer after every epoch;
+    ``comparison/utils.R`` takes one full-batch step per epoch and reduces the
+    learning rate when the summed validation NLL plateaus
+    (``update_learning_rate``: factor, patience, min_lr, strict ``<``). Here
+    every node fits on its own, so the plateau rule is torch's own
+    ``ReduceLROnPlateau`` on each node's validation NLL, stepped from the
+    epoch callback on ``node.history["val"]``, which is also where the
+    coefficients are read.
 
     The whole model and every training number come from the config (the
     experiments' blueprint): ``config["spec"]`` is the serialized DAG
@@ -70,9 +70,10 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
     where it does that (carefl_fig5.r). ``config["marginal_init"]`` says
     whether calibration also starts the simple intercepts at their
     empirical marginals (the reference has no such start).
-    The fitted flow is saved to ``out / "flow.pt"``. ``record(flow)``, when
-    given, is stored after each epoch with the epoch count — the coefficient
-    trajectories of paper Fig. 14, 15 and 19.
+    The fitted flow is saved to ``out / "flow.pt"``. ``record(node)``, when
+    given, reads the node's coefficients after each of its epochs; the
+    trajectory joins the nodes by epoch, a stopped node repeating its last
+    values (the coefficient trajectories of paper Fig. 14, 15 and 19).
 
     Returns
     -------
@@ -81,56 +82,69 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
         wall-clock of the ``fit`` call alone, the CI runtime tripwire.
     """
     flow = CausalFlowDAG(spec_from_dict(config["spec"]), **config["flow_kwargs"])
-    opt = torch.optim.Adam(flow.parameters(), lr=config["learning_rate"])
-    plateau = None
-    if config["schedule"] == "plateau":
-        plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            opt,
-            factor=config["plateau_factor"],
-            # torch reduces once `bad > patience`, the reference at `bad == patience`
-            patience=config["plateau_patience"] - 1,
-            threshold=config["min_delta"],
-            threshold_mode="abs",
-            min_lr=config["plateau_min_lr"],
-        )
-    trajectory = []
+    plateau = config["schedule"] == "plateau"
+    records: dict[str, list[dict]] = {name: [] for name in flow.order}
 
-    def epoch_end(f, epoch, _opt):
-        if plateau is not None:
-            plateau.step(sum(f.history["val"][-1].values()))
+    class Plateau(Callback):
+        def on_fit_begin(self, node, opt):
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                opt,
+                factor=config["plateau_factor"],
+                # torch reduces at `bad > patience`, the reference at `bad == patience`
+                patience=config["plateau_patience"] - 1,
+                threshold=config["min_delta"],
+                threshold_mode="abs",
+                min_lr=config["plateau_min_lr"],
+            )
+
+        def on_epoch_end(self, node, epoch, opt):
+            self.scheduler.step(node.history["val"][-1])
+
+    def callbacks(name):
+        cbs = [Plateau()] if plateau else []
         if record is not None:
-            trajectory.append({"epoch": epoch, **record(f)})
+            cbs.append(lambda node, epoch, _opt: records[name].append(record(node)))
+        return cbs
 
     t0 = time.perf_counter()
     flow.fit(
         train,
         # per-epoch validation only where the protocol consumes it (the
         # plateau rule); the triangle scripts never computed it per epoch
-        validation_data=val if plateau is not None else None,
-        optimizer=opt,
-        callbacks=epoch_end,
+        validation_data=val if plateau else None,
+        optimizer=lambda node: torch.optim.Adam(
+            node.parameters(), lr=config["learning_rate"]
+        ),
+        callbacks=callbacks,
         marginal_init=config["marginal_init"],
         **config["fit_kwargs"],
     )
     fit_seconds = round(time.perf_counter() - t0, 1)
     flow.save(out / "flow.pt")
+    epochs = max(len(r) for r in records.values())
+    trajectory = [
+        {"epoch": e + 1}
+        | {
+            k: v
+            for r in records.values()
+            if r
+            for k, v in r[min(e, len(r) - 1)].items()
+        }
+        for e in range(epochs)
+    ]
     return flow, trajectory, fit_seconds
 
 
-def snapshot(flow: CausalFlowDAG, shift: str) -> dict:
-    """Read the triangle's linear-shift coefficients out of a flow mid-training."""
-    values = {
-        "beta12": ls_weight(flow, "x2", "x1"),
-        "beta13": ls_weight(flow, "x3", "x1"),
-    }
+def snapshot(node, shift: str) -> dict:
+    """Read the triangle's linear-shift coefficients out of a node mid-training."""
+    keys = {("x2", "x1"): "beta12", ("x3", "x1"): "beta13"}
     if shift == "ls":
-        values["beta23"] = ls_weight(flow, "x3", "x2")
-    return values
-
-
-def ls_weight(flow: CausalFlowDAG, node: str, parent: str) -> float:
-    """Give the node's linear-shift weight on that parent."""
-    return float(flow.ls_coefficients()[node][parent][0])
+        keys[("x3", "x2")] = "beta23"
+    return {
+        key: float(node.shifts[parent].weight[0].detach())
+        for (child, parent), key in keys.items()
+        if child == node.name
+    }
 
 
 def true_coefficients(config: dict) -> dict:

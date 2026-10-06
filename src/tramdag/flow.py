@@ -9,8 +9,6 @@ that only read fitted weights live in ``readouts.py``.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import pickle
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -21,7 +19,13 @@ from torch import Tensor, nn
 from . import scores
 from .fitting import FitMixin
 from .modules import ShiftModule
-from .nodes import Node, check_columns, check_level_values
+from .nodes import (
+    Node,
+    check_columns,
+    check_level_values,
+    load_weights,
+    write_checkpoint,
+)
 from .readouts import ReadoutsMixin
 from .spec import (
     NodeSpec,
@@ -567,42 +571,25 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def save(self, path: str | Path) -> None:
         """Write the model, its history and its provenance to a checkpoint.
 
-        The file holds the spec and the weights, the training ``history``,
-        and a ``meta`` block with the tramdag version, the save time and the
-        device.
+        The file holds the spec and the weights, the nodes' training
+        ``history``, and a ``meta`` block with the tramdag version, the save
+        time and the device.
 
         Parameters
         ----------
         path : str | Path
             Target file. Parent directories are created when missing.
         """
-        from . import __version__  # lazy: circular through the package root
-
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        meta = {
-            "tramdag_version": __version__,
-            "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "device": str(self.device),
-        }
-        try:
-            torch.save(
-                {
-                    "spec": spec_to_dict(self.spec),
-                    "init": self.init,
-                    "state_dict": self.state_dict(),
-                    "history": {n: nd.history for n, nd in self.nodes.items()},
-                    "meta": meta,
-                },
-                path,
-            )
-        except (pickle.PicklingError, AttributeError) as err:
-            raise ValueError(
-                "the spec does not serialize: a callable input_transform "
-                "must be a picklable module-level function "
-                "— use 'minmax'/'standardize', or def the function at "
-                "module level."
-            ) from err
+        write_checkpoint(
+            path,
+            {
+                "spec": spec_to_dict(self.spec),
+                "init": self.init,
+                "state_dict": self.state_dict(),
+                "history": {n: nd.history for n, nd in self.nodes.items()},
+            },
+            self.device,
+        )
 
     @classmethod
     def load(cls, path: str | Path, device: str = "cpu") -> CausalFlowDAG:
@@ -628,17 +615,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             device=device,
             init=ckpt["init"],
         )
-        for name, t in ckpt["state_dict"].items():
-            # a callable transform's train buffer takes the checkpoint's shape
-            if not name.endswith(".train_cols"):
-                continue
-            buf = flow.get_buffer(name)
-            if buf.shape != t.shape:
-                mod_path, _, buf_name = name.rpartition(".")
-                flow.get_submodule(mod_path).register_buffer(
-                    buf_name, torch.empty_like(t)
-                )
-        flow.load_state_dict(ckpt["state_dict"])  # with the `calibrated` flags
+        load_weights(flow, ckpt["state_dict"])  # with the `calibrated` flags
         for name, history in ckpt["history"].items():
             flow.nodes[name].history = history
         flow.meta = ckpt["meta"]

@@ -10,6 +10,10 @@ tests read ``kind``, ``parents``, ``shifts``, ``intercept``, ``ut``,
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import pickle
+from datetime import datetime, timezone
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import torch
@@ -19,6 +23,8 @@ from .fitting import NodeFitMixin
 from .spec import (
     NodeSpec,
     node_parents,
+    spec_from_dict,
+    spec_to_dict,
 )
 from .transforms import (
     StandardLogistic,
@@ -70,6 +76,55 @@ def check_level_values(name: str, values, levels: int) -> None:
             f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
             f"{' (non-integer)' if fractional else ''}"
         )
+
+
+def write_checkpoint(path: str | Path, payload: dict, device) -> None:
+    """Save ``payload`` plus a ``meta`` block with ``torch.save``.
+
+    ``meta`` holds the tramdag version, the save time and the device.
+
+    Raises
+    ------
+    ValueError
+        If the spec does not pickle (a callable ``input_transform`` that is not
+        a module-level function).
+    """
+    from . import __version__  # lazy: circular through the package root
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "tramdag_version": __version__,
+        "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "device": str(device),
+    }
+    try:
+        torch.save(payload | {"meta": meta}, path)
+    except (pickle.PicklingError, AttributeError) as err:
+        raise ValueError(
+            "the spec does not serialize: a callable input_transform "
+            "must be a picklable module-level function "
+            "— use 'minmax'/'standardize', or def the function at "
+            "module level."
+        ) from err
+
+
+def load_weights(module: nn.Module, state_dict: dict) -> None:
+    """Load a checkpoint's state dict into a freshly built module.
+
+    A callable input transform's frozen train columns take the checkpoint's
+    shape first; their buffer is empty until calibration.
+    """
+    for name, t in state_dict.items():
+        if not name.endswith(".train_cols"):
+            continue
+        buf = module.get_buffer(name)
+        if buf.shape != t.shape:
+            mod_path, _, buf_name = name.rpartition(".")
+            module.get_submodule(mod_path).register_buffer(
+                buf_name, torch.empty_like(t)
+            )
+    module.load_state_dict(state_dict)
 
 
 # %% public classes --------------------------------------------------------------------
@@ -125,6 +180,7 @@ class Node(NodeFitMixin, nn.Module):
         # recalibrate on its next fit
         self.register_buffer("calibrated", torch.tensor(False))
         self.history: dict = {"train": []}  # mean train NLL per epoch
+        self.meta: dict = {}  # provenance attached at save() (version, time)
 
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.
@@ -297,3 +353,52 @@ class Node(NodeFitMixin, nn.Module):
         for m in sorted(self.shifts.values(), key=lambda m: m.order):
             shift = shift + m.shift_value(self, feats)
         return theta, shift
+
+    def save(self, path: str | Path) -> None:
+        """Write the node, its history and its provenance to a checkpoint.
+
+        The file holds the node's name, spec, parent schema and weights, its
+        training ``history``, and a ``meta`` block with the tramdag version,
+        the save time and the device.
+
+        Parameters
+        ----------
+        path : str | Path
+            Target file. Parent directories are created when missing.
+        """
+        write_checkpoint(
+            path,
+            {
+                "name": self.name,
+                "node_spec": spec_to_dict({self.name: self.node_spec})[self.name],
+                "parents": self.schema,
+                "state_dict": self.state_dict(),
+                "history": self.history,
+            },
+            next(self.parameters()).device,
+        )
+
+    @classmethod
+    def load(cls, path: str | Path, device: str = "cpu") -> Node:
+        """Restore a node from a checkpoint written by [`save`][].
+
+        Parameters
+        ----------
+        path : str | Path
+            Checkpoint file.
+        device : str, optional
+            Torch device to load onto, by default ``"cpu"``.
+
+        Returns
+        -------
+        Node
+            The restored node, in eval mode.
+        """
+        ckpt = torch.load(path, map_location=device, weights_only=False)
+        name = ckpt["name"]
+        spec = spec_from_dict({name: ckpt["node_spec"]})[name]
+        node = cls(name, spec, ckpt["parents"]).to(device)
+        load_weights(node, ckpt["state_dict"])
+        node.history = ckpt["history"]
+        node.meta = ckpt["meta"]
+        return node.eval()

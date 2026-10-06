@@ -4,6 +4,7 @@
 from importlib.metadata import version
 
 from .flow import CausalFlowDAG
+from .nodes import Node
 from .plots import plot_dag
 from .spec import (
     CI,
@@ -38,6 +39,7 @@ __all__ = [
     "I",
     "Intercept",
     "LinearShift",
+    "Node",
     "OrdinalNode",
     "Term",
     "VaryingCoefficient",

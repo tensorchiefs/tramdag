@@ -44,13 +44,15 @@ per-row joint.
 
 A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on its
 parents, and it needs no DAG. It takes its name, its node spec and a parent
-schema, `{parent: "continuous" | n_levels}`, for example
-`Node("y", OrdinalNode(4, LS("x1") + LS("t")), {"x1": "continuous", "t": 2})`.
+schema, `{parent: "continuous" | n_levels}`.
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
-fits one. The frame needs the node's column, its parents' columns and its side columns;
-other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and `load` work
-as on the flow, for one node. A centered `VC` needs its propensity column in
-every frame, because only the flow can compute it live from the treatment node.
+fits one. The frame needs the node's column, its parents' columns and its side
+columns; other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and
+`load` work as on the flow, for one node: `nll` gives one float, the
+`fit_classical` report is the per-node report, and `fit` takes an optimizer
+instance or a factory but no `n_jobs`. A centered `VC` needs its propensity
+column in every frame, because only the flow can compute it live from the
+treatment node.
 
 ## Path A: stochastic optimization with `fit`
 
@@ -59,9 +61,10 @@ every frame, because only the flow can compute it live from the treatment node.
 the final weights.
 
 - **Nodes.** `CausalFlowDAG.fit` fits the nodes in topological order.
-  `n_jobs=N` forks `N` worker processes (Linux and macOS) and gives the same
-  weights as the serial run. `epochs=`, `learning_rate=` and `callbacks=` take
-  one value for all nodes or a function of the node name.
+  `n_jobs=N` forks `N` worker processes (Linux and macOS), one task per node.
+  A worker runs torch on one thread, so it gives the weights of a serial fit
+  on one thread. `epochs=`, `learning_rate=` and `callbacks=` take one value
+  for all nodes or a function of the node name.
 - **Optimizer.** One optimizer per node, `Adam(lr=learning_rate)` by default.
   `optimizer=` takes a factory `f(node)`, for example to give the networks
   weight decay in their own parameter group. `Node.fit` also takes an
@@ -95,11 +98,11 @@ the final weights.
   epoch and the last one, per node; the default 0 is silent.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
   node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
-  and `on_fit_end(node, optimizer)`; a bare callable is an `on_epoch_end`
-  hook, and any `True` return stops that node's fit. `on_fit_end` runs before
-  the `VC` re-centering. On the flow, a function of the node name gives each
-  node its own callbacks, for example
-  `callbacks=lambda name: EarlyStopping(patience=40)`. The shipped callback is
+  and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an
+  `on_epoch_end` hook; any `True` return stops that node's fit. `on_fit_end`
+  runs before the `VC` re-centering. On the flow, a bare callable is a
+  factory of the node name that gives the node its own callbacks, so a bare
+  hook goes into a list there. The shipped callback is
   `EarlyStopping`: it restores the node's best-validation weights and takes an
   optional `patience` and `min_delta`. It reads `node.history["val"]`. `fit`
   refuses two callbacks that restore weights.
@@ -227,13 +230,14 @@ and need the best-validation weights to recover the causal effect.
 | `EarlyStopping(patience=)` | also stop each node once its best epoch is that old |
 | a plateau `Callback` around torch's `ReduceLROnPlateau` | a decaying rate per node |
 
-Two details are easy to get wrong.
+Three details are easy to get wrong.
 
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
-- A callback instance passed to the flow serves every node in turn and resets
-  at each node's fit begin, so its attributes describe the last node only.
-  Use a function of the node name to keep one instance per node.
+- A callback instance passed to the flow serves every node in turn. A shipped
+  callback resets at each node's fit begin, so its attributes describe the
+  last node only; under `n_jobs` its state stays in the workers. Use a
+  function of the node name to keep one instance per node.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 
@@ -246,10 +250,10 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   minibatches, schedule or early stopping, so the same init gives
   bit-identical results. A converged fit matches `statsmodels` and R to about
   four decimals, where a converged Adam `fit` gets to about 1e-3.
-- **Budget.** `max_iter=5000` is a default, not a promise. Torch ends the run
-  when the NLL or the parameters move by less than 1e-9. A model with several
-  nodes can need thousands of iterations to stop on that rule. A report that
-  is not `converged` issues a `UserWarning`.
+- **Budget.** `max_iter=5000` per node is a default, not a promise. Torch ends
+  the run when the NLL or the parameters move by less than 1e-9. A node with
+  many parameters can need thousands of iterations to stop on that rule. A
+  report that is not `converged` issues a `UserWarning`.
 - **Per node.** The flow's `fit_classical` runs `Node.fit_classical` for each
   node. Its report holds `converged` (every node converged), the summed
   `final_nll`, `seconds`, the `coefficients` as `{node: {parent: array}}` and

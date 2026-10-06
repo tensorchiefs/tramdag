@@ -283,10 +283,11 @@ class NodeFitMixin:
 
         The loss is the node's mean NLL plus its own ``VC`` penalties. The
         loop keeps the **final** weights, and a second ``fit`` call continues
-        the training. Validation monitoring, learning-rate schedules, early
-        stopping, best-weight restoration and logging are the caller's,
-        through ``optimizer`` and ``callbacks``; [`callbacks`][tramdag.callbacks]
-        ships the common recipes. A ``VC`` term adds its penalty to the loss,
+        the training. The loop computes the validation NLL and prints the
+        progress; learning-rate schedules, early stopping and best-weight
+        restoration are the caller's, through ``optimizer`` and
+        ``callbacks``; [`callbacks`][tramdag.callbacks] ships the common
+        recipes. A ``VC`` term adds its penalty to the loss,
         never to ``history["train"]``, and is re-centered after the loop.
 
         ``node.history`` accumulates across fits: ``"train"`` and ``"val"``
@@ -560,8 +561,8 @@ class NodeFitMixin:
         if other:
             raise ValueError(
                 "fit_classical requires an all-`ls` spec, that is a simple "
-                f"intercept and LS terms only; this spec has {other} terms. Use "
-                "fit() for flexible models."
+                f"intercept and LS terms only; node {self.name!r} has {other} "
+                "terms. Use fit() for flexible models."
             )
 
 

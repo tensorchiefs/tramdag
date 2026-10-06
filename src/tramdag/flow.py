@@ -127,7 +127,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @property
     def _dtype(self) -> torch.dtype:
-        """Current model dtype: float32, or float64 while ``fit_classical`` runs.
+        """Current model dtype: float32 (float64 only inside ``fit_classical``).
 
         Every tensor built from a frame takes this dtype, so the read-outs work
         in both modes without carrying a dtype argument.

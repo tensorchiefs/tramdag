@@ -48,7 +48,7 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one [`Node`][tramdag.nodes.Node] per variable in topological order. Construction seeds the weights. |
-| [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Maximum likelihood node by node: runs `Node.fit` for each node, serially or in `n_jobs` forked processes. `epochs=`, `learning_rate=` and `callbacks=` take a value or a function of the node name; `optimizer=` is a factory `f(node)`. `history` is a view over the nodes' histories. The mechanics are in [fitting.md](fitting.md). |
+| [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Maximum likelihood node by node, serially or in `n_jobs` forked processes. The mechanics are in [fitting.md](fitting.md). |
 | [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Float64 full-batch L-BFGS for all-`ls` specs, node by node; refuses flexible specs. |
 | [`sample()`][tramdag.flow.CausalFlowDAG.sample] | Observational, interventional (`do=`, graph mutilation) and counterfactual (`u=`) sampling. |
 | [`abduct()`][tramdag.flow.CausalFlowDAG.abduct] | Abduction: recover the latents. |
@@ -134,7 +134,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 |----------------------------------|------------------------------------------------------------------------------|
 | [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
 | [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each. |
-| [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with a dashed mark per `frozen=` entry. |
+| [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with a dashed mark per `stops=` entry. |
 | (`_layout`, `_term_edges`) | Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split. matplotlib is imported on the first call, never at package import. |
 
 ## What is *not* in the package

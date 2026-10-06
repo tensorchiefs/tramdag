@@ -3955,7 +3955,7 @@ bound is meaningful.</p>
 <span class="sd">        n_jobs : int, optional</span>
 <span class="sd">            Number of processes, by default 1 (serial, topological order).</span>
 <span class="sd">            ``n_jobs &gt; 1`` forks ``n_jobs`` workers, one task per node (Linux</span>
-<span class="sd">            and macOS only). A worker runs torch on one thread, so its result</span>
+<span class="sd">            only). A worker runs torch on one thread, so its result</span>
 <span class="sd">            equals a serial fit on one thread; with more threads a network</span>
 <span class="sd">            can differ in the last bits. Callback state stays in the workers;</span>
 <span class="sd">            read ``node.history`` instead.</span>
@@ -4404,7 +4404,7 @@ node's fit begin, so its attributes describe the last node only.</p>
               <div class="doc-md-description">
                 <p>Number of processes, by default 1 (serial, topological order).
 <code>n_jobs &gt; 1</code> forks <code>n_jobs</code> workers, one task per node (Linux
-and macOS only). A worker runs torch on one thread, so its result
+only). A worker runs torch on one thread, so its result
 equals a serial fit on one thread; with more threads a network
 can differ in the last bits. Callback state stays in the workers;
 read <code>node.history</code> instead.</p>
@@ -4669,7 +4669,7 @@ node's arguments are checked before the first node fits.</p>
 <span class="sd">    n_jobs : int, optional</span>
 <span class="sd">        Number of processes, by default 1 (serial, topological order).</span>
 <span class="sd">        ``n_jobs &gt; 1`` forks ``n_jobs`` workers, one task per node (Linux</span>
-<span class="sd">        and macOS only). A worker runs torch on one thread, so its result</span>
+<span class="sd">        only). A worker runs torch on one thread, so its result</span>
 <span class="sd">        equals a serial fit on one thread; with more threads a network</span>
 <span class="sd">        can differ in the last bits. Callback state stays in the workers;</span>
 <span class="sd">        read ``node.history`` instead.</span>

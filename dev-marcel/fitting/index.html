@@ -1563,7 +1563,7 @@ reproducible start. It always uses torch's default init; <code>init=</code> exis
 the final weights.</p>
 <ul>
 <li><strong>Nodes.</strong> <code>CausalFlowDAG.fit</code> fits the nodes in topological order.
-  <code>n_jobs=N</code> forks <code>N</code> worker processes (Linux and macOS), one task per node.
+  <code>n_jobs=N</code> forks <code>N</code> worker processes (Linux only), one task per node.
   A worker runs torch on one thread, so it gives the weights of a serial fit
   on one thread. <code>epochs=</code>, <code>learning_rate=</code> and <code>callbacks=</code> take one value
   for all nodes or a function of the node name.</li>

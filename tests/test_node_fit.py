@@ -134,6 +134,8 @@ def test_a_bad_callback_of_a_later_node_fails_before_any_node_fits(ls_chain):
 def test_a_node_names_a_bad_schema_entry():
     with pytest.raises(ValueError, match="'continuous' or a level count"):
         Node("x2", ContinuousNode(LS("x1")), {"x1": ContinuousNode()})
+    node = Node("y", ContinuousNode(LS("t")), {"t": np.int64(2)})  # df.max() + 1
+    assert node.schema == {"t": 2}
 
 
 def test_a_node_that_refuses_calibration_leaves_no_node_fitted():

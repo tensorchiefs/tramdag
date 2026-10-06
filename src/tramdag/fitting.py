@@ -281,7 +281,7 @@ class NodeFitMixin:
         | None = None,
         callbacks=None,
     ) -> Node:
-        """Fit the node by maximum likelihood with one minibatch Adam loop.
+        """Fit the node by maximum likelihood with one minibatch loop, Adam by default.
 
         The loss is the node's mean NLL plus its own ``VC`` penalties. The
         loop keeps the **final** weights, and a second ``fit`` call continues
@@ -312,7 +312,7 @@ class NodeFitMixin:
             full-batch step per epoch.
         validation_data : pd.DataFrame | None, optional
             Validation rows, with the same columns as ``train_df``. When given
-            (or split off), the validation NLL is appended to
+            (or split off), ``fit`` appends the validation NLL to
             ``node.history["val"]`` after every epoch; ``EarlyStopping``
             reads it there.
         validation_split : float | None, optional
@@ -348,12 +348,10 @@ class NodeFitMixin:
         Raises
         ------
         ValueError
-            If ``epochs`` or ``batch_size`` is below 1, ``verbose`` is
-            negative, both validation arguments are given, the split leaves
-            an empty side, a centered VC term's propensity column is missing
-            from the training frame or out of [0, 1], or two callbacks
-            restore weights, an ordinal value is not a level index, or the
-            node's calibration refuses the frame.
+            If a size argument is out of range, the validation arguments
+            clash, a centered VC term's propensity column is missing or out
+            of [0, 1], two callbacks restore weights, an ordinal value is not
+            a level index, or the node's calibration refuses the frame.
         KeyError
             If a frame lacks a column the node reads.
         TypeError
@@ -660,7 +658,8 @@ class FitMixin:
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
             and macOS only). A worker runs torch on one thread, so its result
             equals a serial fit on one thread; with more threads a network
-            can differ in the last bits. Callback state stays in the workers.
+            can differ in the last bits. Callback state stays in the workers;
+            read ``node.history`` instead.
 
         Returns
         -------

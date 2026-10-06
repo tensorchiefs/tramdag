@@ -41,15 +41,15 @@ __all__ = ["Node"]
 
 
 # %% public functions ------------------------------------------------------------------
-def encode(values: Tensor, kind: str | int) -> Tensor:
+def encode(values: Tensor, entry: str | int) -> Tensor:
     """Encode one column as a parent feature.
 
-    ``kind`` is a schema entry: ``"continuous"`` stays raw, shape ``(n, 1)``;
+    ``entry`` is a schema entry: ``"continuous"`` stays raw, shape ``(n, 1)``;
     a level count one-hot encodes, shape ``(n, levels)``.
     """
-    if kind == "continuous":
+    if entry == "continuous":
         return values.view(-1, 1)
-    one_hot = nn.functional.one_hot(values.long(), num_classes=kind)
+    one_hot = nn.functional.one_hot(values.long(), num_classes=entry)
     return one_hot.to(values.dtype)
 
 
@@ -238,8 +238,8 @@ class Node(NodeFitMixin, nn.Module):
             If an ordinal column is not a level index.
         """
         cols = (self.name, *self.parents) if cols is None else cols
-        kinds = self.schema | {self.name: self.encoding}
-        levels = {c: k for c, k in kinds.items() if k != "continuous"}
+        entries = self.schema | {self.name: self.encoding}
+        levels = {c: e for c, e in entries.items() if e != "continuous"}
         p = next(self.parameters())
         return tensorize(df, cols, levels, p.dtype, p.device)
 

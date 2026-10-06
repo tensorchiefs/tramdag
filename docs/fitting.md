@@ -34,7 +34,7 @@ $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
   evaluated as the log of the cutpoint-interval probability in log space.
 
 Because parents enter as data, the per-node terms have disjoint parameters,
-and the sum is maximized by maximizing each term. So every node fits on
+and maximizing each term maximizes the sum. So every node fits on
 its own: [`Node.fit`](../src/tramdag/fitting.py) minimizes the node's mean
 negative log-likelihood over the batch, plus the node's `VC` penalty.
 `CausalFlowDAG.fit` runs `Node.fit` for each node. `log_prob` returns the
@@ -46,14 +46,16 @@ A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on
 its parents, and it needs no DAG. It takes its name, its node spec and a
 parent schema, `{parent: "continuous" | n_levels}`.
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py) fits
-one. The frame needs the node's column, its parents' columns and its side
-columns; other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and
+one with Adam, and
+[`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
+fits one classically against R `glm`. The frame needs the node's column, its
+parents' columns and its side columns; the fit ignores other columns. `fit`, `fit_classical`, `nll`, `save` and
 `load` work as on the flow, for one node. `nll` gives one float, and the
 `fit_classical` report is the per-node report. `fit` takes an optimizer
 instance or a factory `f(node)`, but no `n_jobs`. A centered `VC` needs its
 propensity column in every frame, because only the flow can compute it live
 from the treatment node. A flow derives each node's shuffling seed from
-`fit(seed=)` and the node's position. So `Node.fit(seed=)` alone does not
+`fit(seed=)` and the node's index. So `Node.fit(seed=)` alone does not
 repeat a node of a seeded flow fit. A node built alone draws its initial
 weights from torch's global RNG; call `torch.manual_seed` first for a
 reproducible start. It always uses torch's default init; `init=` exists on
@@ -244,8 +246,9 @@ Three details are easy to get wrong.
   what makes a multi-phase schedule a loop of `fit` calls.
 - A callback instance passed to the flow serves every node in turn. A shipped
   callback resets at each node's fit begin, so its attributes describe the
-  last node only. Under `n_jobs` its state stays in the workers. Use a
-  function of the node name to keep one instance per node.
+  last node only. Use a function of the node name to keep one instance per
+  node. Under `n_jobs` the state of every callback stays in the workers; read
+  `node.history` instead.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 

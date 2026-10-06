@@ -288,8 +288,8 @@ class NodeFitMixin:
         the training. The loop computes the validation NLL and prints the
         progress; learning-rate schedules, early stopping and best-weight
         restoration are the caller's, through ``optimizer`` and
-        ``callbacks``; [`callbacks`][tramdag.callbacks] ships the common
-        recipes. A ``VC`` term adds its penalty to the loss,
+        ``callbacks``; [`callbacks`][tramdag.callbacks] ships ``EarlyStopping``.
+        A ``VC`` term adds its penalty to the loss,
         never to ``history["train"]``, and is re-centered after the loop.
 
         ``node.history`` accumulates across fits: ``"train"`` and ``"val"``
@@ -352,7 +352,8 @@ class NodeFitMixin:
             negative, both validation arguments are given, the split leaves
             an empty side, a centered VC term's propensity column is missing
             from the training frame or out of [0, 1], or two callbacks
-            restore weights, or an ordinal value is not a level index.
+            restore weights, an ordinal value is not a level index, or the
+            node's calibration refuses the frame.
         KeyError
             If a frame lacks a column the node reads.
         TypeError

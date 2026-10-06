@@ -231,7 +231,7 @@ print(
 # %% [markdown]
 # **The same regression without the DAG.** The marginals of `age` and `lwt`
 # are a nuisance here, and a `Node` drops them. It is the `low` node alone: its
-# name, its node spec and the parent schema, `{parent: "continuous" | levels}`.
+# name, its node spec and the parent schema, `{parent: "continuous" | n_levels}`.
 # The frame needs only `low` and its parents. `Node.fit_classical` lands on the
 # same maximum likelihood as the flow, R and `statsmodels`.
 

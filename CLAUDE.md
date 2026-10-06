@@ -43,9 +43,10 @@ cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
   `options()` is `vars(self)`. No registries, no shared base classes between
   terms, no compatibility shims: prefer built-in Python mechanics and explicit
   repeated signatures.
-- Node-kind branching lives only in the `Node` methods `encode`, `log_prob`,
-  `sample`, `abduct` and `marginal_theta`, and in the `nodes.encode` and
-  `nodes.schema_entry` functions they share with the parent features.
+- Node-kind branching lives in the `Node` methods `encode`, `log_prob`,
+  `sample`, `abduct` and `marginal_theta` and in `nodes.encode`; everything
+  else reads a node's schema entry (`nodes.schema_entry`), "continuous" or a
+  level count.
 - Latent-scale signs: continuous adds the shift, ordinal subtracts it
   (`docs/notation.md`). The ordinal likelihood stays in log space
   (`docs/model.md`). Parents enter raw or one-hot; seeding happens at

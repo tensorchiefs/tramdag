@@ -2,9 +2,8 @@
 
 The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its `Term` subclass (the spec) and its module in
-`modules.py`. Node-kind behavior lives in five `Node` methods and two
-`nodes` functions. Everything else
-is framework code.
+`modules.py`. Node-kind behavior lives in five `Node` methods and
+`nodes.encode`. Everything else is framework code.
 
 ## Module map
 ```mermaid
@@ -127,8 +126,8 @@ A custom term is two classes:
 The two node kinds are continuous and ordinal. They stay an if/else in ONE
 place: the five `Node` methods `log_prob`, `sample`, `abduct`,
 `marginal_theta` and `encode` in nodes.py, plus the column encoding
-`nodes.encode` and the schema entry `nodes.schema_entry` they share with the
-parent features.
+`nodes.encode`. Everything else, the term modules included, reads a node's
+schema entry (`nodes.schema_entry`): `"continuous"` or a level count.
 
 ## Guards that pin all of this
 

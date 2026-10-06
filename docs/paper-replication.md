@@ -323,8 +323,8 @@ The epoch floors, measured at that batch and rate:
   lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
   500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).
-- **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA); the rejected shortcuts are in
-  their sections.
+- **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
+  the rejected shortcuts are in their sections.
 
 ## Repository choices the paper does not state
 

@@ -34,7 +34,7 @@ $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
   evaluated as the log of the cutpoint-interval probability in log space.
 
 Because parents enter as data, the per-node terms have disjoint parameters,
-and the maximum of the sum is the maximum of each term. So every node fits on
+and the sum is maximized by maximizing each term. So every node fits on
 its own: [`Node.fit`](../src/tramdag/fitting.py) minimizes the node's mean
 negative log-likelihood over the batch, plus the node's `VC` penalty.
 `CausalFlowDAG.fit` runs `Node.fit` for each node. `log_prob` returns the

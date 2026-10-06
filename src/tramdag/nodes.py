@@ -161,8 +161,8 @@ class Node(NodeFitMixin, nn.Module):
     transform parameters $\vartheta$. The shift terms add up on the latent
     scale. The likelihood, sampling and encoding branches on the node kind
     live in the five methods ``log_prob``, ``sample``, ``abduct``,
-    ``marginal_theta`` and ``encode``, and in the module functions ``encode``
-    and ``schema_entry``; the rest of the package reads ``kind`` for dispatch
+    ``marginal_theta`` and ``encode``, and in the module function ``encode``;
+    the rest of the package reads ``kind`` or the schema entry for dispatch
     and display only.
 
     Parameters

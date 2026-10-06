@@ -127,7 +127,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """Current model dtype: float32, unless the caller converts the flow.
 
         Every tensor built from a frame takes this dtype, so the read-outs work
-        in both modes without carrying a dtype argument.
+        in either dtype without carrying a dtype argument.
         """
         return next(self.parameters()).dtype
 

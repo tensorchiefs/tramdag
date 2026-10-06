@@ -169,6 +169,6 @@ default you can read at the call site. Nothing numeric is buried.
 | activation | `activation=` on `I`/`CS`/`VC` | `"relu"` (the reference default classes); `"sigmoid"` and `"tanh"` are the paper's |
 | batch norm | `batch_norm=` on `I`/`CS`/`VC` | `False` — neither reference uses it. `True` puts a `BatchNorm1d` between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs `eval()` mode (`fit` and `load` leave the flow there) |
 | transform class | `I(transform=, **kwargs)` (extra kwargs go to the transform class) | `"bernstein"`, `n_coeffs=20` unconstrained coefficients ([zuko-upstream.md](zuko-upstream.md) on the order they give); spline `bins=8`, zuko's NSF default; the domain is fixed at [-5, 5], `transforms.BOUND` |
-| shuffling / weight init | `fit(seed=)` / `CausalFlowDAG(seed=)` | init happens at construction — the constructor seed is the reproducibility knob |
+| shuffling / weight init | `fit(seed=)` / `CausalFlowDAG(seed=)` | init happens at construction — the constructor seed is the reproducibility knob; a lone `Node` takes `torch.manual_seed` before `Node(...)` |
 | weight init | `CausalFlowDAG(init=)` | `"torch"` (`nn.Linear` Kaiming-uniform); `"glorot"` = Keras `Dense` default, glorot-uniform weights and zero biases — the paper's reference; decisive under its full-batch protocol |
 | network inputs | `CI/CS/VC(input_transform=)` | `None`, raw parents; `"minmax"`, `"standardize"` or a callable `fn(x, train)` ([model.md](model.md)) |

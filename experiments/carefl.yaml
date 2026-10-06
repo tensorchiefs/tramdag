@@ -4,7 +4,8 @@
 # flow, `fit_kwargs` go into flow.fit verbatim.
 #
 # Protocol = the reference implementation's own comparison run
-# (tensorchiefs/tram-dag, comparison/utils.R with carefl_fig5.r), 1:1 except D5 (the plateau per node):
+# (tensorchiefs/tram-dag, comparison/utils.R with carefl_fig5.r), 1:1 except
+# D5 (the plateau per node):
 #   * trains on CAREFL's own 2500 rows (USE_EXTERNAL_DATA = TRUE reads
 #     data/CAREFL_CF/X.csv, x3/x4 sd-standardized) — frozen here under
 #     data/carefl-cf with the paper's observation and the analytic truth

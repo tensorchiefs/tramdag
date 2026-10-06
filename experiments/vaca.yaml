@@ -5,7 +5,8 @@
 #
 # Protocol = the reference implementation's own comparison run
 # (tensorchiefs/tram-dag, comparison/utils.R with
-# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1 except D1 (below) and D5 (the plateau per node):
+# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1 except D1 (below)
+# and D5 (the plateau per node):
 #   * nTrain = 2500, validation = a separate dgp(5000) draw;
 #   * one full-batch gradient step per epoch (train_step: one apply_gradients
 #     over all rows), 10000 epochs at Adam lr 0.001;

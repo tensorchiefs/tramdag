@@ -42,8 +42,8 @@ brings that ingredient into the TRAM framework.
   it when the modifiers are many or $n$ is small.
 - **Identification.** A constant moves freely between $\beta_0$ and
   $b_\Theta$. The head's output layer is zero-initialized, so
-  $\beta(x) = \beta_0$ at step 0, and after `fit` each node re-centers its head
-  to mean zero over the training data, which preserves the function. $\beta_0$
+  $\beta(x) = \beta_0$ at step 0. After `fit` each node re-centers its head to
+  mean zero over the training data, which preserves the function. $\beta_0$
   is therefore the main effect in the training population, the Colr reading
   when $\beta$ is constant.
 - **Warm start.** Fit the all-`LS` version classically and copy the treatment

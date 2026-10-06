@@ -244,10 +244,10 @@ plt.show()
 # ## 6. Writing your own
 #
 # The callback contract is in [`docs/fitting.md`](../docs/fitting.md): every
-# hook receives the node, a bare callable in a list is an `on_epoch_end` hook, and a
-# `Callback` subclass gets the other two hooks. `Plateau` below builds torch's
-# `ReduceLROnPlateau` on each node's optimizer and steps it on the validation
-# score `fit` has already put in `node.history["val"]`.
+# hook receives the node, a bare callable in a list is an `on_epoch_end` hook,
+# and a `Callback` subclass gets the other two hooks. `Plateau` below builds
+# torch's `ReduceLROnPlateau` on each node's optimizer and steps it on the
+# validation score `fit` has already put in `node.history["val"]`.
 
 
 # %%
@@ -320,15 +320,16 @@ assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4  # the restored best
 # ## 8. The scoreboard: a poor man's runtime comparison
 #
 # One workload, one seed, one machine, every recipe: the wall-clock seconds
-# each one took, the node-epochs it spent (summed over the nodes), its validation NLL and the gap to the
-# best NLL on the board. A recipe that stops itself wins on seconds only if it
-# also stays near the best NLL, which is what the last two columns show side
-# by side. Absolute seconds are this machine's; the ranking is what travels.
+# each one took, the node-epochs it spent (summed over the nodes), its
+# validation NLL and the gap to the best NLL on the board. A recipe that stops
+# itself wins on seconds only if it also stays near the best NLL, which is
+# what the last two columns show side by side. Absolute seconds are this
+# machine's; the ranking is what travels.
 
 # %%
 board = pd.DataFrame(scoreboard).set_index("strategy")
 board["nll_gap"] = board["val_nll"] - board["val_nll"].min()
-board["s_per_epoch"] = board["seconds"] / board["epochs"]
+board["s_per_node_epoch"] = board["seconds"] / board["epochs"]
 print(board.to_string(float_format=lambda v: f"{v:.4f}"))
 
 fig, ax = plt.subplots(figsize=(7, 3.4))

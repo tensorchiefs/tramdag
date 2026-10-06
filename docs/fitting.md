@@ -3,8 +3,7 @@
 This page is the reference for training a
 [`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes. It covers the
 likelihood, the two fitting paths `fit` and `fit_classical`, and the hooks of
-the Adam path. Every recipe
-named here runs end to end in
+the Adam path. Every recipe named here runs end to end in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py),
 which is the one place for the code and closes with a runtime comparison of
 the recipes on one workload.
@@ -43,21 +42,22 @@ per-row joint.
 
 ## One node alone
 
-A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on its
-parents, and it needs no DAG. It takes its name, its node spec and a parent
-schema, `{parent: "continuous" | n_levels}`.
-[`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
-fits one. The frame needs the node's column, its parents' columns and its side
+A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on
+its parents, and it needs no DAG. It takes its name, its node spec and a
+parent schema, `{parent: "continuous" | n_levels}`.
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py) fits
+one. The frame needs the node's column, its parents' columns and its side
 columns; other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and
 `load` work as on the flow, for one node. `nll` gives one float, and the
 `fit_classical` report is the per-node report. `fit` takes an optimizer
-instance or a factory `f(node)`, but no `n_jobs`. A centered `VC` needs its propensity
-column in every frame, because only the flow can compute it live from the
-treatment node. A flow derives each node's shuffling seed from `fit(seed=)`
-and the node's position. So `Node.fit(seed=)` alone does not repeat a node of a
-seeded flow fit. A node built alone draws its initial weights from torch's
-global RNG; call `torch.manual_seed` first for a reproducible start. It always
-uses torch's default init; `init=` exists on `CausalFlowDAG` only.
+instance or a factory `f(node)`, but no `n_jobs`. A centered `VC` needs its
+propensity column in every frame, because only the flow can compute it live
+from the treatment node. A flow derives each node's shuffling seed from
+`fit(seed=)` and the node's position. So `Node.fit(seed=)` alone does not
+repeat a node of a seeded flow fit. A node built alone draws its initial
+weights from torch's global RNG; call `torch.manual_seed` first for a
+reproducible start. It always uses torch's default init; `init=` exists on
+`CausalFlowDAG` only.
 
 ## Path A: stochastic optimization with `fit`
 
@@ -100,8 +100,8 @@ the final weights.
   `"lr"`, the optimizer's rates per epoch as `{group index: lr}`.
   `flow.history` is a view with one `{node: value}` dict per epoch and key,
   plus the `val_epoch` list. A node that stopped earlier repeats its last
-  entry. `verbose=N` prints every Nth
-  epoch and the last one, per node; the default 0 is silent.
+  entry. `verbose=N` prints every Nth epoch and the last one, per node; the
+  default 0 is silent.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
   node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
   and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an

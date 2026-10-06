@@ -245,8 +245,8 @@ axes[0].legend()
 fig.tight_layout()
 plt.show()
 
-# The bound is almost four times the largest error measured while writing this
-# notebook (0.040), which leaves room for another machine and another draw.
+# The bound is almost four times the largest measured error (0.040), which
+# leaves room for another machine and another draw.
 assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %% [markdown]

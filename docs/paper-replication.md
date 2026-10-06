@@ -128,7 +128,7 @@ tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau: at seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns: min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, measures the opposite way |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, measures the opposite way |
 | n_compare | — | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -265,8 +265,8 @@ validation NLL stops improving. Here every node fits on its own, so no summed
 NLL exists during a fit. Each node runs the same rule on its own validation
 NLL, with its own optimizer. The rule and its constants are unchanged.
 
-VACA, the do(x2) errors at a = −3 / −1 / 0 and the x3 validation NLL, one
-run per init seed, the same data:
+The table gives the VACA do(x2) errors at a = −3 / −1 / 0 and the x3
+validation NLL, one run per init seed on the same data.
 
 | init seed | per node (here) | global (reference) |
 |---|---|---|

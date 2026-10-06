@@ -71,9 +71,9 @@ verbose, so one variant reads top to bottom:
   their empirical marginals (`flow.fit(..., marginal_init=True)`); the
   reference has no such start ([`docs/paper-replication.md`](../docs/paper-replication.md)).
 - `fit_kwargs:` go verbatim to `flow.fit(train, **fit_kwargs)`: `epochs`,
-  `batch_size` and `seed`. `learning_rate`, `schedule` and the `plateau_*`
-  keys stay top-level, because they configure the optimizer and the scheduler
-  the script builds.
+  `batch_size` and `seed`. `learning_rate` goes to `flow.fit` as well;
+  `schedule` and the `plateau_*` keys stay top-level, because they configure
+  the per-node plateau scheduler the script builds.
 - `figures:` gives every figure of the report its title and caption;
   placeholders such as `{f}` fill from the variant.
 - everything else is data and scoring configuration, for example `n_train`,

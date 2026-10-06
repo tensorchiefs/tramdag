@@ -1,8 +1,8 @@
 # Fitting a TRAM-DAG
 
 This page is the reference for training a
-[`CausalFlowDAG`](../src/tramdag/flow.py): the likelihood, the two fitting
-paths `fit` and `fit_classical`, and the hooks of the Adam path. Every recipe
+[`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes: the likelihood, the
+two fitting paths `fit` and `fit_classical`, and the hooks of the Adam path. Every recipe
 named here runs end to end in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py),
 which is the one place for the code and closes with a runtime comparison of
@@ -33,28 +33,45 @@ $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
 - **Ordinal node.** The ordered-logit head of [model.md](model.md#ordinal-nodes),
   evaluated as the log of the cutpoint-interval probability in log space.
 
-The training loss is the summed per-node mean negative log-likelihood over the
-batch, plus the `VC` penalty. `log_prob` returns the per-row joint instead.
+Because parents enter as data, the per-node terms have disjoint parameters,
+and the maximum of the sum is the maximum of each term. So every node fits on
+its own: [`Node.fit`](../src/tramdag/fitting.py) minimizes the node's mean
+negative log-likelihood over the batch, plus the node's `VC` penalty.
+`CausalFlowDAG.fit` runs `Node.fit` for each node. `log_prob` returns the
+per-row joint.
 
-Because parents enter as data, the per-node gradients are independent, so a
-joint fit of the summed loss equals a separate fit of each node. That is what
-licenses per-node learning rates, freezing through a callback, and the
-all-`LS` classical fit.
+## One node alone
+
+A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on its
+parents, and it needs no DAG. It takes its name, its node spec and a parent
+schema, `{parent: "continuous" | n_levels}`, for example
+`Node("y", OrdinalNode(4, LS("x1") + LS("t")), {"x1": "continuous", "t": 2})`.
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
+fits one. The frame needs the node's column, its parents' columns and its side columns;
+other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and `load` work
+as on the flow, for one node. A centered `VC` needs its propensity column in
+every frame, because only the flow can compute it live from the treatment node.
 
 ## Path A: stochastic optimization with `fit`
 
 `fit` is the general-purpose trainer, and the only one for a model with a
-`CS`, `CI` or `VC` term. It is one minibatch Adam loop that keeps the final
-weights.
+`CS`, `CI` or `VC` term. Per node, it is one minibatch Adam loop that keeps
+the final weights.
 
-- **Optimizer.** One optimizer over all parameters, `Adam(lr=learning_rate)`
-  by default; `optimizer=` takes any `torch.optim.Optimizer`, and
-  `per_node_adam` builds per-node parameter groups.
-- **Minibatches.** A fresh `torch.randperm` shuffle each epoch, seeded by
-  `seed=`, which seeds the shuffle only and not the weight init.
+- **Nodes.** `CausalFlowDAG.fit` fits the nodes in topological order.
+  `n_jobs=N` forks `N` worker processes (Linux and macOS) and gives the same
+  weights as the serial run. `epochs=`, `learning_rate=` and `callbacks=` take
+  one value for all nodes or a function of the node name.
+- **Optimizer.** One optimizer per node, `Adam(lr=learning_rate)` by default.
+  `optimizer=` takes a factory `f(node)`, for example to give the networks
+  weight decay in their own parameter group. `Node.fit` also takes an
+  optimizer instance.
+- **Minibatches.** A fresh shuffle each epoch. `seed=` seeds the shuffle
+  only, not the weight init; each node gets its own seed derived from
+  `(seed, node index)`.
 - **Epochs.** `epochs` has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
-- **Calibration.** The first `fit` or `fit_classical` calibrates the flow on
+- **Calibration.** The first `fit` or `fit_classical` calibrates each node on
   `train_df`. Every term freezes its data-dependent state there, the
   intercept its `range_q` quantiles and each `input_transform=` its
   statistics. A loaded checkpoint is never recalibrated.
@@ -63,30 +80,32 @@ weights.
   each Bernstein or ordinal simple intercept at the empirical distribution of
   its column instead. At shift zero the untrained model then already fits
   each marginal, and the fit needs fewer epochs. Only the fit that
-  calibrates the flow applies it, so a flow that `fit_classical` calibrated
+  calibrates the node applies it, so a node that `fit_classical` calibrated
   ignores the flag. [The marginal start](#the-marginal-start) says how, and
   when the endpoint changes.
 - **Validation.** `validation_data=` takes a frame; `validation_split=` takes
   a float and uses the last fraction of `train_df` unshuffled, so shuffle the
-  frame first if its row order means anything; only the head calibrates. With
-  either, `fit` writes the per-node validation NLL after
-  every epoch into `flow.history["val"]`.
-- **Logging.** `flow.history["lr"]` records the optimizer's rates per epoch,
-  one dict keyed by a group's `node` tag or else its index: `{0: lr}` for the
-  default Adam, `{node: lr}` under `per_node_adam`. `verbose=N` prints every
-  Nth epoch and the last one; the default 0 is silent.
-- **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks are
-  `on_fit_begin`, `on_epoch_end` and `on_fit_end`; a bare callable is an
-  `on_epoch_end` hook `cb(flow, epoch, optimizer)`, and any `True` return
-  stops the fit. `on_fit_end` runs before the `VC` re-centering. The shipped
-  callbacks are `EarlyStopping` and `PerNodeEarlyStopping`. `EarlyStopping`
-  restores the best-validation weights and takes an optional `patience` and
-  `min_delta`. `PerNodeEarlyStopping` with `per_node_adam` does the same per
-  node: a node freezes after `patience` flat epochs and loads its best
-  weights back. `fit` refuses two callbacks that restore weights. Both read
-  `history["val"]`.
+  frame first if its row order means anything; only the head calibrates. The
+  flow splits once, so all nodes see the same rows. With either, `fit` writes
+  the node's validation NLL after every epoch into `node.history["val"]`.
+- **History.** `node.history` holds `"train"`, `"val"`, `"val_epoch"` and
+  `"lr"`, the optimizer's rates per epoch as `{group index: lr}`.
+  `flow.history` is a view with one `{node: value}` dict per epoch; a node
+  that stopped earlier repeats its last entry. `verbose=N` prints every Nth
+  epoch and the last one, per node; the default 0 is silent.
+- **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
+  node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
+  and `on_fit_end(node, optimizer)`; a bare callable is an `on_epoch_end`
+  hook, and any `True` return stops that node's fit. `on_fit_end` runs before
+  the `VC` re-centering. On the flow, a function of the node name gives each
+  node its own callbacks, for example
+  `callbacks=lambda name: EarlyStopping(patience=40)`. The shipped callback is
+  `EarlyStopping`: it restores the node's best-validation weights and takes an
+  optional `patience` and `min_delta`. It reads `node.history["val"]`. `fit`
+  refuses two callbacks that restore weights.
 - **Centered `VC` propensities** ride the training frame as the column that
-  `VC(propensity=)` names, and split and minibatch with it.
+  `VC(propensity=)` names, and split and minibatch with it. A validation frame
+  without the column gets the live propensity of the fitted treatment node.
   [varying-coefficients.md](varying-coefficients.md) is the guide.
 
 ### The marginal start
@@ -205,14 +224,16 @@ and need the best-validation weights to recover the causal effect.
 | plain Adam | an all-`LS` spec that `fit_classical` refuses, quick looks |
 | multi-phase Adam, one `fit` call per rate | a tighter MLE without a scheduler |
 | `EarlyStopping()` | any `CI`, `CS` or `VC` model; register it, `fit` has no default |
-| `EarlyStopping(patience=)` | also stop once the best epoch is that old |
-| a global plateau `Callback` around torch's `ReduceLROnPlateau` | one shared decaying rate |
-| `PerNodeEarlyStopping(patience=)` with `per_node_adam` | nodes converge at different speeds; self-stopping |
+| `EarlyStopping(patience=)` | also stop each node once its best epoch is that old |
+| a plateau `Callback` around torch's `ReduceLROnPlateau` | a decaying rate per node |
 
 Two details are easy to get wrong.
 
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
+- A callback instance passed to the flow serves every node in turn and resets
+  at each node's fit begin, so its attributes describe the last node only.
+  Use a function of the node name to keep one instance per node.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 
@@ -229,7 +250,11 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   when the NLL or the parameters move by less than 1e-9. A model with several
   nodes can need thousands of iterations to stop on that rule. A report that
   is not `converged` issues a `UserWarning`.
-- **The report.** `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
+- **Per node.** The flow's `fit_classical` runs `Node.fit_classical` for each
+  node. Its report holds `converged` (every node converged), the summed
+  `final_nll`, `seconds`, the `coefficients` as `{node: {parent: array}}` and
+  `nodes`, the per-node reports.
+- **The report.** Per node, `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
   (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
   both: the run stopped on its own AND `grad_norm` is at most
   `tramdag.fitting.GRAD_TOL` (1e-2). Both conditions are necessary, because
@@ -252,5 +277,5 @@ solution is the optimum and a warm start; the `VC` guide uses it for `beta0`.
 ## Memory and disk
 
 Neither path writes to disk. The parameters, the optimizer state and the
-`history` dict live in RAM, and whatever a callback records is yours. The
+`history` dicts live in RAM, and whatever a callback records is yours. The
 only disk I/O is the explicit `save()` and `load()`.

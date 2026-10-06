@@ -12,22 +12,23 @@ graph TD
         spec["spec.py<br/>DSL: Term + one subclass per term<br/>(Intercept LinearShift ComplexShift<br/>VaryingCoefficient = I LS CS VC),<br/>each holding its module class;<br/>nodes, normalization, Kahn sort, (de)serialization"]
     end
     subgraph torch["torch modules"]
-        modules["modules.py<br/>one nn.Module per term, built from (term, spec):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
+        modules["modules.py<br/>one nn.Module per term, built from (term, schema):<br/>ShiftModule/InterceptModule hooks,<br/>intercept_module, feat_width, _InputTransform;<br/>LinearShiftModule ComplexShiftModule<br/>VaryingCoefficientModule,<br/>SimpleInterceptModule ComplexInterceptModule<br/>AdditiveInterceptModule"]
         transforms["transforms.py<br/>Bernstein/Spline/Affine,<br/>ordinal_* likelihood,<br/>StandardLogistic"]
-        nodes["nodes.py<br/>Node: intercept + shifts,<br/>encode, log_prob, sample,<br/>abduct, marginal_theta"]
+        nodes["nodes.py<br/>Node: intercept + shifts,<br/>encode, log_prob, sample,<br/>abduct, marginal_theta,<br/>calibrate, save/load"]
         flow["flow.py<br/>CausalFlowDAG: construct, calibrate (private),<br/>log_prob, sample/abduct/pmf/density,<br/>save/load; composes the mixins"]
     end
     subgraph functions["flow behavior by concern"]
-        fitting["fitting.py<br/>FitMixin: fit (Adam loop, callbacks),<br/>fit_classical (L-BFGS)"]
+        fitting["fitting.py<br/>NodeFitMixin: fit (Adam loop, callbacks),<br/>fit_classical (L-BFGS), nll;<br/>FitMixin: the flow's loops over the nodes"]
         readouts["readouts.py<br/>ReadoutsMixin: ls_coefficients,<br/>varying_coef, to_matrix, contributions,<br/>design_matrix, shift_curve"]
         scores["scores.py<br/>node_scores,<br/>effect_modifier_scan"]
     end
-    callbacks["callbacks.py<br/>Callback, EarlyStopping,<br/>PerNodeEarlyStopping, per_node_adam"]
+    callbacks["callbacks.py<br/>Callback, EarlyStopping"]
     plots["plots.py<br/>plot_dag, plot_marginals,<br/>plot_training (matplotlib optional)"]
 
     spec --> modules
     nodes --> spec
     nodes --> transforms
+    nodes --> fitting
     flow --> nodes
     flow --> modules
     flow --> spec
@@ -36,6 +37,7 @@ graph TD
     flow --> readouts
     flow --> scores
     fitting --> callbacks
+    fitting --> modules
     readouts --> modules
     readouts --> spec
     scores --> spec
@@ -43,11 +45,14 @@ graph TD
     plots --> spec
 ```
 
-`modules.py` imports nothing from `spec.py`: it reads a spec node's `kind` and
-`levels` and a term's `parents` and options. That is what lets each term class
-hold its module class directly (`LinearShift.module is LinearShiftModule`).
-`fitting.py` and `readouts.py` are mixins that `CausalFlowDAG` composes;
-`fitting` imports `flow` under `TYPE_CHECKING` only. The graph is acyclic.
+`modules.py` imports nothing from `spec.py`: it reads the node's parent schema,
+`{parent: "continuous" | n_levels}`, and a term's `parents` and options. That
+is what lets each term class hold its module class directly
+(`LinearShift.module is LinearShiftModule`). `fitting.py` and `readouts.py`
+are mixins: `Node` composes `NodeFitMixin`, and `CausalFlowDAG` composes
+`FitMixin` and `ReadoutsMixin`. `fitting` imports `flow` under
+`TYPE_CHECKING` only, and `nodes` inside the two flow methods that check
+columns. The import graph is acyclic.
 
 ## The term contract
 ```mermaid
@@ -75,7 +80,7 @@ classDiagram
         input_transform / calibrate(train_df)
     }
     class ShiftModule {
-        __init__(term, spec): builds the net, sets key and parents
+        __init__(term, schema): builds the net, sets key and parents
         order
         shift_value(node, feats)
         post_init()
@@ -85,7 +90,7 @@ classDiagram
         side_columns() / check_column() / live_side() / extra_columns()
     }
     class InterceptModule {
-        __init__(term, spec, n_params): intercept_module picks the class
+        __init__(term, schema, n_params): intercept_module picks the class
         groups / ci_parents
         calibrate_intercept(train_df, own, ut)
         theta_value(node, feats, n)
@@ -107,8 +112,8 @@ stable; `tests/test_statedict_stability.py` pins them.
 
 A custom term is two classes:
 
-- a `ShiftModule` subclass with `__init__(term, spec)`, which builds the
-  network and sets `key` and `parents`, and `shift_value`;
+- a `ShiftModule` subclass with `__init__(term, schema)`, which builds the
+  network from the parent schema and sets `key` and `parents`, and `shift_value`;
 - a `tramdag.Term` subclass with `name` and `module` as class attributes
   (`__init_subclass__` refuses one without). Its options are the keyword
   arguments of its `__init__`, assigned to `self` after
@@ -166,15 +171,19 @@ classDiagram
   class transforms {
   }
   tramdag --> flow
+  tramdag --> nodes
   tramdag --> plots
   tramdag --> spec
   fitting --> callbacks
+  fitting --> modules
+  fitting --> nodes
   flow --> fitting
   flow --> modules
   flow --> nodes
   flow --> readouts
   flow --> spec
   flow --> transforms
+  nodes --> fitting
   nodes --> spec
   nodes --> transforms
   plots --> spec
@@ -225,9 +234,9 @@ classDiagram
   }
   class Node {
   }
-  class OrdinalNode {
+  class NodeFitMixin {
   }
-  class PerNodeEarlyStopping {
+  class OrdinalNode {
   }
   class ReadoutsMixin {
   }
@@ -254,7 +263,6 @@ classDiagram
   class _ScaledUT {
   }
   EarlyStopping --|> Callback
-  PerNodeEarlyStopping --|> Callback
   _FnCallback --|> Callback
   CausalFlowDAG --|> FitMixin
   CausalFlowDAG --|> ReadoutsMixin
@@ -266,6 +274,7 @@ classDiagram
   ShiftModule --|> TermModule
   SimpleInterceptModule --|> InterceptModule
   VaryingCoefficientModule --|> ShiftModule
+  Node --|> NodeFitMixin
   ComplexShift --|> Term
   Intercept --|> Term
   LinearShift --|> Term
@@ -285,63 +294,66 @@ flowchart LR
   subgraph flow
     n0["CausalFlowDAG.__init__"]
     n1["CausalFlowDAG._apply_init"]
+    n2["CausalFlowDAG._schema"]
   end
   subgraph modules
-    n4["ComplexShiftModule.__init__"]
-    n8["LinearShiftModule.__init__"]
-    n11["SimpleInterceptModule.__init__"]
-    n9["VaryingCoefficientModule.__init__"]
-    n5["_attach_input_transform"]
-    n6["_nn"]
-    n7["feat_width"]
-    n10["intercept_module"]
+    n6["ComplexShiftModule.__init__"]
+    n10["LinearShiftModule.__init__"]
+    n13["SimpleInterceptModule.__init__"]
+    n11["VaryingCoefficientModule.__init__"]
+    n7["_attach_input_transform"]
+    n8["_nn"]
+    n9["feat_width"]
+    n12["intercept_module"]
   end
   subgraph nodes
-    n2["Node.__init__"]
+    n3["Node.__init__"]
   end
   subgraph spec
-    n16["Term.check"]
-    n17["Term.edge_parents"]
-    n18["VaryingCoefficient.check"]
-    n19["VaryingCoefficient.edge_parents"]
-    n15["_check_node"]
-    n20["_kahn_sort"]
-    n12["node_parents"]
-    n3["validate_and_sort"]
+    n17["Term.check"]
+    n18["Term.edge_parents"]
+    n19["VaryingCoefficient.check"]
+    n20["VaryingCoefficient.edge_parents"]
+    n16["_check_node"]
+    n21["_kahn_sort"]
+    n5["node_parents"]
+    n4["validate_and_sort"]
   end
   subgraph transforms
-    n21["BernsteinUT.__init__"]
-    n13["BernsteinUT.n_params"]
-    n22["_ScaledUT.__init__"]
-    n14["make_univariate_transform"]
+    n22["BernsteinUT.__init__"]
+    n14["BernsteinUT.n_params"]
+    n23["_ScaledUT.__init__"]
+    n15["make_univariate_transform"]
   end
     n0 --> n1
     n0 -- "3x" --> n2
-    n0 --> n3
-    n4 --> n5
-    n4 --> n6
-    n4 --> n7
-    n8 --> n7
-    n9 --> n5
-    n9 --> n6
-    n9 --> n7
-    n10 -- "3x" --> n11
-    n2 --> n4
-    n2 --> n8
-    n2 --> n9
-    n2 -- "3x" --> n10
-    n2 -- "3x" --> n12
-    n2 -- "2x" --> n13
-    n2 -- "2x" --> n14
-    n15 -- "5x" --> n16
-    n15 -- "5x" --> n17
-    n15 --> n18
-    n15 --> n19
-    n20 -- "3x" --> n12
-    n3 -- "3x" --> n15
-    n3 --> n20
-    n21 -- "2x" --> n22
-    n14 -- "2x" --> n21
+    n0 -- "3x" --> n3
+    n0 --> n4
+    n2 -- "3x" --> n5
+    n6 --> n7
+    n6 --> n8
+    n6 --> n9
+    n10 --> n9
+    n11 --> n7
+    n11 --> n8
+    n11 --> n9
+    n12 -- "3x" --> n13
+    n3 --> n6
+    n3 --> n10
+    n3 --> n11
+    n3 -- "3x" --> n12
+    n3 -- "3x" --> n5
+    n3 -- "2x" --> n14
+    n3 -- "2x" --> n15
+    n16 -- "5x" --> n17
+    n16 -- "5x" --> n18
+    n16 --> n19
+    n16 --> n20
+    n21 -- "3x" --> n5
+    n4 -- "3x" --> n16
+    n4 --> n21
+    n22 -- "2x" --> n23
+    n15 -- "2x" --> n22
 ```
 
 ### Call graph — one fit (traced)
@@ -353,60 +365,58 @@ flowchart LR
     n1["EarlyStopping._reset"]
     n2["EarlyStopping.on_epoch_end"]
     n4["EarlyStopping.on_fit_begin"]
-    n6["EarlyStopping.on_fit_end"]
+    n19["EarlyStopping.on_fit_end"]
     n3["_last_val"]
   end
   subgraph fitting
-    n5["FitMixin.fit"]
-    n7["_check_fit_sizes"]
-    n8["_fit_epoch"]
-    n9["_learning_rates"]
-    n10["_log_epoch"]
-    n11["_normalize_callbacks"]
-    n12["_split_validation"]
-  end
-  subgraph flow
-    n13["CausalFlowDAG._calibrate"]
-    n21["CausalFlowDAG._check_columns"]
-    n22["CausalFlowDAG._check_level_values"]
-    n14["CausalFlowDAG._check_side_columns"]
-    n32["CausalFlowDAG._dtype"]
-    n27["CausalFlowDAG._features"]
-    n15["CausalFlowDAG._mean_nll"]
-    n16["CausalFlowDAG._recenter_vc"]
-    n31["CausalFlowDAG._side_feats"]
-    n17["CausalFlowDAG._tensorize"]
-    n33["CausalFlowDAG._theta_shift"]
-    n20["CausalFlowDAG.node_log_prob"]
+    n5["FitMixin._fit_nodes"]
+    n7["FitMixin.fit"]
+    n8["NodeFitMixin._check_side_columns"]
+    n15["NodeFitMixin.finalize"]
+    n6["NodeFitMixin.fit"]
+    n20["NodeFitMixin.row_log_prob"]
+    n9["NodeFitMixin.side_columns"]
+    n21["_check_fit_sizes"]
+    n22["_fit_epoch"]
+    n23["_learning_rates"]
+    n24["_log_epoch"]
+    n25["_normalize_callbacks"]
+    n10["_per_node"]
+    n11["_split_validation"]
   end
   subgraph modules
-    n37["ComplexShiftModule.forward"]
-    n36["ComplexShiftModule.shift_value"]
-    n23["InterceptModule.calibrate_intercept"]
-    n41["LinearShiftModule.forward"]
-    n40["LinearShiftModule.shift_value"]
-    n29["ShiftModule.finalize"]
-    n18["ShiftModule.regularizer"]
-    n25["ShiftModule.side_columns"]
-    n43["SimpleInterceptModule.forward"]
-    n42["SimpleInterceptModule.theta_value"]
-    n24["TermModule.calibrate"]
-    n44["TermModule.input_transform"]
-    n47["VaryingCoefficientModule.beta"]
-    n30["VaryingCoefficientModule.finalize"]
-    n46["VaryingCoefficientModule.forward"]
-    n48["VaryingCoefficientModule.l2"]
-    n45["VaryingCoefficientModule.recenter"]
-    n50["VaryingCoefficientModule.regressor"]
-    n19["VaryingCoefficientModule.regularizer"]
-    n49["VaryingCoefficientModule.shift_value"]
-    n26["VaryingCoefficientModule.side_columns"]
+    n33["ComplexShiftModule.forward"]
+    n32["ComplexShiftModule.shift_value"]
+    n35["InterceptModule.calibrate_intercept"]
+    n39["LinearShiftModule.forward"]
+    n38["LinearShiftModule.shift_value"]
+    n16["ShiftModule.finalize"]
+    n26["ShiftModule.regularizer"]
+    n13["ShiftModule.side_columns"]
+    n41["SimpleInterceptModule.forward"]
+    n40["SimpleInterceptModule.theta_value"]
+    n36["TermModule.calibrate"]
+    n42["TermModule.input_transform"]
+    n45["VaryingCoefficientModule.beta"]
+    n17["VaryingCoefficientModule.finalize"]
+    n44["VaryingCoefficientModule.forward"]
+    n46["VaryingCoefficientModule.l2"]
+    n43["VaryingCoefficientModule.recenter"]
+    n48["VaryingCoefficientModule.regressor"]
+    n27["VaryingCoefficientModule.regularizer"]
+    n47["VaryingCoefficientModule.shift_value"]
+    n14["VaryingCoefficientModule.side_columns"]
   end
   subgraph nodes
-    n28["Node.encode"]
-    n35["Node.log_prob"]
-    n38["Node.net_input"]
-    n34["Node.theta_shift"]
+    n28["Node.calibrate"]
+    n18["Node.features"]
+    n30["Node.log_prob"]
+    n34["Node.net_input"]
+    n29["Node.tensorize"]
+    n31["Node.theta_shift"]
+    n12["check_columns"]
+    n49["check_level_values"]
+    n50["encode"]
   end
   subgraph transforms
     n54["BernsteinUT._build"]
@@ -414,76 +424,81 @@ flowchart LR
     n55["_ScaledUT._log_dt_dx"]
     n56["_ScaledUT._scale"]
     n52["_ScaledUT.forward"]
-    n39["_ScaledUT.set_range"]
+    n37["_ScaledUT.set_range"]
     n59["_log1mexp"]
     n57["ordinal_bounds"]
     n58["ordinal_cutpoints"]
     n53["ordinal_log_prob"]
   end
     n0 --> n1
-    n2 -- "3x" --> n3
-    n4 --> n1
-    n5 -- "3x" --> n2
-    n5 --> n4
-    n5 --> n6
-    n5 --> n7
-    n5 -- "3x" --> n8
-    n5 -- "3x" --> n9
-    n5 -- "3x" --> n10
-    n5 --> n11
-    n5 --> n12
-    n5 --> n13
-    n5 --> n14
-    n5 -- "3x" --> n15
-    n5 --> n16
-    n5 -- "2x" --> n17
-    n5 -- "2x" --> n18
-    n5 --> n19
-    n8 -- "6x" --> n20
-    n8 -- "6x" --> n19
-    n13 --> n21
-    n13 --> n22
-    n13 -- "3x" --> n23
-    n13 -- "3x" --> n24
-    n14 -- "2x" --> n25
-    n14 --> n26
-    n27 -- "30x" --> n28
-    n15 -- "3x" --> n20
-    n16 --> n27
-    n16 -- "2x" --> n29
-    n16 --> n30
-    n31 -- "18x" --> n25
-    n31 -- "9x" --> n26
-    n17 -- "2x" --> n21
-    n17 -- "2x" --> n22
-    n17 -- "6x" --> n32
-    n33 -- "27x" --> n31
-    n33 -- "27x" --> n34
-    n20 -- "9x" --> n27
-    n20 -- "27x" --> n33
-    n20 -- "27x" --> n35
-    n36 -- "9x" --> n37
-    n36 -- "9x" --> n38
-    n23 -- "3x" --> n24
-    n23 -- "2x" --> n39
-    n40 -- "9x" --> n41
-    n42 -- "27x" --> n43
-    n24 -- "6x" --> n44
-    n30 --> n45
-    n30 --> n38
-    n46 -- "9x" --> n47
-    n19 -- "7x" --> n48
-    n49 -- "9x" --> n46
-    n49 -- "9x" --> n50
-    n49 -- "9x" --> n38
-    n35 -- "18x" --> n51
-    n35 -- "18x" --> n52
-    n35 -- "9x" --> n53
-    n38 -- "19x" --> n44
-    n34 -- "9x" --> n36
-    n34 -- "9x" --> n40
-    n34 -- "27x" --> n42
-    n34 -- "9x" --> n49
+    n2 -- "9x" --> n3
+    n4 -- "3x" --> n1
+    n5 -- "3x" --> n6
+    n7 -- "2x" --> n5
+    n7 -- "3x" --> n8
+    n7 -- "3x" --> n9
+    n7 -- "9x" --> n10
+    n7 --> n11
+    n7 --> n12
+    n8 -- "6x" --> n9
+    n8 -- "4x" --> n13
+    n8 -- "2x" --> n14
+    n15 -- "2x" --> n16
+    n15 --> n17
+    n15 -- "3x" --> n18
+    n6 -- "9x" --> n2
+    n6 -- "3x" --> n4
+    n6 -- "3x" --> n19
+    n6 -- "3x" --> n8
+    n6 -- "3x" --> n15
+    n6 -- "9x" --> n20
+    n6 -- "3x" --> n21
+    n6 -- "9x" --> n22
+    n6 -- "9x" --> n23
+    n6 -- "9x" --> n24
+    n6 -- "3x" --> n25
+    n6 -- "3x" --> n11
+    n6 -- "2x" --> n26
+    n6 --> n27
+    n6 -- "3x" --> n28
+    n6 -- "6x" --> n29
+    n20 -- "27x" --> n9
+    n20 -- "27x" --> n18
+    n20 -- "27x" --> n30
+    n20 -- "27x" --> n31
+    n9 -- "24x" --> n13
+    n9 -- "12x" --> n14
+    n22 -- "18x" --> n20
+    n22 -- "6x" --> n27
+    n32 -- "9x" --> n33
+    n32 -- "9x" --> n34
+    n35 -- "3x" --> n36
+    n35 -- "2x" --> n37
+    n38 -- "9x" --> n39
+    n40 -- "27x" --> n41
+    n36 -- "6x" --> n42
+    n17 --> n43
+    n17 --> n34
+    n44 -- "9x" --> n45
+    n27 -- "7x" --> n46
+    n47 -- "9x" --> n44
+    n47 -- "9x" --> n48
+    n47 -- "9x" --> n34
+    n28 -- "3x" --> n35
+    n28 -- "3x" --> n36
+    n28 -- "3x" --> n12
+    n28 --> n49
+    n18 -- "30x" --> n50
+    n30 -- "18x" --> n51
+    n30 -- "18x" --> n52
+    n30 -- "9x" --> n53
+    n34 -- "19x" --> n42
+    n29 -- "6x" --> n12
+    n29 -- "4x" --> n49
+    n31 -- "9x" --> n32
+    n31 -- "9x" --> n38
+    n31 -- "27x" --> n40
+    n31 -- "9x" --> n47
     n52 -- "18x" --> n54
     n52 -- "18x" --> n55
     n52 -- "18x" --> n56

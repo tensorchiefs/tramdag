@@ -95,7 +95,8 @@ acceptance bars.
 | file | what it covers |
 |---|---|
 | [`test_flow.py`](test_flow.py) | core unit tests — transforms, ordinal log-prob, DAG validation, abduction/counterfactual mechanics, `save`/`load`, the proportional-odds identity |
-| [`test_fit_hooks.py`](test_fit_hooks.py) | `fit(optimizer=, callbacks=)` the Keras-shaped validation/verbose options and the shipped `tramdag.callbacks` — stop, lists, `EarlyStopping`, `PerNodeEarlyStopping` and its per-node restore, a torch scheduler; the guard that it still lands on the MLE |
+| [`test_fit_hooks.py`](test_fit_hooks.py) | `fit(optimizer=, callbacks=)` the Keras-shaped validation/verbose options and the shipped `tramdag.callbacks` — the hooks on the node, stop, lists, per-node factories, `EarlyStopping` and its per-node restore, an optimizer factory with two groups, a torch scheduler; the guard that it still lands on the MLE |
+| [`test_node_fit.py`](test_node_fit.py) | a node fits on its own — alone equals in a flow, forked equals serial, a frame with only its columns, the node checkpoint, the padded flow history |
 | [`test_density.py`](test_density.py) | `density()` integrates to one and matches sampling |
 | [`test_input_transform.py`](test_input_transform.py) | per-term `input_transform=` — minmax/standardize statistics frozen at calibration, the callable's train column on a fresh batch, lambda save rejection, checkpoint round-trip |
 | [`test_fit_classical.py`](test_fit_classical.py) | `fit_classical` — guard on non-`ls` specs, determinism, float64 round-trip, agreement with `statsmodels` and Adam |
@@ -112,7 +113,7 @@ acceptance bars.
 | [`test_api_papercuts.py`](test_api_papercuts.py) | error messages, `save`/`load` meta, small API contracts |
 | [`test_custom_terms.py`](test_custom_terms.py) | the two-class term contract: a `Term` plus `ShiftModule` subclass, a custom `regularizer`, and the refusals for an unknown or orphan term |
 | [`test_flow_columns.py`](test_flow_columns.py) | the frame a query needs: a missing column is named before any tensor operation sees it |
-| [`test_plots.py`](test_plots.py) | `plot_dag`, `plot_marginals` and `plot_training` draw every node, edge and freeze mark |
+| [`test_plots.py`](test_plots.py) | `plot_dag`, `plot_marginals` and `plot_training` draw every node, edge and stop mark |
 | [`test_statedict_stability.py`](test_statedict_stability.py) | the bit-exact tripwire: four seeded flows compared against a recorded baseline, so a reordered construction fails here and not in a replication |
 
 Note: the additive-CI and joint-CS *known-truth* acceptance tests carry the

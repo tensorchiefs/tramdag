@@ -48,8 +48,8 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] | The flow: one [`Node`][tramdag.nodes.Node] per variable in topological order. Construction seeds the weights. |
-| [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Joint maximum likelihood by one minibatch Adam loop, with `validation_data=`/`validation_split=`, `verbose=`, `optimizer=` and `callbacks=`; `history` holds `train`, `val` and `lr` per epoch. A second call continues training. The mechanics are in [fitting.md](fitting.md). |
-| [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Float64 full-batch L-BFGS for all-`ls` specs; refuses flexible specs. |
+| [`fit()`][tramdag.flow.CausalFlowDAG.fit] | Maximum likelihood node by node: runs `Node.fit` for each node, serially or in `n_jobs` forked processes. `epochs=`, `learning_rate=` and `callbacks=` take a value or a function of the node name; `optimizer=` is a factory `f(node)`. `history` is a view over the nodes' histories. The mechanics are in [fitting.md](fitting.md). |
+| [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Float64 full-batch L-BFGS for all-`ls` specs, node by node; refuses flexible specs. |
 | [`sample()`][tramdag.flow.CausalFlowDAG.sample] | Observational, interventional (`do=`, graph mutilation) and counterfactual (`u=`) sampling. |
 | [`abduct()`][tramdag.flow.CausalFlowDAG.abduct] | Abduction: recover the latents. |
 | [`pmf()`][tramdag.flow.CausalFlowDAG.pmf] | Analytic class probabilities of an ordinal node, with `do=` overrides. |
@@ -62,9 +62,9 @@ the same object, so `LS is LinearShift`.
 | [`ls_coefficients()`][tramdag.flow.CausalFlowDAG.ls_coefficients] | The per-node linear-shift weights — the interpretable coefficients. |
 | [`design_matrix()`][tramdag.flow.CausalFlowDAG.design_matrix] | Parent encoding as a DataFrame (`drop_first=` gives the classical statsmodels/`polr` design). |
 | [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
-| [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with history and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
-| (`_node`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_init_linear`) | Node lookup with one shared error; parent encoding through `Node.encode` (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing. |
-| (`_check_side_columns`, `_propensity`, `_side_feats`, `_query_side_columns`, `_recenter_vc`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit and the post-fit `finalize` loop. |
+| [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with the nodes' histories and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
+| (`_node`, `_schema`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_init_linear`) | Node lookup with one shared error; each node's parent schema; parent encoding through `Node.encode` (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing. |
+| (`_propensity`, `_side_feats`, `_query_side_columns`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit. |
 
 
 ## `modules.py` — the term modules
@@ -82,7 +82,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 |----------------------------------|------------------------------------------------------------------------------|
 | [`intercept_module()`][tramdag.modules.intercept_module] | The one factory: an `I` term becomes the free theta, one joint net, or one net per parent (`allow_interaction=False`). |
 | [`feat_width()`][tramdag.modules.feat_width] | Total encoded width of a parent set: `levels` per ordinal parent, 1 per continuous one. |
-| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `__init__(term, spec)` (builds the net, sets `key` and `parents`), `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
+| [`ShiftModule`][tramdag.modules.ShiftModule] / [`InterceptModule`][tramdag.modules.InterceptModule] | The behavior hooks a term module owns: `__init__(term, schema)` (builds the net from the parent schema, sets `key` and `parents`), `shift_value`/`theta_value`, `post_init`, `regularizer`, post-fit `finalize`, `score_columns`, the side-input contract. |
 | [`LinearShiftModule`][tramdag.modules.LinearShiftModule] | `LS`: `Linear(n, 1, bias=False)`. `.weight` is the interpretable coefficient; no bias because the intercept slot owns the constant. |
 | [`ComplexShiftModule`][tramdag.modules.ComplexShiftModule] | `CS`: an NN to one shift value. |
 | [`VaryingCoefficientModule`][tramdag.modules.VaryingCoefficientModule] | `VC`: $\beta_0 + b_\Theta(\text{mod})$ with the L2 hook `l2()`; `beta()` evaluates the effect and `recenter()` re-splits `beta0`/`b_theta` after training ([varying-coefficients.md](varying-coefficients.md)). `regressor` is both the forward regressor and the `beta0` score. |
@@ -93,15 +93,18 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`Node`][tramdag.nodes.Node] | One sub-model per variable: builds its intercept and shift terms through each term's `module`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
+| [`Node`][tramdag.nodes.Node] | One sub-model per variable, a TRAM regression on its parents: built from its name, node spec and parent schema `{parent: "continuous" \| n_levels}`; builds its intercept and shift terms through each term's `module`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
 | [`Node`][tramdag.nodes.Node] `.log_prob` / `.sample` / `.abduct` / `.marginal_theta` / `.encode` | The continuous-vs-ordinal branches and the parent encoding ([architecture.md](architecture.md#node-kinds)). |
+| [`Node`][tramdag.nodes.Node] `.features` / `.tensorize` / `.calibrate` / `.save` / `.load` | The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and `calibrated` flag, its checkpoint. |
+| (`encode`, `check_columns`, `check_level_values`, `write_checkpoint`, `load_weights`) | Shared by the node and the flow: one column's encoding, the column and level checks, the checkpoint writer and loader. |
 
-## `fitting.py` — `FitMixin`
+## `fitting.py` — `NodeFitMixin` and `FitMixin`
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | Defined here once, methods of the flow via the mixin. |
-| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`) | The loop plumbing: Keras-shaped validation split, callback normalization, the validation pass, the rate record, verbose printing. |
+| [`Node.fit()`][tramdag.nodes.Node.fit] / [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] / [`Node.nll()`][tramdag.nodes.Node.nll] | One node's Adam loop and L-BFGS fit, mixed into `Node` via `NodeFitMixin`; `row_log_prob`, `finalize` (the VC re-centering) and the side-column check live here too. |
+| [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | The flow's loops over the nodes, methods of the flow via `FitMixin`; `history` is the flow's view over the nodes' histories. |
+| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `_fit_in_child`, `_pad_last`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the forked worker, the padded history view. |
 
 ## `readouts.py` — `ReadoutsMixin`
 
@@ -123,9 +126,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | Best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the fit, and `min_delta=` sets the smallest gain that counts. |
-| [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] | `EarlyStopping` per node, with the same options: a node freezes after `patience` flat epochs (`None` never freezes) and loads its best-epoch weights back (`restore_best=False` keeps the last ones). Stops the fit once every node froze and records `best_epoch` and `frozen` as `{node: epoch}`. |
-| [`per_node_adam()`][tramdag.callbacks.per_node_adam] | Adam with one `node`-tagged parameter group per node — the optimizer `PerNodeEarlyStopping` needs. |
+| [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | The node's best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the node's fit, and `min_delta=` sets the smallest gain that counts. |
 
 ## `plots.py` — the figures (matplotlib optional: `tramdag[plots]`)
 
@@ -158,8 +159,8 @@ default you can read at the call site. Nothing numeric is buried.
 |----------------------|-------------------------------|----------------------------------------------------------|
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
-| schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, `PerNodeEarlyStopping`; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
-| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied only by the fit that calibrates, so a flow that `fit_classical` calibrated ignores it |
+| schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, per node; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
+| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied only by the fit that calibrates a node, so a node that `fit_classical` calibrated ignores it |
 | VC stage-1 propensities | the training-frame column `VC(propensity=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, propensity=)` | 1.0 / None (`propensity="col"` names the propensity column) |
 | L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 5000 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |

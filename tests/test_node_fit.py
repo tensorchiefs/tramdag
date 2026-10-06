@@ -29,6 +29,10 @@ def _same_weights(a, b) -> bool:
     return sa.keys() == sb.keys() and all(torch.equal(sa[k], sb[k]) for k in sa)
 
 
+def _scale(x, train):
+    return x / train.std()
+
+
 # %% public functions ------------------------------------------------------------------
 def test_a_node_fitted_alone_equals_the_node_in_a_flow(ls_chain):
     """Same start, same rows, same shuffling seed: the same weights.
@@ -85,10 +89,6 @@ def test_the_flow_history_repeats_a_stopped_nodes_last_entry(ls_chain):
         flow.nodes["x1"].history["train"][-1]
     ] * 3
     assert all(not math.isnan(v) for row in train for v in row.values())
-
-
-def _scale(x, train):
-    return x / train.std()
 
 
 def test_a_forked_fit_loads_a_callable_transform_and_leaves_eval_mode(ls_chain):

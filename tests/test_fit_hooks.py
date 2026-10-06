@@ -116,9 +116,7 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
 
 
 def test_an_optimizer_factory_may_split_the_parameters_into_groups(ls_chain):
-    """A factory gives each node an optimizer with two groups: weight decay on
-    the networks only. The decayed group moves, the other group's decay is 0.
-    """
+    """A factory may split each node's parameters into two groups."""
     from tramdag import CS
 
     df = ls_chain["draw"](400, 1)[["x1", "x2"]]

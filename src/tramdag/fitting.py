@@ -651,9 +651,9 @@ class FitMixin:
             example ``lambda node: torch.optim.AdamW(node.parameters())``. The
             default is ``Adam(lr=learning_rate)``.
         callbacks : Callback | list | callable | None, optional
-            The callbacks of every node, or a function of the node name that gives them
-            per node. A shared shipped callback resets at every node's fit begin, so its
-            attributes describe the last node only.
+            The callbacks of every node, or a function of the node name that
+            gives them per node. A shared shipped callback resets at every
+            node's fit begin, so its attributes describe the last node only.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
@@ -710,11 +710,9 @@ class FitMixin:
         self._calibrate(train_df, marginal_init=marginal_init)
         # a centered VC's validation NLL uses the live propensity of the fitted
         # treatment node, as every query does, so those nodes fit second
-        later = [
-            name
-            for name in self.order
-            if validation_data is not None and self.nodes[name].side_columns()
-        ]
+        later = [n for n in self.order if self.nodes[n].side_columns()]
+        if validation_data is None:
+            later = []
         self._fit_nodes(train_df, {n: jobs[n] for n in jobs if n not in later}, n_jobs)
         for name in later:
             jobs[name]["validation_data"] = self._with_live_side(name, validation_data)

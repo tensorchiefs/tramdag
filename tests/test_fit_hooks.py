@@ -300,6 +300,7 @@ def test_each_node_stops_on_its_own_and_keeps_the_mle(ls_chain):
     assert len(flow.history["train"]) == max(
         len(nd.history["train"]) for nd in flow.nodes.values()
     )
+    assert len({len(nd.history["train"]) for nd in flow.nodes.values()}) > 1
     assert float(flow.ls_coefficients()["x2"]["x1"][0]) == pytest.approx(1.2, abs=0.1)
 
 

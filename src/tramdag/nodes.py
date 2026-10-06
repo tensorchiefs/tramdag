@@ -1,9 +1,9 @@
-"""The internal node model: one sub-model per variable.
+"""The node model: one TRAM regression per variable, alone or in a flow.
 
 `Node` bundles a variable's intercept (transform parameters), monotone
-transform and shift modules; `CausalFlowDAG` holds one per node and the DAG
-lives in which parents each node reads. ``scores.py``, the read-outs and the
-tests read ``kind``, ``parents``, ``shifts``, ``intercept``, ``ut``,
+transform and shift modules, and fits itself; `CausalFlowDAG` holds one per
+node and the DAG lives in which parents each node reads. ``scores.py``, the
+read-outs and the tests read ``kind``, ``parents``, ``shifts``, ``intercept``, ``ut``,
 ``net_input`` and ``theta_shift`` by name.
 """
 
@@ -159,29 +159,33 @@ class Node(NodeFitMixin, nn.Module):
     ----------
     name : str
         The node's column name.
-    node : NodeSpec
+    node_spec : NodeSpec
         Specification of the node.
-    parents : dict[str, str | int]
+    schema : dict[str, str | int]
         The parent schema, ``{parent: "continuous" | n_levels}``. It sizes
         the parent features: a continuous parent enters raw, an ordinal one
         one-hot over its levels.
     """
 
-    def __init__(self, name: str, node: NodeSpec, parents: dict[str, str | int]):
+    def __init__(self, name: str, node_spec: NodeSpec, schema: dict[str, str | int]):
         super().__init__()
         self.name = name
-        self.node_spec = node
-        self.kind = node.kind
-        terms = node.terms
-        self.parents = tuple(node_parents(node))
-        self.schema = {p: parents[p] for p in self.parents}
-        if node.kind == "continuous":
-            self.ut = make_univariate_transform(node.transform, **node.transform_kwargs)
+        self.node_spec = node_spec
+        self.kind = node_spec.kind
+        terms = node_spec.terms
+        self.parents = tuple(node_parents(node_spec))
+        self.schema = {p: schema[p] for p in self.parents}
+        if node_spec.kind == "continuous":
+            self.ut = make_univariate_transform(
+                node_spec.transform, **node_spec.transform_kwargs
+            )
             n_params = self.ut.n_params
+            self.encoding = "continuous"  # this node's own schema entry
         else:
             self.ut = None
-            self.levels = node.levels
-            n_params = node.levels - 1
+            self.levels = node_spec.levels
+            n_params = node_spec.levels - 1
+            self.encoding = node_spec.levels
         # the intercept slot: the free theta_0, one joint net, or one net per
         # parent summed in coefficient space — `intercept_module` picks
         self.intercept = terms[0].module(terms[0], self.schema, n_params)
@@ -205,7 +209,7 @@ class Node(NodeFitMixin, nn.Module):
         A continuous parent stays raw, shape ``(n, 1)``; an ordinal parent is
         one-hot encoded, shape ``(n, levels)``.
         """
-        return encode(values, self.levels if self.kind == "ordinal" else "continuous")
+        return encode(values, self.encoding)
 
     def features(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
         """Encode this node's parents out of a raw tensor dict."""
@@ -225,7 +229,7 @@ class Node(NodeFitMixin, nn.Module):
             If an ordinal column is not a level index.
         """
         cols = (self.name, *self.parents) if cols is None else cols
-        kinds = self.schema | {self.name: getattr(self, "levels", "continuous")}
+        kinds = self.schema | {self.name: self.encoding}
         levels = {c: k for c, k in kinds.items() if k != "continuous"}
         p = next(self.parameters())
         return tensorize(df, cols, levels, p.dtype, p.device)
@@ -267,9 +271,7 @@ class Node(NodeFitMixin, nn.Module):
         """
         if bool(self.calibrated):
             return self
-        check_columns(train_df, (self.name, *self.parents))
-        if self.kind == "ordinal":
-            check_level_values(self.name, train_df[self.name].to_numpy(), self.levels)
+        self.tensorize(train_df)  # the columns and the ordinal levels
         self.intercept.calibrate_intercept(train_df, train_df[self.name], self.ut)
         for m in self.shifts.values():
             m.calibrate(train_df)
@@ -382,7 +384,7 @@ class Node(NodeFitMixin, nn.Module):
             {
                 "name": self.name,
                 "node_spec": spec_to_dict({self.name: self.node_spec})[self.name],
-                "parents": self.schema,
+                "schema": self.schema,
                 "state_dict": self.state_dict(),
                 "history": self.history,
             },
@@ -408,7 +410,7 @@ class Node(NodeFitMixin, nn.Module):
         ckpt = torch.load(path, map_location=device, weights_only=False)
         name = ckpt["name"]
         spec = spec_from_dict({name: ckpt["node_spec"]})[name]
-        node = cls(name, spec, ckpt["parents"]).to(device)
+        node = cls(name, spec, ckpt["schema"]).to(device)
         load_weights(node, ckpt["state_dict"])
         node.history = ckpt["history"]
         node.meta = ckpt["meta"]

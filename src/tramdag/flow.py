@@ -25,6 +25,7 @@ from .nodes import Node
 from .readouts import ReadoutsMixin
 from .spec import (
     NodeSpec,
+    node_parents,
     spec_from_dict,
     spec_to_dict,
     validate_and_sort,
@@ -93,7 +94,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.order = validate_and_sort(spec)
         self.init = init
         self.nodes = nn.ModuleDict(
-            {name: Node(spec[name], spec) for name in self.order}
+            {name: Node(name, spec[name], self._schema(name)) for name in self.order}
         )
         self._apply_init(init)
         self.device = torch.device(device)
@@ -104,6 +105,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.history: dict = {"train": []}  # per-node mean train NLL per epoch
         self.meta: dict = {}  # provenance attached at save() (version, time)
         self.to(self.device)
+
+    def _schema(self, name: str) -> dict[str, str | int]:
+        """Give a node's parent schema, ``{parent: "continuous" | n_levels}``."""
+        spec = self.spec
+        return {
+            p: "continuous" if spec[p].kind == "continuous" else spec[p].levels
+            for p in node_parents(spec[name])
+        }
 
     def _apply_init(self, init: str) -> None:
         """Re-initialize every linear layer, if asked; VC heads re-zero their output."""

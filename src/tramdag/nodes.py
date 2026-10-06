@@ -41,17 +41,23 @@ class Node(nn.Module):
 
     Parameters
     ----------
+    name : str
+        The node's column name.
     node : NodeSpec
         Specification of the node.
-    spec : dict[str, NodeSpec]
-        The full DAG specification. Needed for the parent feature widths.
+    parents : dict[str, str | int]
+        The parent schema, ``{parent: "continuous" | n_levels}``. It sizes
+        the parent features: a continuous parent enters raw, an ordinal one
+        one-hot over its levels.
     """
 
-    def __init__(self, node: NodeSpec, spec: dict[str, NodeSpec]):
+    def __init__(self, name: str, node: NodeSpec, parents: dict[str, str | int]):
         super().__init__()
+        self.name = name
         self.kind = node.kind
         terms = node.terms
         self.parents = tuple(node_parents(node))
+        self.schema = {p: parents[p] for p in self.parents}
         if node.kind == "continuous":
             self.ut = make_univariate_transform(node.transform, **node.transform_kwargs)
             n_params = self.ut.n_params
@@ -61,13 +67,13 @@ class Node(nn.Module):
             n_params = node.levels - 1
         # the intercept slot: the free theta_0, one joint net, or one net per
         # parent summed in coefficient space — `intercept_module` picks
-        self.intercept = terms[0].module(terms[0], spec, n_params)
+        self.intercept = terms[0].module(terms[0], self.schema, n_params)
         # one module per shift term, built in formula order (the seeded RNG
         # stream is pinned to it); each names its own key: the parent, "a+b"
         # for a joint CS, the treatment for a VC
         self.shifts = nn.ModuleDict()
         for term in terms[1:]:
-            m = term.module(term, spec)
+            m = term.module(term, self.schema)
             self.shifts[m.key] = m
 
     def encode(self, values: Tensor) -> Tensor:

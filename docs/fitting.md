@@ -262,8 +262,8 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   report that is not `converged` issues a `UserWarning`.
 - **Per node.** The flow's `fit_classical` runs `Node.fit_classical` for each
   node. Its report holds `converged` (every node converged), the summed
-  `final_nll`, `seconds`, the `coefficients` as `{node: {parent: array}}` and
-  `nodes`, the per-node reports.
+  `final_nll` and `seconds`. It also holds the `coefficients` as
+  `{node: {parent: array}}` and `nodes`, the per-node reports.
 - **The report.** Per node, `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
   (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
   both: the run stopped on its own AND `grad_norm` is at most

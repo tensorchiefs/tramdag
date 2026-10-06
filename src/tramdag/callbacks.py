@@ -39,7 +39,7 @@ class Callback:
     """Base class of ``fit(callbacks=)`` entries — override any of the hooks.
 
     ``on_fit_begin(node, optimizer)`` runs once after calibration, before the
-    first epoch (the shipped callbacks reset their state here, so one
+    first epoch (the shipped ``EarlyStopping`` resets its state here, so one
     instance is safe to reuse across fits). ``on_epoch_end(node, epoch,
     optimizer)`` runs after every epoch, once the epoch's train NLL is in
     ``node.history["train"]``; the fit stops after an epoch in which any

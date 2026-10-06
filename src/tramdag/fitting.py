@@ -613,7 +613,7 @@ class FitMixin:
         callbacks=None,
         n_jobs: int = 1,
     ) -> CausalFlowDAG:
-        """Fit every node by maximum likelihood, one node at a time.
+        """Fit every node by maximum likelihood, node by node.
 
         The joint likelihood is a sum of per-node terms with disjoint
         parameters, so fitting the nodes one by one is exact. Each node runs
@@ -798,7 +798,9 @@ class FitMixin:
         Raises
         ------
         ValueError
-            If a term is not classical.
+            If a term is not classical, or an ordinal value is not a level index.
+        KeyError
+            If the frame lacks a node column.
         """
         for nd in self.nodes.values():
             nd._check_classical()

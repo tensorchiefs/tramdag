@@ -336,9 +336,9 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
     frozen : dict[str, int] | None, optional
-        ``{node: epoch}`` of the freezes, each a dashed mark; a
-        [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping]
-        records that dict as its ``frozen``. By default no marks.
+        ``{node: epoch}`` of the per-node stops, each a dashed mark, for
+        example ``{n: len(nd.history["train"]) for n, nd in flow.nodes.items()}``.
+        By default no marks.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
     title : str | None, optional

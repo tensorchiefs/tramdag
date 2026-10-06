@@ -98,7 +98,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        self.history: dict = {"train": []}  # per-node mean train NLL per epoch
         self.meta: dict = {}  # provenance attached at save() (version, time)
         self.to(self.device)
 
@@ -247,43 +246,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """
         theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
         return torch.sigmoid(shift - theta[:, 0])
-
-    def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
-        r"""Check the terms' side columns in the frame; give their names.
-
-        A centered ``VC`` needs its propensity column
-        $P(t = 1 \mid \mathrm{pa}_t)$ per training row, merged into
-        ``train_df`` as an ordinary column. The training loss uses the frozen
-        column; every query after the fit recomputes the value live from the
-        treatment node. ``docs/varying-coefficients.md`` says how to compute
-        the column out of fold.
-        """
-        cols: list[str] = []
-        for name in self.order:
-            for m in self.nodes[name].shifts.values():
-                for col in m.side_columns():
-                    if col not in train_df.columns:
-                        raise ValueError(
-                            f"the centered VC on node {name!r} needs its "
-                            f"propensity column {col!r} in the training "
-                            "frame — compute P(t=1|pa_t) out of fold and "
-                            "merge it as a column."
-                        )
-                    m.check_column(name, col, train_df[col].to_numpy())
-                    cols.append(col)
-        return list(dict.fromkeys(cols))
-
-    def _recenter_vc(self, values: dict[str, Tensor]) -> None:
-        r"""Run every shift term's post-fit ``finalize`` (the VC re-centering).
-
-        A VC term re-splits $\beta_0$ and $b_\Theta$ so the head sums to zero
-        over the train rows; the modelled function does not change.
-        """
-        feats = self._features(values)
-        for name in self.order:
-            nd = self.nodes[name]
-            for m in nd.shifts.values():
-                m.finalize(nd, feats)
 
     def _conditional(
         self, df: pd.DataFrame, node: str, do: dict[str, float] | None
@@ -629,7 +591,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                     "spec": spec_to_dict(self.spec),
                     "init": self.init,
                     "state_dict": self.state_dict(),
-                    "history": self.history,
+                    "history": {n: nd.history for n, nd in self.nodes.items()},
                     "meta": meta,
                 },
                 path,
@@ -646,7 +608,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def load(cls, path: str | Path, device: str = "cpu") -> CausalFlowDAG:
         """Restore a model from a checkpoint.
 
-        ``flow.history`` and ``flow.meta`` are refilled.
+        The nodes' ``history`` and ``flow.meta`` are refilled.
 
         Parameters
         ----------
@@ -677,7 +639,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                     buf_name, torch.empty_like(t)
                 )
         flow.load_state_dict(ckpt["state_dict"])  # with the `calibrated` flags
-        flow.history = ckpt["history"]
+        for name, history in ckpt["history"].items():
+            flow.nodes[name].history = history
         flow.meta = ckpt["meta"]
         flow.eval()
         return flow

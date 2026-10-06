@@ -9,7 +9,7 @@ import pytest
 mpl.use("Agg")
 
 from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, OrdinalNode, plot_dag
-from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
+from tramdag.callbacks import EarlyStopping
 from tramdag.plots import plot_marginals, plot_training
 
 
@@ -62,14 +62,12 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    stopping = PerNodeEarlyStopping(patience=8)
     flow.fit(
         df,
         epochs=30,
         batch_size=100,
         validation_data=df,
-        optimizer=per_node_adam(flow, lr=1e-2),
-        callbacks=stopping,
+        callbacks=lambda name: EarlyStopping(patience=8),
     )
     axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png", title="m")
     assert axes.flat[0].figure._suptitle.get_text() == "m"
@@ -79,8 +77,9 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert ax.get_title() == "t"
     assert len(ax.lines) == 2  # train and val, no marks without frozen=
     assert (tmp_path / "t.png").exists()
-    ax = plot_training(flow, frozen=stopping.frozen)
-    assert len(ax.lines) == 2 + len(stopping.frozen)  # one mark per freeze
+    stops = {n: len(nd.history["train"]) for n, nd in flow.nodes.items()}
+    ax = plot_training(flow, frozen=stops)
+    assert len(ax.lines) == 2 + len(stops)  # one mark per stop
     # no validation history, no marks: one line
     flow2 = CausalFlowDAG(spec, seed=0)
     flow2.fit(df, epochs=3, batch_size=100)

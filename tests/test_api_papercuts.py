@@ -64,7 +64,8 @@ def test_save_load_round_trips_history(tmp_path):
     flow.save(p)
     loaded = CausalFlowDAG.load(p)
     assert set(loaded.history) == {"train", "lr"}  # no val: an unvalidated fit
-    assert loaded.history["lr"] == [{0: 0.01}] * 12  # one untagged Adam group
+    assert loaded.nodes["y"].history["lr"] == [{0: 0.01}] * 12  # one Adam group
+    assert loaded.nodes["y"].history == flow.nodes["y"].history
     assert len(loaded.history["train"]) == 12
 
 

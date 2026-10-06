@@ -15,6 +15,7 @@ import pandas as pd
 import torch
 from torch import Tensor, nn
 
+from .fitting import NodeFitMixin
 from .spec import (
     NodeSpec,
     node_parents,
@@ -72,7 +73,7 @@ def check_level_values(name: str, values, levels: int) -> None:
 
 
 # %% public classes --------------------------------------------------------------------
-class Node(nn.Module):
+class Node(NodeFitMixin, nn.Module):
     r"""One dimension of the flow: an intercept plus additive shift terms.
 
     The intercept produces the transform parameters $\vartheta$. The shift
@@ -97,6 +98,7 @@ class Node(nn.Module):
     def __init__(self, name: str, node: NodeSpec, parents: dict[str, str | int]):
         super().__init__()
         self.name = name
+        self.node_spec = node
         self.kind = node.kind
         terms = node.terms
         self.parents = tuple(node_parents(node))
@@ -122,6 +124,7 @@ class Node(nn.Module):
         # bool, so the flag rides in the state dict and a loaded node does not
         # recalibrate on its next fit
         self.register_buffer("calibrated", torch.tensor(False))
+        self.history: dict = {"train": []}  # mean train NLL per epoch
 
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.

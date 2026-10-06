@@ -71,7 +71,9 @@ def test_dtype_round_trip_and_usable(ls_chain):
     assert next(flow.parameters()).dtype == torch.float32
     rep = flow.fit_classical(obs, max_iter=75)
     assert next(flow.parameters()).dtype == torch.float32
-    assert {"n_iter", "final_nll", "grad_norm", "coefficients", "seconds"} <= rep.keys()
+    assert {"converged", "final_nll", "coefficients", "seconds", "nodes"} <= rep.keys()
+    node_keys = {"n_iter", "stop_reason", "grad_norm", "final_nll", "coefficients"}
+    assert node_keys <= rep["nodes"]["y"].keys()
     assert flow.pmf(obs.head(5), "y").shape == (5, 4)
     assert flow.sample(10, seed=0).shape == (10, 4)
 
@@ -94,7 +96,7 @@ def test_max_iter_and_history_size_reach_the_solver(ls_chain):
     rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(
         obs, max_iter=10, history_size=7
     )
-    assert 0 < rep["n_iter"] <= 10
+    assert 0 < rep["nodes"]["y"]["n_iter"] <= 10
     assert rep["converged"] is False  # ten iterations cannot settle this fit
     with pytest.raises(TypeError):
         CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, not_a_kwarg=1)
@@ -109,6 +111,7 @@ def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
     obs = ls_chain["draw"](800, 3)
     with pytest.warns(UserWarning, match="did not converge"):
         rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=6)
+    rep = rep["nodes"]["y"]
     assert rep["stop_reason"] in ("tolerance", "max_iter", "max_eval")
     assert rep["converged"] is False
     assert rep["grad_norm"] > 1e-2  # nowhere near a settled fit
@@ -129,14 +132,15 @@ def test_a_converged_fit_does_not_warn():
 def test_the_report_keeps_its_two_flags_consistent(ls_chain, max_iter):
     """``stop_reason`` names the limit that ended it; both gate ``converged``."""
     obs = ls_chain["draw"](800, 3)
-    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=max_iter)
-    if rep["n_iter"] == max_iter:
-        assert rep["stop_reason"] == "max_iter"
-    else:
-        assert rep["stop_reason"] in ("tolerance", "max_eval")
-    if rep["converged"]:
-        assert rep["stop_reason"] == "tolerance"
-        assert rep["grad_norm"] <= 1e-2
+    flow_rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=max_iter)
+    for rep in flow_rep["nodes"].values():
+        if rep["n_iter"] == max_iter:
+            assert rep["stop_reason"] == "max_iter"
+        else:
+            assert rep["stop_reason"] in ("tolerance", "max_eval")
+        if rep["converged"]:
+            assert rep["stop_reason"] == "tolerance"
+            assert rep["grad_norm"] <= 1e-2
 
 
 def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
@@ -146,7 +150,7 @@ def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
     df = pd.DataFrame({"x1": x1, "x2": 2 * x1 + rng.logistic(size=3000)})
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     torch.manual_seed(0)
-    rep = CausalFlowDAG(spec).fit_classical(df, max_iter=3)
+    rep = CausalFlowDAG(spec).fit_classical(df, max_iter=3)["nodes"]["x2"]
     assert rep["n_iter"] < 3
     assert rep["stop_reason"] == "max_eval"
     assert rep["converged"] is False

@@ -112,9 +112,7 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
         # per-epoch validation only where the protocol consumes it (the
         # plateau rule); the triangle scripts never computed it per epoch
         validation_data=val if plateau else None,
-        optimizer=lambda node: torch.optim.Adam(
-            node.parameters(), lr=config["learning_rate"]
-        ),
+        learning_rate=config["learning_rate"],
         callbacks=callbacks,
         marginal_init=config["marginal_init"],
         **config["fit_kwargs"],
@@ -141,7 +139,7 @@ def snapshot(node, shift: str) -> dict:
     if shift == "ls":
         keys[("x3", "x2")] = "beta23"
     return {
-        key: float(node.shifts[parent].weight[0].detach())
+        key: float(node.ls_weights()[parent][0])
         for (child, parent), key in keys.items()
         if child == node.name
     }

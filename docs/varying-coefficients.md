@@ -92,8 +92,8 @@ The design is two-stage and frozen, because the naive versions are wrong.
   propensities reintroduce the own-observation bias and can be worse than no
   centering. The values enter the loss as frozen data, so no gradient reaches
   the treatment node and the per-node factorization stays intact. `fit`
-  refuses a centered spec whose training frame lacks the column. A validation
-  frame without it gets the live propensity of the fitted treatment node.
+  refuses a centered spec whose training frame lacks the column. The flow's
+  validation NLL uses the live propensity of the fitted treatment node.
 - **Inference**, in `log_prob`, `sample`, `abduct`, `pmf` and `scores`,
   recomputes $\hat e$ from the flow's own fitted treatment node on the current
   parent values, detached. Under `do(T=t)` the regressor becomes

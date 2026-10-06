@@ -113,8 +113,10 @@ the final weights.
   optional `patience` and `min_delta`. It reads `node.history["val"]`. `fit`
   refuses two callbacks that restore weights.
 - **Centered `VC` propensities** ride the training frame as the column that
-  `VC(propensity=)` names, and split and minibatch with it. A validation frame
-  without the column gets the live propensity of the fitted treatment node.
+  `VC(propensity=)` names, and split and minibatch with it. On the flow, the
+  validation NLL uses the live propensity of the fitted treatment node, as
+  every query does. `Node.fit` alone reads the column from the validation
+  frame.
   [varying-coefficients.md](varying-coefficients.md) is the guide.
 
 ### The marginal start

@@ -580,8 +580,9 @@ class FitMixin:
         """The nodes' histories, one ``{node: value}`` dict per epoch per key.
 
         Nodes stop at different epochs. A node that stopped earlier repeats
-        its last entry, so a summed curve stays defined. ``"val_epoch"`` is
-        the longest node's.
+        its last entry, so a summed curve stays defined. A node without
+        entries for a key shows NaN there. ``"val_epoch"`` is the longest
+        node's.
         """
         out = {}
         for key in ("train", "val", "lr"):

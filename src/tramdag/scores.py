@@ -92,7 +92,7 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
     # not y-free: l_i needs x. Plus the e_hat inputs of centered terms.
     needed = [*nd.parents, node, *flow._query_side_columns(nd)]
     values = flow._tensorize(df, needed)  # names a missing column
-    feats = flow._parent_feats(nd, values)
+    feats = nd.features(values)
     feats |= flow._side_feats(nd, values, len(df))
     dlds = _dl_ds(nd, feats, values[node])
 

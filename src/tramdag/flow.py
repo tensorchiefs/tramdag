@@ -24,6 +24,7 @@ from .nodes import (
     check_columns,
     check_level_values,
     load_weights,
+    tensorize,
     write_checkpoint,
 )
 from .readouts import ReadoutsMixin
@@ -157,14 +158,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             silence, or fail inside ``one_hot`` without naming the node.
         """
         cols = self.order if cols is None else cols
-        check_columns(df, cols)
-        out = {}
-        for c in cols:
-            values = df[c].to_numpy(dtype=float)
-            if levels and c in self.nodes and self.nodes[c].kind == "ordinal":
-                check_level_values(c, values, self.spec[c].levels)
-            out[c] = torch.tensor(values, dtype=self._dtype, device=self.device)
-        return out
+        kinds = {n: nd.levels for n, nd in self.nodes.items() if nd.kind == "ordinal"}
+        return tensorize(df, cols, kinds if levels else {}, self._dtype, self.device)
 
     def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""
@@ -193,10 +188,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             for name, v in values.items()
             if name in self.spec
         }
-
-    def _parent_feats(self, nd: Node, values: dict[str, Tensor]) -> dict[str, Tensor]:
-        """Encode one node's parents out of the raw tensor dict."""
-        return nd.features(values)
 
     def _theta_shift(
         self, nd: Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
@@ -248,7 +239,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         $\sigma(s - \vartheta_0)$. No side columns: chained centering is refused
         by the spec, so a treatment node never carries a centered term itself.
         """
-        theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
+        theta, shift = nd.theta_shift(nd.features(values), n)
         return torch.sigmoid(shift - theta[:, 0])
 
     def _conditional(
@@ -264,7 +255,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         df = df.assign(**(do or {}))
         n = len(df)
         values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
-        theta, shift = self._theta_shift(nd, self._parent_feats(nd, values), values, n)
+        theta, shift = self._theta_shift(nd, nd.features(values), values, n)
         return nd, theta, shift, n
 
     @torch.no_grad()
@@ -419,7 +410,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 continue
             nd = self.nodes[name]
             # under do, a centered VC re-derives t_do - e_hat(x); never cached
-            feats = self._parent_feats(nd, values)
+            feats = nd.features(values)
             theta, shift = self._theta_shift(nd, feats, values, n)
             values[name] = nd.sample(theta, shift, u_vals[name])
         return self._to_frame(values)

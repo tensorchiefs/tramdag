@@ -78,6 +78,23 @@ def check_level_values(name: str, values, levels: int) -> None:
         )
 
 
+def tensorize(
+    df: pd.DataFrame, cols, levels: dict[str, int], dtype, device
+) -> dict[str, Tensor]:
+    """DataFrame columns -> one ``(n,)`` tensor each, in ``dtype`` on ``device``.
+
+    A column named in ``levels`` is checked to hold level indices first.
+    """
+    check_columns(df, cols)
+    out = {}
+    for c in cols:
+        values = df[c].to_numpy(dtype=float)
+        if c in levels:
+            check_level_values(c, values, levels[c])
+        out[c] = torch.tensor(values, dtype=dtype, device=device)
+    return out
+
+
 def write_checkpoint(path: str | Path, payload: dict, device) -> None:
     """Save ``payload`` plus a ``meta`` block with ``torch.save``.
 
@@ -208,16 +225,10 @@ class Node(NodeFitMixin, nn.Module):
             If an ordinal column is not a level index.
         """
         cols = (self.name, *self.parents) if cols is None else cols
-        check_columns(df, cols)
         kinds = self.schema | {self.name: getattr(self, "levels", "continuous")}
+        levels = {c: k for c, k in kinds.items() if k != "continuous"}
         p = next(self.parameters())
-        out = {}
-        for c in cols:
-            values = df[c].to_numpy(dtype=float)
-            if kinds.get(c, "continuous") != "continuous":
-                check_level_values(c, values, kinds[c])
-            out[c] = torch.tensor(values, dtype=p.dtype, device=p.device)
-        return out
+        return tensorize(df, cols, levels, p.dtype, p.device)
 
     def calibrate(self, train_df: pd.DataFrame, *, marginal_init: bool = False) -> Node:
         r"""Take the data-dependent state from the training rows, once.

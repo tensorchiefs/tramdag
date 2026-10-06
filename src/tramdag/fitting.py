@@ -717,6 +717,7 @@ class FitMixin:
         }
         for kwargs in jobs.values():
             _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
+            _normalize_callbacks(kwargs["callbacks"])
         # a validation frame without a centered VC's propensity column gets the
         # live one from the fitted treatment node, so those nodes fit second
         later = [

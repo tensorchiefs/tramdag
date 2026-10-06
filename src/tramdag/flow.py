@@ -104,7 +104,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        self.meta: dict = {}  # provenance attached at save() (version, time)
+        self.meta: dict = {}  # provenance a load() fills (version, time)
         self.to(self.device)
 
     def _schema(self, name: str) -> dict[str, str | int]:
@@ -124,7 +124,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @property
     def _dtype(self) -> torch.dtype:
-        """Current model dtype: float32 (float64 only inside ``fit_classical``).
+        """Current model dtype: float32, unless the caller converts the flow.
 
         Every tensor built from a frame takes this dtype, so the read-outs work
         in both modes without carrying a dtype argument.
@@ -155,8 +155,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             silence, or fail inside ``one_hot`` without naming the node.
         """
         cols = self.order if cols is None else cols
-        kinds = {n: nd.levels for n, nd in self.nodes.items() if nd.kind == "ordinal"}
-        return tensorize(df, cols, kinds if levels else {}, self._dtype, self.device)
+        ordinal = {n: nd.levels for n, nd in self.nodes.items() if nd.kind == "ordinal"}
+        return tensorize(df, cols, ordinal if levels else {}, self._dtype, self.device)
 
     def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""

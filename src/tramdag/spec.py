@@ -400,7 +400,7 @@ class Term:
     serializable by [`spec_to_dict`][] — and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
     class in [`modules`][tramdag.modules] that trains it, constructed as
-    ``module(term, spec)``; the intercept slot adds ``n_params``.
+    ``module(term, schema)``; the intercept slot adds ``n_params``.
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
     and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)

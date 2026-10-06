@@ -156,9 +156,9 @@ class Node(NodeFitMixin, nn.Module):
     The intercept produces the transform parameters $\vartheta$. The shift
     terms add up on the latent scale. The likelihood, sampling and encoding
     branches on the node kind live in the five methods ``log_prob``,
-    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and nowhere
-    else; the rest of the package reads ``kind`` for dispatch and display
-    only.
+    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and in the
+    module functions ``encode`` and ``schema_entry``; the rest of the package
+    reads ``kind`` for dispatch and display only.
 
     Parameters
     ----------
@@ -208,7 +208,7 @@ class Node(NodeFitMixin, nn.Module):
         # recalibrate on its next fit
         self.register_buffer("calibrated", torch.tensor(False))
         self.history: dict = {"train": []}  # mean train NLL per epoch
-        self.meta: dict = {}  # provenance attached at save() (version, time)
+        self.meta: dict = {}  # provenance a load() fills (version, time)
 
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.

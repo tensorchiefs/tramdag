@@ -579,8 +579,8 @@ print(f"corr(mode of the fitted density, the linear predictor) = {corr:.4f}")
 assert corr > 0.95, f"the density's mode does not track the shifts: r = {corr:.4f}"
 
 # %% [markdown]
-# **Classical against Adam: the same optimum.** A converged Adam fit with no
-# early stopping reaches the same coefficients. The guarantees of the
+# **Classical against Adam: the same optimum.** An Adam fit that runs until
+# its validation NLL stops improving reaches the same coefficients. The guarantees of the
 # classical fit are determinism and the exact maximum-likelihood estimate, not
 # speed. Which one is faster depends on the model. It wins clearly on
 # ordinal-outcome models, as in Section 2, while on this Bernstein-heavy

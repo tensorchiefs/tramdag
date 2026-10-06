@@ -197,7 +197,7 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 |---|---|---|
 | train / validation | CAREFL's own `X.csv`, sd-standardized, `val = train` | the same committed `X.csv`, `val = train`; a fresh standardized draw is scored, never trained or annealed on |
 | epochs, lr | 7000 @ 0.001 | 7000 @ 0.001 |
-| batch, schedule, input scaling, init | full batch, plateau 0.1/50/1e-7, `scale_df`, glorot | same |
+| batch, schedule, input scaling, init | full batch, plateau 0.1/50/1e-7, `scale_df`, glorot | same, the plateau per node (D5) |
 | Bernstein domain | train min/max (`scale_df`) | train min/max (`range_q: 0`) |
 | scoring | the single `x_obs`, curves over α (Fig. 6) | the same, plus 300 held-out rows at α ∈ {−1.5, 0, 1.5}, all in standardized units |
 
@@ -259,7 +259,7 @@ listed for the next deliberate re-pin.
 
 The reference reduces the learning rate of one optimizer when the summed
 validation NLL stops improving. Here every node fits on its own, so no summed
-NLL exists during a fit: each node runs the same rule on its own validation
+NLL exists during a fit. Each node runs the same rule on its own validation
 NLL, with its own optimizer. The rule and its constants are unchanged.
 
 VACA, the do(x2) errors at a = −3 / −1 / 0 and the x3 validation NLL, one
@@ -271,11 +271,11 @@ run per init seed, the same data:
 | 2 | 0.038 / 0.032 / 0.076, 1.4351 | 0.213 / 0.044 / 0.041, 1.4476 |
 | 3 | 0.070 / 0.005 / 0.039, 1.4345 | 0.221 / 0.066 / 0.048, 1.4481 |
 | 4 | 0.012 / 0.037 / 0.072, 1.4345 | 0.317 / 0.053 / 0.098, 1.4541 |
-| 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | — |
+| 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | 0.096 / 0.080 / 0.018, 1.4495 |
 
 The per-node rule gives a lower x3 validation NLL on every seed and a much
-smaller error at the off-manifold point do(x2 = −3). At do(x2 = 0) the two
-rules overlap. CAREFL moves by less than 0.003 in validation NLL, and all its
+smaller error at the off-manifold point do(x2 = −3). At do(x2 = 0) it is
+worse on four of the five seeds, and seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation NLL, and all its
 bounds hold.
 
 ## Runtime and the CI deviations

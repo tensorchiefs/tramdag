@@ -288,7 +288,7 @@ class NodeFitMixin:
         optimizer=None,
         callbacks=None,
     ) -> Node:
-        """Fit the node by maximum likelihood — one minibatch Adam loop.
+        """Fit the node by maximum likelihood with one minibatch Adam loop.
 
         The loss is the node's mean NLL plus its own ``VC`` penalties. The
         loop keeps the **final** weights, and a second ``fit`` call continues
@@ -659,7 +659,7 @@ class FitMixin:
             default is ``Adam(lr=learning_rate)``.
         callbacks : Callback | list | callable | None, optional
             The callbacks of every node, or a factory ``f(name)`` that gives
-            them per node. A shared instance resets at every node's fit
+            them per node. A shared shipped callback resets at every node's fit
             begin, so its attributes describe the last node only.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).

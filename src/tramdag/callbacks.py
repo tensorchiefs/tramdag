@@ -2,9 +2,9 @@
 
 Every node fits on its own, so a callback hooks one node's fit. ``fit`` owns
 validation and progress printing; the callbacks here read the validation NLL that
-``fit`` appends to ``node.history["val"]`` after every epoch — computed once, shared
-by all of them. One ``callbacks=`` list is the whole registration; anything not
-covered here is a
+``fit`` appends to ``node.history["val"]`` after every epoch. ``fit`` computes it
+once, and all of them share it. One ``callbacks=`` list is the whole
+registration; anything not covered here is a
 [`Callback`][tramdag.callbacks.Callback] subclass of your own (docs/fitting.md).
 """
 

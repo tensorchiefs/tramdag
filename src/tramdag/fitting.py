@@ -196,7 +196,7 @@ def _fit_in_child(name: str):
 
 def _pad_last(rows: dict[str, list]) -> list[dict]:
     """Align per-node lists by index; a shorter list repeats its last entry."""
-    length = max((len(v) for v in rows.values()), default=0)
+    length = max(len(v) for v in rows.values())
     return [
         {k: v[min(i, len(v) - 1)] if v else math.nan for k, v in rows.items()}
         for i in range(length)
@@ -651,9 +651,9 @@ class FitMixin:
             example ``lambda node: torch.optim.AdamW(node.parameters())``. The
             default is ``Adam(lr=learning_rate)``.
         callbacks : Callback | list | callable | None, optional
-            The callbacks of every node, or a function of the node name that
-            gives them per node. A shared shipped callback resets at every node's fit
-            begin, so its attributes describe the last node only.
+            The callbacks of every node, or a function of the node name that gives them
+            per node. A shared shipped callback resets at every node's fit begin, so its
+            attributes describe the last node only.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux

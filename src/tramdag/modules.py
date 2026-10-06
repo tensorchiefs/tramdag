@@ -1,16 +1,15 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
-A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``I``) is
-plain data and carries the spec-level rules, and its ``module`` attribute is
-the class here that trains it (``LinearShift.module is LinearShiftModule``).
-A module is constructed from its term and the node's parent schema,
+A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``I``) is plain
+data and carries the spec-level rules, and its ``module`` attribute is the
+class here that trains it (``LinearShift.module is LinearShiftModule``). A
+module is constructed from its term and the node's parent schema,
 ``module(term, schema)`` (the intercept slot adds ``n_params``), holds the
-term's network and owns the runtime behaviour: ``shift_value``/``theta_value``,
-``post_init``, ``regularizer``, ``finalize``, ``score_columns`` and the
-side-input contract.
-This module imports nothing from [`spec`][tramdag.spec]: it reads the
-schema, ``{parent: "continuous" | n_levels}``, and a term's ``parents`` and
-options, so ``spec`` can import it.
+term's network and owns the runtime behaviour:
+``shift_value``/``theta_value``, ``post_init``, ``regularizer``, ``finalize``,
+``score_columns`` and the side-input contract. This module imports nothing
+from [`spec`][tramdag.spec]: it reads the schema, ``{parent: "continuous" |
+n_levels}``, and a term's ``parents`` and options, so ``spec`` can import it.
 
 A custom term is two classes: a [`ShiftModule`][tramdag.modules.ShiftModule]
 subclass with ``__init__(term, schema)`` and ``shift_value``, and a ``Term``

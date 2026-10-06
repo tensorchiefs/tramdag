@@ -264,10 +264,10 @@ node-conditional is an ordered logit or a Colr model. It raises on any `CS`, `CI
   node. Its report holds `converged` (every node converged), the summed
   `final_nll` and `seconds`. It also holds the `coefficients` as
   `{node: {parent: array}}` and `nodes`, the per-node reports.
-- **The report.** Per node, `stop_reason` is `"tolerance"`, `"max_iter"` or `"max_eval"`
-  (torch's budget of closure calls, `max_iter * 5 // 4`). `converged` needs
-  both: the run stopped on its own AND `grad_norm` is at most
-  `tramdag.fitting.GRAD_TOL` (1e-2). Both conditions are necessary, because
+- **The report.** Per node, `stop_reason` is `"tolerance"`, `"max_iter"` or
+  `"max_eval"` (torch's budget of closure calls, `max_iter * 5 // 4`).
+  `converged` needs both: the run stopped on its own AND `grad_norm` is at
+  most `tramdag.fitting.GRAD_TOL` (1e-2). Both conditions are necessary, because
   the same tolerance fires when the line search stalls far from the optimum.
   Such a run stops on "tolerance" with a large gradient norm and is not
   converged.

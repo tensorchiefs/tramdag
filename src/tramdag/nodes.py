@@ -179,6 +179,9 @@ class Node(NodeFitMixin, nn.Module):
         self.kind = node_spec.kind
         terms = node_spec.terms
         self.parents = tuple(node_parents(node_spec))
+        missing = [p for p in self.parents if p not in schema]
+        if missing:
+            raise ValueError(f"node {name!r}: the schema lacks the parent(s) {missing}")
         self.schema = {p: schema[p] for p in self.parents}
         if node_spec.kind == "continuous":
             self.ut = make_univariate_transform(

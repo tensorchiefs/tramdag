@@ -175,6 +175,15 @@ def _node_seed(seed: int, index: int) -> int:
     return int(np.random.SeedSequence([seed, index]).generate_state(1)[0])
 
 
+def _check_optimizer_not_a_class(optimizer) -> None:
+    """Refuse an optimizer class: it is callable, but not a factory of the node."""
+    if isinstance(optimizer, type):
+        raise TypeError(
+            f"optimizer= got the class {optimizer.__name__}; pass a factory, "
+            f"for example lambda node: {optimizer.__name__}(node.parameters())"
+        )
+
+
 def _per_node(value, name: str):
     """Give a per-node argument: ``value(name)`` for a function, else ``value``.
 
@@ -357,6 +366,7 @@ class NodeFitMixin:
             or is a ``Callback`` class instead of an instance.
         """
         _check_fit_sizes(epochs, batch_size, verbose)
+        _check_optimizer_not_a_class(optimizer)
         cbs = _normalize_callbacks(callbacks)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
@@ -678,6 +688,7 @@ class FitMixin:
                 "optimizer= of CausalFlowDAG.fit is a factory f(node) -> "
                 "Optimizer, called once per node; got an optimizer instance"
             )
+        _check_optimizer_not_a_class(optimizer)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )

@@ -126,3 +126,11 @@ def test_a_bad_frame_fails_before_any_node_fits(ls_chain):
     with pytest.raises(ValueError, match="epochs"):
         flow.fit(df, epochs=lambda name: 0 if name == "y" else 2)
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
+
+
+def test_a_node_names_a_missing_parent_and_an_optimizer_class():
+    with pytest.raises(ValueError, match=r"lacks the parent\(s\) \['x1'\]"):
+        Node("x2", ContinuousNode(LS("x1")), {})
+    node = Node("x1", ContinuousNode(), {})
+    with pytest.raises(TypeError, match="pass a factory"):
+        node.fit(None, epochs=1, optimizer=torch.optim.AdamW)

@@ -11,6 +11,7 @@ tests read ``kind``, ``parents``, ``shifts``, ``intercept``, ``ut``,
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import torch
 from torch import Tensor, nn
 
@@ -26,6 +27,48 @@ from .transforms import (
     ordinal_marginal_init_theta,
     ordinal_sample,
 )
+
+
+# %% public functions ------------------------------------------------------------------
+def encode(values: Tensor, kind: str | int) -> Tensor:
+    """Encode one column as a parent feature.
+
+    ``kind`` is a schema entry: ``"continuous"`` stays raw, shape ``(n, 1)``;
+    a level count one-hot encodes, shape ``(n, levels)``.
+    """
+    if kind == "continuous":
+        return values.view(-1, 1)
+    one_hot = nn.functional.one_hot(values.long(), num_classes=kind)
+    return one_hot.to(values.dtype)
+
+
+def check_columns(df: pd.DataFrame, cols) -> None:
+    """Name the columns ``df`` lacks, before any tensor op would."""
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        raise KeyError(
+            f"the data frame lacks the column(s) {missing}; this needs "
+            f"{list(cols)}, the frame has {list(df.columns)}"
+        )
+
+
+def check_level_values(name: str, values, levels: int) -> None:
+    """Reject ordinal values that are not level indices of their node.
+
+    ``bincount``, the cutpoint likelihood and the one-hot parent
+    encoding all take the values as ``0..levels-1``; a 1-based or
+    non-integer value would silently be truncated instead of failing.
+    """
+    v = np.asarray(values, dtype=np.float64)
+    if v.size == 0:
+        return
+    fractional = bool((v != np.round(v)).any())
+    if fractional or v.min() < 0 or v.max() >= levels:
+        raise ValueError(
+            f"node {name!r}: an ordinal column holds the level indices "
+            f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
+            f"{' (non-integer)' if fractional else ''}"
+        )
 
 
 # %% public classes --------------------------------------------------------------------
@@ -82,10 +125,36 @@ class Node(nn.Module):
         A continuous parent stays raw, shape ``(n, 1)``; an ordinal parent is
         one-hot encoded, shape ``(n, levels)``.
         """
-        if self.kind == "ordinal":
-            one_hot = nn.functional.one_hot(values.long(), num_classes=self.levels)
-            return one_hot.to(values.dtype)
-        return values.view(-1, 1)
+        return encode(values, self.levels if self.kind == "ordinal" else "continuous")
+
+    def features(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
+        """Encode this node's parents out of a raw tensor dict."""
+        return {p: encode(values[p], self.schema[p]) for p in self.parents}
+
+    def tensorize(self, df: pd.DataFrame, cols=None) -> dict[str, Tensor]:
+        """DataFrame columns -> one ``(n,)`` tensor each, in the node's dtype.
+
+        ``cols=None`` takes the node's own column and its parents. Ordinal
+        columns, own or parent, are checked to hold level indices.
+
+        Raises
+        ------
+        KeyError
+            If the frame lacks one of the columns.
+        ValueError
+            If an ordinal column is not a level index.
+        """
+        cols = (self.name, *self.parents) if cols is None else cols
+        check_columns(df, cols)
+        kinds = self.schema | {self.name: getattr(self, "levels", "continuous")}
+        p = next(self.parameters())
+        out = {}
+        for c in cols:
+            values = df[c].to_numpy(dtype=float)
+            if kinds.get(c, "continuous") != "continuous":
+                check_level_values(c, values, kinds[c])
+            out[c] = torch.tensor(values, dtype=p.dtype, device=p.device)
+        return out
 
     def log_prob(self, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
         """``log p(x | pa)`` from the transform parameters and the shift."""

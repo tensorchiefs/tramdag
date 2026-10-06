@@ -21,7 +21,7 @@ from torch import Tensor, nn
 from . import scores
 from .fitting import FitMixin
 from .modules import ShiftModule
-from .nodes import Node
+from .nodes import Node, check_columns, check_level_values
 from .readouts import ReadoutsMixin
 from .spec import (
     NodeSpec,
@@ -158,43 +158,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             silence, or fail inside ``one_hot`` without naming the node.
         """
         cols = self.order if cols is None else cols
-        self._check_columns(df, cols)
+        check_columns(df, cols)
         out = {}
         for c in cols:
             values = df[c].to_numpy(dtype=float)
             if levels and c in self.nodes and self.nodes[c].kind == "ordinal":
-                self._check_level_values(c, values)
+                check_level_values(c, values, self.spec[c].levels)
             out[c] = torch.tensor(values, dtype=self._dtype, device=self.device)
         return out
-
-    @staticmethod
-    def _check_columns(df: pd.DataFrame, cols) -> None:
-        """Name the columns ``df`` lacks, before any tensor op would."""
-        missing = [c for c in cols if c not in df.columns]
-        if missing:
-            raise KeyError(
-                f"the data frame lacks the column(s) {missing}; this needs "
-                f"{list(cols)}, the frame has {list(df.columns)}"
-            )
-
-    def _check_level_values(self, name: str, values) -> None:
-        """Reject ordinal values that are not level indices of their node.
-
-        ``bincount``, the cutpoint likelihood and the one-hot parent
-        encoding all take the values as ``0..levels-1``; a 1-based or
-        non-integer value would silently be truncated instead of failing.
-        """
-        levels = self.spec[name].levels
-        v = np.asarray(values, dtype=np.float64)
-        if v.size == 0:
-            return
-        fractional = bool((v != np.round(v)).any())
-        if fractional or v.min() < 0 or v.max() >= levels:
-            raise ValueError(
-                f"node {name!r}: an ordinal column holds the level indices "
-                f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
-                f"{' (non-integer)' if fractional else ''}"
-            )
 
     def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""
@@ -226,7 +197,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     def _parent_feats(self, nd: Node, values: dict[str, Tensor]) -> dict[str, Tensor]:
         """Encode one node's parents out of the raw tensor dict."""
-        return self._features({p: values[p] for p in nd.parents})
+        return nd.features(values)
 
     def _theta_shift(
         self, nd: Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
@@ -379,11 +350,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """
         if bool(self.calibrated):
             return self
-        self._check_columns(train_df, self.order)
+        check_columns(train_df, self.order)
         for name in self.order:
             nd = self.nodes[name]
             if nd.kind == "ordinal":
-                self._check_level_values(name, train_df[name].to_numpy())
+                check_level_values(name, train_df[name].to_numpy(), nd.levels)
             nd.intercept.calibrate_intercept(train_df, train_df[name], nd.ut)
             for m in nd.shifts.values():
                 m.calibrate(train_df)
@@ -506,7 +477,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         do = do or {}
         for name, value in do.items():
             if self._node(name).kind == "ordinal":
-                self._check_level_values(name, [value])
+                check_level_values(name, [value], self.spec[name].levels)
         if u is not None:
             n = len(u)
             u_vals = self._tensorize(u, levels=False)  # latents, not levels

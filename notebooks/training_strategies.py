@@ -14,9 +14,9 @@
 # %% [markdown]
 # # Training strategies: driving `fit` from the API side
 #
-# `fit` is one minibatch Adam loop that keeps the final weights. It owns three
-# things only: the loop, the per-epoch validation score, and progress
-# printing. Everything else is the caller's, through `optimizer=` and
+# `fit` runs one minibatch Adam loop per node and keeps the final weights. It
+# owns three things only: the loop, the per-epoch validation score, and
+# progress printing. Everything else is the caller's, through `optimizer=` and
 # `callbacks=`.
 #
 # This notebook runs every shipped strategy on one small workload, so the
@@ -34,13 +34,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from tramdag import CausalFlowDAG, ContinuousNode, I
-from tramdag.callbacks import (
-    Callback,
-    EarlyStopping,
-    PerNodeEarlyStopping,
-    per_node_adam,
-)
+from tramdag import CausalFlowDAG, ContinuousNode, I, Node
+from tramdag.callbacks import Callback, EarlyStopping
 from tramdag.plots import plot_training
 
 plt.rcParams["figure.dpi"] = 110
@@ -87,12 +82,17 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 #
 # Pass `validation_data=` and `fit` scores the validation set once per epoch,
 # centrally. Every shipped callback reads that one computation rather than
-# repeating it. Three keys appear in `flow.history`:
+# repeating it. Four keys appear in `flow.history`:
 #
 # - `train`, one dict of per-node negative log-likelihood per epoch,
 # - `val`, the same for the validation rows, only when validation is on,
-# - `lr`, the optimizer's rate after each epoch, recorded after the callbacks
-#   ran, so a schedule's decision for that epoch is what gets stored.
+# - `val_epoch`, the train epoch each `val` entry belongs to,
+# - `lr`, each node's rates `{group index: lr}` after each epoch, recorded
+#   after the callbacks ran, so a schedule's decision for that epoch is what
+#   gets stored.
+#
+# Each node keeps its own history in `flow.nodes[name].history`, one float
+# per epoch. `flow.history` is a view over them.
 
 # %%
 flow = build()
@@ -144,8 +144,8 @@ history_plain = [sum(d.values()) for d in flow.history["val"]]
 # %% [markdown]
 # ## 3. Two phases
 #
-# Calling `fit` again continues training. The optimizer is rebuilt unless you
-# pass your own, so a second call at a lower rate is a coarse-then-fine
+# Calling `fit` again continues training. Each call builds a new optimizer,
+# so a second call at a lower rate is a coarse-then-fine
 # schedule with no callback at all. History accumulates across the calls.
 
 # %%
@@ -166,10 +166,11 @@ assert len(flow.history["train"]) == 300, "the second fit did not continue the h
 # The loop keeps the final weights, which is what makes the classical
 # agreement exact. A flexible model does not always want that: it can reach a
 # better validation score part way through and then drift. `EarlyStopping`
-# snapshots the best epoch and loads it back at the end of the fit.
+# snapshots each node's best epoch and loads it back at the end of that node's
+# fit.
 #
 # The check below is the one a static code block cannot make. After the fit,
-# the model's validation score equals the *minimum* over the recorded epochs,
+# each node's validation score equals the *minimum* over its recorded epochs,
 # not the last one.
 
 # %%
@@ -186,145 +187,134 @@ flow.fit(
 )
 nll_best = record("EarlyStopping", flow, time.perf_counter() - t0)
 
-recorded = [sum(d.values()) for d in flow.history["val"]]
-print(f"    best epoch {stopper.best_epoch} of {len(recorded)}")
-print(f"    minimum recorded: {min(recorded):.4f}")
-print(f"    last epoch:       {recorded[-1]:.4f}")
-assert abs(nll_best - min(recorded)) < 1e-4, (
-    "the restored weights do not match the best recorded epoch"
-)
+restored = flow.nll(val)
+for name, nd in flow.nodes.items():
+    recorded = nd.history["val"]
+    best = int(np.argmin(recorded)) + 1
+    print(
+        f"    {name}: best epoch {best} of {len(recorded)}, "
+        f"minimum {min(recorded):.4f}, last {recorded[-1]:.4f}"
+    )
+    assert abs(restored[name] - min(recorded)) < 1e-4, (
+        f"the restored weights of {name} do not match its best recorded epoch"
+    )
 
 # %% [markdown]
-# ## 5. `EarlyStopping(patience=)`: stop as well as restore
+# ## 5. `EarlyStopping(patience=)`: stop each node on its own
 #
-# Without `patience` the fit spends its whole budget and only the restoration
-# happens. With it, the fit also stops once the best epoch is that many
-# epochs old.
+# Without `patience` each node spends its whole budget and only the
+# restoration happens. With it, a node also stops once its best epoch is that
+# many epochs old. Nodes converge at different speeds, so they stop at
+# different epochs.
+#
+# One shared instance resets at each node's fit begin, so its attributes
+# describe the last node only. A factory `callbacks=lambda name: ...` gives
+# each node its own instance.
 
 # %%
 flow = build()
 t0 = time.perf_counter()
-stopper = EarlyStopping(patience=25)
+stoppers = {}
 flow.fit(
     train,
     epochs=CEILING,
     batch_size=256,
     learning_rate=1e-2,
     validation_data=val,
-    callbacks=stopper,
+    callbacks=lambda name: stoppers.setdefault(name, EarlyStopping(patience=25)),
 )
 record("EarlyStopping(25)", flow, time.perf_counter() - t0)
 
-spent = len(flow.history["train"])
-print(f"    stopped after {spent} of {CEILING} epochs, best was {stopper.best_epoch}")
-assert spent < CEILING, "patience never triggered, so the ceiling bound instead"
-assert spent - stopper.best_epoch >= 25
+stopped = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
+for name, spent in stopped.items():
+    best = stoppers[name].best_epoch
+    print(f"    {name}: stopped after {spent} of {CEILING} epochs, best was {best}")
+    assert spent < CEILING, f"patience never triggered for {name}"
+    assert spent - best >= 25
 
 # %% [markdown]
-# ## 6. Per-node early stopping: `per_node_adam` with `PerNodeEarlyStopping`
-#
-# `per_node_adam` builds an Adam with one tagged parameter group per node, and
-# `PerNodeEarlyStopping` freezes and restores each node on its own validation
-# score ([`docs/fitting.md`](../docs/fitting.md)). The fit stops when
-# the last node freezes.
-#
-# Do not attach a torch scheduler to the same optimizer. It could set a frozen
-# node's rate above 0 again.
+# `flow.history` repeats the last entry of a node that stopped earlier, so the
+# summed curve stays defined. `plot_training` marks the stop epochs.
 
 # %%
-flow = build()
-t0 = time.perf_counter()
-stopping = PerNodeEarlyStopping(patience=40)
-flow.fit(
-    train,
-    epochs=CEILING,
-    batch_size=256,
-    validation_data=val,
-    optimizer=per_node_adam(flow, lr=1e-2),
-    callbacks=stopping,
-)
-record("PerNodeEarlyStopping", flow, time.perf_counter() - t0)
-
-print(f"    froze at: {dict(sorted(stopping.frozen.items()))}")
-print("    per-node rates at the end:", flow.history["lr"][-1])
-assert set(stopping.frozen) == set(SPEC), "not every node froze"
-assert len(flow.history["train"]) < CEILING, "the per-node stop did not self-stop"
-
-# %% [markdown]
-# `history["lr"]` holds one dict per epoch, keyed by the node tags here, so the
-# freeze of each node is on record without a callback of your own.
-# `plot_training` marks the freeze epochs.
-
-# %%
-plot_training(flow, frozen=stopping.frozen)
+plot_training(flow, frozen=stopped)
 plt.show()
 
 # %% [markdown]
-# ## 7. Writing your own
+# ## 6. Writing your own
 #
-# The callback contract is in [`docs/fitting.md`](../docs/fitting.md): a bare
-# callable is an `on_epoch_end` hook, and a `Callback` subclass gets the other
-# two hooks. `GlobalPlateau` below carries torch's `ReduceLROnPlateau` on the
-# validation score `fit` has already put in `history["val"]`.
+# The callback contract is in [`docs/fitting.md`](../docs/fitting.md): every
+# hook receives the node, a bare callable is an `on_epoch_end` hook, and a
+# `Callback` subclass gets the other two hooks. `Plateau` below builds torch's
+# `ReduceLROnPlateau` on each node's optimizer and steps it on the validation
+# score `fit` has already put in `node.history["val"]`.
 
 
 # %%
-class GlobalPlateau(Callback):
-    """One torch ReduceLROnPlateau over all nodes, driven by fit's own score."""
+class Plateau(Callback):
+    """One torch ReduceLROnPlateau per node, driven by fit's own score."""
 
     def __init__(self, factor=0.3, patience=10):
         self.factor, self.patience = factor, patience
         self.scheduler = None
 
-    def on_fit_begin(self, flow, optimizer):
-        """Build the scheduler here: the optimizer exists only once fit runs."""
+    def on_fit_begin(self, node, optimizer):
+        """Build the scheduler here: the node's optimizer exists only now."""
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, factor=self.factor, patience=self.patience
         )
 
-    def on_epoch_end(self, flow, epoch, optimizer):
+    def on_epoch_end(self, node, epoch, optimizer):
         """Step the scheduler, and stop once the rate has bottomed out."""
-        self.scheduler.step(sum(flow.history["val"][-1].values()))
+        self.scheduler.step(node.history["val"][-1])
         return optimizer.param_groups[0]["lr"] < 1e-5
 
 
 flow = build()
-optimizer = torch.optim.Adam(flow.parameters(), lr=1e-2)
 t0 = time.perf_counter()
 flow.fit(
     train,
     epochs=CEILING,
     batch_size=256,
+    learning_rate=1e-2,
     validation_data=val,
-    optimizer=optimizer,
-    callbacks=GlobalPlateau(),
+    callbacks=Plateau(),
 )
-record("GlobalPlateau", flow, time.perf_counter() - t0)
+record("Plateau", flow, time.perf_counter() - t0)
 
-final_lr = optimizer.param_groups[0]["lr"]
-print(f"    rate went 1.0e-02 -> {final_lr:.1e}")
-assert final_lr < 1e-2, "the scheduler never decayed the rate"
+for name, rates in flow.history["lr"][-1].items():
+    print(f"    {name}: rate went 1.0e-02 -> {rates[0]:.1e}")
+    assert rates[0] < 1e-2, f"the scheduler never decayed the rate of {name}"
 
 # %% [markdown]
-# A one-line callable is often enough. This one records a coefficient after
-# every epoch, which is how the paper replications trace convergence:
+# A one-line callable is often enough. This one records each node's
+# validation NLL after every epoch. Put it in a list: a callable alone is a
+# per-node factory `f(name)`.
 #
 # ```python
 # trace = []
 # flow.fit(train, epochs=100, validation_data=val,
-#          callbacks=lambda f, epoch, opt: trace.append(f.nll(val)["x3"]))
+#          callbacks=[lambda node, epoch, opt: trace.append(node.nll(val))])
 # ```
+
+# %% [markdown]
+# ## 7. One node alone
 #
-# A callable of the wrong shape is refused before the first epoch, so a
-# mis-registered callback cannot waste a long run.
+# A node is a TRAM regression of one variable on its parents and fits without
+# the DAG. It takes its name, its node spec and a parent schema,
+# `{parent: "continuous" | n_levels}`. The frame needs only the node's own
+# column and its parents' columns.
 
 # %%
-try:
-    build().fit(train, epochs=5, batch_size=256, callbacks=lambda flow: None)
-except TypeError as err:
-    print("wrong arity refused up front:\n   ", err)
-else:
-    raise AssertionError("a one-argument callable should be refused")
+x3 = Node("x3", SPEC["x3"], {"x1": "continuous", "x2": "continuous"})
+x3.fit(
+    train[["x1", "x2", "x3"]],
+    epochs=CEILING,
+    validation_data=val[["x1", "x2", "x3"]],
+    callbacks=EarlyStopping(patience=25),
+)
+print(f"x3 alone: {len(x3.history['train'])} epochs, val NLL {x3.nll(val):.4f}")
+assert x3.nll(val) == min(x3.history["val"])  # the restored best epoch
 
 # %% [markdown]
 # ## 8. The scoreboard: a poor man's runtime comparison

@@ -273,7 +273,7 @@ class ReadoutsMixin:
             One column per encoded feature, indexed like ``df``.
         """
         nd = self._node(node)
-        feats = self._features(self._tensorize(df, nd.parents))
+        feats = nd.features(self._tensorize(df, nd.parents))
         cols: dict[str, np.ndarray] = {}
         for p in nd.parents:
             arr = feats[p].cpu().numpy()

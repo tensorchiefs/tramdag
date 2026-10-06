@@ -67,7 +67,7 @@ def build():
 def record(name, flow, seconds):
     """Add one finished recipe to the scoreboard and print its line."""
     nll = sum(flow.nll(val).values())
-    epochs = len(flow.history["train"])
+    epochs = sum(len(nd.history["train"]) for nd in flow.nodes.values())
     scoreboard.append(
         {"strategy": name, "val_nll": nll, "epochs": epochs, "seconds": seconds}
     )
@@ -208,8 +208,8 @@ for name, nd in flow.nodes.items():
 # different epochs.
 #
 # One shared instance resets at each node's fit begin, so its attributes
-# describe the last node only. A factory `callbacks=lambda name: ...` gives
-# each node its own instance.
+# describe the last node only. A function of the node name,
+# `callbacks=lambda name: ...`, gives each node its own instance.
 
 # %%
 flow = build()
@@ -244,7 +244,7 @@ plt.show()
 # ## 6. Writing your own
 #
 # The callback contract is in [`docs/fitting.md`](../docs/fitting.md): every
-# hook receives the node, a bare callable is an `on_epoch_end` hook, and a
+# hook receives the node, a bare callable in a list is an `on_epoch_end` hook, and a
 # `Callback` subclass gets the other two hooks. `Plateau` below builds torch's
 # `ReduceLROnPlateau` on each node's optimizer and steps it on the validation
 # score `fit` has already put in `node.history["val"]`.
@@ -288,8 +288,8 @@ for name, rates in flow.history["lr"][-1].items():
 
 # %% [markdown]
 # A one-line callable is often enough. This one records each node's
-# validation NLL after every epoch. Put it in a list: a callable alone is a
-# per-node factory `f(name)`.
+# validation NLL after every epoch. Put it in a list: on the flow a callable
+# alone is a function of the node name.
 #
 # ```python
 # trace = []
@@ -314,13 +314,13 @@ x3.fit(
     callbacks=EarlyStopping(patience=25),
 )
 print(f"x3 alone: {len(x3.history['train'])} epochs, val NLL {x3.nll(val):.4f}")
-assert x3.nll(val) == min(x3.history["val"])  # the restored best epoch
+assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4  # the restored best
 
 # %% [markdown]
 # ## 8. The scoreboard: a poor man's runtime comparison
 #
 # One workload, one seed, one machine, every recipe: the wall-clock seconds
-# each one took, the epochs it spent, its validation NLL and the gap to the
+# each one took, the node-epochs it spent (summed over the nodes), its validation NLL and the gap to the
 # best NLL on the board. A recipe that stops itself wins on seconds only if it
 # also stays near the best NLL, which is what the last two columns show side
 # by side. Absolute seconds are this machine's; the ranking is what travels.

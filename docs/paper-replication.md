@@ -128,7 +128,7 @@ tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1: at seed 7 the reference's min/max domain scores 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022, worse at do(x2 = −3) and do(x2 = 0). CAREFL, same nets, measures the opposite way |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau: at seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022. Under the per-node plateau (D5) the order turns: min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, measures the opposite way |
 | n_compare | — | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -243,7 +243,7 @@ run per variant with the start off and on, seeds unchanged:
 | triangle sin-cs | 34 → 10 | cs max err 0.240 → 0.088; do(x1) err 0.075 → 0.201, past the 0.188 bound | off: a different optimum, better curve, worse L2 |
 | mixed linear-ls | 42 → 9 | identical | on |
 | mixed exp-cs | 28 → 6 | cs max err 0.143 → 0.060; do(x1) err 0.018 → 0.010 | on |
-| VACA | within 0.5: 2245 → 168 | val NLL 1.4496 → 1.4348; do(x2 = 0) err 0.019 → 0.101, past the 0.044 bound | off: the plateau anneal fires elsewhere and freezes a different point |
+| VACA | within 0.5: 2245 → 168 (global plateau) | per-node plateau (D5): val NLL 1.4347 → 1.4347; do(x2) err 0.080 / 0.068 / 0.092 → 0.094 / 0.079 / 0.102 | off: no gain, slightly worse at every do point |
 | CAREFL | — | — | impossible: `range_q: 0` has no marginal start |
 
 The start is only an initialization. Where the optimizer reaches the same

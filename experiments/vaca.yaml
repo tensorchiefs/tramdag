@@ -20,12 +20,13 @@
 #     (`init: glorot`, make_model's layer_dense);
 #   * input_transform: minmax on the CI terms (comparison/utils.R::scale_df).
 # range_q: 0.05 in the spec — a DELIBERATE deviation from scale_df's min-max
-# Bernstein domain, measured at init seed 7 with everything else 1:1:
-# the reference's min-max domain (range_q 0) scores do(x2) errors
-# 0.289 / 0.040 / 0.067 against the quantile domain's 0.097 / 0.088 / 0.018
-# — worse at the off-manifold do(x2=-3) and at do(x2=0), where the bounds
-# are pinned. CAREFL, same nets and scaling, measures the opposite way and
-# uses range_q 0 (carefl.yaml).
+# Bernstein domain, chosen under the global plateau at init seed 7: the
+# reference's min-max domain (range_q 0) scored do(x2) errors
+# 0.289 / 0.040 / 0.067 against the quantile domain's 0.097 / 0.088 / 0.018.
+# Under the per-node plateau (D5) min-max scores 0.072 / 0.001 / 0.049
+# against 0.080 / 0.068 / 0.092, so D1 is open for revision
+# (docs/paper-replication.md). CAREFL, same nets and scaling, uses range_q 0
+# (carefl.yaml).
 # Rejected deviations, both measured: minibatch stepping (batch
 # 256, lr 0.001-0.004, 300-3000 epochs, constant or plateau) misses the
 # interventional bounds — its optima carry a systematic -0.11 common-mode
@@ -46,7 +47,7 @@ variants:
     flow_kwargs:
       seed: 7                 # weight init (repo choice)
       init: glorot            # Keras Dense default: glorot_uniform, zero bias
-    marginal_init: false     # measured: the start shifts the anneal, do(x2=0) error 0.019 -> 0.101 (D4)
+    marginal_init: false     # measured (D4): no gain, do(x2=0) error 0.092 -> 0.102
     fit_kwargs:
       epochs: 10000           # the reference protocol, 1:1
       batch_size: 2500        # = n_train: one full-batch step per epoch

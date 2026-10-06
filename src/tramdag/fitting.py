@@ -657,7 +657,7 @@ class FitMixin:
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
-            and macOS only). A worker runs torch on one thread, so its result
+            only). A worker runs torch on one thread, so its result
             equals a serial fit on one thread; with more threads a network
             can differ in the last bits. Callback state stays in the workers;
             read ``node.history`` instead.

@@ -68,7 +68,7 @@ reproducible start. It always uses torch's default init; `init=` exists on
 the final weights.
 
 - **Nodes.** `CausalFlowDAG.fit` fits the nodes in topological order.
-  `n_jobs=N` forks `N` worker processes (Linux and macOS), one task per node.
+  `n_jobs=N` forks `N` worker processes (Linux only), one task per node.
   A worker runs torch on one thread, so it gives the weights of a serial fit
   on one thread. `epochs=`, `learning_rate=` and `callbacks=` take one value
   for all nodes or a function of the node name.

@@ -3,6 +3,7 @@
 # %% imports ---------------------------------------------------------------------------
 import copy
 import math
+import sys
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,10 @@ import torch
 from tramdag import CI, LS, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import Callback
 from tramdag.fitting import _node_seed
+
+# %% global variables ------------------------------------------------------------------
+# n_jobs forks: Windows has no fork, and macOS torch refuses autograd after one
+_LINUX = pytest.mark.skipif(sys.platform != "linux", reason="n_jobs forks: Linux only")
 
 
 # %% private functions -----------------------------------------------------------------
@@ -54,6 +59,7 @@ def test_a_node_fitted_alone_equals_the_node_in_a_flow(ls_chain):
     assert alone.nll(df) == pytest.approx(flow.nll(df)["y"], rel=1e-6)
 
 
+@_LINUX
 def test_processes_give_the_serial_result(ls_chain):
     """``n_jobs=2`` forks the node fits; weights and histories are identical."""
     df = ls_chain["draw"](600, 1)
@@ -91,6 +97,7 @@ def test_the_flow_history_repeats_a_stopped_nodes_last_entry(ls_chain):
     assert all(not math.isnan(v) for row in train for v in row.values())
 
 
+@_LINUX
 def test_a_forked_fit_loads_a_callable_transform_and_leaves_eval_mode(ls_chain):
     """The parent takes the workers' state, train columns of any shape included."""
     df = ls_chain["draw"](300, 5)[["x1", "x2"]]

@@ -1336,67 +1336,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PerNodeEarlyStopping
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="PerNodeEarlyStopping">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_begin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_fit_begin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_epoch_end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_epoch_end
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_fit_end
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.per_node_adam" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        per_node_adam
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1584,67 +1523,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PerNodeEarlyStopping
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="PerNodeEarlyStopping">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_begin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_fit_begin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_epoch_end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_epoch_end
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_end" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        on_fit_end
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tramdag.callbacks.per_node_adam" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        per_node_adam
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1685,11 +1563,11 @@
 
     <div class="doc doc-contents first">
 
-        <p>Predefined <code>fit</code> callbacks: <code>EarlyStopping</code> and <code>PerNodeEarlyStopping</code>.</p>
-<p><code>fit</code> owns validation and progress printing; the callbacks here read the per-node
-validation NLL that <code>fit</code> appends to <code>flow.history["val"]</code> after every epoch —
-computed once, shared by all of them. One <code>callbacks=</code> list is the whole registration
-(the <code>fit</code> docstring shows it); anything not covered here is a
+        <p>Predefined <code>fit</code> callbacks: <code>EarlyStopping</code>.</p>
+<p>Every node fits on its own, so a callback hooks one node's fit. <code>fit</code> owns
+validation and progress printing; <code>EarlyStopping</code> reads the validation NLL that
+<code>fit</code> appends to <code>node.history["val"]</code> after every epoch. One <code>callbacks=</code>
+list is the whole registration; anything not covered here is a
 <a class="autorefs autorefs-internal" title="Callback" href="#tramdag.callbacks.Callback"><code>Callback</code></a> subclass of your own (docs/fitting.md).</p>
 
 
@@ -1727,12 +1605,12 @@ computed once, shared by all of them. One <code>callbacks=</code> list is the wh
 
 
         <p>Base class of <code>fit(callbacks=)</code> entries — override any of the hooks.</p>
-<p><code>on_fit_begin(flow, optimizer)</code> runs once after calibration, before the
-first epoch (the shipped callbacks reset their state here, so one
-instance is safe to reuse across fits). <code>on_epoch_end(flow, epoch,
-optimizer)</code> runs after every epoch, once the epoch's train NLLs are in
-<code>flow.history["train"]</code>; the fit stops after an epoch in which any
-callback returned <code>True</code>. <code>on_fit_end(flow, optimizer)</code> runs once
+<p><code>on_fit_begin(node, optimizer)</code> runs once after calibration, before the
+first epoch (the shipped <code>EarlyStopping</code> resets its state here, so one
+instance is safe to reuse across fits). <code>on_epoch_end(node, epoch,
+optimizer)</code> runs after every epoch, once the epoch's train NLL is in
+<code>node.history["train"]</code>; the fit stops after an epoch in which any
+callback returned <code>True</code>. <code>on_fit_end(node, optimizer)</code> runs once
 after the loop and <strong>before</strong> the VC re-centering, so a hook that swaps
 the weights hands them to the re-centering.</p>
 
@@ -1745,46 +1623,46 @@ the weights hands them to the re-centering.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span>
-<span class="normal">89</span>
-<span class="normal">90</span>
-<span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span>
-<span class="normal">94</span>
-<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Callback</span><span class="p">:</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Callback</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Base class of ``fit(callbacks=)`` entries — override any of the hooks.</span>
 
-<span class="sd">    ``on_fit_begin(flow, optimizer)`` runs once after calibration, before the</span>
-<span class="sd">    first epoch (the shipped callbacks reset their state here, so one</span>
-<span class="sd">    instance is safe to reuse across fits). ``on_epoch_end(flow, epoch,</span>
-<span class="sd">    optimizer)`` runs after every epoch, once the epoch's train NLLs are in</span>
-<span class="sd">    ``flow.history["train"]``; the fit stops after an epoch in which any</span>
-<span class="sd">    callback returned ``True``. ``on_fit_end(flow, optimizer)`` runs once</span>
+<span class="sd">    ``on_fit_begin(node, optimizer)`` runs once after calibration, before the</span>
+<span class="sd">    first epoch (the shipped ``EarlyStopping`` resets its state here, so one</span>
+<span class="sd">    instance is safe to reuse across fits). ``on_epoch_end(node, epoch,</span>
+<span class="sd">    optimizer)`` runs after every epoch, once the epoch's train NLL is in</span>
+<span class="sd">    ``node.history["train"]``; the fit stops after an epoch in which any</span>
+<span class="sd">    callback returned ``True``. ``on_fit_end(node, optimizer)`` runs once</span>
 <span class="sd">    after the loop and **before** the VC re-centering, so a hook that swaps</span>
 <span class="sd">    the weights hands them to the re-centering.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Run once before the first epoch."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Run after every epoch; return ``True`` to stop the fit."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Run once after the loop, before the VC re-centering."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -1810,7 +1688,7 @@ the weights hands them to the re-centering.</p>
 
 
 <a href="#tramdag.callbacks.Callback.on_fit_begin" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_begin</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_begin</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1820,8 +1698,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">88</span>
-<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
+<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run once before the first epoch."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1837,7 +1715,7 @@ the weights hands them to the re-centering.</p>
 
 
 <a href="#tramdag.callbacks.Callback.on_epoch_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1847,8 +1725,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">91</span>
-<span class="normal">92</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Run after every epoch; return ``True`` to stop the fit."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1864,7 +1742,7 @@ the weights hands them to the re-centering.</p>
 
 
 <a href="#tramdag.callbacks.Callback.on_fit_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_end</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1874,8 +1752,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">94</span>
-<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run once after the loop, before the VC re-centering."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1909,13 +1787,13 @@ the weights hands them to the re-centering.</p>
 
 
         <p>Keep the best-validation weights; optionally stop once they are old.</p>
-<p>Tracks the summed validation NLL; an epoch improves when it beats the best
+<p>Tracks the node's validation NLL; an epoch improves when it beats the best
 by more than <code>min_delta</code>. With <code>restore_best</code> (the default)
 the weights of the best epoch are snapshotted and loaded back at fit
 end, before the VC re-centering. With <code>patience</code> the fit also stops
 once the last improvement is that many epochs old; without it (the
 default) the fit runs its full epoch budget and only the restoration
-happens. Reads <code>flow.history["val"]</code>, so the fit needs
+happens. Reads <code>node.history["val"]</code>, so the fit needs
 <code>validation_data=</code> or <code>validation_split=</code>.</p>
 
 
@@ -1999,7 +1877,7 @@ default) never stops.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The best summed validation NLL seen this fit and its epoch.</p>
+                <p>The best validation NLL seen this fit and its epoch.</p>
               </div>
             </td>
           </tr>
@@ -2015,7 +1893,44 @@ default) never stops.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 98</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
@@ -2054,53 +1969,16 @@ default) never stops.</p>
 <span class="normal">134</span>
 <span class="normal">135</span>
 <span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Keep the best-validation weights; optionally stop once they are old.</span>
 
-<span class="sd">    Tracks the summed validation NLL; an epoch improves when it beats the best</span>
+<span class="sd">    Tracks the node's validation NLL; an epoch improves when it beats the best</span>
 <span class="sd">    by more than ``min_delta``. With ``restore_best`` (the default)</span>
 <span class="sd">    the weights of the best epoch are snapshotted and loaded back at fit</span>
 <span class="sd">    end, before the VC re-centering. With ``patience`` the fit also stops</span>
 <span class="sd">    once the last improvement is that many epochs old; without it (the</span>
 <span class="sd">    default) the fit runs its full epoch budget and only the restoration</span>
-<span class="sd">    happens. Reads ``flow.history["val"]``, so the fit needs</span>
+<span class="sd">    happens. Reads ``node.history["val"]``, so the fit needs</span>
 <span class="sd">    ``validation_data=`` or ``validation_split=``.</span>
 
 <span class="sd">    Parameters</span>
@@ -2116,7 +1994,7 @@ default) never stops.</p>
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    best_nll, best_epoch</span>
-<span class="sd">        The best summed validation NLL seen this fit and its epoch.</span>
+<span class="sd">        The best validation NLL seen this fit and its epoch.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -2143,21 +2021,21 @@ default) never stops.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Start fresh — neither patience nor the snapshot carries over."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
-        <span class="n">nll</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Load the best weights back into the flow (``restore_best`` only)."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load the best weights back into the node (``restore_best`` only)."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># a first finite NLL always beats inf</span>
@@ -2167,7 +2045,7 @@ default) never stops.</p>
                 <span class="s2">"epoch, or the fit diverged — lower learning_rate, or check the "</span>
                 <span class="s2">"validation frame for a column the model cannot score."</span>
             <span class="p">)</span>
-        <span class="n">flow</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2192,7 +2070,7 @@ default) never stops.</p>
 
 
 <a href="#tramdag.callbacks.EarlyStopping.on_fit_begin" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_begin</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_begin</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2202,9 +2080,9 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh — neither patience nor the snapshot carries over."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
@@ -2221,7 +2099,7 @@ default) never stops.</p>
 
 
 <a href="#tramdag.callbacks.EarlyStopping.on_epoch_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2231,20 +2109,20 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
-    <span class="n">nll</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">nll</span> <span class="o">=</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2260,29 +2138,29 @@ default) never stops.</p>
 
 
 <a href="#tramdag.callbacks.EarlyStopping.on_fit_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_end</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Load the best weights back into the flow (<code>restore_best</code> only).</p>
+        <p>Load the best weights back into the node (<code>restore_best</code> only).</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Load the best weights back into the flow (``restore_best`` only)."""</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load the best weights back into the node (``restore_best`` only)."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># a first finite NLL always beats inf</span>
@@ -2292,7 +2170,7 @@ default) never stops.</p>
             <span class="s2">"epoch, or the fit diverged — lower learning_rate, or check the "</span>
             <span class="s2">"validation frame for a column the model cannot score."</span>
         <span class="p">)</span>
-    <span class="n">flow</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2307,707 +2185,6 @@ default) never stops.</p>
 
 </div>
 
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="tramdag.callbacks.PerNodeEarlyStopping" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">PerNodeEarlyStopping</span>
-
-
-<a href="#tramdag.callbacks.PerNodeEarlyStopping" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="Callback (tramdag.callbacks.Callback)" href="#tramdag.callbacks.Callback">Callback</a></code></p>
-
-
-
-        <p>Early stopping per node: <code>EarlyStopping</code> on each node's own NLL.</p>
-<p>Tracks every node's validation NLL; an epoch improves a node when it beats
-that node's best by more than <code>min_delta</code>. With <code>patience</code> a node
-freezes (rate 0) once its best is that many epochs old, and the fit stops
-when every node has frozen; without it (the default) no node freezes and
-the fit runs its full epoch budget. With <code>restore_best</code> (the default) a
-node loads the weights of its best epoch back when it freezes, and every
-node loads them in <code>on_fit_end</code>, before the VC re-centering.</p>
-<p>Build the optimizer with <a class="autorefs autorefs-internal" title="per_node_adam" href="#tramdag.callbacks.per_node_adam"><code>per_node_adam</code></a>
-(one <code>node</code>-tagged group per node), and give <code>fit</code> a validation set
-(the callback reads <code>flow.history["val"]</code>). Do not attach a torch lr
-scheduler to the same optimizer: it could set a frozen node's rate above
-0 again. With <code>restore_best</code>,
-<code>fit</code> refuses it beside another restoring callback, such as
-<code>EarlyStopping(restore_best=True)</code>.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>patience</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Epochs without an improvement before a node freezes; <code>None</code> (the
-default) never freezes.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>restore_best</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Load each node's best-epoch weights back, by default True.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>min_delta</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Improvement at or below this is flat, by default 0.0.</p>
-              </div>
-            </td>
-            <td>
-                  <code>0.0</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Attributes:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code><span title="tramdag.callbacks.PerNodeEarlyStopping.best_epoch">best_epoch</span></code></td>
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p><code>{node: epoch}</code> of each node's best validation NLL.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="tramdag.callbacks.PerNodeEarlyStopping.frozen">frozen</span></code></td>
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p><code>{node: epoch}</code> of the nodes that left training, so a training
-figure can mark the freezes.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
-                <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
-<span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
-<span class="normal">300</span>
-<span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Early stopping per node: ``EarlyStopping`` on each node's own NLL.</span>
-
-<span class="sd">    Tracks every node's validation NLL; an epoch improves a node when it beats</span>
-<span class="sd">    that node's best by more than ``min_delta``. With ``patience`` a node</span>
-<span class="sd">    freezes (rate 0) once its best is that many epochs old, and the fit stops</span>
-<span class="sd">    when every node has frozen; without it (the default) no node freezes and</span>
-<span class="sd">    the fit runs its full epoch budget. With ``restore_best`` (the default) a</span>
-<span class="sd">    node loads the weights of its best epoch back when it freezes, and every</span>
-<span class="sd">    node loads them in ``on_fit_end``, before the VC re-centering.</span>
-
-<span class="sd">    Build the optimizer with [`per_node_adam`][tramdag.callbacks.per_node_adam]</span>
-<span class="sd">    (one ``node``-tagged group per node), and give ``fit`` a validation set</span>
-<span class="sd">    (the callback reads ``flow.history["val"]``). Do not attach a torch lr</span>
-<span class="sd">    scheduler to the same optimizer: it could set a frozen node's rate above</span>
-<span class="sd">    0 again. With ``restore_best``,</span>
-<span class="sd">    ``fit`` refuses it beside another restoring callback, such as</span>
-<span class="sd">    ``EarlyStopping(restore_best=True)``.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    patience : int | None, optional</span>
-<span class="sd">        Epochs without an improvement before a node freezes; ``None`` (the</span>
-<span class="sd">        default) never freezes.</span>
-<span class="sd">    restore_best : bool, optional</span>
-<span class="sd">        Load each node's best-epoch weights back, by default True.</span>
-<span class="sd">    min_delta : float, optional</span>
-<span class="sd">        Improvement at or below this is flat, by default 0.0.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    best_epoch : dict[str, int]</span>
-<span class="sd">        ``{node: epoch}`` of each node's best validation NLL.</span>
-<span class="sd">    frozen : dict[str, int]</span>
-<span class="sd">        ``{node: epoch}`` of the nodes that left training, so a training</span>
-<span class="sd">        figure can mark the freezes.</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">restore_best</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">min_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="k">if</span> <span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">patience</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"patience must be at least 1, got </span><span class="si">{</span><span class="n">patience</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">patience</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">restore_best</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"patience=None and restore_best=False is a no-op; pass patience= "</span>
-                <span class="s2">"or restore_best=True"</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span> <span class="o">=</span> <span class="n">restore_best</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span> <span class="o">=</span> <span class="n">min_delta</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-                <span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"initial_lr"</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Load every node's best weights again (``restore_best``).</span>
-
-<span class="sd">        A frozen node still runs forward in training mode, so its batch-norm</span>
-<span class="sd">        buffers move after the freeze; this final restore resets them too.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Step every unfrozen node on its own NLL; ``True`` when all are frozen."""</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">"node"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"PerNodeEarlyStopping needs one 'node'-tagged parameter "</span>
-                    <span class="s2">"group per node — build the optimizer with per_node_adam(flow, lr)"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"PerNodeEarlyStopping needs the 'initial_lr' stamp on every "</span>
-                    <span class="s2">"parameter group — build the optimizer with "</span>
-                    <span class="s2">"per_node_adam(flow, lr); a bare group's current rate may "</span>
-                    <span class="s2">"already be zero and would silently become the baseline"</span>
-                <span class="p">)</span>
-            <span class="n">lr0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="s2">"initial_lr"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">lr0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">g</span><span class="p">[</span><span class="s1">'node'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> starts at learning rate 0 — build a "</span>
-                    <span class="s2">"fresh per_node_adam(flow, lr): its initial_lr stamp lets "</span>
-                    <span class="s2">"a reused optimizer restore its rates"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_step_node</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">nll</span><span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]],</span> <span class="n">epoch</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_step_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">nll</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"node"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">best</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
-        <span class="k">elif</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
-            <span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_restore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span>  <span class="c1"># a first finite NLL always beats inf</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"PerNodeEarlyStopping has nothing to restore for node </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">: "</span>
-                <span class="s2">"its validation NLL was never finite. Lower learning_rate, or "</span>
-                <span class="s2">"check the validation frame for a column the model cannot score."</span>
-            <span class="p">)</span>
-        <span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
-</code></pre></div></td></tr></table></div>
-              </details>
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="tramdag.callbacks.PerNodeEarlyStopping.on_fit_begin" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">on_fit_begin</span>
-
-
-<a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_begin" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_begin</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Start fresh: every group's rate goes back to its <code>initial_lr</code> stamp.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Start fresh: every group's rate goes back to its ``initial_lr`` stamp."""</span>
-    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">"initial_lr"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
-            <span class="n">g</span><span class="p">[</span><span class="s2">"lr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"initial_lr"</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="tramdag.callbacks.PerNodeEarlyStopping.on_epoch_end" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">on_epoch_end</span>
-
-
-<a href="#tramdag.callbacks.PerNodeEarlyStopping.on_epoch_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Step on the epoch's validation NLL; <code>True</code> once every node froze.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Step on the epoch's validation NLL; ``True`` once every node froze."""</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="tramdag.callbacks.PerNodeEarlyStopping.on_fit_end" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">on_fit_end</span>
-
-
-<a href="#tramdag.callbacks.PerNodeEarlyStopping.on_fit_end" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_fit_end</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Load every node's best weights again (<code>restore_best</code>).</p>
-<p>A frozen node still runs forward in training mode, so its batch-norm
-buffers move after the freeze; this final restore resets them too.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Load every node's best weights again (``restore_best``).</span>
-
-<span class="sd">    A frozen node still runs forward in training mode, so its batch-norm</span>
-<span class="sd">    buffers move after the freeze; this final restore resets them too.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="tramdag.callbacks.per_node_adam" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">per_node_adam</span>
-
-
-<a href="#tramdag.callbacks.per_node_adam" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">per_node_adam</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Give an Adam with one <code>node</code>-tagged parameter group per node.</p>
-<p>The optimizer that
-<a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a> needs:
-each group carries its node's name and an <code>initial_lr</code> stamp.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>flow</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="CausalFlowDAG (tramdag.flow.CausalFlowDAG)" href="../flow/#tramdag.flow.CausalFlowDAG">CausalFlowDAG</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The flow whose nodes' parameters form the groups.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>lr</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The rate of every group, by default 1e-2.</p>
-              </div>
-            </td>
-            <td>
-                  <code>0.01</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="torch.optim.Adam">Adam</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>One group per node, tagged <code>node</code> and stamped <code>initial_lr</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_node_adam</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give an Adam with one ``node``-tagged parameter group per node.</span>
-
-<span class="sd">    The optimizer that</span>
-<span class="sd">    [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping] needs:</span>
-<span class="sd">    each group carries its node's name and an ``initial_lr`` stamp.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    flow : CausalFlowDAG</span>
-<span class="sd">        The flow whose nodes' parameters form the groups.</span>
-<span class="sd">    lr : float, optional</span>
-<span class="sd">        The rate of every group, by default 1e-2.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    torch.optim.Adam</span>
-<span class="sd">        One group per node, tagged ``node`` and stamped ``initial_lr``.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="c1"># initial_lr (torch's scheduler convention) lets PerNodeEarlyStopping</span>
-            <span class="c1"># restore a frozen group to its start at the next fit begin</span>
-            <span class="p">{</span>
-                <span class="s2">"params"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">parameters</span><span class="p">()),</span>
-                <span class="s2">"lr"</span><span class="p">:</span> <span class="n">lr</span><span class="p">,</span>
-                <span class="s2">"initial_lr"</span><span class="p">:</span> <span class="n">lr</span><span class="p">,</span>
-                <span class="s2">"node"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">flow</span><span class="o">.</span><span class="n">order</span>
-        <span class="p">]</span>
-    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
 
 
 

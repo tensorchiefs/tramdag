@@ -1441,8 +1441,8 @@ brings that ingredient into the TRAM framework.</p>
   it when the modifiers are many or <span class="arithmatex">\(n\)</span> is small.</li>
 <li><strong>Identification.</strong> A constant moves freely between <span class="arithmatex">\(\beta_0\)</span> and
   <span class="arithmatex">\(b_\Theta\)</span>. The head's output layer is zero-initialized, so
-  <span class="arithmatex">\(\beta(x) = \beta_0\)</span> at step 0, and after <code>fit</code> the flow re-centers the head
-  to mean zero over the training data, which preserves the function. <span class="arithmatex">\(\beta_0\)</span>
+  <span class="arithmatex">\(\beta(x) = \beta_0\)</span> at step 0. After <code>fit</code> each node re-centers its head to
+  mean zero over the training data, which preserves the function. <span class="arithmatex">\(\beta_0\)</span>
   is therefore the main effect in the training population, the Colr reading
   when <span class="arithmatex">\(\beta\)</span> is constant.</li>
 <li><strong>Warm start.</strong> Fit the all-<code>LS</code> version classically and copy the treatment
@@ -1488,7 +1488,8 @@ with or without centering.</p>
   propensities reintroduce the own-observation bias and can be worse than no
   centering. The values enter the loss as frozen data, so no gradient reaches
   the treatment node and the per-node factorization stays intact. <code>fit</code>
-  refuses a centered spec whose frame lacks the column.</li>
+  refuses a centered spec whose training frame lacks the column. The flow's
+  validation NLL uses the live propensity of the fitted treatment node.</li>
 <li><strong>Inference</strong>, in <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>pmf</code> and <code>scores</code>,
   recomputes <span class="arithmatex">\(\hat e\)</span> from the flow's own fitted treatment node on the current
   parent values, detached. Under <code>do(T=t)</code> the regressor becomes

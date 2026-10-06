@@ -641,6 +641,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d5-the-plateau-rule-per-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D5: the plateau rule per node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-and-the-ci-deviations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1449,6 +1460,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d5-the-plateau-rule-per-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D5: the plateau rule per node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-and-the-ci-deviations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1552,7 +1574,7 @@ replay, so every seed here is a repository choice.</p>
 <tr>
 <td>plateau rule (VACA/CAREFL)</td>
 <td><code>update_learning_rate</code>: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict <code>&lt;</code>), factor 0.1, min 1e-7</td>
-<td>torch <code>ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)</code> on the summed <code>history["val"]</code>, the same rule, verified against torch's source; <code>experiments/helpers.py::fit_paper</code> drives it</td>
+<td>torch <code>ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)</code>, the same rule verified against torch's source, but per node on the node's own validation NLL, deviation D5 below; <code>experiments/helpers.py::fit_paper</code> drives it</td>
 </tr>
 </tbody>
 </table>
@@ -1817,7 +1839,7 @@ tolerance.</p>
 <tr>
 <td>schedule</td>
 <td>the plateau rule above</td>
-<td>the same rule; it fires at about epoch 9050 and freezes an all-bounds point</td>
+<td>the same rule per node, deviation D5</td>
 </tr>
 <tr>
 <td>input scaling</td>
@@ -1827,7 +1849,7 @@ tolerance.</p>
 <tr>
 <td>Bernstein domain</td>
 <td>train min/max (<code>scale_df</code>)</td>
-<td>5 %/95 % quantiles (<code>range_q: 0.05</code>), deviation D1: at seed 7 the reference's min/max domain scores 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022, worse at do(x2 = −3) and do(x2 = 0). CAREFL, same nets, measures the opposite way</td>
+<td>5 %/95 % quantiles (<code>range_q: 0.05</code>), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, uses <code>range_q: 0</code></td>
 </tr>
 <tr>
 <td>n_compare</td>
@@ -1850,37 +1872,37 @@ pinned flow value.</p>
 <tr>
 <td>|E[x3 | do(x2 = −3)] − (−1.0)|</td>
 <td>Fig. 5: densities overlap</td>
-<td>0.096</td>
+<td>0.080</td>
 </tr>
 <tr>
 <td>|E[x3 | do(x2 = −1)] − (−0.5)|</td>
 <td>Fig. 5</td>
-<td>0.080</td>
+<td>0.068</td>
 </tr>
 <tr>
 <td>|E[x3 | do(x2 = 0)] − (−0.25)|</td>
 <td>Fig. 5</td>
-<td>0.022</td>
+<td>0.092</td>
 </tr>
 <tr>
 <td>sd(x1) flow vs analytic 2.0767</td>
 <td>Fig. 4: bimodal x1 fitted; the default CNF (Javaloy et al., 2023)<sup id="fnref:javaloy2023causalflows"><a class="footnote-ref" href="#fn:javaloy2023causalflows">3</a></sup> fails</td>
-<td>2.036, error 0.040</td>
+<td>2.069, error 0.008</td>
 </tr>
 <tr>
 <td>val NLL x3</td>
 <td>—</td>
-<td>1.4427</td>
+<td>1.4347</td>
 </tr>
 </tbody>
 </table>
-<p>The result is seed-sensitive at the off-manifold point do(x2 = −3), where the
-error spans 0.03–0.27 over four init draws, against 0.005–0.026 at
-do(x2 = 0). The paper shows one run's densities. The committed bound is 2.5×
-the seed-7 measurement.</p>
+<p>The do(x2) errors are seed-sensitive; D5 below gives the spread over four
+init draws. The paper shows one run's densities. The committed bounds are
+2.5× the seed-7 measurement.</p>
 <p>The table below traces what each protocol ingredient is worth under the
-reference protocol, one change at a time, on the paper text's grid −3 / −2 / 0
-with min-max inputs unless the row says otherwise.</p>
+reference protocol with its global plateau, one change at a time. It uses the
+paper text's grid −3 / −2 / 0 and min-max inputs unless the row says
+otherwise.</p>
 <table>
 <thead>
 <tr>
@@ -1937,7 +1959,8 @@ epochs; tanh on raw parents saturates outright at 0.731; minibatch stepping
 common-mode offset of all three do-means while the observational fit stays
 perfect.</p>
 <h2 id="carefl-benchmark-careflpy-paper-sec-53-app-c2">CAREFL benchmark (<code>carefl.py</code>): paper Sec. 5.3, App. C.2<a class="headerlink" href="#carefl-benchmark-careflpy-paper-sec-53-app-c2" title="Permanent link">&para;</a></h2>
-<p>This benchmark is the reference run 1:1 on the reference's own data.
+<p>This benchmark is the reference run 1:1 on the reference's own data, except
+D5 (the plateau per node).
 <code>carefl_fig5.r</code> sets <code>USE_EXTERNAL_DATA = TRUE</code> and trains on CAREFL's own
 committed 2500 rows (<code>X.csv</code>, x3/x4 sd-standardized by 6.0104/1.9114) with
 <code>val = train</code>. CAREFL's repository also commits the observation <code>xObs.csv</code>,
@@ -1977,7 +2000,7 @@ the same <code>make_model</code> nets as VACA, <code>range_q: 0</code> for the r
 <tr>
 <td>batch, schedule, input scaling, init</td>
 <td>full batch, plateau 0.1/50/1e-7, <code>scale_df</code>, glorot</td>
-<td>same</td>
+<td>same, the plateau per node (D5)</td>
 </tr>
 <tr>
 <td>Bernstein domain</td>
@@ -2004,7 +2027,7 @@ the same <code>make_model</code> nets as VACA, <code>range_q: 0</code> for the r
 <tr>
 <td>Fig. 6 max |x3^cf error|</td>
 <td>Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to ~0.7 at α = −3</td>
-<td>0.066</td>
+<td>0.063</td>
 </tr>
 <tr>
 <td>Fig. 6 max |x4^cf error|</td>
@@ -2014,7 +2037,7 @@ the same <code>make_model</code> nets as VACA, <code>range_q: 0</code> for the r
 <tr>
 <td>held-out CF MAE x3, α = −1.5 / 0 / 1.5</td>
 <td>—</td>
-<td>0.015 / 0.009 / 0.013</td>
+<td>0.014 / 0.008 / 0.013</td>
 </tr>
 <tr>
 <td>held-out CF MAE x4, α = −1.5 / 0 / 1.5</td>
@@ -2092,9 +2115,9 @@ run per variant with the start off and on, seeds unchanged:</p>
 </tr>
 <tr>
 <td>VACA</td>
-<td>within 0.5: 2245 → 168</td>
-<td>val NLL 1.4496 → 1.4348; do(x2 = 0) err 0.019 → 0.101, past the 0.044 bound</td>
-<td>off: the plateau anneal fires elsewhere and freezes a different point</td>
+<td>within 0.5: 2245 → 168 (global plateau)</td>
+<td>per-node plateau (D5): val NLL 1.4347 → 1.4347; do(x2) err 0.080 / 0.068 / 0.092 → 0.094 / 0.079 / 0.102</td>
+<td>off: no gain, slightly worse at every do point</td>
 </tr>
 <tr>
 <td>CAREFL</td>
@@ -2111,7 +2134,56 @@ changes. Of the five such cases, two switch the start on and three leave it
 off. The pinned ground truth of the four variants that switched on is
 unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
-listed for the next deliberate re-pin.</p>
+listed for the next deliberate re-pin. The per-node shuffle seeds add one:
+the <code>triangle-linear-cs</code> do(x1) bound is 7.4× its measurement of 0.034.</p>
+<h2 id="d5-the-plateau-rule-per-node">D5: the plateau rule per node<a class="headerlink" href="#d5-the-plateau-rule-per-node" title="Permanent link">&para;</a></h2>
+<p>The reference reduces the learning rate of one optimizer when the summed
+validation NLL stops improving. Here every node fits on its own, so no summed
+NLL exists during a fit. Each node runs the same rule on its own validation
+NLL, with its own optimizer. The rule and its constants are unchanged.</p>
+<p>The table gives the VACA do(x2) errors at a = −3 / −1 / 0 and the x3
+validation NLL, one run per init seed on the same data.</p>
+<table>
+<thead>
+<tr>
+<th>init seed</th>
+<th>per node (here)</th>
+<th>global (reference)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0.038 / 0.047 / 0.074, 1.4344</td>
+<td>0.331 / 0.051 / 0.037, 1.4514</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0.038 / 0.032 / 0.076, 1.4351</td>
+<td>0.213 / 0.044 / 0.041, 1.4476</td>
+</tr>
+<tr>
+<td>3</td>
+<td>0.070 / 0.005 / 0.039, 1.4345</td>
+<td>0.221 / 0.066 / 0.048, 1.4481</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.012 / 0.037 / 0.072, 1.4345</td>
+<td>0.317 / 0.053 / 0.098, 1.4541</td>
+</tr>
+<tr>
+<td>7 (config)</td>
+<td>0.080 / 0.068 / 0.092, 1.4347</td>
+<td>0.096 / 0.080 / 0.018, 1.4495</td>
+</tr>
+</tbody>
+</table>
+<p>The per-node rule gives a lower x3 validation NLL on every seed. Its error at
+the off-manifold point do(x2 = −3) is smaller on every seed, and much smaller
+on seeds 1 to 4. At do(x2 = 0) it is worse on three of the five seeds, and
+seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation
+NLL, and all its bounds hold.</p>
 <h2 id="runtime-and-the-ci-deviations">Runtime and the CI deviations<a class="headerlink" href="#runtime-and-the-ci-deviations" title="Permanent link">&para;</a></h2>
 <p>The reference protocol's cost is the motivation for every deviation. The
 triangle runs 500 epochs × 1250 steps of batch 32; one epoch takes 3.2 s
@@ -2210,8 +2282,8 @@ triangle job takes 7–11 min instead of 42–69.</p>
   lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
   500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).</li>
-<li><strong>VACA and CAREFL</strong> run their references 1:1; the rejected shortcuts are in
-  their sections.</li>
+<li><strong>VACA and CAREFL</strong> run their references 1:1 except D5 (and D1 for VACA);
+  the rejected shortcuts are in their sections.</li>
 </ul>
 <h2 id="repository-choices-the-paper-does-not-state">Repository choices the paper does not state<a class="headerlink" href="#repository-choices-the-paper-does-not-state" title="Permanent link">&para;</a></h2>
 <ul>

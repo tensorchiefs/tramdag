@@ -41,8 +41,8 @@ import pandas as pd
 import torch
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, OrdinalNode
-from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
+from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
+from tramdag.callbacks import EarlyStopping
 
 # repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
@@ -227,6 +227,27 @@ print(
     f"max |P_flow(low=1) - P_glm(low=1)| over {len(bw)} rows: "
     f"{np.abs(p_flow - p_classical).max():.2e}"
 )
+
+# %% [markdown]
+# **The same regression without the DAG.** The marginals of `age` and `lwt`
+# are a nuisance here, and a `Node` drops them. It is the `low` node alone: its
+# name, its node spec and the parent schema, `{parent: "continuous" | n_levels}`.
+# The frame needs only `low` and its parents. `Node.fit_classical` lands on the
+# same maximum likelihood as the flow, R and `statsmodels`.
+
+# %%
+low = Node(
+    "low", spec_bw["low"], {"age": "continuous", "lwt": "continuous", "smoke": 2}
+)
+low.fit_classical(bw[["age", "lwt", "smoke", "low"]])
+w_low = low.ls_weights()
+ll_low = -low.nll(bw) * len(bw)
+print(f"log-likelihood   node alone {ll_low:.6f}   R glm {R_LOGLIK:.6f}")
+print(
+    f"smoke   node alone {float(w_low['smoke'][1] - w_low['smoke'][0]):.4f}"
+    f"   R glm {R_GLM['smoke']:.4f}"
+)
+assert abs(ll_low - R_LOGLIK) < 1e-4, "the lone node misses the glm likelihood"
 
 # %% [markdown]
 # ## 1. Continuous case
@@ -516,7 +537,7 @@ spec_vaca = {
 }
 
 flow_c = CausalFlowDAG(spec_vaca, seed=0)
-rep = flow_c.fit_classical(df)  # logs iters / NLL / time
+rep = flow_c.fit_classical(df)
 print(f"\n{'':<12}{'fit_classical':>14}{'R Colr':>12}{'|diff|':>10}")
 loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}  # nll() is a mean
 for node, parents in flow_c.ls_coefficients().items():
@@ -579,26 +600,25 @@ print(f"corr(mode of the fitted density, the linear predictor) = {corr:.4f}")
 assert corr > 0.95, f"the density's mode does not track the shifts: r = {corr:.4f}"
 
 # %% [markdown]
-# **Classical against Adam: the same optimum.** A converged Adam fit with no
-# early stopping reaches the same coefficients. The guarantees of the
-# classical fit are determinism and the exact maximum-likelihood estimate, not
-# speed. Which one is faster depends on the model. It wins clearly on
-# ordinal-outcome models, as in Section 2, while on this Bernstein-heavy
-# continuous DAG the flat directions of the basis slow L-BFGS down. Both
-# timings are printed below rather than claimed, because a wall clock is a
-# property of the machine.
+# **Classical against Adam: the same optimum.** An Adam fit that runs until
+# its validation NLL stops improving reaches the same coefficients. The
+# guarantees of the classical fit are determinism and the exact
+# maximum-likelihood estimate, not speed. Which one is faster depends on the
+# model. It wins clearly on ordinal-outcome models, as in Section 2, while on
+# this Bernstein-heavy continuous DAG the flat directions of the basis slow
+# L-BFGS down. Both timings are printed below rather than claimed, because a
+# wall clock is a property of the machine.
 
 # %%
 flow_a = CausalFlowDAG(spec_vaca, seed=0)
 t0 = time.perf_counter()
-sched = PerNodeEarlyStopping(patience=60)
 flow_a.fit(
     df,
     epochs=2000,
     batch_size=4096,
+    learning_rate=1e-1,
     validation_data=df,
-    optimizer=per_node_adam(flow_a, lr=1e-1),
-    callbacks=sched,
+    callbacks=EarlyStopping(patience=60),
 )
 t_adam = time.perf_counter() - t0
 

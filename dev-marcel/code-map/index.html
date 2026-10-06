@@ -675,10 +675,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fittingpy-fitmixin" class="md-nav__link">
+  <a href="#fittingpy-nodefitmixin-and-fitmixin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        fitting.py — FitMixin
+        fitting.py — NodeFitMixin and FitMixin
       
     </span>
   </a>
@@ -1460,10 +1460,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fittingpy-fitmixin" class="md-nav__link">
+  <a href="#fittingpy-nodefitmixin-and-fitmixin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        fitting.py — FitMixin
+        fitting.py — NodeFitMixin and FitMixin
       
     </span>
   </a>
@@ -1700,11 +1700,11 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a></td>
-<td>Joint maximum likelihood by one minibatch Adam loop, with <code>validation_data=</code>/<code>validation_split=</code>, <code>verbose=</code>, <code>optimizer=</code> and <code>callbacks=</code>; <code>history</code> holds <code>train</code>, <code>val</code> and <code>lr</code> per epoch. A second call continues training. The mechanics are in <a href="../fitting/">fitting.md</a>.</td>
+<td>Maximum likelihood node by node, serially or in <code>n_jobs</code> forked processes. The mechanics are in <a href="../fitting/">fitting.md</a>.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a></td>
-<td>Float64 full-batch L-BFGS for all-<code>ls</code> specs; refuses flexible specs.</td>
+<td>Float64 full-batch L-BFGS for all-<code>ls</code> specs, node by node; refuses flexible specs.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="sample" href="../api/flow/#tramdag.flow.CausalFlowDAG.sample"><code>sample()</code></a></td>
@@ -1728,7 +1728,7 @@ the same object, so <code>LS is LinearShift</code>.</p>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="node_log_prob" href="../api/flow/#tramdag.flow.CausalFlowDAG.node_log_prob"><code>node_log_prob()</code></a></td>
-<td>The per-node decomposition everything trains and evaluates through.</td>
+<td>The per-node decomposition the flow's queries evaluate through; training uses <code>Node.row_log_prob</code>.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="varying_coef" href="../api/flow/#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef()</code></a></td>
@@ -1761,15 +1761,15 @@ the same object, so <code>LS is LinearShift</code>.</p>
   
       classmethod
   " href="../api/flow/#tramdag.flow.CausalFlowDAG.load"><code>load()</code></a></td>
-<td>Checkpoints with history and provenance (version, time, device). <code>load</code> requires a complete checkpoint and fails loudly otherwise.</td>
+<td>Checkpoints with the nodes' histories and provenance (version, time, device). <code>load</code> requires a complete checkpoint and fails loudly otherwise.</td>
 </tr>
 <tr>
-<td>(<code>_node</code>, <code>_features</code>, <code>_tensorize</code>, <code>_generator</code>, <code>_dtype</code>, <code>_init_linear</code>)</td>
-<td>Node lookup with one shared error; parent encoding through <code>Node.encode</code> (continuous raw, ordinal one-hot); <code>_tensorize(df, cols=None)</code> for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing.</td>
+<td>(<code>_node</code>, <code>_schema</code>, <code>_features</code>, <code>_tensorize</code>, <code>_generator</code>, <code>_dtype</code>, <code>_init_linear</code>)</td>
+<td>Node lookup with one shared error; each node's parent schema; parent encoding through <code>Node.encode</code> (continuous raw, ordinal one-hot); <code>_tensorize(df, cols=None)</code> for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing.</td>
 </tr>
 <tr>
-<td>(<code>_check_side_columns</code>, <code>_propensity</code>, <code>_side_feats</code>, <code>_query_side_columns</code>, <code>_recenter_vc</code>)</td>
-<td>The generic side-column plumbing (each term names/validates/recomputes its own columns via the <code>ShiftModule</code> hooks) plus the binary propensity fit and the post-fit <code>finalize</code> loop.</td>
+<td>(<code>_calibrate</code>, <code>_propensity</code>, <code>_side_feats</code>, <code>_query_side_columns</code>)</td>
+<td>The flow-wide calibration (every node before the first fit, flags rolled back when a node refuses the frame), the generic side-column plumbing (each term names/validates/recomputes its own columns via the <code>ShiftModule</code> hooks) plus the binary propensity fit.</td>
 </tr>
 </tbody>
 </table>
@@ -1799,7 +1799,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="ShiftModule" href="../api/modules/#tramdag.modules.ShiftModule"><code>ShiftModule</code></a> / <a class="autorefs autorefs-internal" title="InterceptModule" href="../api/modules/#tramdag.modules.InterceptModule"><code>InterceptModule</code></a></td>
-<td>The behavior hooks a term module owns: <code>__init__(term, spec)</code> (builds the net, sets <code>key</code> and <code>parents</code>), <code>shift_value</code>/<code>theta_value</code>, <code>post_init</code>, <code>regularizer</code>, post-fit <code>finalize</code>, <code>score_columns</code>, the side-input contract.</td>
+<td>The behavior hooks a term module owns: <code>__init__(term, schema)</code> (builds the net from the parent schema, sets <code>key</code> and <code>parents</code>), <code>shift_value</code>/<code>theta_value</code>, <code>post_init</code>, <code>regularizer</code>, post-fit <code>finalize</code>, <code>score_columns</code>, the side-input contract.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="LinearShiftModule" href="../api/modules/#tramdag.modules.LinearShiftModule"><code>LinearShiftModule</code></a></td>
@@ -1841,15 +1841,23 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a></td>
-<td>One sub-model per variable: builds its intercept and shift terms through each term's <code>module</code>; <code>theta_shift()</code> sums the terms' <code>shift_value</code>s (plain shifts first, then VC); <code>net_input()</code> feeds every term network, <code>input_transform</code> applied.</td>
+<td>One sub-model per variable, a TRAM regression on its parents, exported as <code>tramdag.Node</code>: built from its name, node spec and parent schema <code>{parent: "continuous" \| n_levels}</code>; builds its intercept and shift terms through each term's <code>module</code>; <code>theta_shift()</code> sums the terms' <code>shift_value</code>s (plain shifts first, then VC); <code>net_input()</code> feeds every term network, <code>input_transform</code> applied.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> <code>.log_prob</code> / <code>.sample</code> / <code>.abduct</code> / <code>.marginal_theta</code> / <code>.encode</code></td>
 <td>The continuous-vs-ordinal branches and the parent encoding (<a href="../architecture/#node-kinds">architecture.md</a>).</td>
 </tr>
+<tr>
+<td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> <code>.features</code> / <code>.tensorize</code> / <code>.calibrate</code> / <code>.ls_weights</code> / <code>.save</code> / <code>.load</code></td>
+<td>The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and <code>calibrated</code> flag, its <code>LS</code> weights, its checkpoint.</td>
+</tr>
+<tr>
+<td>(<code>encode</code>, <code>schema_entry</code>, <code>tensorize</code>, <code>check_columns</code>, <code>check_level_values</code>, <code>write_checkpoint</code>, <code>load_weights</code>)</td>
+<td>Shared by the node and the flow: one column's encoding, a node's schema entry, columns as tensors, the column and level checks, the checkpoint writer and loader.</td>
+</tr>
 </tbody>
 </table>
-<h2 id="fittingpy-fitmixin"><code>fitting.py</code> — <code>FitMixin</code><a class="headerlink" href="#fittingpy-fitmixin" title="Permanent link">&para;</a></h2>
+<h2 id="fittingpy-nodefitmixin-and-fitmixin"><code>fitting.py</code> — <code>NodeFitMixin</code> and <code>FitMixin</code><a class="headerlink" href="#fittingpy-nodefitmixin-and-fitmixin" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -1859,12 +1867,16 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </thead>
 <tbody>
 <tr>
-<td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a> / <a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a></td>
-<td>Defined here once, methods of the flow via the mixin.</td>
+<td><a class="autorefs autorefs-internal" title="fit" href="../api/nodes/#tramdag.nodes.Node.fit"><code>Node.fit()</code></a> / <a class="autorefs autorefs-internal" title="fit_classical" href="../api/nodes/#tramdag.nodes.Node.fit_classical"><code>Node.fit_classical()</code></a> / <a class="autorefs autorefs-internal" title="nll" href="../api/nodes/#tramdag.nodes.Node.nll"><code>Node.nll()</code></a></td>
+<td>One node's Adam loop and L-BFGS fit, mixed into <code>Node</code> via <code>NodeFitMixin</code>; <code>row_log_prob</code>, <code>_recenter</code> (the VC re-centering) and the side-column check live here too.</td>
 </tr>
 <tr>
-<td>(<code>_split_validation</code>, <code>_normalize_callbacks</code>, <code>_check_fit_sizes</code>, <code>_learning_rates</code>, <code>_log_epoch</code>, <code>_fit_epoch</code>, <code>_FnCallback</code>)</td>
-<td>The loop plumbing: Keras-shaped validation split, callback normalization, the validation pass, the rate record, verbose printing.</td>
+<td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a> / <a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a></td>
+<td>The flow's loops over the nodes, methods of the flow via <code>FitMixin</code>; <code>history</code> is the flow's view over the nodes' histories.</td>
+</tr>
+<tr>
+<td>(<code>_split_validation</code>, <code>_normalize_callbacks</code>, <code>_check_fit_sizes</code>, <code>_learning_rates</code>, <code>_log_epoch</code>, <code>_fit_epoch</code>, <code>_FnCallback</code>, <code>_node_seed</code>, <code>_per_node</code>, <code>NodeFitMixin._check_classical</code>, <code>_fit_in_child</code>, <code>_pad_last</code>, <code>FitMixin._check_frames</code>, <code>FitMixin._fit_nodes</code>, <code>FitMixin._with_live_side</code>)</td>
+<td>The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the frame checks before the first fit, the forked worker and the serial loop, the padded history view, the live propensity for the validation NLL.</td>
 </tr>
 </tbody>
 </table>
@@ -1925,15 +1937,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="EarlyStopping" href="../api/callbacks/#tramdag.callbacks.EarlyStopping"><code>EarlyStopping</code></a></td>
-<td>Best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the fit, and <code>min_delta=</code> sets the smallest gain that counts.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../api/callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a></td>
-<td><code>EarlyStopping</code> per node, with the same options: a node freezes after <code>patience</code> flat epochs (<code>None</code> never freezes) and loads its best-epoch weights back (<code>restore_best=False</code> keeps the last ones). Stops the fit once every node froze and records <code>best_epoch</code> and <code>frozen</code> as <code>{node: epoch}</code>.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="per_node_adam" href="../api/callbacks/#tramdag.callbacks.per_node_adam"><code>per_node_adam()</code></a></td>
-<td>Adam with one <code>node</code>-tagged parameter group per node — the optimizer <code>PerNodeEarlyStopping</code> needs.</td>
+<td>The node's best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the node's fit, and <code>min_delta=</code> sets the smallest gain that counts.</td>
 </tr>
 </tbody>
 </table>
@@ -1956,7 +1960,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="plot_training" href="../api/plots/#tramdag.plots.plot_training"><code>plot_training()</code></a></td>
-<td>Summed train/val NLL per epoch, with a dashed mark per <code>frozen=</code> entry.</td>
+<td>Summed train/val NLL per epoch, with a dashed mark per <code>stops=</code> entry.</td>
 </tr>
 <tr>
 <td>(<code>_layout</code>, <code>_term_edges</code>)</td>
@@ -2000,12 +2004,12 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <tr>
 <td>schedules, early stopping</td>
 <td><code>fit(optimizer=, callbacks=)</code></td>
-<td><code>tramdag.callbacks</code> ships <code>EarlyStopping</code>, <code>PerNodeEarlyStopping</code>; anything else is torch's <code>lr_scheduler</code> and a few lines of callback (<a href="../fitting/">fitting.md</a>)</td>
+<td><code>tramdag.callbacks</code> ships <code>EarlyStopping</code>, per node; anything else is torch's <code>lr_scheduler</code> and a few lines of callback (<a href="../fitting/">fitting.md</a>)</td>
 </tr>
 <tr>
 <td>calibrated init</td>
 <td><code>fit(marginal_init=)</code></td>
-<td>False: zuko's zero start; applied only by the fit that calibrates, so a flow that <code>fit_classical</code> calibrated ignores it</td>
+<td>False: zuko's zero start; applied only by the fit that calibrates a node, so a node that <code>fit_classical</code> calibrated ignores it</td>
 </tr>
 <tr>
 <td>VC stage-1 propensities</td>
@@ -2050,7 +2054,7 @@ default you can read at the call site. Nothing numeric is buried.</p>
 <tr>
 <td>shuffling / weight init</td>
 <td><code>fit(seed=)</code> / <code>CausalFlowDAG(seed=)</code></td>
-<td>init happens at construction — the constructor seed is the reproducibility knob</td>
+<td>init happens at construction — the constructor seed is the reproducibility knob; a lone <code>Node</code> takes <code>torch.manual_seed</code> before <code>Node(...)</code></td>
 </tr>
 <tr>
 <td>weight init</td>

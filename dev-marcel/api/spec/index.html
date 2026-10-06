@@ -2325,7 +2325,7 @@ node's formula. A term is plain data — comparable, hashable,
 serializable by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a> — and knows its own spec-level rules
 (<code>check</code>, <code>edge_parents</code>, <code>cells</code>, <code>classical</code>). <code>module</code> is the
 class in <a class="autorefs autorefs-internal" title="tramdag.modules" href="../modules/#tramdag.modules"><code>modules</code></a> that trains it, constructed as
-<code>module(term, spec)</code>; the intercept slot adds <code>n_params</code>.</p>
+<code>module(term, schema)</code>; the intercept slot adds <code>n_params</code>.</p>
 <p>Subclass to add a term: set <code>name</code> (what the <code>term</code> key serializes)
 and <code>module</code> (a <a class="autorefs autorefs-internal" title="ShiftModule" href="../modules/#tramdag.modules.ShiftModule"><code>ShiftModule</code></a> subclass)
 as class attributes, and assign the options — the keyword arguments of
@@ -2509,7 +2509,7 @@ every other built-in term's parents all own their edges.</p>
 <span class="sd">    serializable by [`spec_to_dict`][] — and knows its own spec-level rules</span>
 <span class="sd">    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the</span>
 <span class="sd">    class in [`modules`][tramdag.modules] that trains it, constructed as</span>
-<span class="sd">    ``module(term, spec)``; the intercept slot adds ``n_params``.</span>
+<span class="sd">    ``module(term, schema)``; the intercept slot adds ``n_params``.</span>
 
 <span class="sd">    Subclass to add a term: set ``name`` (what the ``term`` key serializes)</span>
 <span class="sd">    and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)</span>

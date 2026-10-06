@@ -2041,7 +2041,7 @@ The sample has as many rows as <code>df</code>.</p>
 
 
 <a href="#tramdag.plots.plot_training" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2082,16 +2082,16 @@ curves aligned when one <code>fit</code> validated and another did not.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>frozen</code>
+                <code>stops</code>
             </td>
             <td>
                   <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>{node: epoch}</code> of the freezes, each a dashed mark; a
-<a class="autorefs autorefs-internal" title="PerNodeEarlyStopping" href="../callbacks/#tramdag.callbacks.PerNodeEarlyStopping"><code>PerNodeEarlyStopping</code></a>
-records that dict as its <code>frozen</code>. By default no marks.</p>
+                <p><code>{node: epoch}</code> of the per-node stops, each a dashed mark; a
+node's stop epoch is the length of its <code>history["train"]</code>. By
+default no marks.</p>
               </div>
             </td>
             <td>
@@ -2220,7 +2220,7 @@ records that dict as its <code>frozen</code>. By default no marks.</p>
 <span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span>
-<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Draw the summed train and validation NLL per epoch.</span>
 
 <span class="sd">    ``flow.history`` accumulates across ``fit`` calls, so the curves cover</span>
@@ -2232,10 +2232,10 @@ records that dict as its <code>frozen</code>. By default no marks.</p>
 <span class="sd">    ----------</span>
 <span class="sd">    flow : CausalFlowDAG</span>
 <span class="sd">        The fitted flow; ``flow.history`` is read.</span>
-<span class="sd">    frozen : dict[str, int] | None, optional</span>
-<span class="sd">        ``{node: epoch}`` of the freezes, each a dashed mark; a</span>
-<span class="sd">        [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping]</span>
-<span class="sd">        records that dict as its ``frozen``. By default no marks.</span>
+<span class="sd">    stops : dict[str, int] | None, optional</span>
+<span class="sd">        ``{node: epoch}`` of the per-node stops, each a dashed mark; a</span>
+<span class="sd">        node's stop epoch is the length of its ``history["train"]``. By</span>
+<span class="sd">        default no marks.</span>
 <span class="sd">    path : str | Path | None, optional</span>
 <span class="sd">        Save the figure here (150 dpi) after drawing.</span>
 <span class="sd">    title : str | None, optional</span>
@@ -2266,10 +2266,10 @@ records that dict as its <code>frozen</code>. By default no marks.</p>
     <span class="k">if</span> <span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">lo</span> <span class="o">-</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">),</span> <span class="n">hi</span><span class="p">)</span>
     <span class="c1"># after the zoom, so the annotations hang from the visible top</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">frozen</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">stops</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> frozen"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> stopped"</span><span class="p">,</span>
             <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">]),</span>
             <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
             <span class="n">va</span><span class="o">=</span><span class="s2">"top"</span><span class="p">,</span>

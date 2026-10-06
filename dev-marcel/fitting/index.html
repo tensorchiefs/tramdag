@@ -513,6 +513,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#one-node-alone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One node alone
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#path-a-stochastic-optimization-with-fit" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1400,6 +1411,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#one-node-alone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One node alone
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#path-a-stochastic-optimization-with-fit" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1482,9 +1504,9 @@
 
 <h1 id="fitting-a-tram-dag">Fitting a TRAM-DAG<a class="headerlink" href="#fitting-a-tram-dag" title="Permanent link">&para;</a></h1>
 <p>This page is the reference for training a
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a>: the likelihood, the two fitting
-paths <code>fit</code> and <code>fit_classical</code>, and the hooks of the Adam path. Every recipe
-named here runs end to end in
+<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a> and its nodes. It covers the
+likelihood, the two fitting paths <code>fit</code> and <code>fit_classical</code>, and the hooks of
+the Adam path. Every recipe named here runs end to end in
 <a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>,
 which is the one place for the code and closes with a runtime comparison of
 the recipes on one workload.</p>
@@ -1510,25 +1532,51 @@ triangular, and the joint log-likelihood decomposes per node,
 <li><strong>Ordinal node.</strong> The ordered-logit head of <a href="../model/#ordinal-nodes">model.md</a>,
   evaluated as the log of the cutpoint-interval probability in log space.</li>
 </ul>
-<p>The training loss is the summed per-node mean negative log-likelihood over the
-batch, plus the <code>VC</code> penalty. <code>log_prob</code> returns the per-row joint instead.</p>
-<p>Because parents enter as data, the per-node gradients are independent, so a
-joint fit of the summed loss equals a separate fit of each node. That is what
-licenses per-node learning rates, freezing through a callback, and the
-all-<code>LS</code> classical fit.</p>
+<p>Because parents enter as data, the per-node terms have disjoint parameters,
+and maximizing each term maximizes the sum. So every node fits on
+its own: <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/fitting.py"><code>Node.fit</code></a> minimizes the node's mean
+negative log-likelihood over the batch, plus the node's <code>VC</code> penalty.
+<code>CausalFlowDAG.fit</code> runs <code>Node.fit</code> for each node. <code>log_prob</code> returns the
+per-row joint.</p>
+<h2 id="one-node-alone">One node alone<a class="headerlink" href="#one-node-alone" title="Permanent link">&para;</a></h2>
+<p>A <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/nodes.py"><code>Node</code></a> is a TRAM regression of one variable on
+its parents, and it needs no DAG. It takes its name, its node spec and a
+parent schema, <code>{parent: "continuous" | n_levels}</code>.
+<a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a> fits
+one with Adam, and
+<a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>
+fits one classically against R <code>glm</code>. The frame needs the node's column, its
+parents' columns and its side columns; the fit ignores other columns. <code>fit</code>, <code>fit_classical</code>, <code>nll</code>, <code>save</code> and
+<code>load</code> work as on the flow, for one node. <code>nll</code> gives one float, and the
+<code>fit_classical</code> report is the per-node report. <code>fit</code> takes an optimizer
+instance or a factory <code>f(node)</code>, but no <code>n_jobs</code>. A centered <code>VC</code> needs its
+propensity column in every frame, because only the flow can compute it live
+from the treatment node. A flow derives each node's shuffling seed from
+<code>fit(seed=)</code> and the node's index. So <code>Node.fit(seed=)</code> alone does not
+repeat a node of a seeded flow fit. A node built alone draws its initial
+weights from torch's global RNG; call <code>torch.manual_seed</code> first for a
+reproducible start. It always uses torch's default init; <code>init=</code> exists on
+<code>CausalFlowDAG</code> only.</p>
 <h2 id="path-a-stochastic-optimization-with-fit">Path A: stochastic optimization with <code>fit</code><a class="headerlink" href="#path-a-stochastic-optimization-with-fit" title="Permanent link">&para;</a></h2>
 <p><code>fit</code> is the general-purpose trainer, and the only one for a model with a
-<code>CS</code>, <code>CI</code> or <code>VC</code> term. It is one minibatch Adam loop that keeps the final
-weights.</p>
+<code>CS</code>, <code>CI</code> or <code>VC</code> term. Per node, it is one minibatch Adam loop that keeps
+the final weights.</p>
 <ul>
-<li><strong>Optimizer.</strong> One optimizer over all parameters, <code>Adam(lr=learning_rate)</code>
-  by default; <code>optimizer=</code> takes any <code>torch.optim.Optimizer</code>, and
-  <code>per_node_adam</code> builds per-node parameter groups.</li>
-<li><strong>Minibatches.</strong> A fresh <code>torch.randperm</code> shuffle each epoch, seeded by
-  <code>seed=</code>, which seeds the shuffle only and not the weight init.</li>
+<li><strong>Nodes.</strong> <code>CausalFlowDAG.fit</code> fits the nodes in topological order.
+  <code>n_jobs=N</code> forks <code>N</code> worker processes (Linux and macOS), one task per node.
+  A worker runs torch on one thread, so it gives the weights of a serial fit
+  on one thread. <code>epochs=</code>, <code>learning_rate=</code> and <code>callbacks=</code> take one value
+  for all nodes or a function of the node name.</li>
+<li><strong>Optimizer.</strong> One optimizer per node, <code>Adam(lr=learning_rate)</code> by default.
+  <code>optimizer=</code> takes a factory <code>f(node)</code>, for example to give the networks
+  weight decay in their own parameter group. <code>Node.fit</code> also takes an
+  optimizer instance.</li>
+<li><strong>Minibatches.</strong> A fresh shuffle each epoch. <code>seed=</code> seeds the shuffle
+  only, not the weight init; each node gets its own seed derived from
+  <code>(seed, node index)</code>.</li>
 <li><strong>Epochs.</strong> <code>epochs</code> has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.</li>
-<li><strong>Calibration.</strong> The first <code>fit</code> or <code>fit_classical</code> calibrates the flow on
+<li><strong>Calibration.</strong> The first <code>fit</code> or <code>fit_classical</code> calibrates each node on
   <code>train_df</code>. Every term freezes its data-dependent state there, the
   intercept its <code>range_q</code> quantiles and each <code>input_transform=</code> its
   statistics. A loaded checkpoint is never recalibrated.</li>
@@ -1537,30 +1585,35 @@ weights.</p>
   each Bernstein or ordinal simple intercept at the empirical distribution of
   its column instead. At shift zero the untrained model then already fits
   each marginal, and the fit needs fewer epochs. Only the fit that
-  calibrates the flow applies it, so a flow that <code>fit_classical</code> calibrated
+  calibrates the node applies it, so a node that <code>fit_classical</code> calibrated
   ignores the flag. <a href="#the-marginal-start">The marginal start</a> says how, and
   when the endpoint changes.</li>
 <li><strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
   a float and uses the last fraction of <code>train_df</code> unshuffled, so shuffle the
-  frame first if its row order means anything; only the head calibrates. With
-  either, <code>fit</code> writes the per-node validation NLL after
-  every epoch into <code>flow.history["val"]</code>.</li>
-<li><strong>Logging.</strong> <code>flow.history["lr"]</code> records the optimizer's rates per epoch,
-  one dict keyed by a group's <code>node</code> tag or else its index: <code>{0: lr}</code> for the
-  default Adam, <code>{node: lr}</code> under <code>per_node_adam</code>. <code>verbose=N</code> prints every
-  Nth epoch and the last one; the default 0 is silent.</li>
-<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks are
-  <code>on_fit_begin</code>, <code>on_epoch_end</code> and <code>on_fit_end</code>; a bare callable is an
-  <code>on_epoch_end</code> hook <code>cb(flow, epoch, optimizer)</code>, and any <code>True</code> return
-  stops the fit. <code>on_fit_end</code> runs before the <code>VC</code> re-centering. The shipped
-  callbacks are <code>EarlyStopping</code> and <code>PerNodeEarlyStopping</code>. <code>EarlyStopping</code>
-  restores the best-validation weights and takes an optional <code>patience</code> and
-  <code>min_delta</code>. <code>PerNodeEarlyStopping</code> with <code>per_node_adam</code> does the same per
-  node: a node freezes after <code>patience</code> flat epochs and loads its best
-  weights back. <code>fit</code> refuses two callbacks that restore weights. Both read
-  <code>history["val"]</code>.</li>
+  frame first if its row order means anything; only the head calibrates. The
+  flow splits once, so all nodes see the same rows. With either, <code>fit</code> writes
+  the node's validation NLL after every epoch into <code>node.history["val"]</code>.</li>
+<li><strong>History.</strong> <code>node.history</code> holds <code>"train"</code>, <code>"val"</code>, <code>"val_epoch"</code> and
+  <code>"lr"</code>, the optimizer's rates per epoch as <code>{group index: lr}</code>.
+  <code>flow.history</code> is a view with one <code>{node: value}</code> dict per epoch and key,
+  plus the <code>val_epoch</code> list. A node that stopped earlier repeats its last
+  entry. <code>verbose=N</code> prints every Nth epoch and the last one, per node; the
+  default 0 is silent.</li>
+<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks get the
+  node: <code>on_fit_begin(node, optimizer)</code>, <code>on_epoch_end(node, epoch, optimizer)</code>
+  and <code>on_fit_end(node, optimizer)</code>. In <code>Node.fit</code> a bare callable is an
+  <code>on_epoch_end</code> hook; any <code>True</code> return stops that node's fit. <code>on_fit_end</code>
+  runs before the <code>VC</code> re-centering. On the flow, a bare callable is a
+  function of the node name that gives that node its callbacks. So on the
+  flow, a bare hook goes into a list. The shipped callback is
+  <code>EarlyStopping</code>: it restores the node's best-validation weights and takes an
+  optional <code>patience</code> and <code>min_delta</code>. It reads <code>node.history["val"]</code>. <code>fit</code>
+  refuses two callbacks that restore weights.</li>
 <li><strong>Centered <code>VC</code> propensities</strong> ride the training frame as the column that
-  <code>VC(propensity=)</code> names, and split and minibatch with it.
+  <code>VC(propensity=)</code> names, and split and minibatch with it. On the flow, the
+  validation NLL uses the live propensity of the fitted treatment node, as
+  every query does. <code>Node.fit</code> alone reads the column from the validation
+  frame.
   <a href="../varying-coefficients/">varying-coefficients.md</a> is the guide.</li>
 </ul>
 <h3 id="the-marginal-start">The marginal start<a class="headerlink" href="#the-marginal-start" title="Permanent link">&para;</a></h3>
@@ -1684,22 +1737,23 @@ and need the best-validation weights to recover the causal effect.</p>
 </tr>
 <tr>
 <td><code>EarlyStopping(patience=)</code></td>
-<td>also stop once the best epoch is that old</td>
+<td>also stop each node once its best epoch is that old</td>
 </tr>
 <tr>
-<td>a global plateau <code>Callback</code> around torch's <code>ReduceLROnPlateau</code></td>
-<td>one shared decaying rate</td>
-</tr>
-<tr>
-<td><code>PerNodeEarlyStopping(patience=)</code> with <code>per_node_adam</code></td>
-<td>nodes converge at different speeds; self-stopping</td>
+<td>a plateau <code>Callback</code> around torch's <code>ReduceLROnPlateau</code></td>
+<td>a decaying rate per node</td>
 </tr>
 </tbody>
 </table>
-<p>Two details are easy to get wrong.</p>
+<p>Three details are easy to get wrong.</p>
 <ul>
 <li>A second <code>fit</code> call continues training and <code>history</code> accumulates. That is
   what makes a multi-phase schedule a loop of <code>fit</code> calls.</li>
+<li>A callback instance passed to the flow serves every node in turn. A shipped
+  callback resets at each node's fit begin, so its attributes describe the
+  last node only. Use a function of the node name to keep one instance per
+  node. Under <code>n_jobs</code> the state of every callback stays in the workers; read
+  <code>node.history</code> instead.</li>
 <li>A post-fit <code>load_state_dict</code> skips the <code>VC</code> re-centering. Restore weights
   from <code>on_fit_end</code> instead, as <code>EarlyStopping</code> does.</li>
 </ul>
@@ -1711,14 +1765,18 @@ node-conditional is an ordered logit or a Colr model. It raises on any <code>CS<
   minibatches, schedule or early stopping, so the same init gives
   bit-identical results. A converged fit matches <code>statsmodels</code> and R to about
   four decimals, where a converged Adam <code>fit</code> gets to about 1e-3.</li>
-<li><strong>Budget.</strong> <code>max_iter=5000</code> is a default, not a promise. Torch ends the run
-  when the NLL or the parameters move by less than 1e-9. A model with several
-  nodes can need thousands of iterations to stop on that rule. A report that
-  is not <code>converged</code> issues a <code>UserWarning</code>.</li>
-<li><strong>The report.</strong> <code>stop_reason</code> is <code>"tolerance"</code>, <code>"max_iter"</code> or <code>"max_eval"</code>
-  (torch's budget of closure calls, <code>max_iter * 5 // 4</code>). <code>converged</code> needs
-  both: the run stopped on its own AND <code>grad_norm</code> is at most
-  <code>tramdag.fitting.GRAD_TOL</code> (1e-2). Both conditions are necessary, because
+<li><strong>Budget.</strong> <code>max_iter=5000</code> per node is a default, not a promise. Torch ends
+  the run when the NLL or the parameters move by less than 1e-9. A node with
+  many parameters can need thousands of iterations to stop on that rule. A
+  report that is not <code>converged</code> issues a <code>UserWarning</code>.</li>
+<li><strong>Per node.</strong> The flow's <code>fit_classical</code> runs <code>Node.fit_classical</code> for each
+  node. Its report holds <code>converged</code> (every node converged), the summed
+  <code>final_nll</code> and <code>seconds</code>. It also holds the <code>coefficients</code> as
+  <code>{node: {parent: array}}</code> and <code>nodes</code>, the per-node reports.</li>
+<li><strong>The report.</strong> Per node, <code>stop_reason</code> is <code>"tolerance"</code>, <code>"max_iter"</code> or
+  <code>"max_eval"</code> (torch's budget of closure calls, <code>max_iter * 5 // 4</code>).
+  <code>converged</code> needs both: the run stopped on its own AND <code>grad_norm</code> is at
+  most <code>tramdag.fitting.GRAD_TOL</code> (1e-2). Both conditions are necessary, because
   the same tolerance fires when the line search stalls far from the optimum.
   Such a run stops on "tolerance" with a large gradient norm and is not
   converged.</li>
@@ -1736,7 +1794,7 @@ node-conditional is an ordered logit or a Colr model. It raises on any <code>CS<
 solution is the optimum and a warm start; the <code>VC</code> guide uses it for <code>beta0</code>.</p>
 <h2 id="memory-and-disk">Memory and disk<a class="headerlink" href="#memory-and-disk" title="Permanent link">&para;</a></h2>
 <p>Neither path writes to disk. The parameters, the optimizer state and the
-<code>history</code> dict live in RAM, and whatever a callback records is yours. The
+<code>history</code> dicts live in RAM, and whatever a callback records is yours. The
 only disk I/O is the explicit <code>save()</code> and <code>load()</code>.</p>
 
 

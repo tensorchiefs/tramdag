@@ -56,7 +56,7 @@ import pandas as pd
 import torch
 
 from tramdag import CausalFlowDAG, ContinuousNode, I, plot_dag
-from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
+from tramdag.callbacks import EarlyStopping
 from tramdag.plots import plot_marginals, plot_training
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -146,12 +146,11 @@ plt.show()
 # [`notebooks/classical_fit_tram_dag.py`](classical_fit_tram_dag.py) writes the
 # same DAG with interpretable terms.
 #
-# One Adam fits every node at once ([`docs/fitting.md`](../docs/fitting.md)).
+# Each node fits on its own Adam loop ([`docs/fitting.md`](../docs/fitting.md)).
 # `validation_data=` scores the validation rows per epoch, `verbose=` prints
-# progress, and the strategy attaches through `callbacks=`: `per_node_adam`
-# with `PerNodeEarlyStopping` freezes each node once its own validation score
-# has plateaued and loads its best weights back, so `epochs=200` is a ceiling
-# and not a budget.
+# progress, and the strategy attaches through `callbacks=`: `EarlyStopping`
+# stops each node once its own validation score has plateaued and loads its
+# best weights back, so `epochs=200` is a ceiling and not a budget.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
@@ -168,7 +167,6 @@ plt.show()
 # %%
 torch.manual_seed(0)
 flow = CausalFlowDAG(spec, device=DEVICE)
-sched = PerNodeEarlyStopping(patience=40)
 
 t0 = time.perf_counter()
 flow.fit(
@@ -177,23 +175,23 @@ flow.fit(
     batch_size=2048,
     validation_data=val,
     verbose=50,
-    optimizer=per_node_adam(flow, lr=1e-1),
-    callbacks=sched,
+    learning_rate=1e-1,
+    callbacks=EarlyStopping(patience=40),
 )
 t_fit = time.perf_counter() - t0
-epochs_used = len(flow.history["val"])
-print(f"\nfitted on {DEVICE} in {t_fit:.1f}s, {epochs_used} epochs")
-print(f"each node froze at epoch: {dict(sorted(sched.frozen.items()))}")
+stopped = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
+print(f"\nfitted on {DEVICE} in {t_fit:.1f}s")
+print(f"each node stopped at epoch: {stopped}")
 
-# The ceiling must not bind. If it does, the per-node stop never finished and
-# the numbers below describe an unconverged fit.
-assert epochs_used < 200, (
-    "the fit used all 200 epochs, so no node froze and the per-node stop did "
-    "not self-stop; raise the ceiling before trusting anything below"
+# The ceiling must not bind. If it does, a node never stopped and the
+# numbers below describe an unconverged fit.
+assert max(stopped.values()) < 200, (
+    "a node used all 200 epochs, so its early stop never triggered; raise the "
+    "ceiling before trusting anything below"
 )
 
 # %%
-plot_training(flow, frozen=sched.frozen)
+plot_training(flow, stops=stopped)
 plt.show()
 
 # %% [markdown]
@@ -247,8 +245,8 @@ axes[0].legend()
 fig.tight_layout()
 plt.show()
 
-# The bound is about three times the largest error measured while writing this
-# notebook (0.048), which leaves room for another machine and another draw.
+# The bound is almost four times the largest measured error (0.040), which
+# leaves room for another machine and another draw.
 assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %% [markdown]

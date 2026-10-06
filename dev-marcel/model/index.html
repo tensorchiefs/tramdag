@@ -1487,6 +1487,9 @@ bracketed bisection solves it, and sampling is the more expensive direction.</p>
 <p>Together the <span class="arithmatex">\(h\)</span>'s form one triangular flow. Each variable depends only on its
 causal parents <span class="arithmatex">\(\mathrm{pa}(x_i)\)</span>, which is a subset of its predecessors. The
 Jacobian sparsity of the flow is therefore the DAG itself.</p>
+<p>Each <span class="arithmatex">\(h(x_i \mid \mathrm{pa})\)</span> is one transformation model of <span class="arithmatex">\(x_i\)</span> given its
+parents. In code it is a <code>Node</code>, which also fits on its own, without the DAG
+(<a href="../fitting/#one-node-alone">fitting.md</a>).</p>
 <p>The latents <span class="arithmatex">\(u_1,\dots,u_p\)</span> are standard logistic. That choice is what makes
 the fitted parameters interpretable, because a shift on the latent scale is
 then a log-odds ratio.</p>

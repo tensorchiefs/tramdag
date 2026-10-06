@@ -54,7 +54,8 @@ instance or a factory, but no `n_jobs`. A centered `VC` needs its propensity
 column in every frame, because only the flow can compute it live from the
 treatment node. A flow derives each node's shuffling seed from its own seed and
 the node's position. So `Node.fit(seed=)` alone does not repeat a node of a
-seeded flow fit.
+seeded flow fit. A node built alone draws its initial weights from torch's
+global RNG; call `torch.manual_seed` first for a reproducible start.
 
 ## Path A: stochastic optimization with `fit`
 
@@ -95,7 +96,8 @@ the final weights.
   the node's validation NLL after every epoch into `node.history["val"]`.
 - **History.** `node.history` holds `"train"`, `"val"`, `"val_epoch"` and
   `"lr"`, the optimizer's rates per epoch as `{group index: lr}`.
-  `flow.history` is a view with one `{node: value}` dict per epoch; a node
+  `flow.history` is a view with one `{node: value}` dict per epoch and key,
+  plus the `val_epoch` list; a node
   that stopped earlier repeats its last entry. `verbose=N` prints every Nth
   epoch and the last one, per node; the default 0 is silent.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the

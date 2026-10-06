@@ -186,8 +186,8 @@ def _check_optimizer_not_a_class(optimizer) -> None:
 def _per_node(value, name: str):
     """Give a per-node argument: ``value(name)`` for a function, else ``value``.
 
-    A class is not a factory: ``callbacks=EarlyStopping`` reaches the node,
-    which names the missing parentheses.
+    A class is not a factory: ``callbacks=EarlyStopping`` reaches
+    ``_normalize_callbacks``, which names the missing parentheses.
     """
     return value(name) if callable(value) and not isinstance(value, type) else value
 
@@ -319,8 +319,8 @@ class NodeFitMixin:
         validation_data : pd.DataFrame | None, optional
             Validation rows, with the same columns as ``train_df``. When given
             (or split off), the validation NLL is appended to
-            ``node.history["val"]`` after every epoch; the shipped callbacks
-            read it there.
+            ``node.history["val"]`` after every epoch; ``EarlyStopping``
+            reads it there.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
@@ -331,7 +331,8 @@ class NodeFitMixin:
             validation NLL when validation is configured.
         seed : int | None, optional
             Seeds the minibatch shuffling with a private generator. Weight
-            initialization is seeded at construction.
+            initialization draws from torch's global RNG at construction;
+            ``CausalFlowDAG(seed=)`` seeds it for a flow.
         marginal_init : bool, optional
             Start a simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates the node.
@@ -362,7 +363,8 @@ class NodeFitMixin:
             If a frame lacks a column the node reads.
         TypeError
             If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
-            or is a ``Callback`` class instead of an instance.
+            or is a ``Callback`` class instead of an instance, or
+            ``optimizer`` is an optimizer class.
         """
         _check_fit_sizes(epochs, batch_size, verbose)
         _check_optimizer_not_a_class(optimizer)
@@ -580,7 +582,7 @@ class FitMixin:
 
     @property
     def history(self) -> dict[str, list[dict]]:
-        """The nodes' histories, one ``{node: value}`` dict per epoch.
+        """The nodes' histories, one ``{node: value}`` dict per epoch per key.
 
         Nodes stop at different epochs. A node that stopped earlier repeats
         its last entry, so a summed curve stays defined. ``"val_epoch"`` is
@@ -671,7 +673,8 @@ class FitMixin:
         Raises
         ------
         TypeError
-            If ``optimizer`` is an optimizer instance instead of a factory.
+            If ``optimizer`` is an optimizer instance or class instead of a
+            factory, or a node's ``callbacks`` entry is not a callback.
         KeyError
             If a frame lacks a node column.
         ValueError

@@ -22,7 +22,7 @@
 # range_q: 0.05 in the spec — a DELIBERATE deviation from scale_df's min-max
 # Bernstein domain, chosen under the global plateau at init seed 7: the
 # reference's min-max domain (range_q 0) scored do(x2) errors
-# 0.289 / 0.040 / 0.067 against the quantile domain's 0.097 / 0.088 / 0.018.
+# 0.289 / 0.040 / 0.067 against the quantile domain's 0.096 / 0.080 / 0.018.
 # Under the per-node plateau (D5) min-max scores 0.072 / 0.001 / 0.049
 # against 0.080 / 0.068 / 0.092, so D1 is open for revision
 # (docs/paper-replication.md). CAREFL, same nets and scaling, uses range_q 0

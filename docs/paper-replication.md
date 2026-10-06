@@ -128,7 +128,7 @@ tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau: at seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022. Under the per-node plateau (D5) the order turns: min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, measures the opposite way |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau: at seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns: min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, measures the opposite way |
 | n_compare | — | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -172,7 +172,8 @@ perfect.
 
 ## CAREFL benchmark (`carefl.py`): paper Sec. 5.3, App. C.2
 
-This benchmark is the reference run 1:1 on the reference's own data.
+This benchmark is the reference run 1:1 on the reference's own data, except
+D5 (the plateau per node).
 `carefl_fig5.r` sets `USE_EXTERNAL_DATA = TRUE` and trains on CAREFL's own
 committed 2500 rows (`X.csv`, x3/x4 sd-standardized by 6.0104/1.9114) with
 `val = train`. CAREFL's repository also commits the observation `xObs.csv`,
@@ -273,10 +274,11 @@ run per init seed, the same data:
 | 4 | 0.012 / 0.037 / 0.072, 1.4345 | 0.317 / 0.053 / 0.098, 1.4541 |
 | 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | 0.096 / 0.080 / 0.018, 1.4495 |
 
-The per-node rule gives a lower x3 validation NLL on every seed and a much
-smaller error at the off-manifold point do(x2 = −3). At do(x2 = 0) it is
-worse on four of the five seeds, and seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation NLL, and all its
-bounds hold.
+The per-node rule gives a lower x3 validation NLL on every seed. Its error at
+the off-manifold point do(x2 = −3) is smaller on every seed, and much smaller
+on seeds 1 to 4. At do(x2 = 0) it is worse on three of the five seeds, and
+seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation
+NLL, and all its bounds hold.
 
 ## Runtime and the CI deviations
 
@@ -319,7 +321,7 @@ The epoch floors, measured at that batch and rate:
   lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
   500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).
-- **VACA and CAREFL** run their references 1:1; the rejected shortcuts are in
+- **VACA and CAREFL** run their references 1:1 except D5; the rejected shortcuts are in
   their sections.
 
 ## Repository choices the paper does not state

@@ -81,7 +81,7 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 # ## 1. What `fit` records without any callback
 #
 # Pass `validation_data=` and `fit` scores the validation set once per epoch,
-# centrally. Every shipped callback reads that one computation rather than
+# centrally. `EarlyStopping` reads that one computation rather than
 # repeating it. Four keys appear in `flow.history`:
 #
 # - `train`, one dict of per-node negative log-likelihood per epoch,

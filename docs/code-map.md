@@ -102,9 +102,9 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`Node.fit()`][tramdag.nodes.Node.fit] / [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] / [`Node.nll()`][tramdag.nodes.Node.nll] | One node's Adam loop and L-BFGS fit, mixed into `Node` via `NodeFitMixin`; `row_log_prob`, `finalize` (the VC re-centering) and the side-column check live here too. |
+| [`Node.fit()`][tramdag.nodes.Node.fit] / [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] / [`Node.nll()`][tramdag.nodes.Node.nll] | One node's Adam loop and L-BFGS fit, mixed into `Node` via `NodeFitMixin`; `row_log_prob`, `_recenter` (the VC re-centering) and the side-column check live here too. |
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | The flow's loops over the nodes, methods of the flow via `FitMixin`; `history` is the flow's view over the nodes' histories. |
-| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `_fit_in_child`, `_pad_last`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the forked worker, the padded history view. |
+| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `_check_optimizer_not_a_class`, `_fit_in_child`, `_pad_last`, `FitMixin._fit_nodes`, `FitMixin._with_live_side`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the optimizer-class refusal, the forked worker and the serial loop, the padded history view, the live propensity for a validation frame. |
 
 ## `readouts.py` — `ReadoutsMixin`
 

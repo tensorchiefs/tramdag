@@ -24,6 +24,7 @@ from .nodes import (
     check_columns,
     check_level_values,
     load_weights,
+    schema_entry,
     tensorize,
     write_checkpoint,
 )
@@ -108,11 +109,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     def _schema(self, name: str) -> dict[str, str | int]:
         """Give a node's parent schema, ``{parent: "continuous" | n_levels}``."""
-        spec = self.spec
-        return {
-            p: "continuous" if spec[p].kind == "continuous" else spec[p].levels
-            for p in node_parents(spec[name])
-        }
+        return {p: schema_entry(self.spec[p]) for p in node_parents(self.spec[name])}
 
     def _apply_init(self, init: str) -> None:
         """Re-initialize every linear layer, if asked; VC heads re-zero their output."""

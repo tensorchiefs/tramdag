@@ -49,6 +49,11 @@ def encode(values: Tensor, kind: str | int) -> Tensor:
     return one_hot.to(values.dtype)
 
 
+def schema_entry(node_spec: NodeSpec) -> str | int:
+    """Give a node's schema entry: ``"continuous"`` or its level count."""
+    return "continuous" if node_spec.kind == "continuous" else node_spec.levels
+
+
 def check_columns(df: pd.DataFrame, cols) -> None:
     """Name the columns ``df`` lacks, before any tensor op would."""
     missing = [c for c in cols if c not in df.columns]
@@ -180,12 +185,11 @@ class Node(NodeFitMixin, nn.Module):
                 node_spec.transform, **node_spec.transform_kwargs
             )
             n_params = self.ut.n_params
-            self.encoding = "continuous"  # this node's own schema entry
         else:
             self.ut = None
             self.levels = node_spec.levels
             n_params = node_spec.levels - 1
-            self.encoding = node_spec.levels
+        self.encoding = schema_entry(node_spec)  # this node's own schema entry
         # the intercept slot: the free theta_0, one joint net, or one net per
         # parent summed in coefficient space — `intercept_module` picks
         self.intercept = terms[0].module(terms[0], self.schema, n_params)

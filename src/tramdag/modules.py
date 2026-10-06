@@ -544,8 +544,8 @@ class VaryingCoefficientModule(ShiftModule):
     r"""``VC``: $\beta(\text{mod})\, x_t$ with $\beta(x) = \beta_0 + b_\Theta(x)$.
 
     The weights of $b_\Theta$ carry the L2 ``penalty`` (``l2``; ``fit`` adds
-    ``penalty * l2() / n`` to the node's mean NLL, so ``penalty * l2()`` on the
-    summed NLL); $\beta_0$ is not penalized. The
+    ``penalty * l2() / n`` to the node's mean NLL, which equals adding
+    ``penalty * l2()`` to the summed NLL); $\beta_0$ is not penalized. The
     output layer starts at zero, so $\beta(x) = \beta_0$ at construction. With
     ``n_features == 0`` there is no network and the term is ``LS(t)``. After
     the fit, ``recenter`` moves the training-mean of ``b_theta`` into

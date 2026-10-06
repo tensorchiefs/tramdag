@@ -53,7 +53,7 @@ variants:
       batch_size: 2500        # = n_train: one full-batch step per epoch
       seed: 0                 # full batch: the shuffle seed has no effect
     learning_rate: 0.001
-    schedule: plateau         # update_learning_rate, the reference rule
+    schedule: plateau         # update_learning_rate, per node (D5)
     plateau_patience: 50
     plateau_factor: 0.1
     plateau_min_lr: 1.0e-7
@@ -69,7 +69,7 @@ variants:
         caption: The model as declared, one edge per term, labelled by the term that owns it.
       training.png:
         title: 'VACA triangle: training'
-        caption: Summed train and validation NLL per epoch under the reference's plateau rule.
+        caption: Summed train and validation NLL per epoch under the reference's plateau rule, applied per node (D5).
       marginals.png:
         title: 'VACA triangle: observed vs sampled marginals'
         caption: The validation rows against a sample of the fitted flow, one panel per node.

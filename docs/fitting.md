@@ -1,8 +1,9 @@
 # Fitting a TRAM-DAG
 
 This page is the reference for training a
-[`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes: the likelihood, the
-two fitting paths `fit` and `fit_classical`, and the hooks of the Adam path. Every recipe
+[`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes. It covers the
+likelihood, the two fitting paths `fit` and `fit_classical`, and the hooks of
+the Adam path. Every recipe
 named here runs end to end in
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py),
 which is the one place for the code and closes with a runtime comparison of
@@ -55,7 +56,8 @@ column in every frame, because only the flow can compute it live from the
 treatment node. A flow derives each node's shuffling seed from `fit(seed=)`
 and the node's position. So `Node.fit(seed=)` alone does not repeat a node of a
 seeded flow fit. A node built alone draws its initial weights from torch's
-global RNG; call `torch.manual_seed` first for a reproducible start.
+global RNG; call `torch.manual_seed` first for a reproducible start. It always
+uses torch's default init; `init=` exists on `CausalFlowDAG` only.
 
 ## Path A: stochastic optimization with `fit`
 
@@ -97,8 +99,8 @@ the final weights.
 - **History.** `node.history` holds `"train"`, `"val"`, `"val_epoch"` and
   `"lr"`, the optimizer's rates per epoch as `{group index: lr}`.
   `flow.history` is a view with one `{node: value}` dict per epoch and key,
-  plus the `val_epoch` list; a node
-  that stopped earlier repeats its last entry. `verbose=N` prints every Nth
+  plus the `val_epoch` list. A node that stopped earlier repeats its last
+  entry. `verbose=N` prints every Nth
   epoch and the last one, per node; the default 0 is silent.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
   node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
@@ -240,7 +242,7 @@ Three details are easy to get wrong.
   what makes a multi-phase schedule a loop of `fit` calls.
 - A callback instance passed to the flow serves every node in turn. A shipped
   callback resets at each node's fit begin, so its attributes describe the
-  last node only; under `n_jobs` its state stays in the workers. Use a
+  last node only. Under `n_jobs` its state stays in the workers. Use a
   function of the node name to keep one instance per node.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.

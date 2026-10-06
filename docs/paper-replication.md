@@ -207,9 +207,9 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 
 | metric | paper / CAREFL | here, the pinned ground truth |
 |---|---|---|
-| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to ~0.7 at α = −3 | 0.066 |
+| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to ~0.7 at α = −3 | 0.063 |
 | Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.204, at the α = −3 grid edge; 0.074 at α = 0 |
-| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | — | 0.015 / 0.009 / 0.013 |
+| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | — | 0.014 / 0.008 / 0.013 |
 | held-out CF MAE x4, α = −1.5 / 0 / 1.5 | — | 0.080 / 0.027 / 0.048 |
 
 Three ingredients carry the agreement, each measured with everything else

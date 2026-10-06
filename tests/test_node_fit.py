@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import LS, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
+from tramdag import CI, LS, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import Callback
 from tramdag.fitting import _node_seed
 
@@ -93,8 +93,6 @@ def _scale(x, train):
 
 def test_a_forked_fit_loads_a_callable_transform_and_leaves_eval_mode(ls_chain):
     """The parent takes the workers' state, train columns of any shape included."""
-    from tramdag import CI
-
     df = ls_chain["draw"](300, 5)[["x1", "x2"]]
     spec = {
         "x1": ContinuousNode(),

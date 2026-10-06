@@ -365,6 +365,10 @@ class NodeFitMixin:
             If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
             or is a ``Callback`` class instead of an instance, or
             ``optimizer`` is an optimizer class.
+
+        A frame column that does not fit the node raises as in
+        [`tensorize`][tramdag.nodes.tensorize]: a ``KeyError`` for a missing
+        column, a ``ValueError`` for an ordinal value that is not a level index.
         """
         _check_fit_sizes(epochs, batch_size, verbose)
         _check_optimizer_not_a_class(optimizer)
@@ -474,7 +478,11 @@ class NodeFitMixin:
         Raises
         ------
         ValueError
-            If a term is not classical: anything but the simple intercept and ``LS``.
+            If a term is not classical: anything but the simple intercept and
+            ``LS``, if an ordinal value is not a level index, or if the node's
+            calibration refuses the frame.
+        KeyError
+            If the frame lacks a column the node reads.
 
         Notes
         -----
@@ -581,7 +589,7 @@ class FitMixin:
     """
 
     @property
-    def history(self) -> dict[str, list[dict]]:
+    def history(self) -> dict[str, list]:
         """The nodes' histories, one ``{node: value}`` dict per epoch per key.
 
         Nodes stop at different epochs. A node that stopped earlier repeats
@@ -655,8 +663,8 @@ class FitMixin:
             example ``lambda node: torch.optim.AdamW(node.parameters())``. The
             default is ``Adam(lr=learning_rate)``.
         callbacks : Callback | list | callable | None, optional
-            The callbacks of every node, or a factory ``f(name)`` that gives
-            them per node. A shared shipped callback resets at every node's fit
+            The callbacks of every node, or a function of the node name that
+            gives them per node. A shared shipped callback resets at every node's fit
             begin, so its attributes describe the last node only.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).

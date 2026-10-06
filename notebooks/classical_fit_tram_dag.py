@@ -516,7 +516,7 @@ spec_vaca = {
 }
 
 flow_c = CausalFlowDAG(spec_vaca, seed=0)
-rep = flow_c.fit_classical(df)  # logs iters / NLL / time
+rep = flow_c.fit_classical(df)
 print(f"\n{'':<12}{'fit_classical':>14}{'R Colr':>12}{'|diff|':>10}")
 loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}  # nll() is a mean
 for node, parents in flow_c.ls_coefficients().items():

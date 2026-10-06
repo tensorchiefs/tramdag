@@ -153,7 +153,9 @@ def load_weights(module: nn.Module, state_dict: dict) -> None:
 
 # %% public classes --------------------------------------------------------------------
 class Node(NodeFitMixin, nn.Module):
-    r"""One dimension of the flow: an intercept plus additive shift terms.
+    r"""One TRAM regression of a variable on its parents, alone or in a flow.
+
+    It is an intercept plus additive shift terms.
 
     The intercept produces the transform parameters $\vartheta$. The shift
     terms add up on the latent scale. The likelihood, sampling and encoding
@@ -429,6 +431,8 @@ class Node(NodeFitMixin, nn.Module):
     @classmethod
     def load(cls, path: str | Path, device: str = "cpu") -> Node:
         """Restore a node from a checkpoint written by [`save`][].
+
+        The node's ``history`` and ``meta`` are refilled.
 
         Parameters
         ----------

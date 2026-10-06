@@ -67,11 +67,18 @@ def build():
 def record(name, flow, seconds):
     """Add one finished recipe to the scoreboard and print its line."""
     nll = sum(flow.nll(val).values())
-    epochs = sum(len(nd.history["train"]) for nd in flow.nodes.values())
+    node_epochs = sum(len(nd.history["train"]) for nd in flow.nodes.values())
     scoreboard.append(
-        {"strategy": name, "val_nll": nll, "epochs": epochs, "seconds": seconds}
+        {
+            "strategy": name,
+            "val_nll": nll,
+            "node_epochs": node_epochs,
+            "seconds": seconds,
+        }
     )
-    print(f"{name:22s} val NLL {nll:.4f}   {epochs:4d} epochs   {seconds:5.1f}s")
+    print(
+        f"{name:22s} val NLL {nll:.4f}   {node_epochs:4d} node-epochs   {seconds:5.1f}s"
+    )
     return nll
 
 
@@ -329,7 +336,7 @@ assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4  # the restored best
 # %%
 board = pd.DataFrame(scoreboard).set_index("strategy")
 board["nll_gap"] = board["val_nll"] - board["val_nll"].min()
-board["s_per_node_epoch"] = board["seconds"] / board["epochs"]
+board["s_per_node_epoch"] = board["seconds"] / board["node_epochs"]
 print(board.to_string(float_format=lambda v: f"{v:.4f}"))
 
 fig, ax = plt.subplots(figsize=(7, 3.4))

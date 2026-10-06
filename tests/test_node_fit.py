@@ -4,6 +4,8 @@
 import copy
 import math
 
+import numpy as np
+import pandas as pd
 import pytest
 import torch
 
@@ -141,4 +143,21 @@ def test_a_bad_callback_of_a_later_node_fails_before_any_node_fits(ls_chain):
     flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
     with pytest.raises(TypeError, match="Callback instances or callables"):
         flow.fit(df, epochs=2, callbacks=lambda name: [42] if name == "x2" else [])
+    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
+
+
+def test_a_node_names_a_bad_schema_entry():
+    with pytest.raises(ValueError, match="'continuous' or a level count"):
+        Node("x2", ContinuousNode(LS("x1")), {"x1": ContinuousNode()})
+
+
+def test_a_node_that_refuses_calibration_leaves_no_node_fitted():
+    rng = np.random.default_rng(0)
+    x1 = rng.normal(size=400)
+    x2 = np.where(rng.random(400) < 0.97, 1.0, 2.0)  # 5%/95% quantiles coincide
+    df = pd.DataFrame({"x1": x1, "x2": x2})
+    flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
+    with pytest.raises(ValueError, match="quantiles coincide"):
+        flow.fit(df, epochs=3)
+    assert flow.nodes["x1"].history["train"] == []
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())

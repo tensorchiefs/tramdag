@@ -183,6 +183,17 @@ class Node(NodeFitMixin, nn.Module):
         missing = [p for p in self.parents if p not in schema]
         if missing:
             raise ValueError(f"node {name!r}: the schema lacks the parent(s) {missing}")
+        bad = {
+            p: schema[p]
+            for p in self.parents
+            if schema[p] != "continuous"
+            and not (isinstance(schema[p], int) and schema[p] >= 2)
+        }
+        if bad:
+            raise ValueError(
+                f"node {name!r}: schema entries are 'continuous' or a level count "
+                f"of at least 2, got {bad}"
+            )
         self.schema = {p: schema[p] for p in self.parents}
         if node_spec.kind == "continuous":
             self.ut = make_univariate_transform(

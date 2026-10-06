@@ -713,6 +713,7 @@ class FitMixin:
         for kwargs in jobs.values():
             _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
             _normalize_callbacks(kwargs["callbacks"])
+        self._calibrate(train_df, marginal_init=marginal_init)
         # a validation frame without a centered VC's propensity column gets the
         # live one from the fitted treatment node, so those nodes fit second
         later = [
@@ -800,6 +801,7 @@ class FitMixin:
         for nd in self.nodes.values():
             nd._check_classical()
         self._tensorize(train_df)  # every column and level, before a node fits
+        self._calibrate(train_df)
         reports = {
             name: self.nodes[name].fit_classical(
                 train_df, max_iter=max_iter, history_size=history_size

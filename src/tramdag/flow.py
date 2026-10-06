@@ -260,12 +260,19 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     ) -> CausalFlowDAG:
         """Calibrate every node on the training rows ([`Node.calibrate`][]).
 
-        The columns are checked for all nodes first, so a frame that lacks one
-        does not leave the flow half calibrated.
+        The columns are checked for all nodes first. When a node refuses the
+        frame, the nodes this call calibrated lose their flag again, so a
+        corrected frame calibrates the whole flow anew.
         """
         check_columns(train_df, self.order)
-        for nd in self.nodes.values():
-            nd.calibrate(train_df, marginal_init=marginal_init)
+        fresh = [nd for nd in self.nodes.values() if not bool(nd.calibrated)]
+        try:
+            for nd in fresh:
+                nd.calibrate(train_df, marginal_init=marginal_init)
+        except ValueError:
+            for nd in fresh:
+                nd.calibrated.fill_(False)
+            raise
         return self
 
     def node_log_prob(

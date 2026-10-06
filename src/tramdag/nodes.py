@@ -10,7 +10,6 @@ read-outs and the tests read ``kind``, ``parents``, ``shifts``, ``intercept``, `
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import numbers
 import pickle
 from datetime import datetime, timezone
 from pathlib import Path
@@ -183,28 +182,7 @@ class Node(NodeFitMixin, nn.Module):
         self.kind = node_spec.kind
         terms = node_spec.terms
         self.parents = tuple(node_parents(node_spec))
-        missing = [p for p in self.parents if p not in schema]
-        if missing:
-            raise ValueError(f"node {name!r}: the schema lacks the parent(s) {missing}")
-        bad = {
-            p: schema[p]
-            for p in self.parents
-            if schema[p] != "continuous"
-            and not (
-                isinstance(schema[p], numbers.Integral)
-                and not isinstance(schema[p], bool)
-                and schema[p] >= 2
-            )
-        }
-        if bad:
-            raise ValueError(
-                f"node {name!r}: schema entries are 'continuous' or a level count "
-                f"of at least 2, got {bad}"
-            )
-        self.schema = {
-            p: schema[p] if schema[p] == "continuous" else int(schema[p])
-            for p in self.parents
-        }
+        self.schema = {p: schema[p] for p in self.parents}
         if node_spec.kind == "continuous":
             self.ut = make_univariate_transform(
                 node_spec.transform, **node_spec.transform_kwargs

@@ -113,27 +113,12 @@ def test_a_bad_frame_fails_before_any_node_fits(ls_chain):
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
 
 
-def test_a_node_names_a_missing_parent_and_an_optimizer_class():
-    with pytest.raises(ValueError, match=r"lacks the parent\(s\) \['x1'\]"):
-        Node("x2", ContinuousNode(LS("x1")), {})
-    node = Node("x1", ContinuousNode(), {})
-    with pytest.raises(TypeError, match="pass a factory"):
-        node.fit(None, epochs=1, optimizer=torch.optim.AdamW)
-
-
 def test_a_bad_callback_of_a_later_node_fails_before_any_node_fits(ls_chain):
     df = ls_chain["draw"](300, 7)[["x1", "x2"]]
     flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
     with pytest.raises(TypeError, match="Callback instances or callables"):
         flow.fit(df, epochs=2, callbacks=lambda name: [42] if name == "x2" else [])
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
-
-
-def test_a_node_names_a_bad_schema_entry():
-    with pytest.raises(ValueError, match="'continuous' or a level count"):
-        Node("x2", ContinuousNode(LS("x1")), {"x1": ContinuousNode()})
-    node = Node("y", ContinuousNode(LS("t")), {"t": np.int64(2)})  # df.max() + 1
-    assert node.schema == {"t": 2}
 
 
 def test_a_node_that_refuses_calibration_leaves_no_node_fitted():

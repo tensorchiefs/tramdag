@@ -686,6 +686,8 @@ class FitMixin:
             train_df, validation_data, validation_split
         )
         self._check_frames(train_df, validation_data)
+        if seed is None and n_jobs > 1:  # forked workers would replay one RNG state
+            seed = int(torch.randint(2**62, ()))
         if not callable(callbacks) or isinstance(callbacks, type):
             callbacks = _normalize_callbacks(callbacks)  # one pass over an iterator
         jobs = {

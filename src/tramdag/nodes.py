@@ -20,6 +20,7 @@ import torch
 from torch import Tensor, nn
 
 from .fitting import NodeFitMixin
+from .modules import LinearShiftModule
 from .spec import (
     NodeSpec,
     node_parents,
@@ -373,6 +374,14 @@ class Node(NodeFitMixin, nn.Module):
         for m in sorted(self.shifts.values(), key=lambda m: m.order):
             shift = shift + m.shift_value(self, feats)
         return theta, shift
+
+    def ls_weights(self) -> dict[str, np.ndarray]:
+        """Give the ``LS`` weights as ``{parent: array}``; empty without ``LS``."""
+        return {
+            parent: m.weight.detach().cpu().numpy().ravel().copy()
+            for parent, m in self.shifts.items()
+            if isinstance(m, LinearShiftModule)
+        }
 
     def save(self, path: str | Path) -> None:
         """Write the node, its history and its provenance to a checkpoint.

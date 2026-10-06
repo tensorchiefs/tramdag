@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .modules import LinearShiftModule, VaryingCoefficientModule
+from .modules import VaryingCoefficientModule
 
 # %% global variables ------------------------------------------------------------------
 __all__ = ["ReadoutsMixin"]
@@ -142,16 +142,8 @@ class ReadoutsMixin:
             The weights, as ``{node: {parent: array}}``. A node without
             linear-shift terms is absent.
         """
-        out: dict[str, dict[str, np.ndarray]] = {}
-        for name in self.order:
-            linear = {
-                parent: module.weight.cpu().numpy().ravel().copy()
-                for parent, module in self.nodes[name].shifts.items()
-                if isinstance(module, LinearShiftModule)
-            }
-            if linear:
-                out[name] = linear
-        return out
+        weights = {name: self.nodes[name].ls_weights() for name in self.order}
+        return {name: w for name, w in weights.items() if w}
 
     def to_matrix(self) -> pd.DataFrame:
         """Give the labeled adjacency matrix of term effects.

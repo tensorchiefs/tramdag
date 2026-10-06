@@ -255,11 +255,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         theta, shift = self._theta_shift(nd, nd.features(values), values, n)
         return nd, theta, shift, n
 
-    @torch.no_grad()
-    def _mean_nll(self, values: dict[str, Tensor]) -> dict[str, float]:
-        """Give the per-node mean NLL of already tensorized columns."""
-        return {k: float(-v.mean()) for k, v in self.node_log_prob(values).items()}
-
     def _calibrate(
         self, train_df: pd.DataFrame, *, marginal_init: bool = False
     ) -> CausalFlowDAG:
@@ -330,6 +325,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         per_node = self.node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
+    @torch.no_grad()
     def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
         """Compute the mean negative log-likelihood per node (a diagnostic).
 
@@ -343,7 +339,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         dict[str, float]
             The mean NLL, keyed by node name.
         """
-        return self._mean_nll(self._tensorize(df))
+        per_node = self.node_log_prob(self._tensorize(df))
+        return {k: float(-v.mean()) for k, v in per_node.items()}
 
     nll = node_negative_log_prob  # the short name every notebook uses
 

@@ -23,7 +23,6 @@ import torch
 from torch import Tensor
 
 from .callbacks import Callback
-from .modules import LinearShiftModule
 
 if TYPE_CHECKING:
     from .flow import CausalFlowDAG
@@ -419,11 +418,11 @@ class NodeFitMixin:
             # before the VC re-centering, so weights a callback restores
             # (EarlyStopping) still take part in it
             cb.on_fit_end(self, opt)
-        self.finalize(values)
+        self._recenter(values)
         self.eval()
         return self
 
-    def finalize(self, values: dict[str, Tensor]) -> None:
+    def _recenter(self, values: dict[str, Tensor]) -> None:
         r"""Run every shift term's post-fit ``finalize`` (the VC re-centering).
 
         A VC term re-splits $\beta_0$ and $b_\Theta$ so the head sums to zero
@@ -537,11 +536,7 @@ class NodeFitMixin:
             # a stalled line search stops on the same tolerance as an arrival,
             # so the gradient is what tells the two apart
             converged = stop_reason == "tolerance" and grad_norm <= GRAD_TOL
-            coefs = {  # read while still float64
-                parent: m.weight.detach().cpu().numpy().ravel().copy()
-                for parent, m in self.shifts.items()
-                if isinstance(m, LinearShiftModule)
-            }
+            coefs = self.ls_weights()  # read while still float64
         finally:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
         self.eval()

@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = carefl_fig5.r 1:1 on CAREFL's own committed rows (data/carefl-cf, the reference's USE_EXTERNAL_DATA run): val = train, 7000 full-batch epochs @ lr 0.001 with the reference's plateau rule, glorot init, minmax net inputs, range_q 0 (scale_df's min-max Bernstein domain). Every metric is in CAREFL's sd-standardized units (x3/x4 divided by 6.0104/1.9114 - the committed data's units). The Fig. 6 errors compare the flow's curves at the committed xObs, on the committed alpha grid, against the committed analytic truth curves; fig6_max_abs_err_x4_carefl is CAREFL's OWN committed prediction error - a constant of the frozen data, pinned tightly as a tripwire on the csvs and as the bar the flow sits next to: the flow's remaining x4 max (0.204 vs CAREFL's 0.174) sits at the alpha = -3 grid edge, while the parabola bottom is on the truth (err at alpha 0: 0.074). What each protocol ingredient is worth is measured in docs/paper-replication.md.",
+  "_note": "Protocol = carefl_fig5.r 1:1 on CAREFL's own committed rows (data/carefl-cf, the reference's USE_EXTERNAL_DATA run): val = train, 7000 full-batch epochs @ lr 0.001 with the reference's plateau rule applied per node (D5 in docs/paper-replication.md), glorot init, minmax net inputs, range_q 0 (scale_df's min-max Bernstein domain). Every metric is in CAREFL's sd-standardized units (x3/x4 divided by 6.0104/1.9114 - the committed data's units). The Fig. 6 errors compare the flow's curves at the committed xObs, on the committed alpha grid, against the committed analytic truth curves; fig6_max_abs_err_x4_carefl is CAREFL's OWN committed prediction error - a constant of the frozen data, pinned tightly as a tripwire on the csvs and as the bar the flow sits next to: the flow's remaining x4 max (0.204 vs CAREFL's 0.174) sits at the alpha = -3 grid edge, while the parabola bottom is on the truth (err at alpha 0: 0.074). What each protocol ingredient is worth is measured in docs/paper-replication.md.",
   "fig6_max_abs_err_x3": {
     "max": 0.15
   },
@@ -29,11 +29,11 @@
     "max": 0.1
   },
   "val_nll_x3": {
-    "value": -0.3078438341617584,
+    "value": -0.3056441843509674,
     "atol": 0.05
   },
   "val_nll_x4": {
-    "value": 0.730790376663208,
+    "value": 0.7307920455932617,
     "atol": 0.05
   },
   "fit_seconds": {

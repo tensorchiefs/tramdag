@@ -1,23 +1,23 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 (see the YAML header): Paper Sec. 5.1-5.2. The interventional means are analytic (E[x3|do(x2=a)] = -0.25 + 0.25a), so what is checked is the flow's error against them, not a pinned flow value: a center plus an error bound on the same number gave two windows that could disagree. do(x2=-3) is off-manifold extrapolation, which is why its error is the largest of the three. Under the reference protocol (global ReduceLROnPlateau, glorot init) the do(x2=-3) error is seed-sensitive \u2014 0.098 at the config's init seed 7, 0.268 / 0.217 at seeds 8 / 9 \u2014 so the bound is 2.5x the seed-7 value and docs/paper-replication.md holds the spread. Pinned at the reference's own 10000 epochs @ lr 0.001 with the plateau rule; bounds are 2.5x the measurement.",
+  "_note": "Protocol = the paper's R code (see the YAML header) with one deviation: each node fits on its own, so the plateau rule acts on each node's validation NLL, not on the summed one (D5 in docs/paper-replication.md). Paper Sec. 5.1-5.2. The interventional means are analytic (E[x3|do(x2=a)] = -0.25 + 0.25a), so what is checked is the flow's error against them, not a pinned flow value: a center plus an error bound on the same number gave two windows that could disagree. do(x2=-3) is off-manifold extrapolation. The do(x2) errors are seed-sensitive: over init seeds 1-4 the per-node protocol gives 0.012-0.070 / 0.005-0.047 / 0.039-0.076 at do(x2 = -3 / -1 / 0), against 0.092 at do(x2=0) for the config's seed 7; docs/paper-replication.md holds the table. Pinned at the reference's own 10000 epochs @ lr 0.001 with the per-node plateau rule; bounds are 2.5x the seed-7 measurement.",
   "val_nll_x3": {
-    "value": 1.449499249458313,
+    "value": 1.4347363710403442,
     "atol": 0.05
   },
   "mean_x3_abs_err_do_x2_-3": {
-    "max": 0.2409
+    "max": 0.2002
   },
   "mean_x3_abs_err_do_x2_-1": {
-    "max": 0.1997
+    "max": 0.1705
   },
   "mean_x3_abs_err_do_x2_+0": {
-    "max": 0.0441
+    "max": 0.2294
   },
   "std_x1_abs_err": {
-    "max": 0.0814
+    "max": 0.0193
   },
   "std_x1_flow": {
-    "value": 2.0440921783447266,
+    "value": 2.068942070007324,
     "atol": 0.07999
   },
   "fit_seconds": {

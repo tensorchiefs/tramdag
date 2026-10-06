@@ -26,7 +26,7 @@ replay, so every seed here is a repository choice.
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
 | calibrated start | none | `marginal_init: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`, VACA) and impossible for CAREFL's `range_q: 0` domain. Calibration without the flag never touches the weights |
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
-| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)` on the summed `history["val"]`, the same rule, verified against torch's source; `experiments/helpers.py::fit_paper` drives it |
+| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)`, the same rule verified against torch's source, but per node on the node's own validation NLL, deviation D5 below; `experiments/helpers.py::fit_paper` drives it |
 
 ## Triangle, continuous (`triangle.py`): paper Sec. 6.1, App. C.3
 
@@ -126,7 +126,7 @@ tolerance.
 | epochs | 10000 (`Figure_Triangle_Linear_Bimodal.R`, the sourcing script, not in our copy of the R code, so EPOCHS/M/nTrain rest on that reading) | 10000, one run, 1:1 |
 | lr | 0.001 | 0.001 |
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
-| schedule | the plateau rule above | the same rule; it fires at about epoch 9050 and freezes an all-bounds point |
+| schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
 | Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1: at seed 7 the reference's min/max domain scores 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022, worse at do(x2 = −3) and do(x2 = 0). CAREFL, same nets, measures the opposite way |
 | n_compare | — | 50000 |
@@ -136,19 +136,18 @@ pinned flow value.
 
 | metric | paper | here, the pinned ground truth |
 |---|---|---|
-| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.096 |
-| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.080 |
-| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.022 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.036, error 0.040 |
-| val NLL x3 | — | 1.4427 |
+| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.080 |
+| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.068 |
+| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.092 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
+| val NLL x3 | — | 1.4347 |
 
-The result is seed-sensitive at the off-manifold point do(x2 = −3), where the
-error spans 0.03–0.27 over four init draws, against 0.005–0.026 at
-do(x2 = 0). The paper shows one run's densities. The committed bound is 2.5×
-the seed-7 measurement.
+The do(x2) errors are seed-sensitive; D5 below gives the spread over four
+init draws. The paper shows one run's densities. The committed bounds are
+2.5× the seed-7 measurement.
 
 The table below traces what each protocol ingredient is worth under the
-reference protocol, one change at a time, on the paper text's grid −3 / −2 / 0
+reference protocol with its global plateau, one change at a time, on the paper text's grid −3 / −2 / 0
 with min-max inputs unless the row says otherwise.
 
 | variant | error | reading |
@@ -255,6 +254,29 @@ off. The pinned ground truth of the four variants that switched on is
 unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
 listed for the next deliberate re-pin.
+
+## D5: the plateau rule per node
+
+The reference reduces the learning rate of one optimizer when the summed
+validation NLL stops improving. Here every node fits on its own, so no summed
+NLL exists during a fit: each node runs the same rule on its own validation
+NLL, with its own optimizer. The rule and its constants are unchanged.
+
+VACA, the do(x2) errors at a = −3 / −1 / 0 and the x3 validation NLL, one
+run per init seed, the same data:
+
+| init seed | per node (here) | global (reference) |
+|---|---|---|
+| 1 | 0.038 / 0.047 / 0.074, 1.4344 | 0.331 / 0.051 / 0.037, 1.4514 |
+| 2 | 0.038 / 0.032 / 0.076, 1.4351 | 0.213 / 0.044 / 0.041, 1.4476 |
+| 3 | 0.070 / 0.005 / 0.039, 1.4345 | 0.221 / 0.066 / 0.048, 1.4481 |
+| 4 | 0.012 / 0.037 / 0.072, 1.4345 | 0.317 / 0.053 / 0.098, 1.4541 |
+| 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | — |
+
+The per-node rule gives a lower x3 validation NLL on every seed and a much
+smaller error at the off-manifold point do(x2 = −3). At do(x2 = 0) the two
+rules overlap. CAREFL moves by less than 0.003 in validation NLL, and all its
+bounds hold.
 
 ## Runtime and the CI deviations
 

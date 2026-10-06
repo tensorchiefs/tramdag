@@ -5,13 +5,13 @@
 #
 # Protocol = the reference implementation's own comparison run
 # (tensorchiefs/tram-dag, comparison/utils.R with
-# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1:
+# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1 except D5 (the plateau per node):
 #   * nTrain = 2500, validation = a separate dgp(5000) draw;
 #   * one full-batch gradient step per epoch (train_step: one apply_gradients
 #     over all rows), 10000 epochs at Adam lr 0.001;
-#   * update_learning_rate: ReduceLROnPlateau on the summed validation NLL
-#     (factor 0.1, patience 50, min_lr 1e-7, strict <) — the anneal fires
-#     late (~epoch 9050) and freezes a point where every pinned bound holds;
+#   * update_learning_rate: ReduceLROnPlateau (factor 0.1, patience 50,
+#     min_lr 1e-7, strict <), here per node on the node's own validation NLL
+#     instead of the summed one (deviation D5, docs/paper-replication.md);
 #   * make_model: one net per node, dense(10, tanh) -> dense(100, tanh) ->
 #     dense(len_theta), M = 30 so len_theta = 31 (the spec's units and
 #     n_coeffs; zuko ties two extra control points on, order 32 against the

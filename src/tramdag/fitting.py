@@ -708,13 +708,12 @@ class FitMixin:
             _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
             kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
         self._calibrate(train_df, marginal_init=marginal_init)
-        # a validation frame without a centered VC's propensity column gets the
-        # live one from the fitted treatment node, so those nodes fit second
+        # a centered VC's validation NLL uses the live propensity of the fitted
+        # treatment node, as every query does, so those nodes fit second
         later = [
             name
             for name in self.order
-            if validation_data is not None
-            and any(c not in validation_data for c in self.nodes[name].side_columns())
+            if validation_data is not None and self.nodes[name].side_columns()
         ]
         self._fit_nodes(train_df, {n: jobs[n] for n in jobs if n not in later}, n_jobs)
         for name in later:
@@ -753,12 +752,11 @@ class FitMixin:
             self.nodes[name].eval()
 
     def _with_live_side(self, name: str, df: pd.DataFrame) -> pd.DataFrame:
-        """Add the node's missing side columns to ``df``, computed live."""
+        """Set the node's side columns in ``df`` to their live values."""
         nd = self.nodes[name]
         cols = dict.fromkeys([*nd.parents, *self._query_side_columns(nd)])
         live = self._side_feats(nd, self._tensorize(df, list(cols)), len(df))
-        missing = [c for c in nd.side_columns() if c not in df]
-        return df.assign(**{c: live[c].cpu().numpy() for c in missing})
+        return df.assign(**{c: live[c].cpu().numpy() for c in nd.side_columns()})
 
     def fit_classical(
         self,

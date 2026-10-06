@@ -36,6 +36,9 @@ from .transforms import (
     ordinal_sample,
 )
 
+# %% global variables ------------------------------------------------------------------
+__all__ = ["Node"]
+
 
 # %% public functions ------------------------------------------------------------------
 def encode(values: Tensor, kind: str | int) -> Tensor:
@@ -154,10 +157,9 @@ def load_weights(module: nn.Module, state_dict: dict) -> None:
 class Node(NodeFitMixin, nn.Module):
     r"""One TRAM regression of a variable on its parents, alone or in a flow.
 
-    It is an intercept plus additive shift terms.
-
-    The intercept produces the transform parameters $\vartheta$. The shift
-    terms add up on the latent scale. The likelihood, sampling and encoding
+    It is an intercept plus additive shift terms. The intercept produces the
+    transform parameters $\vartheta$. The shift terms add up on the latent
+    scale. The likelihood, sampling and encoding
     branches on the node kind live in the five methods ``log_prob``,
     ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, and in the
     module functions ``encode`` and ``schema_entry``; the rest of the package

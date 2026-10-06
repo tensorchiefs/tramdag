@@ -15,6 +15,7 @@ import math
 import multiprocessing
 import time
 import warnings
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -349,16 +350,12 @@ class NodeFitMixin:
             negative, both validation arguments are given, the split leaves
             an empty side, a centered VC term's propensity column is missing
             from the training frame or out of [0, 1], or two callbacks
-            restore weights.
+            restore weights, or an ordinal value is not a level index.
         KeyError
             If a frame lacks a column the node reads.
         TypeError
             If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
             or is a ``Callback`` class instead of an instance.
-
-        A frame column that does not fit the node raises as in
-        [`tensorize`][tramdag.nodes.tensorize]: a ``KeyError`` for a missing
-        column, a ``ValueError`` for an ordinal value that is not a level index.
         """
         _check_fit_sizes(epochs, batch_size, verbose)
         cbs = _normalize_callbacks(callbacks)
@@ -602,15 +599,15 @@ class FitMixin:
         self,
         train_df: pd.DataFrame,
         *,
-        epochs,
-        learning_rate=1e-2,
+        epochs: int | Callable[[str], int],
+        learning_rate: float | Callable[[str], float] = 1e-2,
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
         verbose: int = 0,
         seed: int | None = None,
         marginal_init: bool = False,
-        optimizer=None,
+        optimizer: Callable[[Node], torch.optim.Optimizer] | None = None,
         callbacks=None,
         n_jobs: int = 1,
     ) -> CausalFlowDAG:

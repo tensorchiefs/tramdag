@@ -187,6 +187,7 @@ def _per_node(value, name: str):
 def _fit_in_child(name: str):
     """Fit one node in a forked worker; give its state and history back."""
     flow, train_df, jobs = _FORK_JOB
+    # one thread: a forked child that starts OpenMP threads can deadlock
     torch.set_num_threads(1)
     nd = flow.nodes[name]
     nd.fit(train_df, **jobs[name])
@@ -651,9 +652,10 @@ class FitMixin:
             begin, so its attributes describe the last node only.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
-            ``n_jobs > 1`` forks one worker per node (Linux and macOS only);
-            the results equal the serial ones, but callback state stays in
-            the workers.
+            ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
+            and macOS only). A worker runs torch on one thread, so its result
+            equals a serial fit on one thread; with more threads a network
+            can differ in the last bits. Callback state stays in the workers.
 
         Returns
         -------
@@ -664,11 +666,12 @@ class FitMixin:
         ------
         TypeError
             If ``optimizer`` is an optimizer instance instead of a factory.
+        KeyError
+            If a frame lacks a node column.
         ValueError
-            See [`Node.fit`][tramdag.nodes.Node.fit].
+            See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every
+            node's arguments are checked before the first node fits.
         """
-        from .nodes import check_columns  # lazy: nodes imports this module
-
         if isinstance(optimizer, torch.optim.Optimizer):
             raise TypeError(
                 "optimizer= of CausalFlowDAG.fit is a factory f(node) -> "
@@ -677,9 +680,15 @@ class FitMixin:
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )
-        check_columns(train_df, self.order)
-        for nd in self.nodes.values():  # every node, before the first one fits
+        # every frame and node, before the first node fits: a bad input must not
+        # leave the flow half fitted
+        self._tensorize(train_df)
+        if validation_data is not None:
+            self._tensorize(validation_data)
+        for nd in self.nodes.values():
             nd._check_side_columns(train_df)
+        if seed is None and n_jobs > 1:  # forked workers share the parent's RNG
+            seed = int(torch.randint(2**62, ()))
         jobs = {
             name: dict(
                 epochs=_per_node(epochs, name),
@@ -694,6 +703,8 @@ class FitMixin:
             )
             for i, name in enumerate(self.order)
         }
+        for kwargs in jobs.values():
+            _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
         # a validation frame without a centered VC's propensity column gets the
         # live one from the fitted treatment node, so those nodes fit second
         later = [
@@ -711,6 +722,8 @@ class FitMixin:
     def _fit_nodes(self, train_df: pd.DataFrame, jobs: dict, n_jobs: int) -> None:
         """Run ``Node.fit`` for each job, serially or in forked workers."""
         global _FORK_JOB
+        from .nodes import load_weights  # lazy: nodes imports this module
+
         if n_jobs == 1 or len(jobs) < 2:
             for name, kwargs in jobs.items():
                 self.nodes[name].fit(train_df, **kwargs)
@@ -722,8 +735,9 @@ class FitMixin:
         finally:
             _FORK_JOB = None
         for name, (state, history) in zip(jobs, results, strict=True):
-            self.nodes[name].load_state_dict(state)
+            load_weights(self.nodes[name], state)
             self.nodes[name].history = history
+            self.nodes[name].eval()
 
     def _with_live_side(self, name: str, df: pd.DataFrame) -> pd.DataFrame:
         """Add the node's missing side columns to ``df``, computed live."""
@@ -775,11 +789,9 @@ class FitMixin:
         ValueError
             If a term is not classical.
         """
-        from .nodes import check_columns  # lazy: nodes imports this module
-
         for nd in self.nodes.values():
             nd._check_classical()
-        check_columns(train_df, self.order)
+        self._tensorize(train_df)  # every column and level, before a node fits
         reports = {
             name: self.nodes[name].fit_classical(
                 train_df, max_iter=max_iter, history_size=history_size

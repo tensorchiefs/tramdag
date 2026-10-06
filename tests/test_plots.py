@@ -75,10 +75,10 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert (tmp_path / "m.png").exists()
     ax = plot_training(flow, path=tmp_path / "t.png", title="t")
     assert ax.get_title() == "t"
-    assert len(ax.lines) == 2  # train and val, no marks without frozen=
+    assert len(ax.lines) == 2  # train and val, no marks without stops=
     assert (tmp_path / "t.png").exists()
     stops = {n: len(nd.history["train"]) for n, nd in flow.nodes.items()}
-    ax = plot_training(flow, frozen=stops)
+    ax = plot_training(flow, stops=stops)
     assert len(ax.lines) == 2 + len(stops)  # one mark per stop
     # no validation history, no marks: one line
     flow2 = CausalFlowDAG(spec, seed=0)

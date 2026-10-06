@@ -237,7 +237,7 @@ for name, spent in stopped.items():
 # summed curve stays defined. `plot_training` marks the stop epochs.
 
 # %%
-plot_training(flow, frozen=stopped)
+plot_training(flow, stops=stopped)
 plt.show()
 
 # %% [markdown]

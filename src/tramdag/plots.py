@@ -323,7 +323,7 @@ def plot_marginals(
     return axes
 
 
-def plot_training(flow, *, frozen=None, path=None, title=None):
+def plot_training(flow, *, stops=None, path=None, title=None):
     """Draw the summed train and validation NLL per epoch.
 
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
@@ -335,10 +335,10 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
     ----------
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
-    frozen : dict[str, int] | None, optional
-        ``{node: epoch}`` of the per-node stops, each a dashed mark, for
-        example ``{n: len(nd.history["train"]) for n, nd in flow.nodes.items()}``.
-        By default no marks.
+    stops : dict[str, int] | None, optional
+        ``{node: epoch}`` of the per-node stops, each a dashed mark; a
+        node's stop epoch is the length of its ``history["train"]``. By
+        default no marks.
     path : str | Path | None, optional
         Save the figure here (150 dpi) after drawing.
     title : str | None, optional
@@ -369,10 +369,10 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
     # after the zoom, so the annotations hang from the visible top
-    for name, epoch in sorted((frozen or {}).items(), key=lambda kv: kv[1]):
+    for name, epoch in sorted((stops or {}).items(), key=lambda kv: kv[1]):
         ax.axvline(epoch, ls="--", lw=1, color="gray")
         ax.annotate(
-            f" {name} frozen",
+            f" {name} stopped",
             (epoch, ax.get_ylim()[1]),
             rotation=90,
             va="top",

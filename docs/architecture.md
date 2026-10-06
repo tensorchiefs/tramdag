@@ -86,7 +86,7 @@ classDiagram
         post_init()
         regularizer() -> Tensor | None
         finalize(node, feats)
-        score_columns(node, flow, feats, dlds)
+        score_columns(node, feats, dlds)
         side_columns() / check_column() / live_side() / extra_columns()
     }
     class InterceptModule {

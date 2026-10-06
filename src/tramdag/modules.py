@@ -270,7 +270,7 @@ class ShiftModule(TermModule, ABC):
     def finalize(self, node: Node, feats: dict) -> None:
         """Run the term's post-fit step (after the after-fit callbacks)."""
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         """Give the per-observation score columns of this term's coefficients.
 
         Empty for a term with no interpretable coefficient (``CS``).
@@ -490,7 +490,7 @@ class LinearShiftModule(ShiftModule):
         """Give the raw parent column times the weight — no input transform."""
         return self(torch.cat([feats[p] for p in self.parents], dim=1))
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         r"""One column per weight: the parent (continuous) or its one-hot levels.
 
         $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$,
@@ -674,7 +674,7 @@ class VaryingCoefficientModule(ShiftModule):
         if self.mods:
             self.recenter(node.net_input(feats, self.mods, self.key))
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         r"""One column, keyed by the treatment: the ``beta0`` score.
 
         $\partial s / \partial \beta_0$ is the term's own ``regressor``, so forward

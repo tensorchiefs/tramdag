@@ -98,7 +98,7 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
 
     cols: dict[str, np.ndarray] = {}
     for m in scored:
-        cols.update(m.score_columns(nd, flow, feats, dlds))
+        cols.update(m.score_columns(nd, feats, dlds))
     return pd.DataFrame(cols, index=df.index)
 
 

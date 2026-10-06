@@ -41,7 +41,7 @@ import pandas as pd
 import torch
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, OrdinalNode
+from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import EarlyStopping
 
 # repo-relative data, whether the notebook runs from the repo root or notebooks/
@@ -227,6 +227,27 @@ print(
     f"max |P_flow(low=1) - P_glm(low=1)| over {len(bw)} rows: "
     f"{np.abs(p_flow - p_classical).max():.2e}"
 )
+
+# %% [markdown]
+# **The same regression without the DAG.** The marginals of `age` and `lwt`
+# are a nuisance here, and a `Node` drops them. It is the `low` node alone: its
+# name, its node spec and the parent schema, `{parent: "continuous" | levels}`.
+# The frame needs only `low` and its parents. `Node.fit_classical` lands on the
+# same maximum likelihood as the flow, R and `statsmodels`.
+
+# %%
+low = Node(
+    "low", spec_bw["low"], {"age": "continuous", "lwt": "continuous", "smoke": 2}
+)
+low.fit_classical(bw[["age", "lwt", "smoke", "low"]])
+w_low = low.ls_weights()
+ll_low = -low.nll(bw) * len(bw)
+print(f"log-likelihood   node alone {ll_low:.6f}   R glm {R_LOGLIK:.6f}")
+print(
+    f"smoke   node alone {float(w_low['smoke'][1] - w_low['smoke'][0]):.4f}"
+    f"   R glm {R_GLM['smoke']:.4f}"
+)
+assert abs(ll_low - R_LOGLIK) < 1e-4, "the lone node misses the glm likelihood"
 
 # %% [markdown]
 # ## 1. Continuous case

@@ -98,10 +98,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        # _calibrate() takes the data-dependent state once; a buffer, not a Python
-        # bool, so the flag rides in the state dict and a loaded flow does not
-        # recalibrate on its next fit
-        self.register_buffer("calibrated", torch.tensor(False))
         self.history: dict = {"train": []}  # per-node mean train NLL per epoch
         self.meta: dict = {}  # provenance attached at save() (version, time)
         self.to(self.device)
@@ -313,56 +309,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def _calibrate(
         self, train_df: pd.DataFrame, *, marginal_init: bool = False
     ) -> CausalFlowDAG:
-        r"""Take the data-dependent state from the training rows, once.
+        """Calibrate every node on the training rows ([`Node.calibrate`][]).
 
-        Every term calibrates itself: the intercept term maps its node's
-        train ``range_q``/``1 - range_q`` quantiles (an intercept option,
-        default 5%/95%; ``0.0`` is the min/max) onto the transform's pre-scaled
-        domain, and every term with an ``input_transform=`` freezes its statistics
-        (minmax lo/hi, standardize mean/std, a callable's frozen train
-        columns).
-
-        The first ``fit`` or ``fit_classical`` calls this when it has not run
-        yet; a loaded model is already calibrated, and later fits on other rows
-        reuse this state — data on a new scale needs a new flow.
-
-        ``marginal_init`` additionally starts every simple intercept at its
-        column's marginal: a Bernstein intercept at the Bernstein
-        approximation of $\operatorname{logit} \hat F(y)$, an ordinal one at
-        the marginal class log-odds; spline/affine intercepts and intercepts
-        with parents are untouched. The start rides on this method's guard, so
-        a second ``fit`` (the next phase of a schedule) continues training
-        instead of discarding the intercepts it just trained, and the flag
-        does nothing on a flow that is already calibrated.
-
-        Parameters
-        ----------
-        train_df : pd.DataFrame
-            Training rows, one column per node (plus any side columns).
-        marginal_init : bool, optional
-            Also set the calibrated start, by default ``False``: an
-            uninitialized intercept starts at zuko's zero instead.
-
-        Returns
-        -------
-        CausalFlowDAG
-            ``self``.
+        The columns are checked for all nodes first, so a frame that lacks one
+        does not leave the flow half calibrated.
         """
-        if bool(self.calibrated):
-            return self
         check_columns(train_df, self.order)
-        for name in self.order:
-            nd = self.nodes[name]
-            if nd.kind == "ordinal":
-                check_level_values(name, train_df[name].to_numpy(), nd.levels)
-            nd.intercept.calibrate_intercept(train_df, train_df[name], nd.ut)
-            for m in nd.shifts.values():
-                m.calibrate(train_df)
-            if marginal_init:
-                theta = nd.marginal_theta(train_df[name].to_numpy())
-                if theta is not None:  # a spline or affine transform has no start
-                    nd.intercept.marginal_start(theta)
-        self.calibrated.fill_(True)
+        for nd in self.nodes.values():
+            nd.calibrate(train_df, marginal_init=marginal_init)
         return self
 
     def node_log_prob(
@@ -722,7 +676,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 flow.get_submodule(mod_path).register_buffer(
                     buf_name, torch.empty_like(t)
                 )
-        flow.load_state_dict(ckpt["state_dict"])  # includes the `calibrated` flag
+        flow.load_state_dict(ckpt["state_dict"])  # with the `calibrated` flags
         flow.history = ckpt["history"]
         flow.meta = ckpt["meta"]
         flow.eval()

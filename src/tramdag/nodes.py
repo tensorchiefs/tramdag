@@ -118,6 +118,10 @@ class Node(nn.Module):
         for term in terms[1:]:
             m = term.module(term, self.schema)
             self.shifts[m.key] = m
+        # calibrate() takes the data-dependent state once; a buffer, not a Python
+        # bool, so the flag rides in the state dict and a loaded node does not
+        # recalibrate on its next fit
+        self.register_buffer("calibrated", torch.tensor(False))
 
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.
@@ -155,6 +159,56 @@ class Node(nn.Module):
                 check_level_values(c, values, kinds[c])
             out[c] = torch.tensor(values, dtype=p.dtype, device=p.device)
         return out
+
+    def calibrate(self, train_df: pd.DataFrame, *, marginal_init: bool = False) -> Node:
+        r"""Take the data-dependent state from the training rows, once.
+
+        Every term calibrates itself: the intercept term maps the node's
+        train ``range_q``/``1 - range_q`` quantiles (an intercept option,
+        default 5%/95%; ``0.0`` is the min/max) onto the transform's pre-scaled
+        domain, and every term with an ``input_transform=`` freezes its
+        statistics (minmax lo/hi, standardize mean/std, a callable's frozen
+        train columns).
+
+        The first ``fit`` or ``fit_classical`` calls this when it has not run
+        yet; a loaded node is already calibrated, and later fits on other rows
+        reuse this state. Data on a new scale needs a new node.
+
+        ``marginal_init`` additionally starts a simple intercept at the
+        column's marginal: a Bernstein intercept at the Bernstein
+        approximation of $\operatorname{logit} \hat F(y)$, an ordinal one at
+        the marginal class log-odds; spline/affine intercepts and intercepts
+        with parents are untouched. The start rides on this method's guard, so
+        a second ``fit`` (the next phase of a schedule) continues training
+        instead of discarding the intercept it just trained.
+
+        Parameters
+        ----------
+        train_df : pd.DataFrame
+            Training rows with the node's column and its parents' columns.
+        marginal_init : bool, optional
+            Also set the calibrated start, by default ``False``: an
+            uninitialized intercept starts at zuko's zero instead.
+
+        Returns
+        -------
+        Node
+            ``self``.
+        """
+        if bool(self.calibrated):
+            return self
+        check_columns(train_df, (self.name, *self.parents))
+        if self.kind == "ordinal":
+            check_level_values(self.name, train_df[self.name].to_numpy(), self.levels)
+        self.intercept.calibrate_intercept(train_df, train_df[self.name], self.ut)
+        for m in self.shifts.values():
+            m.calibrate(train_df)
+        if marginal_init:
+            theta = self.marginal_theta(train_df[self.name].to_numpy())
+            if theta is not None:  # a spline or affine transform has no start
+                self.intercept.marginal_start(theta)
+        self.calibrated.fill_(True)
+        return self
 
     def log_prob(self, theta: Tensor, shift: Tensor, x: Tensor) -> Tensor:
         """``log p(x | pa)`` from the transform parameters and the shift."""

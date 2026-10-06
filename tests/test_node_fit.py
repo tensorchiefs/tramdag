@@ -98,3 +98,31 @@ def test_per_node_early_stopping_through_the_flow(ls_chain):
     ran = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
     assert all(r < 2000 for r in ran.values())
     assert len(set(ran.values())) > 1  # the nodes stop at different epochs
+
+
+def _scale(x, train):
+    return x / train.std()
+
+
+def test_a_forked_fit_loads_a_callable_transform_and_leaves_eval_mode(ls_chain):
+    """The parent takes the workers' state, train columns of any shape included."""
+    from tramdag import CI
+
+    df = ls_chain["draw"](300, 5)[["x1", "x2"]]
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(CI("x1", units=[4], input_transform=_scale)),
+    }
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, batch_size=128, n_jobs=2)
+    assert not any(nd.training for nd in flow.nodes.values())
+    assert bool(flow.nodes["x2"].calibrated)
+
+
+def test_a_bad_frame_fails_before_any_node_fits(ls_chain):
+    df = ls_chain["draw"](300, 6)
+    flow = CausalFlowDAG(_ls_spec(), seed=0)
+    with pytest.raises(KeyError, match="'y'"):
+        flow.fit(df, epochs=2, validation_data=df.drop(columns="y"))
+    with pytest.raises(ValueError, match="epochs"):
+        flow.fit(df, epochs=lambda name: 0 if name == "y" else 2)
+    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())

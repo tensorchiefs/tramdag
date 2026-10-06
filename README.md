@@ -48,7 +48,7 @@ one guide, and its worked example is one notebook.
 |---|---|---|
 | The model, its notation, what it cannot do | [`docs/model.md`](docs/model.md), [`docs/notation.md`](docs/notation.md) | [demo](notebooks/demo_tram_dag_colab.py) |
 | Reading a fitted model: coefficients, curves, interventional distributions | [`docs/interpretation.md`](docs/interpretation.md) | [classical fitting](notebooks/classical_fit_tram_dag.py) |
-| Fitting: the likelihood, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
+| Fitting: the likelihood, one node alone, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
 | Complex intercepts, joint versus additive | | [additive vs joint intercepts](notebooks/additive_vs_joint_ci.py) |
 | Treatment effects that vary with covariates | [`docs/varying-coefficients.md`](docs/varying-coefficients.md) | [varying coefficients](notebooks/varying_coefficients.py) |
 | Scores and the effect-modifier scan | [`docs/scores.md`](docs/scores.md) | [varying coefficients](notebooks/varying_coefficients.py) |

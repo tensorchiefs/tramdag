@@ -35,6 +35,10 @@ Together the $h$'s form one triangular flow. Each variable depends only on its
 causal parents $\mathrm{pa}(x_i)$, which is a subset of its predecessors. The
 Jacobian sparsity of the flow is therefore the DAG itself.
 
+Each $h(x_i \mid \mathrm{pa})$ is one transformation model of $x_i$ given its
+parents. In code it is a `Node`, which also fits on its own, without the DAG
+([fitting.md](fitting.md#one-node-alone)).
+
 The latents $u_1,\dots,u_p$ are standard logistic. That choice is what makes
 the fitted parameters interpretable, because a shift on the latent scale is
 then a log-odds ratio.

@@ -1,10 +1,9 @@
 """Predefined ``fit`` callbacks: ``EarlyStopping``.
 
 Every node fits on its own, so a callback hooks one node's fit. ``fit`` owns
-validation and progress printing; the callbacks here read the validation NLL that
-``fit`` appends to ``node.history["val"]`` after every epoch. ``fit`` computes it
-once, and ``EarlyStopping`` reads it there. One ``callbacks=`` list is the whole
-registration; anything not covered here is a
+validation and progress printing; ``EarlyStopping`` reads the validation NLL that
+``fit`` appends to ``node.history["val"]`` after every epoch. One ``callbacks=``
+list is the whole registration; anything not covered here is a
 [`Callback`][tramdag.callbacks.Callback] subclass of your own (docs/fitting.md).
 """
 

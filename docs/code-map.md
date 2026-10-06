@@ -64,7 +64,7 @@ the same object, so `LS is LinearShift`.
 | [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
 | [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with the nodes' histories and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
 | (`_node`, `_schema`, `_features`, `_tensorize`, `_generator`, `_dtype`, `_init_linear`) | Node lookup with one shared error; each node's parent schema; parent encoding through `Node.encode` (continuous raw, ordinal one-hot); `_tensorize(df, cols=None)` for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing. |
-| (`_propensity`, `_side_feats`, `_query_side_columns`) | The generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit. |
+| (`_calibrate`, `_propensity`, `_side_feats`, `_query_side_columns`) | The flow-wide calibration (every node before the first fit, flags rolled back when a node refuses the frame), the generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit. |
 
 
 ## `modules.py` — the term modules
@@ -104,7 +104,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 |----------------------------------|------------------------------------------------------------------------------|
 | [`Node.fit()`][tramdag.nodes.Node.fit] / [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] / [`Node.nll()`][tramdag.nodes.Node.nll] | One node's Adam loop and L-BFGS fit, mixed into `Node` via `NodeFitMixin`; `row_log_prob`, `_recenter` (the VC re-centering) and the side-column check live here too. |
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | The flow's loops over the nodes, methods of the flow via `FitMixin`; `history` is the flow's view over the nodes' histories. |
-| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `_check_optimizer_not_a_class`, `_fit_in_child`, `_pad_last`, `FitMixin._fit_nodes`, `FitMixin._with_live_side`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the optimizer-class refusal, the forked worker and the serial loop, the padded history view, the live propensity for a validation frame. |
+| (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `_check_optimizer_not_a_class`, `NodeFitMixin._check_classical`, `_fit_in_child`, `_pad_last`, `FitMixin._check_frames`, `FitMixin._fit_nodes`, `FitMixin._with_live_side`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the optimizer-class refusal, the frame checks before the first fit, the forked worker and the serial loop, the padded history view, the live propensity for a validation frame. |
 
 ## `readouts.py` — `ReadoutsMixin`
 

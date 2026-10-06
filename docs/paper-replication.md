@@ -147,8 +147,9 @@ init draws. The paper shows one run's densities. The committed bounds are
 2.5× the seed-7 measurement.
 
 The table below traces what each protocol ingredient is worth under the
-reference protocol with its global plateau, one change at a time, on the paper text's grid −3 / −2 / 0
-with min-max inputs unless the row says otherwise.
+reference protocol with its global plateau, one change at a time. It uses the
+paper text's grid −3 / −2 / 0 and min-max inputs unless the row says
+otherwise.
 
 | variant | error | reading |
 |---|---|---|
@@ -254,7 +255,8 @@ changes. Of the five such cases, two switch the start on and three leave it
 off. The pinned ground truth of the four variants that switched on is
 unchanged: every metric stays
 within its tolerance, and the check's advisory notes on their bounds are
-listed for the next deliberate re-pin.
+listed for the next deliberate re-pin. The per-node shuffle seeds add one:
+the `triangle-linear-cs` do(x1) bound is 7.4× its measurement of 0.034.
 
 ## D5: the plateau rule per node
 
@@ -321,7 +323,7 @@ The epoch floors, measured at that batch and rate:
   lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
   500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).
-- **VACA and CAREFL** run their references 1:1 except D5; the rejected shortcuts are in
+- **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA); the rejected shortcuts are in
   their sections.
 
 ## Repository choices the paper does not state

@@ -91,7 +91,7 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 #   after the callbacks ran, so a schedule's decision for that epoch is what
 #   gets stored.
 #
-# Each node keeps its own history in `flow.nodes[name].history`, one float
+# Each node keeps its own history in `flow.nodes[name].history`, one entry
 # per epoch. `flow.history` is a view over them.
 
 # %%
@@ -109,8 +109,8 @@ assert len(flow.history["train"]) == len(flow.history["val"]) == 20
 assert set(flow.history["train"][-1]) == set(SPEC)
 
 # %% [markdown]
-# Without `validation_data=` there is no `val` key, and the shipped callbacks
-# refuse rather than guess.
+# Without `validation_data=` there is no `val` key, and `EarlyStopping`
+# refuses rather than guesses.
 
 # %%
 bare = build()

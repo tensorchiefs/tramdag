@@ -50,10 +50,10 @@ fits one. The frame needs the node's column, its parents' columns and its side
 columns; other columns are ignored. `fit`, `fit_classical`, `nll`, `save` and
 `load` work as on the flow, for one node. `nll` gives one float, and the
 `fit_classical` report is the per-node report. `fit` takes an optimizer
-instance or a factory, but no `n_jobs`. A centered `VC` needs its propensity
+instance or a factory `f(node)`, but no `n_jobs`. A centered `VC` needs its propensity
 column in every frame, because only the flow can compute it live from the
-treatment node. A flow derives each node's shuffling seed from its own seed and
-the node's position. So `Node.fit(seed=)` alone does not repeat a node of a
+treatment node. A flow derives each node's shuffling seed from `fit(seed=)`
+and the node's position. So `Node.fit(seed=)` alone does not repeat a node of a
 seeded flow fit. A node built alone draws its initial weights from torch's
 global RNG; call `torch.manual_seed` first for a reproducible start.
 
@@ -105,8 +105,8 @@ the final weights.
   and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an
   `on_epoch_end` hook; any `True` return stops that node's fit. `on_fit_end`
   runs before the `VC` re-centering. On the flow, a bare callable is a
-  factory: it takes the node name and gives that node its callbacks. So on
-  the flow, a bare hook goes into a list. The shipped callback is
+  function of the node name that gives that node its callbacks. So on the
+  flow, a bare hook goes into a list. The shipped callback is
   `EarlyStopping`: it restores the node's best-validation weights and takes an
   optional `patience` and `min_delta`. It reads `node.history["val"]`. `fit`
   refuses two callbacks that restore weights.

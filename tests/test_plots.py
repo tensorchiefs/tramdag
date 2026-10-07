@@ -4,13 +4,14 @@
 import sys
 
 import matplotlib as mpl
+import pandas as pd
 import pytest
 
 mpl.use("Agg")
 
 from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, OrdinalNode, plot_dag
 from tramdag.callbacks import EarlyStopping
-from tramdag.plots import plot_marginals, plot_training
+from tramdag.plots import plot_marginals, plot_training, plot_varying_coef
 
 
 # %% private functions -----------------------------------------------------------------
@@ -33,8 +34,14 @@ def test_plot_dag_draws_every_node_and_edge():
     assert len(ax.patches) == len(spec) + n_edges
     assert len(arrows) == n_edges
     labels = {t.get_text() for t in ax.texts}
-    assert {"CI", "LS", "CS", "CS joint", "VC", "VC mod"} <= labels
-    assert ax.get_legend() is not None
+    assert {"CI", "LS", "CS", "CS joint", "VC"} <= labels
+    assert len(ax.lines) == 1  # the modifier's dot on the treatment edge
+    legend = {t.get_text() for t in ax.get_legend().get_texts()}
+    assert "VC modifier" in legend
+    # the modifier as an edge into the outcome, with its own label
+    node_mode = plot_dag(spec, modifiers="node")
+    assert "VC modifier" in {t.get_text() for t in node_mode.texts}
+    assert not node_mode.lines
     # a flow draws its spec; labels and legend are optional
     flow = CausalFlowDAG(spec, seed=0)
     ax2 = plot_dag(flow, labels=False, legend=False, title="d")
@@ -121,3 +128,47 @@ def test_the_validation_curve_keeps_its_own_epochs(ls_chain):
     }
     assert drawn["train"] == [1, 2, 3, 4, 5]
     assert drawn["val"] == [4, 5]
+
+
+def test_plots_draw_into_given_axes_and_take_a_style(ls_chain):
+    """ax= draws into the caller's layout; style and node_kind change the look."""
+    import matplotlib.pyplot as plt
+
+    fig, (left, right) = plt.subplots(1, 2)
+    ax = plot_dag(_every_term_spec(), ax=left, style="dark", node_kind=False)
+    assert ax is left
+    assert len(fig.axes) == 2  # no new figure, no new axes
+    texts = {t.get_text() for t in left.texts}
+    assert "continuous" not in texts  # no kind sub-labels
+    assert {t.get_color() for t in left.texts if t.get_text() == "x1"} == {"white"}
+    df = ls_chain["draw"](200, 1)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, validation_split=0.2)
+    assert plot_training(flow, ax=right) is right
+    fig2, panels = plt.subplots(1, 2)
+    out = plot_marginals(flow, df, ax=panels, legend="figure", title=None)
+    assert list(out) == list(panels)
+    assert fig2._suptitle is None
+    assert len(fig2.legends) == 1
+    assert all(p.get_legend() is None for p in panels)
+
+
+def test_plot_varying_coef_draws_the_vc_effect(ls_chain):
+    """One line of beta along the modifier, as varying_coef gives it."""
+    import numpy as np
+
+    rng = np.random.default_rng(0)
+    n = 300
+    x = rng.normal(size=n)
+    t = (rng.random(n) < 0.5).astype(float)
+    df = pd.DataFrame({"x": x, "t": t, "y": x + (1 + x) * t + rng.logistic(size=n)})
+    spec = {
+        "x": ContinuousNode(),
+        "t": OrdinalNode(2),
+        "y": ContinuousNode(LS("x") + VC("x", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
+    ax = plot_varying_coef(flow, df, "y", by="x")
+    line = ax.get_lines()[0]
+    grid = pd.DataFrame({"x": line.get_xdata()})
+    assert np.allclose(line.get_ydata(), flow.varying_coef(grid, "y"))

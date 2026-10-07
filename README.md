@@ -1,4 +1,4 @@
-# tramdag — Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
+# tramdag: Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
 
 [![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 [![PyPI](https://img.shields.io/pypi/v/tramdag)](https://pypi.org/project/tramdag/)
@@ -31,9 +31,9 @@ or locally.
 
 ## Install
 
-The package is on PyPI as `tramdag`; `uv add tramdag` or `pip install tramdag`
+The package is on PyPI as `tramdag`. `uv add tramdag` or `pip install tramdag`
 installs it, and the `plots` extra (`tramdag[plots]`) adds matplotlib for the
-figures. The PyPI release lags `main`; for the current state install from git
+figures. The PyPI release lags `main`. For the current state, install from git
 (`tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main`, pinned to a
 commit for reproducibility). A clone with `uv sync` gives the development
 setup with tests and experiments.
@@ -42,7 +42,7 @@ setup with tests and experiments.
 
 Guides, executed notebooks and the API reference are published at the
 [documentation site](https://tensorchiefs.github.io/tramdag/). Each subject has
-one guide, and its worked example is one notebook.
+at most one guide and one example notebook.
 
 | Subject | Guide | Example |
 |---|---|---|

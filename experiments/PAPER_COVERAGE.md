@@ -1,4 +1,4 @@
-# Paper coverage — what of arXiv:2503.16206 is reproduced here
+# Paper coverage: what of arXiv:2503.16206 is reproduced here
 
 Checked figure by figure against the paper (v1). "Schematic" means the figure
 is a drawing of a model or DAG, not a result: nothing to compute.
@@ -9,7 +9,7 @@ is a drawing of a model or DAG, not a result: nothing to compute.
 |---|---|---|
 | 1 | TRAM-DAG architecture | schematic |
 | 2 | DAG with noise, and the post-interventional DAG | schematic |
-| 3 | Meta-adjacency matrix specification | schematic — but the object itself is `flow.to_matrix()` |
+| 3 | Meta-adjacency matrix specification | schematic, but the object itself is `flow.to_matrix()` |
 | 4 | VACA observational joint: DGP vs TRAM-DAG vs CNF | `vaca.py flexible` → `plots/pairs.png` (DGP vs flow; **the CNF baseline is not reimplemented**, see gaps) |
 | 5 | VACA interventional `p(x3 \| do(x2))` | `vaca.py flexible` → `plots/interventional.png`, scored against the analytic means |
 | 6 | CAREFL counterfactual queries | `carefl.py flexible` → `plots/cf_curves.png`, scored against the analytic counterfactuals |
@@ -21,9 +21,9 @@ is a drawing of a model or DAG, not a result: nothing to compute.
 
 | Figure | Subject | Reproduced by |
 |---|---|---|
-| 10 | Why counterfactuals fail for interval-censored discrete variables | schematic (App. B) — the measured version is gap 2 below: `triangle_mixed.py` → `plots/counterfactual_pmf.png`, scored against the analytic counterfactual law |
+| 10 | Why counterfactuals fail for interval-censored discrete variables | schematic (App. B); the measured version is gap 2 below: `triangle_mixed.py` → `plots/counterfactual_pmf.png`, scored against the analytic counterfactual law |
 | 11 | DAG of the original VACA DGP | schematic |
-| 12 | VACA observational fit with a Neural Spline Flow | **not reproduced** — a competing method, see gaps |
+| 12 | VACA observational fit with a Neural Spline Flow | **not reproduced**: a competing method, see gaps |
 | 13 | DAG of the four-variable counterfactual experiment | schematic |
 | 14 | Coefficient convergence, linear-shift continuous case | `triangle.py linear-ls` → `plots/coefficients.png` |
 | 15 | Coefficient convergence with one CS term | `triangle.py atan-cs` → `plots/coefficients.png` |
@@ -50,7 +50,6 @@ in the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
    `triangle_mixed.py` turns that into a number. An observed ordinal level pins
    the latent to an interval. The generator can therefore state the exact
    counterfactual *distribution*, `TriangleMixed.true_counterfactual_pmf`,
-   which `tests/` checks against realised counterfactuals. The flow's
+   which `experiments/tests/` checks against realized counterfactuals. The flow's
    averaged abduction draws are then scored against that distribution, and not
    against a level no model can predict.
-3. **Section 7's application** is not here: its data is not public.

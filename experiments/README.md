@@ -36,7 +36,7 @@ Every run writes to `results/<name>/` (gitignored):
 |---|---|---|---|
 | [`triangle.py`](triangle.py) | continuous triangle | Sec. 6.1, App. C.3 | `linear-ls`, `linear-cs`, `atan-cs`, `sin-cs` |
 | [`triangle_mixed.py`](triangle_mixed.py) | triangle with an ordinal x3 | Sec. 6.2, App. C.4 | `linear-ls`, `exp-cs` |
-| [`vaca.py`](vaca.py) | VACA/CNF bimodal benchmark | Sec. 5.1–5.2, App. C.1 | `flexible` |
+| [`vaca.py`](vaca.py) | VACA/CNF bimodal benchmark | Sec. 5.1 and 5.2, App. C.1 | `flexible` |
 | [`carefl.py`](carefl.py) | CAREFL Laplace SCM | Sec. 5.3, App. C.2 | `flexible` |
 
 Each variant's protocol, its deviations from the paper and the measurements
@@ -71,7 +71,7 @@ verbose, so one variant reads top to bottom:
   their empirical marginals (`flow.fit(..., marginal_init=True)`); the
   reference has no such start ([`docs/paper-replication.md`](../docs/paper-replication.md)).
 - `fit_kwargs:` go verbatim to `flow.fit(train, **fit_kwargs)`: `epochs`,
-  `batch_size` and `seed`. `learning_rate` stays top-level too and reaches
+  `batch_size` and `seed`. `learning_rate` is a top-level key and reaches
   `flow.fit(learning_rate=)`; `schedule` and the `plateau_*` keys configure
   the per-node plateau scheduler the script builds.
 - `figures:` gives every figure of the report its title and caption;
@@ -115,9 +115,10 @@ and why.
 ## The frozen data is a contract
 
 `data/` is committed input, not a cache. `check_data.py` regenerates every
-dataset from the seed in its `truth.json` and compares to 1e-9, not to bit
-equality, because numpy's transcendental functions move their last bits
-between releases; `tests/` runs the same comparison in the ordinary test run.
+dataset from the seed in its `truth.json` and compares to 1e-9. It does not
+compare to bit equality, because numpy's transcendental functions move their
+last bits between releases. `experiments/tests/test_generators.py` runs the same
+comparison.
 A new seed or a changed equation means a new folder, never an edit in place.
 `data/carefl-cf` is the one folder with no generator here: it is CAREFL's own
 committed data, external frozen input.

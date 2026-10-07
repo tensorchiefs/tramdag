@@ -1,11 +1,11 @@
-# Code map — every module of `src/tramdag/` — the public names and the private plumbing
+# Code map: every module of `src/tramdag/`, the public names and the private plumbing
 
 This document has one entry per name, with its role and its place in the
 pipeline. Names in parentheses are private machinery. They are useful to know,
 and they are not part of the API. The last section lists every training
 hyperparameter and where it lives.
 
-## `spec.py` — declare the model
+## `spec.py`: declare the model
 
 Every term is a `Term` subclass under its pythonic name. The paper's symbol is
 the same object, so `LS is LinearShift`.
@@ -13,10 +13,10 @@ the same object, so `LS is LinearShift`.
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`Term`][tramdag.spec.Term] | One additive term of a node's transformation, plain data: a subclass per term with `name` and `module` as class attributes and its options as the keyword arguments of `__init__` assigned to `self`, so `options()` is `dict(vars(term))`. `+` on terms builds plain lists. Carries the spec-level rules `check`, `edge_parents`, `cells`, `classical` and `from_serialized`. The contract is in [architecture.md](architecture.md). |
-| [`SI()`][tramdag.spec.SI] | The parentless intercept — the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
-| [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept — the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
+| [`SI()`][tramdag.spec.SI] | The parentless intercept, the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (`transform=`, default `"bernstein"`); extra keyword arguments pass straight to the transform class. |
+| [`CI()`][tramdag.spec.CI] | The parent-conditioned intercept, the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries `units=` and `allow_interaction=` (joint vs. additive multi-parent intercept). |
 | [`Intercept`][tramdag.spec.Intercept] / `I` | The intercept term class: without parents the paper's SI, with parents the CI; `SI()`/`CI()` are the two spellings with their arity checked. |
-| [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift $\beta x$ — the interpretable log-odds coefficient. Exactly one parent. |
+| [`LinearShift`][tramdag.spec.LinearShift] / `LS` | Linear shift $\beta x$, the interpretable log-odds coefficient. Exactly one parent. |
 | [`ComplexShift`][tramdag.spec.ComplexShift] / `CS` | Complex shift: an NN `g(x)`, additive on the latent scale. Several parents form one joint network. |
 | [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] / `VC` | Varying-coefficient shift $(\beta_0 + b_\Theta(\text{mod}))\, x_t$, the penalized treatment-effect head. `propensity=` names the propensity column for centering. |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] | Continuous variable: monotone 1-D transform plus shifts. `terms` is the first positional argument. |
@@ -27,7 +27,7 @@ the same object, so `LS is LinearShift`.
 | (`_normalize_terms`, `_check_term`, `_term_class`, `_checked_input_transform`, `_serialized`) | Formula flattening and per-entry validation (a `+` sum nested in a list is rejected), the one-parented-`I` rule plus transform hoisting in one pass. An option another term takes is refused by Python's own argument binding, as a `TypeError`. |
 | (`_check_node`, `_kahn_sort`) | The stages behind `validate_and_sort`: parents exist, then each term's `check` (the VC treatment and centering rules), then edge ownership through `edge_parents`; a term's own shape (arity, option values) and a node's own (ordinal levels, the transform) are checked when they are built. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic. |
 
-## `transforms.py` — the monotone map h and the ordinal transform
+## `transforms.py`: the monotone map h and the ordinal transform
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -43,7 +43,7 @@ the same object, so `LS is LinearShift`.
 | [`ordinal_bounds()`][tramdag.transforms.ordinal_bounds] | The shifted cutpoint interval of each observed level. `scores.py` reads it for the latent-scale derivative. |
 | (`_ScaledUT`, `_log1mexp`) | Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable $\log(1-e^{x})$. |
 
-## `flow.py` — the model
+## `flow.py`: the model
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -53,12 +53,12 @@ the same object, so `LS is LinearShift`.
 | [`sample()`][tramdag.flow.CausalFlowDAG.sample] | Observational, interventional (`do=`, graph mutilation) and counterfactual (`u=`) sampling. |
 | [`abduct()`][tramdag.flow.CausalFlowDAG.abduct] | Abduction: recover the latents. |
 | [`pmf()`][tramdag.flow.CausalFlowDAG.pmf] | Analytic class probabilities of an ordinal node, with `do=` overrides. |
-| [`density()`][tramdag.flow.CausalFlowDAG.density] | Analytic conditional density of a continuous node on a grid, with `do=` overrides — the continuous counterpart of `pmf`. |
+| [`density()`][tramdag.flow.CausalFlowDAG.density] | Analytic conditional density of a continuous node on a grid, with `do=` overrides, the continuous counterpart of `pmf`. |
 | [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`nll()`][tramdag.flow.CausalFlowDAG.nll] | Joint per-row log-likelihood, or a `nodes=` subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic. |
 | [`varying_coef()`][tramdag.flow.CausalFlowDAG.varying_coef] | Closed-form read-out $\beta(x)$ of a fitted VC term. Deterministic, y-free. |
 | [`scores()`][tramdag.flow.CausalFlowDAG.scores] / [`effect_modifier_scan()`][tramdag.flow.CausalFlowDAG.effect_modifier_scan] | Analytic per-observation scores and the CUSUM modifier scan (delegate to `scores.py`). |
 | [`intercept_contributions()`][tramdag.flow.CausalFlowDAG.intercept_contributions] | Post-hoc GAM-style decomposition of a complex intercept into mean-centered per-term parts. |
-| [`ls_coefficients()`][tramdag.flow.CausalFlowDAG.ls_coefficients] | The per-node linear-shift weights — the interpretable coefficients. |
+| [`ls_coefficients()`][tramdag.flow.CausalFlowDAG.ls_coefficients] | The per-node linear-shift weights, the interpretable coefficients. |
 | [`design_matrix()`][tramdag.flow.CausalFlowDAG.design_matrix] | Parent encoding as a DataFrame (`drop_first=` gives the classical statsmodels/`polr` design). |
 | [`to_matrix()`][tramdag.flow.CausalFlowDAG.to_matrix] | The labeled meta-adjacency matrix of term tags. |
 | [`save()`][tramdag.flow.CausalFlowDAG.save] / [`load()`][tramdag.flow.CausalFlowDAG.load] | Checkpoints with the nodes' histories and provenance (version, time, device). `load` requires a complete checkpoint and fails loudly otherwise. |
@@ -66,7 +66,7 @@ the same object, so `LS is LinearShift`.
 | (`_calibrate`, `_propensity`, `_side_feats`, `_query_side_columns`) | The flow-wide calibration (every node before the first fit, flags rolled back when a node refuses the frame), the generic side-column plumbing (each term names/validates/recomputes its own columns via the `ShiftModule` hooks) plus the binary propensity fit. |
 
 
-## `modules.py` — the term modules
+## `modules.py`: the term modules
 
 There is one module class per term, and the term class holds it as `module`
 (`ComplexShift.module is ComplexShiftModule`); the module holds the term's
@@ -88,7 +88,8 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`SimpleInterceptModule`][tramdag.modules.SimpleInterceptModule] / [`ComplexInterceptModule`][tramdag.modules.ComplexInterceptModule] / [`AdditiveInterceptModule`][tramdag.modules.AdditiveInterceptModule] | The intercept slot: free theta (`I()`), one joint net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in `nets`. |
 | (`_nn`) | The one NN builder: a stack of the given `units` with the term's `activation` (optional `batch_norm` before it), then a bias-free output layer. |
 | (`_InputTransform`) | One term's frozen network-input transform (minmax / standardize / callable over frozen train columns). |
-## `nodes.py` — the node model
+
+## `nodes.py`: the node model
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -97,7 +98,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`Node`][tramdag.nodes.Node] `.features` / `.tensorize` / `.calibrate` / `.ls_coefficients` / `.save` / `.load` | The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and `calibrated` flag, its `LS` coefficients, its checkpoint. |
 | (`encode`, `schema_entry`, `tensorize`, `check_columns`, `check_level_values`, `write_checkpoint`, `load_weights`) | Shared by the node and the flow: one column's encoding, a node's schema entry, columns as tensors, the column and level checks, the checkpoint writer and loader. |
 
-## `fitting.py` — `NodeFitMixin` and `FitMixin`
+## `fitting.py`: `NodeFitMixin` and `FitMixin`
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -105,14 +106,14 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`fit()`][tramdag.flow.CausalFlowDAG.fit] / [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] | The flow's loops over the nodes, methods of the flow via `FitMixin`; `history` is the flow's view over the nodes' histories. |
 | (`_split_validation`, `_normalize_callbacks`, `_check_fit_sizes`, `_learning_rates`, `_log_epoch`, `_fit_epoch`, `_FnCallback`, `_node_seed`, `_per_node`, `NodeFitMixin._check_classical`, `_fit_in_child`, `_pad_last`, `FitMixin._check_frames`, `FitMixin._fit_nodes`, `FitMixin._with_live_side`) | The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the frame checks before the first fit, the forked worker and the serial loop, the padded history view, the live propensity for the validation NLL. |
 
-## `readouts.py` — `ReadoutsMixin`
+## `readouts.py`: `ReadoutsMixin`
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`shift_curve()`][tramdag.flow.CausalFlowDAG.shift_curve] | One fitted shift term on a 1-D grid, through the term's own `shift_value`. |
-| the read-out methods | `varying_coef`, `ls_coefficients`, `to_matrix`, `intercept_contributions`, `design_matrix` — defined here once, methods of the flow via the mixin. |
+| the read-out methods | `varying_coef`, `ls_coefficients`, `to_matrix`, `intercept_contributions`, `design_matrix`, defined here once, methods of the flow via the mixin. |
 
-## `scores.py` — effect-modifier detection
+## `scores.py`: effect-modifier detection
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -121,13 +122,13 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 | [`sup_bb_pvalue()`][tramdag.scores.sup_bb_pvalue] | $P(\sup|B| > \text{stat})$ for a Brownian bridge $B$, the Kolmogorov series. |
 | (`_dl_ds`, `CRIT_5PCT`) | Closed-form latent-scale derivative and the 5 % critical value. The per-term columns come from each term's `score_columns` hook. |
 
-## `callbacks.py` — the shipped `fit` callbacks
+## `callbacks.py`: the shipped `fit` callbacks
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
 | [`EarlyStopping`][tramdag.callbacks.EarlyStopping] | The node's best-validation weights, restored at fit end (`restore_best=False` keeps the final ones); `patience=` also stops the node's fit, and `min_delta=` sets the smallest gain that counts. |
 
-## `plots.py` — the figures (matplotlib optional: `tramdag[plots]`)
+## `plots.py`: the figures (matplotlib optional: `tramdag[plots]`)
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
@@ -159,15 +160,15 @@ default you can read at the call site. Nothing numeric is buried.
 | learning rate, batch size | `fit()` | 1e-2 / 512 (in-repo callers state them explicitly anyway) |
 | validation, progress | `fit(validation_data=, validation_split=, verbose=)` | validation off, `verbose=0` |
 | schedules, early stopping | `fit(optimizer=, callbacks=)` | `tramdag.callbacks` ships `EarlyStopping`, per node; anything else is torch's `lr_scheduler` and a few lines of callback ([fitting.md](fitting.md)) |
-| calibrated init | `fit(marginal_init=)` | False: zuko's zero start; applied only by the fit that calibrates a node, so a node that `fit_classical` calibrated ignores it |
+| marginal start | `fit(marginal_init=)` | False: the zero start; applied only by the fit that calibrates a node, so a node that `fit_classical` calibrated ignores it |
 | VC stage-1 propensities | the training-frame column `VC(propensity=)` names | required for a centered VC term ([varying-coefficients.md](varying-coefficients.md)) |
 | VC penalty and centering | `VC(penalty=, propensity=)` | 1.0 / None (`propensity="col"` names the propensity column) |
-| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 5000 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off — one full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
+| L-BFGS budget | `fit_classical(max_iter=, history_size=)` | 5000 / 50; torch's `tolerance_change` is 1e-9 and `tolerance_grad` is off. One full-batch run, no chunks; `converged` also needs `GRAD_TOL` (1e-2) |
 | training budget | `fit(epochs=)` | **required** ([fitting.md](fitting.md)) |
-| network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64) — parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |
+| network widths | `units=` on `I`/`CS`/`VC` | (8, 8) / (64, 128, 64), parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement |
 | activation | `activation=` on `I`/`CS`/`VC` | `"relu"` (the reference default classes); `"sigmoid"` and `"tanh"` are the paper's |
-| batch norm | `batch_norm=` on `I`/`CS`/`VC` | `False` — neither reference uses it. `True` puts a `BatchNorm1d` between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs `eval()` mode (`fit` and `load` leave the flow there) |
+| batch norm | `batch_norm=` on `I`/`CS`/`VC` | `False`: neither reference uses it. `True` puts a `BatchNorm1d` between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs `eval()` mode (`fit` and `load` leave the flow there) |
 | transform class | `I(transform=, **kwargs)` (extra kwargs go to the transform class) | `"bernstein"`, `n_coeffs=20` unconstrained coefficients ([zuko-upstream.md](zuko-upstream.md) on the order they give); spline `bins=8`, zuko's NSF default; the domain is fixed at [-5, 5], `transforms.BOUND` |
-| shuffling / weight init | `fit(seed=)` / `CausalFlowDAG(seed=)` | init happens at construction — the constructor seed is the reproducibility knob; a lone `Node` takes `torch.manual_seed` before `Node(...)` |
-| weight init | `CausalFlowDAG(init=)` | `"torch"` (`nn.Linear` Kaiming-uniform); `"glorot"` = Keras `Dense` default, glorot-uniform weights and zero biases — the paper's reference; decisive under its full-batch protocol |
+| shuffling / weight init | `fit(seed=)` / `CausalFlowDAG(seed=)` | init happens at construction, so the constructor seed is the reproducibility knob; a lone `Node` takes `torch.manual_seed` before `Node(...)` |
+| weight init | `CausalFlowDAG(init=)` | `"torch"` (`nn.Linear` Kaiming-uniform); `"glorot"` = Keras `Dense` default, glorot-uniform weights and zero biases, the paper's reference; decisive under its full-batch protocol |
 | network inputs | `CI/CS/VC(input_transform=)` | `None`, raw parents; `"minmax"`, `"standardize"` or a callable `fn(x, train)` ([model.md](model.md)) |

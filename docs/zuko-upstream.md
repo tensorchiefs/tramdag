@@ -51,7 +51,7 @@ that function:
 - the `log(2)·n/2` centering
 - the tying of the first two and the last two diffs
 
-Any upstream reparametrization therefore breaks the calibrated start silently.
+Any upstream reparametrization therefore breaks the marginal start silently.
 A public `unconstrain_theta(theta)` that takes the target control points is
 ~15 lines upstream. It removes the coupling to these private details. The
 framing is "identity/linear initialization support", a standard flow trick.
@@ -76,14 +76,14 @@ the five.
 
 ## Anti-candidates (look upstreamable, are not)
 
-- **Quantile pre-scaling and `_ScaledUT`** — this is a modeling choice. zuko's
+- **Quantile pre-scaling and `_ScaledUT`**: this is a modeling choice. zuko's
   `ComposedTransform` with `MonotonicAffineTransform` already composes it.
-- **The ordinal ordered-logit transform and log-space `ordinal_log_prob`** —
+- **The ordinal ordered-logit transform and log-space `ordinal_log_prob`**:
   this transform is not a bijection. It stays outside zuko's flow scope. It is
   torch.distributions material, if anywhere.
-- **LS, CS, CI and VC terms, the marginal-init policy, propensity centering
-  and scores** — these are TRAM-DAG semantics. zuko's `MaskedMLP` already
+- **LS, CS, CI and VC terms, the marginal-start policy, propensity centering
+  and scores**: these are TRAM-DAG semantics. zuko's `MaskedMLP` already
   supports arbitrary adjacency. tramdag does not use it, because it needs
   per-term interpretability.
-- **The spline `slope` knob and the Bernstein `eps` knob** — zuko already
+- **The spline `slope` knob and the Bernstein `eps` knob**: zuko already
   exposes both upstream.

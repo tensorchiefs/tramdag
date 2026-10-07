@@ -6,7 +6,7 @@ repository follows it.
 ## Symbols
 
 Random variables are capital Latin letters, for example $Y$. Their
-realizations — observed or sampled values — are lowercase Latin letters, for
+realizations, observed or sampled values, are lowercase Latin letters, for
 example $y$. The cumulative distribution function of $Y$ is $F_Y$ and the
 density is $f_Y$. A hat marks an estimate: $\hat{F}$ is the fitted
 distribution, $F$ the true and often unknown one.
@@ -17,8 +17,8 @@ $\mathbf{X} = [X_1, \dots, X_J]$.
 A single optimized parameter is a lowercase Greek letter, for example
 $\vartheta$ or $\beta$. A vector of parameters is bold lowercase, for example
 $\boldsymbol{\vartheta} = (\vartheta_1, \ldots, \vartheta_M)^\top$. A tuple
-that collects several parameter groups — for example all weight matrices of a
-network — is bold capital, for example $\boldsymbol{\Theta}$.
+that collects several parameter groups, for example all weight matrices of a
+network, is bold capital, for example $\boldsymbol{\Theta}$.
 
 A function that a parameter vector defines carries it as a subscript:
 $h_{\boldsymbol{\vartheta}}$ is the monotone transformation with coefficients
@@ -40,16 +40,8 @@ $\boldsymbol{\vartheta}$.
 | $\lambda$ | the L2 weight on $b_{\boldsymbol{\Theta}}$ | `penalty=` |
 | $\sigma$ | the logistic function | `torch.sigmoid` |
 
-Every node's model is one additive formula on the latent scale:
-
-$$
-u \;=\; h(x \mid \mathrm{pa}(x)) \;=\;
-h_{\boldsymbol{\vartheta}(\cdot)}(x)
-\;+\; \sum_j \beta_j\, x_j
-\;+\; \sum_k g_k(x_k)
-\;+\; (\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t .
-$$
-
-For a continuous node the shifts are added, as written. For an ordinal node
-the shift is subtracted inside the sigmoid:
+Every node's model is one additive formula on the latent scale.
+[model.md](model.md#the-components) writes it out. For a continuous node the
+shifts are added. For an ordinal node the shift is subtracted inside the
+sigmoid:
 $P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - \text{shift})$.

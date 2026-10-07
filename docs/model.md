@@ -110,14 +110,13 @@ Three rules follow from the model.
   parents the complex one; `SI()` and `CI(...)` spell that out with the arity
   checked.
 - **Joint versus additive is argument grouping.** Several parents in one term
-  form one network over all of them, an interaction; the same parents in
-  separate terms act additively. For the intercept the grouping is said with
-  `allow_interaction`, because a node takes at most one intercept with
-  parents.
+  form one network over all of them, an interaction. The same parents in
+  separate terms act additively. A node takes at most one intercept with
+  parents, so for the intercept `allow_interaction` sets the grouping.
 - **Every parent enters through exactly one edge-owning term.** The VC
   modifiers are the one exception: `CS("X2") + VC("X2", t="T")` is the
-  intended pattern, where $x_2$ acts prognostically through the shift and
-  modifies the treatment effect.
+  intended pattern. There $x_2$ acts prognostically through the shift and
+  also modifies the treatment effect.
 
 ### The three knobs on a term
 
@@ -135,8 +134,8 @@ continuous node:
 
 Extra keyword arguments of `I` pass straight to the transform class,
 `I(transform="spline", bins=16)`. Each transform pre-scales the data from the
-training `range_q` and $1 - $`range_q` quantiles onto a fixed domain;
-`range_q` is an intercept option, default 0.05, and `range_q=0` uses the
+training `range_q` and $1 - $`range_q` quantiles onto a fixed domain.
+`range_q` is an intercept option with default 0.05, and `range_q=0` uses the
 minimum and maximum. Ordinal nodes have no transform to pick.
 
 **`input_transform=` on `I`, `CS`, `VC`** transforms that term's continuous
@@ -157,13 +156,13 @@ P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 $$
 
 with increasing cutpoints $\vartheta$ and $s$ the total shift. The shift is
-subtracted where a continuous node adds it; [notation.md](notation.md) states
-the convention and [interpretation.md](interpretation.md) works through what
-it does to the sign of a coefficient.
+subtracted where a continuous node adds it. [notation.md](notation.md) states
+the convention. [interpretation.md](interpretation.md) shows what it does to
+the sign of a coefficient.
 
-The log-probability of an observed level is the difference of two sigmoids,
-computed in log space with `logsigmoid` and a stable `log(1 - exp(x))` and
-taking per element the better-conditioned side. The direct difference of two
+The log-probability of an observed level is the difference of two sigmoids.
+The code computes it in log space with `logsigmoid` and a stable
+`log(1 - exp(x))`, and per element it takes the better-conditioned side. The direct difference of two
 sigmoids has exactly zero gradient once they saturate in float32, and a node
 that starts there never recovers.
 

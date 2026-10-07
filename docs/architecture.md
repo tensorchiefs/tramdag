@@ -2,8 +2,8 @@
 
 The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its `Term` subclass (the spec) and its module in
-`modules.py`. Node-kind behavior lives in five `Node` methods and
-`nodes.encode`. Everything else is framework code.
+`modules.py`. Node-kind maths lives in five `Node` methods, `nodes.encode`
+and the score derivative `scores._dl_ds`. Everything else is framework code.
 
 ## Module map
 ```mermaid
@@ -39,20 +39,17 @@ graph TD
     flow --> scores
     fitting --> callbacks
     readouts --> modules
-    readouts --> spec
-    scores --> spec
     scores --> transforms
     plots --> spec
 ```
 
-`modules.py` imports nothing from `spec.py`: it reads the node's parent schema,
+`modules.py` imports nothing from `spec.py` at run time: it reads the node's parent schema,
 `{parent: "continuous" | n_levels}`, and a term's `parents` and options. That
 is what lets each term class hold its module class directly
 (`LinearShift.module is LinearShiftModule`). `fitting.py` and `readouts.py`
 are mixins: `Node` composes `NodeFitMixin`, and `CausalFlowDAG` composes
 `FitMixin` and `ReadoutsMixin`. `fitting` imports `flow` and `nodes` under
-`TYPE_CHECKING` only, plus `nodes.load_weights` lazily in
-`FitMixin._fit_nodes`. So the import graph is acyclic at module load,
+`TYPE_CHECKING` only. So the import graph is acyclic at module load,
 although the package UML draws both directions between `fitting` and `nodes`.
 
 ## The term contract
@@ -65,7 +62,7 @@ classDiagram
         parents
         __init__(*parents): the base assigns the parents
         options: each subclass's keyword arguments, assigned to self
-        __repr__(): the only one — every entry as name=value
+        __repr__(): the only one, every entry as name=value
         check(name, spec)
         edge_parents
         cells()
@@ -123,17 +120,29 @@ A custom term is two classes:
 
 ## Node kinds
 
-The two node kinds are continuous and ordinal. They stay an if/else in ONE
-place: the five `Node` methods `log_prob`, `sample`, `abduct`,
-`marginal_theta` and `encode` in nodes.py, plus the column encoding
-`nodes.encode`. Everything else, the term modules included, reads a node's
-schema entry (`nodes.schema_entry`): `"continuous"` or a level count.
+The two node kinds are continuous and ordinal. The maths that differs by
+kind is an if/else in three places:
+
+- the five `Node` methods `log_prob`, `sample`, `abduct`, `marginal_theta`
+  and `encode`, plus the transform choice in `Node.__init__`;
+- the column encoding `nodes.encode`;
+- the score derivative `scores._dl_ds`.
+
+Other code reads the kind only to check, convert or display values.
+`flow.py` checks ordinal levels, sets the output dtype and limits `pmf` and
+`density` to their kind. `readouts.py` refuses an ordinal parent in
+`shift_curve` and keeps a continuous parent raw in `design_matrix`.
+`effect_modifier_scan` finds the score column of a binary ordinal
+treatment. `spec.py` validates and serializes the kind, and `plots.py`
+styles the node.
+The term modules read a node's schema entry (`nodes.schema_entry`):
+`"continuous"` or a level count.
 
 ## Guards that pin all of this
 
-- `tests/tools/statedict_smoke.py` — seeded per-DGP state dicts, bit-compared.
+- `tests/tools/statedict_smoke.py`: seeded per-DGP state dicts, bit-compared.
 - The inline DGP truths (`tests/conftest.py`) and 45+ regex-pinned refusals.
-- `experiments/ground_truth/*.json` — eight CI-checked replications with
+- `experiments/ground_truth/*.json`: eight CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.
 
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->

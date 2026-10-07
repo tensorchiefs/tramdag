@@ -104,7 +104,8 @@ covariate. Two causes give this:
   prognostic part, wrongly.
 
 The second cause works through the score. The treatment score of row $i$ is
-$\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row. The factor
+$\psi_i = r_i$ times the term's regressor: $t_i$, or $t_i - \hat e_i$ for a
+centered `VC`. Here $t_i$ is the treatment of the row. The factor
 $r_i = \partial \ell_i / \partial s_i$ is the derivative of $\ell_i$ with
 respect to the row's total shift $s_i$, and it acts like a residual. If the
 simple model gets the prognostic effect of `X1` wrong, $r_i$ follows a
@@ -146,7 +147,7 @@ of `df`, and one column per interpretable shift coefficient of the node.
 
 - A continuous `LS` parent gives one column, named after the parent.
 - An ordinal `LS` parent gives one column per level of its one-hot
-  encoding, named `"t[0]"`, `"t[1]"` and so on. A row's score goes to the
+  encoding, named `"{parent}[0]"`, `"{parent}[1]"` and so on. A row's score goes to the
   column of the level that the row has.
 - A `VC` term gives one column for its $\beta_0$, named after the
   treatment.

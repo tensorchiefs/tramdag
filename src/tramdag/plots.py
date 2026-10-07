@@ -646,10 +646,10 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
         _, ax = plt.subplots(figsize=(7.5, 3.6))
     for label, (x, curve) in curves.items():
         ax.plot(x, curve, label=f"{label} NLL (total)")
-    # zoom past the initial drop: the top keeps 98 % of each curve after 10 %
-    # of its epochs, so a validation curve that rises later stays in view
+    # zoom past the initial drop: the top keeps each curve after 10 % of its
+    # epochs, so a validation curve that rises later stays in view
     lo = min(c.min() for _, c in curves.values())
-    hi = max(np.quantile(c[len(c) // 10 :], 0.98) for _, c in curves.values())
+    hi = max(c[len(c) // 10 :].max() for _, c in curves.values())
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
     for name, epoch in sorted((stops or {}).items(), key=lambda kv: kv[1]):
@@ -667,8 +667,9 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
         )
     ax.set_xlabel("epoch")
     ax.set_ylabel("NLL")
-    ax.legend(loc="upper right", frameon=False)
-    ax.set_title(title or "training")
+    # below the axes, off the curves; the title stays left of the stop names
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
+    ax.set_title(title or "training", loc="left")
     _finish(ax.figure, path, created)
     return ax
 

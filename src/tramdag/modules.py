@@ -1,18 +1,18 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
-A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``I``) is
-plain data and carries the spec-level rules, and its ``module`` attribute is
-the class here that trains it (``LinearShift.module is LinearShiftModule``).
-A module is constructed from its term and the spec, ``module(term, spec)``
-(the intercept slot adds ``n_params``), holds the term's network and owns the
-runtime behaviour: ``shift_value``/``theta_value``, ``post_init``,
-``regularizer``, ``finalize``, ``score_columns`` and the side-input contract.
-This module imports nothing from [`spec`][tramdag.spec]: it reads a spec
-node's ``kind``, ``levels`` and a term's ``parents`` and options, so ``spec``
-can import it.
+A spec term ([`Term`][] subclass: ``LS``, ``CS``, ``VC``, ``I``) is plain
+data and carries the spec-level rules, and its ``module`` attribute is the
+class here that trains it (``LinearShift.module is LinearShiftModule``). A
+module is constructed from its term and the node's parent schema,
+``module(term, schema)`` (the intercept slot adds ``n_params``), holds the
+term's network and owns the runtime behaviour:
+``shift_value``/``theta_value``, ``post_init``, ``regularizer``, ``finalize``,
+``score_columns`` and the side-input contract. This module imports nothing
+from [`spec`][tramdag.spec]: it reads the schema, ``{parent: "continuous" |
+n_levels}``, and a term's ``parents`` and options, so ``spec`` can import it.
 
 A custom term is two classes: a [`ShiftModule`][tramdag.modules.ShiftModule]
-subclass with ``__init__(term, spec)`` and ``shift_value``, and a ``Term``
+subclass with ``__init__(term, schema)`` and ``shift_value``, and a ``Term``
 subclass for the options and checks whose ``module`` is that class.
 
 The widths and the activation of every network are options of the term
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from .nodes import Node
-    from .spec import NodeSpec, Term
+    from .spec import Term
 
 # %% global variables ------------------------------------------------------------------
 ACTIVATIONS = {"relu": nn.ReLU, "sigmoid": nn.Sigmoid, "tanh": nn.Tanh}
@@ -116,7 +116,7 @@ def _nn(
 
 
 def _attach_input_transform(
-    m: nn.Module, term: Term, spec: dict[str, NodeSpec], parents: tuple[str, ...]
+    m: nn.Module, term: Term, schema: dict[str, str | int], parents: tuple[str, ...]
 ) -> None:
     """Register the term's input transform over its continuous parents.
 
@@ -125,19 +125,19 @@ def _attach_input_transform(
     """
     if term.input_transform is None:
         return
-    cps = tuple(p for p in parents if spec[p].kind == "continuous")
+    cps = tuple(p for p in parents if schema[p] == "continuous")
     if cps:
         m.add_module("_input_transform", _InputTransform(term.input_transform, cps))
 
 
 # %% public functions ------------------------------------------------------------------
-def feat_width(spec: dict[str, NodeSpec], parents: tuple[str, ...]) -> int:
+def feat_width(schema: dict[str, str | int], parents: tuple[str, ...]) -> int:
     """Total feature width of the parents (ordinal one-hot, continuous raw)."""
-    return sum(spec[p].levels if spec[p].kind == "ordinal" else 1 for p in parents)
+    return sum(1 if schema[p] == "continuous" else schema[p] for p in parents)
 
 
 def intercept_module(
-    term: Term, spec: dict[str, NodeSpec], n_params: int
+    term: Term, schema: dict[str, str | int], n_params: int
 ) -> InterceptModule:
     """Construct the node's intercept module from its ``I`` term.
 
@@ -146,10 +146,10 @@ def intercept_module(
     coefficient vectors summed (``allow_interaction=False``).
     """
     if not term.parents:
-        return SimpleInterceptModule(term, spec, n_params)
+        return SimpleInterceptModule(term, schema, n_params)
     if term.allow_interaction:
-        return ComplexInterceptModule(term, spec, n_params)
-    return AdditiveInterceptModule(term, spec, n_params)
+        return ComplexInterceptModule(term, schema, n_params)
+    return AdditiveInterceptModule(term, schema, n_params)
 
 
 # %% private classes -------------------------------------------------------------------
@@ -159,7 +159,7 @@ class _InputTransform(nn.Module):
     ``calibrate`` takes the statistics from the training rows once:
     ``"minmax"`` freezes per-column lo/hi, ``"standardize"`` mean/std, and a
     callable keeps the raw training columns and is applied per batch as
-    ``fn(x, train)`` — so train statistics inside the callable are always the
+    ``fn(x, train)``, so train statistics inside the callable are always the
     frozen training data, never the batch's.
     """
 
@@ -215,9 +215,9 @@ class TermModule(nn.Module):
     def calibrate(self, train_df: pd.DataFrame) -> None:
         """Freeze this term's data-dependent state: the input-transform stats.
 
-        ``CausalFlowDAG._calibrate`` calls this once per term; a term without
+        ``Node.calibrate`` calls this once per term; a term without
         an ``input_transform`` has nothing to freeze. The intercept slot has a
-        second step on top of this one — see
+        second step on top of this one, see
         [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].
         """
         tr = self.input_transform
@@ -236,8 +236,8 @@ class TermModule(nn.Module):
 class ShiftModule(TermModule, ABC):
     """A shift term's behavior hooks, on top of its network.
 
-    ``__init__(term, spec)`` builds the network from the term's options and the
-    parents' widths in the spec, and sets ``key`` (the node's ModuleDict key)
+    ``__init__(term, schema)`` builds the network from the term's options and the
+    parents' widths in the schema, and sets ``key`` (the node's ModuleDict key)
     and ``parents`` (the term's written parents); a subclass may keep more
     (``VaryingCoefficientModule`` keeps ``mods``/``t_is_ord``/``propensity_col``).
     Layers are built in a fixed order under fixed attribute names, so
@@ -269,7 +269,7 @@ class ShiftModule(TermModule, ABC):
     def finalize(self, node: Node, feats: dict) -> None:
         """Run the term's post-fit step (after the after-fit callbacks)."""
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         """Give the per-observation score columns of this term's coefficients.
 
         Empty for a term with no interpretable coefficient (``CS``).
@@ -301,10 +301,10 @@ class InterceptModule(TermModule, ABC):
 
     A node has exactly one intercept term (normalization guarantees
     ``node.terms[0]``); it produces the transform parameters ``theta``.
-    ``groups`` carries the parent groups — empty for a simple intercept,
-    one tuple for a joint net, one per parent for an additive one — and
+    ``groups`` carries the parent groups (empty for a simple intercept,
+    one tuple for a joint net, one per parent for an additive one) and
     ``ci_parents`` their flat order. [`intercept_module`][] picks the class
-    for an ``I`` term; each class constructs from ``(term, spec, n_params)``.
+    for an ``I`` term; each class constructs from ``(term, schema, n_params)``.
     """
 
     groups: list[tuple[str, ...]]
@@ -316,7 +316,7 @@ class InterceptModule(TermModule, ABC):
         The intercept slot calibrates one thing more than every other term, so
         it says so in its own name rather than widening ``calibrate``: ``own``
         is the node's training column and ``ut`` its monotone transform
-        (``None`` for an ordinal node — cutpoints have no domain), whose
+        (``None`` for an ordinal node: cutpoints have no domain), whose
         ``range_q``/``1 - range_q`` quantiles map onto the pre-scaled domain.
         """
         self.calibrate(train_df)
@@ -347,13 +347,13 @@ class SimpleInterceptModule(InterceptModule):
     ----------
     term : Intercept
         The parentless intercept term.
-    spec : dict[str, NodeSpec]
-        The DAG specification (unused: no parents to size).
+    schema : dict[str, str | int]
+        The parent schema (unused: no parents to size).
     n_params : int
         Number of transform parameters.
     """
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
+    def __init__(self, term: Term, schema: dict[str, str | int], n_params: int):
         super().__init__()
         self.theta = nn.Parameter(torch.zeros(n_params))
         self.groups, self.ci_parents = [], []
@@ -382,16 +382,17 @@ class ComplexInterceptModule(InterceptModule):
     ----------
     term : Intercept
         The intercept term, with at least one parent.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the parents' feature widths.
+    schema : dict[str, str | int]
+        The parent schema, ``{parent: "continuous" | n_levels}``, for the
+        parents' feature widths.
     n_params : int
         Number of transform parameters to produce.
     """
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
+    def __init__(self, term: Term, schema: dict[str, str | int], n_params: int):
         super().__init__()
         self.net = _nn(
-            feat_width(spec, term.parents),
+            feat_width(schema, term.parents),
             term.units,
             n_params,
             activation=term.activation,
@@ -399,7 +400,7 @@ class ComplexInterceptModule(InterceptModule):
         )
         self.groups = [tuple(term.parents)]
         self.ci_parents = list(term.parents)
-        _attach_input_transform(self, term, spec, tuple(term.parents))
+        _attach_input_transform(self, term, schema, tuple(term.parents))
 
     def forward(self, x: Tensor) -> Tensor:
         """Map parent features ``(n, n_features)`` to parameters ``(n, n_params)``."""
@@ -421,13 +422,14 @@ class AdditiveInterceptModule(InterceptModule):
     term : Intercept
         The intercept term with ``allow_interaction=False`` and two or more
         parents.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the parents' feature widths.
+    schema : dict[str, str | int]
+        The parent schema, ``{parent: "continuous" | n_levels}``, for the
+        parents' feature widths.
     n_params : int
         Number of transform parameters to produce.
     """
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec], n_params: int):
+    def __init__(self, term: Term, schema: dict[str, str | int], n_params: int):
         super().__init__()
         self.groups = [(p,) for p in term.parents]
         self.ci_parents = list(term.parents)
@@ -435,7 +437,7 @@ class AdditiveInterceptModule(InterceptModule):
         # pins the state-dict path
         self.nets = nn.ModuleList(
             _nn(
-                feat_width(spec, grp),
+                feat_width(schema, grp),
                 term.units,
                 n_params,
                 activation=term.activation,
@@ -443,7 +445,7 @@ class AdditiveInterceptModule(InterceptModule):
             )
             for grp in self.groups
         )
-        _attach_input_transform(self, term, spec, tuple(term.parents))
+        _attach_input_transform(self, term, schema, tuple(term.parents))
 
     def theta_value(self, node: Node, feats: dict, n: int) -> Tensor:
         """Sum the per-parent nets in coefficient space."""
@@ -454,7 +456,7 @@ class AdditiveInterceptModule(InterceptModule):
 
 
 class LinearShiftModule(ShiftModule):
-    r"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
+    r"""``LS``: one raw-unit coefficient per feature of the single parent, no bias.
 
     Keyed by the parent's name.
 
@@ -462,15 +464,15 @@ class LinearShiftModule(ShiftModule):
     ----------
     term : LinearShift
         The term, with its one parent.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the parent's feature width.
+    schema : dict[str, str | int]
+        The parent schema, for the parent's feature width.
     """
 
     scored = True
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
+    def __init__(self, term: Term, schema: dict[str, str | int]):
         super().__init__()
-        self.fc = nn.Linear(feat_width(spec, term.parents), 1, bias=False)
+        self.fc = nn.Linear(feat_width(schema, term.parents), 1, bias=False)
         self.key = term.parents[0]
         self.parents = tuple(term.parents)
 
@@ -484,10 +486,10 @@ class LinearShiftModule(ShiftModule):
         return self.fc(x).squeeze(-1)
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
-        """Give the raw parent column times the weight — no input transform."""
+        """Give the raw parent column times the weight, with no input transform."""
         return self(torch.cat([feats[p] for p in self.parents], dim=1))
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         r"""One column per weight: the parent (continuous) or its one-hot levels.
 
         $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$,
@@ -495,13 +497,13 @@ class LinearShiftModule(ShiftModule):
         """
         (parent,) = self.parents  # an LS term has exactly one parent
         psi = (dlds.unsqueeze(1) * feats[parent]).cpu().numpy()
-        if flow.spec[parent].kind == "ordinal":
+        if node.schema[parent] != "continuous":
             return {f"{parent}[{k}]": psi[:, k] for k in range(psi.shape[1])}
         return {self.key: psi[:, 0]}
 
 
 class ComplexShiftModule(ShiftModule):
-    """``CS`` — an additive network shift ``g(x)`` over its parents.
+    """``CS``: an additive network shift ``g(x)`` over its parents.
 
     One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The
     term's ``units``, ``activation`` and ``batch_norm`` size the network.
@@ -510,22 +512,23 @@ class ComplexShiftModule(ShiftModule):
     ----------
     term : ComplexShift
         The term, with its parents.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the parents' feature widths.
+    schema : dict[str, str | int]
+        The parent schema, ``{parent: "continuous" | n_levels}``, for the
+        parents' feature widths.
     """
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
+    def __init__(self, term: Term, schema: dict[str, str | int]):
         super().__init__()
         self.parents = tuple(term.parents)
         self.net = _nn(
-            feat_width(spec, self.parents),
+            feat_width(schema, self.parents),
             term.units,
             1,
             activation=term.activation,
             batch_norm=term.batch_norm,
         )
         self.key = "+".join(self.parents)
-        _attach_input_transform(self, term, spec, self.parents)
+        _attach_input_transform(self, term, schema, self.parents)
 
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
@@ -540,6 +543,7 @@ class VaryingCoefficientModule(ShiftModule):
     r"""``VC``: $\beta(\text{mod})\, x_t$ with $\beta(x) = \beta_0 + b_\Theta(x)$.
 
     The weights of $b_\Theta$ carry the L2 ``penalty`` (``l2``; ``fit`` adds
+    ``penalty * l2() / n`` to the node's mean NLL, which equals adding
     ``penalty * l2()`` to the summed NLL); $\beta_0$ is not penalized. The
     output layer starts at zero, so $\beta(x) = \beta_0$ at construction. With
     ``n_features == 0`` there is no network and the term is ``LS(t)``. After
@@ -551,21 +555,21 @@ class VaryingCoefficientModule(ShiftModule):
     ----------
     term : VaryingCoefficient
         The term: treatment first in ``parents``, then the modifiers.
-    spec : dict[str, NodeSpec]
-        The DAG specification, for the modifiers' feature widths and the
+    schema : dict[str, str | int]
+        The parent schema, for the modifiers' feature widths and the
         treatment's kind.
     """
 
     scored = True
     order = 1
 
-    def __init__(self, term: Term, spec: dict[str, NodeSpec]):
+    def __init__(self, term: Term, schema: dict[str, str | int]):
         super().__init__()
         t, mods = term.parents[0], tuple(term.parents[1:])
         self.penalty = float(term.penalty)
         self.beta0 = nn.Parameter(torch.zeros(()))
         self.register_buffer("center", torch.zeros(()))
-        n_features = feat_width(spec, mods)
+        n_features = feat_width(schema, mods)
         if n_features > 0:
             # zero-initialised output: beta(x) == beta0 at init
             self.net = _nn(
@@ -581,9 +585,9 @@ class VaryingCoefficientModule(ShiftModule):
         self.key = t
         self.parents = tuple(term.parents)
         self.mods = mods
-        self.t_is_ord = spec[t].kind == "ordinal"
+        self.t_is_ord = schema[t] != "continuous"
         self.propensity_col = term.propensity
-        _attach_input_transform(self, term, spec, mods)
+        _attach_input_transform(self, term, schema, mods)
 
     def beta(self, mod_feats: Tensor | None, n: int) -> Tensor:
         r"""Give the effect values $\beta(x)$, shape ``(n,)``.
@@ -627,7 +631,7 @@ class VaryingCoefficientModule(ShiftModule):
         self.beta0 += delta
 
     def regressor(self, feats: dict) -> Tensor:
-        r"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.
+        r"""Give the ``(n, 1)`` column $\beta$ multiplies: the treatment, raw.
 
         The one-hot level-1 indicator for a binary ordinal treatment, the
         value itself for a continuous one; a centered term subtracts its
@@ -670,7 +674,7 @@ class VaryingCoefficientModule(ShiftModule):
         if self.mods:
             self.recenter(node.net_input(feats, self.mods, self.key))
 
-    def score_columns(self, node: Node, flow, feats: dict, dlds) -> dict:
+    def score_columns(self, node: Node, feats: dict, dlds) -> dict:
         r"""One column, keyed by the treatment: the ``beta0`` score.
 
         $\partial s / \partial \beta_0$ is the term's own ``regressor``, so forward
@@ -694,8 +698,8 @@ class VaryingCoefficientModule(ShiftModule):
     def live_side(self, flow, values: dict, n: int) -> dict:
         """Give the full-data propensity from the flow's own treatment node.
 
-        Detached — no gradient reaches the treatment node from this node's
-        loss — and derived from the current parent values, so
+        Detached (no gradient reaches the treatment node from this node's
+        loss) and derived from the current parent values, so
         ``do``-mutilated sampling centers with the intervened ``t``. Training
         uses the frozen column.
         """

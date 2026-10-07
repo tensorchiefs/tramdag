@@ -164,7 +164,7 @@ def test_gradient_isolation(confounded):
     flow.fit(df.assign(ps=_oof_propensity(df)[0]), epochs=3, seed=0)
     flow.zero_grad()
     vals = flow._tensorize(df)
-    (-flow.node_log_prob(vals)["Y"].mean()).backward()
+    (-flow._node_log_prob(vals)["Y"].mean()).backward()
     for p in flow.nodes["T"].parameters():
         assert p.grad is None or float(p.grad.abs().max()) == 0.0
     # the Y-node itself DID get gradients (the loss is not degenerate)
@@ -270,27 +270,28 @@ def test_propensities_must_be_probabilities(confounded):
 
 def test_centered_fit_with_managed_validation(confounded):
     """Fit-managed validation composes with a centered spec: the frozen OOF
-    column trains, the per-epoch validation NLL falls back to the LIVE
-    propensity (validation frames carry no OOF column by design), and
-    EarlyStopping restores best weights.
+    column trains, the per-epoch validation NLL uses the LIVE propensity of
+    the fitted treatment node (validation frames carry no OOF column by
+    design), and EarlyStopping restores best weights.
     """
     from tramdag.callbacks import EarlyStopping
 
     df = confounded["draw"](800, 3)
     val = confounded["draw"](300, 30)  # no 'ps' column: live e_hat by design
     flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
-    early = EarlyStopping()
+    stops = {}
     flow.fit(
         df.assign(ps=_oof_propensity(df)[0]),
         epochs=8,
         seed=0,
         validation_data=val,
-        callbacks=early,
+        callbacks=lambda name: stops.setdefault(name, EarlyStopping()),
     )
     assert len(flow.history["val"]) == 8
-    assert np.isfinite(early.best_nll)
-    # restored best: the flow's val NLL equals the callback's best
-    assert sum(flow.nll(val).values()) == pytest.approx(early.best_nll, rel=1e-6)
+    # restored best: each node's val NLL equals its callback's best
+    for name, nll in flow.nll(val).items():
+        assert np.isfinite(stops[name].best_nll)
+        assert nll == pytest.approx(stops[name].best_nll, rel=1e-6)
 
 
 def test_stray_propensity_column_is_ignored_on_an_uncentered_fit(confounded):
@@ -309,3 +310,14 @@ def test_stray_propensity_column_is_ignored_on_an_uncentered_fit(confounded):
     ):
         assert ka == kb
         assert torch.equal(pa, pb), ka
+
+
+def test_the_validation_nll_uses_the_live_propensity(confounded):
+    """The split carries the frozen column along; the validation NLL still
+    uses the live propensity of the fitted treatment node, as queries do.
+    """
+    df = confounded["draw"](600, 4)
+    flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
+    flow.fit(df.assign(ps=0.5), epochs=3, seed=1, validation_split=0.25)
+    val = df.iloc[450:]
+    assert flow.history["val"][-1]["Y"] == pytest.approx(flow.nll(val)["Y"], rel=1e-6)

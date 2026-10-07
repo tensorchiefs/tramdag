@@ -16,7 +16,7 @@ reader can re-fit in R.
 | `age` | mother's age in years |
 | `lwt` | mother's weight at last menstrual period, lbs |
 | `smoke` | smoking during pregnancy (0/1) |
-| `bwt` | birth weight in grams — the continuous outcome `low` is cut from |
+| `bwt` | birth weight in grams, the continuous outcome that `low` is cut from |
 
 Exported verbatim from MASS 7.3-58.2 under R 4.2.3:
 
@@ -39,7 +39,7 @@ CSV therefore means you re-run the R snippet and update `R_GLM` and
 
 ## `vaca.csv`
 
-The bimodal VACA triangle of Section 1 of `classical_fit_tram_dag.py`: 1000 rows
+The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`: 1000 rows
 of `x1`, `x2`, `x3` from the SCM stated in
 [`docs/paper-replication.md`](../../docs/paper-replication.md).
 

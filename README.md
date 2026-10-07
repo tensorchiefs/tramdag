@@ -1,4 +1,4 @@
-# tramdag — Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
+# tramdag: Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
 
 [![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 [![PyPI](https://img.shields.io/pypi/v/tramdag)](https://pypi.org/project/tramdag/)
@@ -31,9 +31,9 @@ or locally.
 
 ## Install
 
-The package is on PyPI as `tramdag`; `uv add tramdag` or `pip install tramdag`
+The package is on PyPI as `tramdag`. `uv add tramdag` or `pip install tramdag`
 installs it, and the `plots` extra (`tramdag[plots]`) adds matplotlib for the
-figures. The PyPI release lags `main`; for the current state install from git
+figures. The PyPI release lags `main`. For the current state, install from git
 (`tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main`, pinned to a
 commit for reproducibility). A clone with `uv sync` gives the development
 setup with tests and experiments.
@@ -42,13 +42,13 @@ setup with tests and experiments.
 
 Guides, executed notebooks and the API reference are published at the
 [documentation site](https://tensorchiefs.github.io/tramdag/). Each subject has
-one guide, and its worked example is one notebook.
+at most one guide and one example notebook.
 
 | Subject | Guide | Example |
 |---|---|---|
 | The model, its notation, what it cannot do | [`docs/model.md`](docs/model.md), [`docs/notation.md`](docs/notation.md) | [demo](notebooks/demo_tram_dag_colab.py) |
 | Reading a fitted model: coefficients, curves, interventional distributions | [`docs/interpretation.md`](docs/interpretation.md) | [classical fitting](notebooks/classical_fit_tram_dag.py) |
-| Fitting: the likelihood, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
+| Fitting: the likelihood, one node alone, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
 | Complex intercepts, joint versus additive | | [additive vs joint intercepts](notebooks/additive_vs_joint_ci.py) |
 | Treatment effects that vary with covariates | [`docs/varying-coefficients.md`](docs/varying-coefficients.md) | [varying coefficients](notebooks/varying_coefficients.py) |
 | Scores and the effect-modifier scan | [`docs/scores.md`](docs/scores.md) | [varying coefficients](notebooks/varying_coefficients.py) |

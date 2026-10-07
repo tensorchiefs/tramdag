@@ -1,5 +1,5 @@
 # The continuous-triangle replication (triangle.py): full model spec + every
-# training hyperparameter. The script reads no defaults of its own — `spec`
+# training hyperparameter. The script reads no defaults of its own: `spec`
 # is the whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct the
 # flow, `fit_kwargs` go into flow.fit verbatim.
 #
@@ -8,7 +8,7 @@
 #   * train = dgp(40000), test = dgp(40000): two separate draws, no split;
 #   * 500 epochs, optimizer_adam() = Keras Adam at lr 0.001, Keras fit() with
 #     its default batch size 32, shuffled; one compiled model, so one
-#     continuous optimizer run — the coefficients are read after every epoch
+#     continuous optimizer run; the coefficients are read after every epoch
 #     (epochs, batch and lr are the deviations below, for CI runtime);
 #   * len_theta = 20, hidden_features_I = hidden_features_CS = c(2, 25, 25, 2),
 #     sigmoid activations (create_param_net; its ReLU line is commented out).
@@ -41,9 +41,10 @@
 # 0.001; that is 42-69 min per variant on the CI runners. Batch 256 with the
 # lr scaled 4x runs in 8x fewer steps and keeps every ground-truth metric.
 # Epochs 300 instead of 500 is a further runtime cut (measured:
-# every metric within its ground-truth bound; 150 epochs is not enough — the
-# do(x1) error fails on atan, 0.235 > 0.206; linear-cs keeps 500 — at 300 its
-# curve visibly flattens past |x2| > 0.5, max err 0.140 vs 0.088, because the
+# every metric within its ground-truth bound; 150 epochs is not enough: the
+# do(x1) error fails on atan, 0.235 > 0.200; linear-cs keeps 500: at 300 its
+# curve visibly flattens past |x2| > 0.5, max err 0.140 vs the pinned 0.025
+# at 500, because the
 # DGP line spans only +-0.3 and the sigmoid net's slow tail convergence is
 # half of that); this config's own numbers are in ground_truth/.
 
@@ -73,21 +74,21 @@ paper_protocol: &paper_protocol
       caption: The model as declared, one edge per term, labelled by the term that owns it.
     training.png:
       title: 'triangle/{f}, {shift} model: training'
-      caption: Summed train and validation NLL per epoch; the fit keeps the final weights.
+      caption: Summed train NLL per epoch; the fit keeps the final weights.
     marginals.png:
       title: 'triangle/{f}, {shift} model: observed vs sampled marginals'
       caption: The validation rows against a sample of the fitted flow, one panel per node.
     coefficients.png:
-      title: 'triangle/{f}, {shift} model: linear-shift coefficients (Fig. 14/15)'
+      title: 'triangle/{f}, {shift} model: linear-shift coefficients'
       caption: The linear-shift weights after every epoch, dashed at the DGP truth.
     cs_curve.png:
       title: 'complex shift, DGP f = {f}: fitted vs $-f(x_2)$'
-      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at x2 = 0; cs_curve_max_abs_err is the largest gap.
+      caption: The fitted x2 -> x3 complex shift against the DGP's -f(x2), both anchored at the grid's middle point; cs_curve_max_abs_err is the largest gap.
     distributions.png:
-      title: 'triangle/{f}, {shift} model: L1/L2 (Fig. 16/17)'
+      title: 'triangle/{f}, {shift} model: L1/L2'
       caption: Observational and do(x1) samples per variable, DGP filled and flow stepped; the do(x1) mean of x3 is the metric.
 
-# shared node specs — one place to change if the intercept or LS edge varies
+# shared node specs: one place to change if the intercept or LS edge varies
 x1: &x1
   kind: continuous
   terms:
@@ -159,7 +160,7 @@ variants:
     shift: cs
     marginal_init: false  # measured: the marginal start finds a different optimum, do(x1) error 0.075 -> 0.201
     # the paper evaluates the sin fit on half a period (Fig. 18 plots
-    # x2 in [-1, 0]) — the grid follows it
+    # x2 in [-1, 0]); the grid follows it
     grid_low: -1.0
     grid_high: 0.0
     spec:

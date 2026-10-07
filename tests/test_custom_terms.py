@@ -79,7 +79,7 @@ def test_custom_regularizer_joins_the_loss(ls_chain):
 
 # %% private classes -------------------------------------------------------------------
 class _ScaledLS(ShiftModule):
-    def __init__(self, term, spec):
+    def __init__(self, term, schema):
         nn.Module.__init__(self)
         self.scale = term.scale
         self.w = nn.Parameter(torch.zeros(()))
@@ -104,7 +104,7 @@ class SLS(Term):
 
 
 class _PenShift(ShiftModule):
-    def __init__(self, term, spec):
+    def __init__(self, term, schema):
         nn.Module.__init__(self)
         self.w = nn.Parameter(torch.zeros(()))
         self.calls = 0

@@ -1,6 +1,6 @@
-"""Figures of a TRAM-DAG: the labelled DAG, the marginals, the training curve.
+"""Figures of a TRAM-DAG: the DAG, the marginals, the training curve, a VC's beta.
 
-matplotlib is an optional dependency — ``pip install "tramdag[plots]"``. It is
+matplotlib is an optional dependency: ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
 """
 
@@ -15,18 +15,45 @@ import pandas as pd
 from .spec import NodeSpec, node_parents, validate_and_sort
 
 # %% global variables ------------------------------------------------------------------
-__all__ = ["plot_dag", "plot_marginals", "plot_training"]
+__all__ = ["plot_dag", "plot_marginals", "plot_training", "plot_varying_coef"]
 # how each term draws its edge; an unregistered term falls back to dotted gray
 EDGE_STYLE = {
-    "LS": dict(color="0.25", ls="-", lw=1.3),
-    "CS": dict(color="C0", ls="-", lw=2.4),
-    "CI": dict(color="C1", ls="--", lw=1.8),
-    "VC": dict(color="C3", ls="-", lw=2.4),
-    "VC mod": dict(color="C3", ls=":", lw=1.4),
+    "LS": dict(ls="-", lw=1.3),
+    "CS": dict(ls="-", lw=2.4),
+    "CI": dict(ls="--", lw=1.8),
+    "VC": dict(ls="-", lw=2.4),
+    "VC modifier": dict(ls=":", lw=1.4),
 }
-EDGE_LABEL = {"VCm": "VC mod"}  # to_matrix's tag for a VC modifier
-NODE_FACE = {"continuous": "#e3f2fd", "ordinal": "#fff3e0"}
+EDGE_LABEL = {"VCm": "VC modifier"}  # to_matrix's tag for a VC modifier
+# the colours of every drawn element; `style=` picks one or overrides keys
+STYLES = {
+    "light": dict(
+        text="black",
+        muted="0.4",
+        node_edge="0.3",
+        node_face={"continuous": "#e3f2fd", "ordinal": "#fff3e0"},
+        edge={"LS": "0.25", "CS": "C0", "CI": "C1", "VC": "C3", "VC modifier": "C3"},
+        label_box="white",
+        font_scale=1.0,
+    ),
+    "dark": dict(
+        text="white",
+        muted="0.75",
+        node_edge="0.8",
+        node_face={"continuous": "#1e3a5f", "ordinal": "#5c3d14"},
+        edge={
+            "LS": "0.85",
+            "CS": "#4fc3f7",
+            "CI": "#ffb74d",
+            "VC": "#ef5350",
+            "VC modifier": "#ef5350",
+        },
+        label_box="#202124",
+        font_scale=1.0,
+    ),
+}
 NODE_H, ROW_DY = 0.56, 1.1  # layout units: node height, distance between rows
+INCH_PER_UNIT = 0.9  # a new DAG figure's size per layout unit; the fonts fit it
 BULGE = 0.5  # how far an edge that skips a layer bends out, per skipped layer
 
 
@@ -41,9 +68,37 @@ def _plt():
     return plt
 
 
-def _node_width(name: str) -> float:
-    """Wide enough for the name in bold 10 pt, never narrower than 1 unit."""
-    return max(1.0, 0.13 * len(name) + 0.3)
+def _style(style) -> dict:
+    """Give the full style: a preset name, or a dict over the light preset."""
+    if style is None or isinstance(style, str):
+        return STYLES[style or "light"]
+    base = STYLES["light"]
+    merged = base | style
+    for key in ("node_face", "edge"):
+        merged[key] = base[key] | style.get(key, {})
+    return merged
+
+
+def _edge_style(name: str, st: dict) -> dict:
+    """Give the line style of one edge kind in the colours of ``st``."""
+    if name not in EDGE_STYLE:
+        return dict(color="0.5", ls=":", lw=1.2)
+    return EDGE_STYLE[name] | dict(color=st["edge"][name])
+
+
+def _node_width(name: str, node: NodeSpec | None = None) -> float:
+    """Wide enough for the name in bold 10 pt and the kind sub-label."""
+    width = max(1.0, 0.13 * len(name) + 0.3)
+    if node is not None:
+        width = max(width, 0.065 * len(_kind_label(node)) + 0.2)
+    return width
+
+
+def _kind_label(node: NodeSpec) -> str:
+    """Give the node's kind sub-label."""
+    return (
+        "continuous" if node.kind == "continuous" else f"ordinal · {node.levels} levels"
+    )
 
 
 def _layout(spec: dict[str, NodeSpec]) -> tuple[dict[str, tuple[float, float]], float]:
@@ -54,7 +109,7 @@ def _layout(spec: dict[str, NodeSpec]) -> tuple[dict[str, tuple[float, float]], 
     package is for. Rows are centered on 0. Also gives the layer distance,
     which grows with the widest node.
     """
-    layer_dx = max(_node_width(n) for n in spec) + 1.0
+    layer_dx = max(_node_width(n, spec[n]) for n in spec) + 1.0
     order = validate_and_sort(spec)
     depth: dict[str, int] = {}
     for name in order:
@@ -79,7 +134,7 @@ def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
 
     Read off the term's adjacency ``cells``: the tag is the term name (``CI``
     for an intercept edge, ``VCm`` for a VC modifier) and ``joint`` is the
-    term's own answer — ``cells`` is the per-term authority here.
+    term's own answer; ``cells`` is the per-term authority here.
     """
     return [
         (parent, child, EDGE_LABEL.get(tag, tag), joint)
@@ -87,28 +142,50 @@ def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
     ]
 
 
-def _draw_node(ax, name: str, node: NodeSpec, xy: tuple[float, float]):
+def _draw_node(ax, name: str, node: NodeSpec, xy, st: dict, node_kind: bool):
     from matplotlib.patches import Ellipse, FancyBboxPatch
 
     x, y = xy
-    w = _node_width(name)
+    w = _node_width(name, node if node_kind else None)
+    face, edge = st["node_face"][node.kind], st["node_edge"]
     if node.kind == "ordinal":
         patch = FancyBboxPatch(
             (x - w / 2, y - NODE_H / 2),
             w,
             NODE_H,
             boxstyle="round,pad=0.0,rounding_size=0.12",
-            fc=NODE_FACE["ordinal"],
-            ec="0.3",
+            fc=face,
+            ec=edge,
             lw=1.2,
+            zorder=3,
         )
-        sub = f"ordinal · {node.levels} levels"
     else:
-        patch = Ellipse((x, y), w, NODE_H, fc=NODE_FACE["continuous"], ec="0.3")
-        sub = "continuous"
+        patch = Ellipse((x, y), w, NODE_H, fc=face, ec=edge, zorder=3)
     ax.add_patch(patch)
-    ax.text(x, y + 0.06, name, ha="center", va="center", fontsize=10, weight="bold")
-    ax.text(x, y - 0.13, sub, ha="center", va="center", fontsize=6.5, color="0.4")
+    fs = st["font_scale"]
+    name_y = y + 0.06 if node_kind else y
+    ax.text(
+        x,
+        name_y,
+        name,
+        ha="center",
+        va="center",
+        fontsize=10 * fs,
+        weight="bold",
+        color=st["text"],
+        zorder=4,
+    )
+    if node_kind:
+        ax.text(
+            x,
+            y - 0.13,
+            _kind_label(node),
+            ha="center",
+            va="center",
+            fontsize=6.5 * fs,
+            color=st["muted"],
+            zorder=4,
+        )
     return patch
 
 
@@ -124,12 +201,53 @@ def _bulge(pos, layer_dx: float, edge, lane: float) -> float:
     return BULGE * skipped * (1 if y0 + y1 >= 0 else -1) + lane
 
 
-def _draw_edge(ax, patches, pos, edge, labels: bool, bulge: float) -> None:
+def _arc(pos, edge, bulge: float, t) -> np.ndarray:
+    """Give the points at ``t`` along an edge's arc, shape ``(len(t), 2)``.
+
+    The arc is matplotlib's ``arc3``, a quadratic Bezier curve whose midpoint
+    lies ``bulge`` off the chord's midpoint.
+    """
+    p0, p2 = np.array(pos[edge[0]]), np.array(pos[edge[1]])
+    d = p2 - p0
+    normal = np.array([-d[1], d[0]]) / np.hypot(*d)
+    control = (p0 + p2) / 2 + 2 * bulge * normal
+    t = np.asarray(t, dtype=float)[:, None]
+    return (1 - t) ** 2 * p0 + 2 * t * (1 - t) * control + t**2 * p2
+
+
+def _hits(spec, pos, pts, skip=()) -> bool:
+    """Say whether any point lies on a node other than those in ``skip``."""
+    return any(
+        (
+            (np.abs(pts[:, 0] - x) < _node_width(n, spec[n]) / 2 + 0.1)
+            & (np.abs(pts[:, 1] - y) < NODE_H / 2 + 0.1)
+        ).any()
+        for n, (x, y) in pos.items()
+        if n in spec and n not in skip  # a modifier's target point is no node
+    )
+
+
+def _clear(spec, pos, edge, bulge: float) -> float:
+    """Give the smallest bend near ``bulge`` whose arc misses every other node.
+
+    Bends on both sides are tried, up to 2 units beyond ``bulge``; when none
+    clears, the edge keeps ``bulge``.
+    """
+    t = np.linspace(0.1, 0.9, 25)
+    for step in (0.0, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5, 2.0, -2.0):
+        if not _hits(spec, pos, _arc(pos, edge, bulge + step, t), edge[:2]):
+            return bulge + step
+    return bulge
+
+
+def _draw_edge(
+    ax, patches, spec, pos, edge, labels: bool, bulge: float, st: dict
+) -> None:
     from matplotlib.patches import FancyArrowPatch
 
     parent, child, name, joint = edge
     (x0, y0), (x1, y1) = pos[parent], pos[child]
-    style = EDGE_STYLE.get(name, dict(color="0.5", ls=":", lw=1.2))
+    style = _edge_style(name, st)
     # arc3 bulges by rad * length / 2 to the right of its direction of travel
     dist = float(np.hypot(x1 - x0, y1 - y0))
     rad = -2 * bulge / dist
@@ -146,48 +264,166 @@ def _draw_edge(ax, patches, pos, edge, labels: bool, bulge: float) -> None:
     )
     ax.add_patch(arrow)
     if labels:
-        text = name + (" joint" if joint else "")
-        # the arc's midpoint: the chord's midpoint pushed out by the bulge
-        mx = (x0 + x1) / 2 - bulge * (y1 - y0) / dist
-        my = (y0 + y1) / 2 + bulge * (x1 - x0) / dist
+        box = st["label_box"]
+        # toward the child, so crossing edges into different children separate;
+        # the midpoint when that spot lies on a node
+        at = _arc(pos, edge, bulge, [0.62])
+        if _hits(spec, pos, at):
+            at = _arc(pos, edge, bulge, [0.5])
         ax.text(
-            mx,
-            my,
-            text,
-            fontsize=6.5,
+            *at[0],
+            name + (" joint" if joint else ""),
+            fontsize=6.5 * st["font_scale"],
             color=style["color"],
             ha="center",
             va="center",
-            bbox=dict(fc="white", ec="none", pad=0.6, alpha=0.85),
+            zorder=2.5,
+            bbox=None if box is None else dict(fc=box, ec="none", pad=0.6, alpha=0.85),
         )
 
 
-def _legend(ax, names: set[str]) -> None:
+def _draw_modifier(ax, patches, pos, edge, bulge: float, st: dict) -> None:
+    """Draw a VC modifier's arrow onto the midpoint of its treatment edge.
+
+    ``edge`` runs from the modifier to the midpoint, whose position ``pos``
+    holds under the edge's own key; ``bulge`` bends it around the nodes.
+    """
+    from matplotlib.patches import FancyArrowPatch
+
+    mod, target = edge
+    (x0, y0), (x1, y1) = pos[mod], pos[target]
+    style = _edge_style("VC modifier", st)
+    ax.add_patch(
+        FancyArrowPatch(
+            (x0, y0),
+            (x1, y1),
+            patchA=patches[mod],
+            arrowstyle="-|>,head_length=5,head_width=2.5",
+            connectionstyle=f"arc3,rad={-2 * bulge / np.hypot(x1 - x0, y1 - y0)}",
+            shrinkA=2,
+            shrinkB=3,
+            **style,
+        )
+    )
+    ax.plot(x1, y1, "o", ms=3.5, color=style["color"])
+
+
+def _dag_edges(spec, modifiers: str) -> tuple[list, list]:
+    """Give the drawn edges and, in ``"edge"`` mode, ``(modifier, treatment edge)``."""
+    edges, mods = [], []
+    for child, node in spec.items():
+        for term in node.terms:
+            term_edges = _term_edges(child, term)
+            if modifiers == "edge" and term.name == "VC":
+                treatment = term_edges[0]
+                mods += [(e[0], treatment) for e in term_edges[1:]]
+                term_edges = [treatment]
+            edges += term_edges
+    return edges, mods
+
+
+def _bulges(spec, pos, layer_dx: float, edges) -> dict:
+    """Give each edge its bend: parallel edges in lanes, every arc clear of nodes."""
+    parallel = defaultdict(list)
+    for edge in edges:
+        parallel[edge[:2]].append(edge)
+    bulges = {}
+    for pair in parallel.values():
+        for k, edge in enumerate(pair):
+            lane = 0.35 * (k - (len(pair) - 1) / 2)
+            bulges[edge] = _clear(spec, pos, edge, _bulge(pos, layer_dx, edge, lane))
+    return bulges
+
+
+def _limits(spec, pos, bulges) -> tuple[float, float, float, float]:
+    """Give the axes limits: the nodes plus room for the arcs."""
+    xs, ys = (np.array(v) for v in zip(*pos.values(), strict=True))
+    arcs = [_arc(pos, e, b, np.linspace(0, 1, 11))[:, 1] for e, b in bulges.items()]
+    arc_y = np.concatenate([ys, *arcs])
+    half_w = max(_node_width(n, spec[n]) for n in spec) / 2
+    return (
+        xs.min() - half_w - 0.2,
+        xs.max() + half_w + 0.2,
+        min(ys.min() - 0.5, arc_y.min() - 0.2),
+        max(ys.max() + 0.5, arc_y.max() + 0.2),
+    )
+
+
+def _legend(ax, names: set[str], st: dict) -> None:
     from matplotlib.lines import Line2D
 
     handles = [
-        Line2D([], [], label=e, **EDGE_STYLE[e]) for e in EDGE_STYLE if e in names
+        Line2D([], [], label=e, **_edge_style(e, st)) for e in EDGE_STYLE if e in names
     ]
     if handles:
-        ax.legend(
+        leg = ax.legend(
             handles=handles,
             loc="upper center",
             bbox_to_anchor=(0.5, 0.0),
             ncol=len(handles),
-            fontsize=7,
+            fontsize=7 * st["font_scale"],
             frameon=False,
         )
+        for text in leg.get_texts():
+            text.set_color(st["text"])
 
 
-def _finish(fig, path) -> None:
-    fig.tight_layout()
+def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
+    """Draw one node's observed against sampled marginal into ``panel``."""
+    if node.kind == "ordinal":
+        lv, w = np.arange(node.levels), 0.4
+        for x, d, label, color in [
+            (lv - w / 2, df, "data", colors[0]),
+            (lv + w / 2, sample, "flow", colors[1]),
+        ]:
+            counts = d[name].value_counts(normalize=True).reindex(lv, fill_value=0)
+            panel.bar(x, counts, w, label=label, color=color)
+        panel.set_xticks(lv)
+        panel.set_ylabel("proportion")
+    else:
+        # 30 bins over the central 99.8 %, so an outlier cannot flatten the
+        # panel; the density counts every row, also those outside the bins
+        edges = np.linspace(*np.quantile(df[name], [0.001, 0.999]), 31)
+        width = edges[1] - edges[0]
+        panel.hist(
+            df[name],
+            bins=edges,
+            weights=np.full(len(df), 1 / (len(df) * width)),
+            alpha=0.5,
+            color=colors[0],
+            label="data",
+        )
+        panel.hist(
+            sample[name],
+            bins=edges,
+            weights=np.full(len(sample), 1 / (len(sample) * width)),
+            histtype="step",
+            lw=1.5,
+            color=colors[1],
+            label="flow",
+        )
+        panel.set_ylabel("density")
+
+
+def _finish(fig, path, created: bool) -> None:
+    if created:
+        fig.tight_layout()
     if path is not None:
         fig.savefig(path, dpi=150, bbox_inches="tight")
 
 
 # %% public functions ------------------------------------------------------------------
 def plot_dag(
-    spec_or_flow, *, labels: bool = True, legend: bool = True, path=None, title=None
+    spec_or_flow,
+    *,
+    labels: bool = True,
+    legend: bool = True,
+    node_kind: bool = True,
+    modifiers: str = "edge",
+    style=None,
+    ax=None,
+    path=None,
+    title=None,
 ):
     """Draw the labelled DAG of a spec (or of a fitted flow).
 
@@ -195,8 +431,8 @@ def plot_dag(
     nodes are ellipses, ordinal nodes rounded boxes with their level count.
     Each edge is drawn by the term that owns it: ``LS`` thin gray, ``CS`` thick
     blue, a complex intercept (``CI``) dashed orange, a ``VC`` treatment edge
-    red with its modifiers dotted; a multi-parent CS/CI is labelled
-    ``joint``.
+    red; a multi-parent CS/CI is labelled ``joint``. A VC modifier is a dotted
+    red arrow onto the treatment edge it modifies.
 
     Parameters
     ----------
@@ -206,60 +442,97 @@ def plot_dag(
         Write the term name on each edge, by default True.
     legend : bool, optional
         Add a legend of the terms used, by default True.
+    node_kind : bool, optional
+        Write the node kind under each name, by default True.
+    modifiers : str, optional
+        ``"edge"`` (default) points a VC modifier at the midpoint of its
+        treatment edge; ``"node"`` draws it as an edge into the outcome node.
+    style : str | dict | None, optional
+        ``"light"`` (default) or ``"dark"``, or a dict over the light preset
+        with any of the keys of ``tramdag.plots.STYLES["light"]``: ``text``,
+        ``muted``, ``node_edge``, ``node_face`` (per kind), ``edge`` (per
+        term), ``label_box`` (``None`` for no box) and ``font_scale``.
+    ax : matplotlib.axes.Axes | None, optional
+        Draw into this axes; by default a new figure sized to the layout.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
-        Figure title, by default none.
+        Axes title, by default none.
 
     Returns
     -------
     matplotlib.axes.Axes
-        The axes of the new figure, sized to the layout.
+        The axes drawn into.
+
+    Raises
+    ------
+    ValueError
+        If the spec has no node.
     """
     plt = _plt()
     spec = getattr(spec_or_flow, "spec", spec_or_flow)  # a flow draws its spec
     if not spec:
         raise ValueError("plot_dag needs a spec with at least one node")
+    st = _style(style)
     pos, layer_dx = _layout(spec)
-    xs, ys = (np.array(v) for v in zip(*pos.values(), strict=True))
-    edges = [
-        edge
-        for child, node in spec.items()
-        for term in node.terms
-        for edge in _term_edges(child, term)
-    ]
-    parallel = defaultdict(list)
-    for edge in edges:
-        parallel[edge[:2]].append(edge)
-    bulges = {
-        edge: _bulge(pos, layer_dx, edge, 0.35 * (k - (len(pair) - 1) / 2))
-        for pair in parallel.values()
-        for k, edge in enumerate(pair)
+    edges, mods = _dag_edges(spec, modifiers)
+    bulges = _bulges(spec, pos, layer_dx, edges)
+    # a modifier points at its treatment edge's midpoint, a position of its own
+    pos_all = pos | {
+        (mod, t_edge): tuple(_arc(pos, t_edge, bulges[t_edge], [0.5])[0])
+        for mod, t_edge in mods
     }
-    # room for the arcs above and below the rows
-    reach_up = max([*bulges.values(), 0.0])
-    reach_down = max([*(-b for b in bulges.values()), 0.0])
-    half_w = max(_node_width(n) for n in spec) / 2
-    x_lo, x_hi = xs.min() - half_w - 0.2, xs.max() + half_w + 0.2
-    y_lo, y_hi = ys.min() - 0.5 - reach_down, ys.max() + 0.5 + reach_up
-    _, ax = plt.subplots(figsize=(0.9 * (x_hi - x_lo), 0.9 * (y_hi - y_lo) + 0.5))
-    patches = {name: _draw_node(ax, name, spec[name], xy) for name, xy in pos.items()}
+    mod_bulges = {
+        (mod, (mod, t_edge)): _clear(spec, pos_all, (mod, (mod, t_edge)), 0.0)
+        for mod, t_edge in mods
+    }
+    x_lo, x_hi, y_lo, y_hi = _limits(spec, pos_all, bulges | mod_bulges)
+    created = ax is None
+    if created:
+        _, ax = plt.subplots(
+            figsize=(
+                INCH_PER_UNIT * (x_hi - x_lo),
+                INCH_PER_UNIT * (y_hi - y_lo) + 0.5,
+            )
+        )
+    else:  # the fonts shrink with the space the given axes has per layout unit
+        box = ax.get_position()
+        w, h = ax.figure.get_size_inches()
+        per_unit = min(box.width * w / (x_hi - x_lo), box.height * h / (y_hi - y_lo))
+        st = st | dict(font_scale=st["font_scale"] * per_unit / INCH_PER_UNIT)
+    patches = {
+        name: _draw_node(ax, name, spec[name], xy, st, node_kind)
+        for name, xy in pos.items()
+    }
     for edge, bulge in bulges.items():
-        _draw_edge(ax, patches, pos, edge, labels, bulge)
+        _draw_edge(ax, patches, spec, pos, edge, labels, bulge, st)
+    for edge, bulge in mod_bulges.items():
+        _draw_modifier(ax, patches, pos_all, edge, bulge, st)
     if legend:
-        _legend(ax, {e for _, _, e, _ in bulges})
+        names = {e for _, _, e, _ in bulges} | ({"VC modifier"} if mods else set())
+        _legend(ax, names, st)
     ax.set_xlim(x_lo, x_hi)
     ax.set_ylim(y_lo, y_hi)
     ax.set_aspect("equal")
     ax.set_axis_off()
     if title:
-        ax.set_title(title)
-    _finish(ax.figure, path)
+        ax.set_title(title, color=st["text"])
+    _finish(ax.figure, path, created)
     return ax
 
 
 def plot_marginals(
-    flow, df: pd.DataFrame, *, ncols: int = 3, seed=None, path=None, title=None
+    flow,
+    df: pd.DataFrame,
+    *,
+    ncols: int = 3,
+    seed=None,
+    colors=("C0", "C1"),
+    legend: str | None = "axes",
+    ax=None,
+    path=None,
+    title="observed vs sampled marginals",
 ):
     """Observed vs sampled marginal of every node, one panel each.
 
@@ -274,56 +547,65 @@ def plot_marginals(
     df : pd.DataFrame
         The data to compare against (the validation split, typically).
     ncols : int, optional
-        Panels per row, by default 3.
+        Panels per row of a new figure, by default 3.
     seed : int | None, optional
-        Seed of the flow's sample.
+        Seed of the flow's sample, by default None.
+    colors : tuple[str, str], optional
+        Colours of the data and of the flow's sample, by default
+        ``("C0", "C1")``.
+    legend : str | None, optional
+        ``"axes"`` (default) puts a legend in every panel, ``"figure"`` one
+        legend for the figure, ``None`` none.
+    ax : sequence of matplotlib.axes.Axes | None, optional
+        Draw into these panels, one per node in the flow's order; by default
+        a new figure.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
-        Figure title, by default ``"observed vs sampled marginals"``.
+        Title of a new figure, by default ``"observed vs sampled
+        marginals"``; ``None`` for none. A figure passed through ``ax`` keeps
+        its own title.
 
     Returns
     -------
     numpy.ndarray of matplotlib.axes.Axes
-        The panels, in the flow's node order (unused panels are switched off).
+        The panels, in the flow's node order (unused panels of a new figure
+        are switched off).
     """
     plt = _plt()
     sample = flow.sample(len(df), seed=seed)
-    nrows = -(-len(flow.order) // ncols)
-    fig, axes = plt.subplots(
-        nrows, ncols, figsize=(3.6 * ncols, 2.8 * nrows), squeeze=False
-    )
-    for ax in axes.flat[len(flow.order) :]:
-        ax.set_axis_off()
-    for ax, name in zip(axes.flat, flow.order, strict=False):
-        node = flow.spec[name]
-        if node.kind == "ordinal":
-            lv, w = np.arange(node.levels), 0.4
-            for x, d, label in [(lv - w / 2, df, "data"), (lv + w / 2, sample, "flow")]:
-                counts = d[name].value_counts(normalize=True).reindex(lv, fill_value=0)
-                ax.bar(x, counts, w, label=label)
-            ax.set_xticks(lv)
-            ax.set_ylabel("proportion")
-        else:
-            edges = np.linspace(df[name].min(), df[name].max(), 31)  # 30 bins
-            ax.hist(df[name], bins=edges, density=True, alpha=0.5, label="data")
-            ax.hist(
-                sample[name],
-                bins=edges,
-                density=True,
-                histtype="step",
-                lw=1.5,
-                label="flow",
-            )
-            ax.set_ylabel("density")
-        ax.set_title(name)
-        ax.legend(fontsize=8, frameon=False)
-    fig.suptitle(title or "observed vs sampled marginals")
-    _finish(fig, path)
+    created = ax is None
+    if created:
+        nrows = -(-len(flow.order) // ncols)
+        fig, axes = plt.subplots(
+            nrows, ncols, figsize=(3.6 * ncols, 2.8 * nrows), squeeze=False
+        )
+        for unused in axes.flat[len(flow.order) :]:
+            unused.set_axis_off()
+    else:
+        axes = np.asarray(ax, dtype=object)
+        fig = axes.flat[0].figure
+    for panel, name in zip(axes.flat, flow.order, strict=False):
+        _marginal_panel(panel, name, flow.spec[name], df, sample, colors)
+        panel.set_title(name)
+        if legend == "axes":
+            panel.legend(fontsize=8, frameon=False)
+    if legend == "figure":
+        fig.legend(
+            *axes.flat[0].get_legend_handles_labels(),
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.0),
+            ncol=2,
+            frameon=False,
+        )
+    if title and created:
+        fig.suptitle(title)
+    _finish(fig, path, created)
     return axes
 
 
-def plot_training(flow, *, frozen=None, path=None, title=None):
+def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     """Draw the summed train and validation NLL per epoch.
 
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
@@ -335,19 +617,27 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
     ----------
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
-    frozen : dict[str, int] | None, optional
-        ``{node: epoch}`` of the freezes, each a dashed mark; a
-        [`PerNodeEarlyStopping`][tramdag.callbacks.PerNodeEarlyStopping]
-        records that dict as its ``frozen``. By default no marks.
+    stops : dict[str, int] | None, optional
+        ``{node: epoch}`` of the per-node stops, each a dashed mark; a
+        node's stop epoch is the length of its ``history["train"]``. By
+        default no marks.
+    ax : matplotlib.axes.Axes | None, optional
+        Draw into this axes; by default a new figure.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
-        Figure title, by default ``"training"``.
+        Axes title, by default ``"training"``.
 
     Returns
     -------
     matplotlib.axes.Axes
         The axes drawn into.
+
+    Raises
+    ------
+    ValueError
+        If ``flow.history`` is empty.
     """
     plt = _plt()
     hist = flow.history
@@ -360,28 +650,95 @@ def plot_training(flow, *, frozen=None, path=None, title=None):
         # each entry's own epoch, so an unvalidated fit in between leaves a gap
         # rather than shifting the whole curve back to epoch 1
         curves["val"] = (np.asarray(hist["val_epoch"], dtype=float), val)
-    _, ax = plt.subplots(figsize=(7.5, 3.6))
+    created = ax is None
+    if created:
+        _, ax = plt.subplots(figsize=(7.5, 3.6))
     for label, (x, curve) in curves.items():
         ax.plot(x, curve, label=f"{label} NLL (total)")
-    # zoom past the initial drop: the top is the curves' level after 10 % of the epochs
-    lo = min(c.min() for _, c in curves.values())
-    hi = max(c[len(c) // 10] for _, c in curves.values())
+    # zoom past the initial drop: the top keeps each curve after 10 % of its
+    # epochs, so a validation curve that rises later stays in view
+    # finite values only: a diverged epoch must not blow the limits up
+    lo = min(c[np.isfinite(c)].min() for _, c in curves.values())
+    hi = max(
+        c[len(c) // 10 :][np.isfinite(c[len(c) // 10 :])].max()
+        for _, c in curves.values()
+    )
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
-    # after the zoom, so the annotations hang from the visible top
-    for name, epoch in sorted((frozen or {}).items(), key=lambda kv: kv[1]):
+    for name, epoch in sorted((stops or {}).items(), key=lambda kv: kv[1]):
         ax.axvline(epoch, ls="--", lw=1, color="gray")
-        ax.annotate(
-            f" {name} frozen",
-            (epoch, ax.get_ylim()[1]),
+        ax.text(
+            epoch,
+            1.01,
+            name,
+            transform=ax.get_xaxis_transform(),
             rotation=90,
-            va="top",
+            ha="center",
+            va="bottom",
             fontsize=8,
             color="gray",
         )
     ax.set_xlabel("epoch")
     ax.set_ylabel("NLL")
-    ax.legend(frameon=False)
-    ax.set_title(title or "training")
-    _finish(ax.figure, path)
+    # below the axes, off the curves; the title stays left of the stop names
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
+    ax.set_title(title or "training", loc="left")
+    _finish(ax.figure, path, created)
+    return ax
+
+
+def plot_varying_coef(
+    flow, df: pd.DataFrame, node: str, *, by: str, t=None, ax=None, path=None
+):
+    r"""Draw a VC term's effect $\beta(x)$ along one modifier.
+
+    The grid spans ``by`` over its range in ``df``, or its levels for an
+    ordinal ``by``; every other node column is held at an observed median
+    in ``df``. The values come from
+    [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef], on the node's
+    latent scale. A dotted line marks $\beta = 0$.
+
+    Parameters
+    ----------
+    flow : CausalFlowDAG
+        The fitted flow.
+    df : pd.DataFrame
+        Rows that give the range of ``by`` and the medians of the other
+        modifiers.
+    node : str
+        The node that carries the VC term.
+    by : str
+        The modifier along which to draw.
+    t : str | None, optional
+        The treatment of the VC term; optional when the node has one.
+    ax : matplotlib.axes.Axes | None, optional
+        Draw into this axes; by default a new figure.
+    path : str | Path | None, optional
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes drawn into.
+    """
+    plt = _plt()
+    if flow.nodes[by].kind == "ordinal":
+        grid = np.unique(df[by])
+    else:
+        grid = np.linspace(df[by].min(), df[by].max(), 200)
+    # an observed median per node column, so an ordinal value is a level
+    nodes = [c for c in flow.order if c in df.columns]
+    medians = {c: df[c].quantile(0.5, interpolation="nearest") for c in nodes}
+    rows = pd.DataFrame({c: np.full(len(grid), m) for c, m in medians.items()})
+    rows[by] = grid
+    beta = flow.varying_coef(rows, node, t=t)
+    created = ax is None
+    if created:
+        _, ax = plt.subplots(figsize=(5, 3.4))
+    ax.plot(grid, beta)
+    ax.axhline(0.0, ls=":", lw=1, color="gray")
+    ax.set_xlabel(by)
+    ax.set_ylabel(r"$\beta$" + f"({by})")
+    _finish(ax.figure, path, created)
     return ax

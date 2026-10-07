@@ -48,7 +48,8 @@ Rules live in `pyproject.toml`: ruff's default set plus the extras listed
 under `extend-select`, at 88 columns with the numpy docstring convention.
 The complexipy hooks gate cognitive complexity. The limit is 15 for `src/`
 and `tools/`. The limit is 10 for `experiments/`, `notebooks/` and `tests/`.
-Docstrings are not required in `tests/`, `experiments/` or `notebooks/`.
+Function docstrings are not required in `tests/`, `experiments/` or
+`notebooks/`.
 
 The hooks in `.pre-commit-config.yaml` are enforced by
 `.github/workflows/pre-commit.yaml` on every push and pull request. Install
@@ -91,18 +92,22 @@ Regenerate it from the `.py`. See
 ## Conventions worth knowing
 
 Four implementation conventions are easy to get wrong, and tests pin each:
-the latent-scale signs ([`docs/notation.md`](docs/notation.md)), the raw
-continuous against one-hot ordinal parent encoding and the log-space ordinal
-likelihood ([`docs/model.md`](docs/model.md)), and the seeding
-([`docs/code-map.md`](docs/code-map.md)). Read [`docs/architecture.md`](docs/architecture.md)
-before you change anything in `src/tramdag/`.
+
+- the latent-scale signs ([`docs/notation.md`](docs/notation.md));
+- the raw continuous against one-hot ordinal parent encoding
+  ([`docs/model.md`](docs/model.md));
+- the log-space ordinal likelihood ([`docs/model.md`](docs/model.md));
+- the seeding ([`docs/code-map.md`](docs/code-map.md)).
+
+Read [`docs/architecture.md`](docs/architecture.md) before you change
+anything in `src/tramdag/`.
 
 ## Citations
 
 Every cited work has one entry in
-[`docs/references.bib`](docs/references.bib), with its DOI or arXiv link
-and the metadata of a primary source such as Crossref or the proceedings
-page. Keep the file sorted by first author. Name the key
+[`docs/references.bib`](docs/references.bib), with its DOI or arXiv link.
+The entry takes its metadata from a primary source, such as Crossref or the
+proceedings page. Keep the file sorted by first author. Name the key
 `<firstauthor><year><word>`, for example `pearl2009causality`. The
 References page lists every entry by itself.
 
@@ -122,7 +127,7 @@ References page lists every entry by itself.
 ## Releasing
 
 The version is the git tag, through hatch-vcs. `cz bump` derives the next tag
-from the conventional commits since the last one and `cz changelog` writes
-`CHANGELOG.md` from the same commits; a push of the tag runs
-`.github/workflows/release.yaml`, which builds with uv, uploads to PyPI through
+from the conventional commits since the last one. `cz changelog` writes
+`CHANGELOG.md` from the same commits. A push of the tag runs
+`.github/workflows/release.yaml`. It builds with uv, uploads to PyPI through
 trusted publishing and creates a sigstore-signed GitHub release.

@@ -10,7 +10,7 @@ so nothing here is a number typed into prose.
 
 ## Which term owns which edge
 
-`flow.to_matrix()` gives the labelled adjacency matrix of the model. Rows are
+`flow.to_matrix()` gives the labeled adjacency matrix of the model. Rows are
 parents and columns are children. A cell holds the term tag: `LS`, `CS`, `CI`,
 `VC` for a treatment edge, or `VCm` for a varying-coefficient modifier. An
 empty cell means no edge. A multi-parent term carries its parent group as a
@@ -46,8 +46,10 @@ Those weights are identified only up to a common constant. The one-hot columns
 sum to one in every row. Adding a constant to all of them, and subtracting it
 from the intercept, leaves the likelihood unchanged. Read them as
 differences.
-`w[k] - w[0]` is the level-k-against-level-0 log-odds ratio, and it is the
-column that `flow.design_matrix(df, node, drop_first=True)` drops.
+`w[k] - w[0]` is the level-k-against-level-0 log-odds ratio. It matches the
+coefficient of column `{parent}[k]` in
+`flow.design_matrix(df, node, drop_first=True)`, which drops the level-0
+column.
 
 Checked in [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
 which compares the weights against `statsmodels` and R, and pinned in
@@ -84,7 +86,12 @@ works too.
 
 A caution on both: a `CS` term is identified only up to a constant, because
 that constant can move into the intercept. Compare a fitted curve to the truth
-after mean-centring both, not point by point.
+after mean-centering both, not point by point.
+
+`density` runs in the
+[classical-fitting notebook](../notebooks/classical_fit_tram_dag.py), section
+1b. `experiments/triangle.py` compares the `shift_curve` of each `CS` variant
+with the true function against committed ground truth.
 
 ## The price of a complex intercept
 
@@ -99,7 +106,7 @@ edge.
 A middle option exists. `I("a", "b", allow_interaction=False)` builds one
 network per parent and sums their parameter vectors, so the parents act
 additively on the transform. `flow.intercept_contributions(df, node)` then
-decomposes that sum into mean-centred per-term parts, using the usual additive
+decomposes that sum into mean-centered per-term parts, using the usual additive
 model convention, so the parts become comparable. This is a post-hoc read-out
 and changes nothing about the fitted model.
 

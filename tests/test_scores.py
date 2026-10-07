@@ -115,9 +115,9 @@ def test_scores_match_finite_differences():
                 idx = 0  # first element of the parameter
                 with torch.no_grad():
                     flat[idx] += h
-                    lp_plus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_plus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] -= 2 * h
-                    lp_minus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_minus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] += h
                 fd = ((lp_plus - lp_minus) / (2 * h)).numpy()
                 np.testing.assert_allclose(
@@ -208,3 +208,21 @@ def test_scan_column_override_scans_a_level_contrast(ls_chain):
     pd.testing.assert_frame_equal(by_default, by_column)
     with pytest.raises(KeyError, match="no score column 'nope'"):
         flow.effect_modifier_scan(df, "y", t="t", column="nope")
+
+
+def test_the_default_scan_leaves_out_descendants_of_the_treatment(ls_chain):
+    """A child of the outcome follows the treatment, so it is no candidate."""
+    df = ls_chain["draw"](800, 1)
+    rng = np.random.default_rng(1)
+    df["z"] = df["y"] + rng.logistic(size=len(df))
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
+        "z": ContinuousNode(LS("y")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    scan = flow.effect_modifier_scan(df.assign(row_id=range(len(df))), "y", t="t")
+    assert set(scan.index) == {"x1", "x2"}

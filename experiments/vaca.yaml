@@ -1,34 +1,36 @@
 # The VACA/CNF benchmark (vaca.py): full model spec + every training
-# hyperparameter. The script reads no defaults of its own — `spec` is the
+# hyperparameter. The script reads no defaults of its own: `spec` is the
 # whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct the flow,
 # `fit_kwargs` go into flow.fit verbatim.
 #
 # Protocol = the reference implementation's own comparison run
 # (tensorchiefs/tram-dag, comparison/utils.R with
-# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1:
+# Figure_Triangle_Linear_Bimodal.R: EPOCHS = 10000), 1:1 except D1 (below)
+# and D5 (the plateau per node):
 #   * nTrain = 2500, validation = a separate dgp(5000) draw;
 #   * one full-batch gradient step per epoch (train_step: one apply_gradients
 #     over all rows), 10000 epochs at Adam lr 0.001;
-#   * update_learning_rate: ReduceLROnPlateau on the summed validation NLL
-#     (factor 0.1, patience 50, min_lr 1e-7, strict <) — the anneal fires
-#     late (~epoch 9050) and freezes a point where every pinned bound holds;
+#   * update_learning_rate: ReduceLROnPlateau (factor 0.1, patience 50,
+#     min_lr 1e-7, strict <), here per node on the node's own validation NLL
+#     instead of the summed one (deviation D5, docs/paper-replication.md);
 #   * make_model: one net per node, dense(10, tanh) -> dense(100, tanh) ->
 #     dense(len_theta), M = 30 so len_theta = 31 (the spec's units and
 #     n_coeffs; zuko ties two extra control points on, order 32 against the
-#     reference's 30 — the free-parameter count is what matches);
+#     reference's 30; the free-parameter count is what matches);
 #   * weights start from Keras' Dense default, glorot_uniform / zero bias
 #     (`init: glorot`, make_model's layer_dense);
 #   * input_transform: minmax on the CI terms (comparison/utils.R::scale_df).
-# range_q: 0.05 in the spec — a DELIBERATE deviation from scale_df's min-max
-# Bernstein domain, measured at init seed 7 with everything else 1:1:
-# the reference's min-max domain (range_q 0) scores do(x2) errors
-# 0.289 / 0.040 / 0.067 against the quantile domain's 0.097 / 0.088 / 0.018
-# — worse at the off-manifold do(x2=-3) and at do(x2=0), where the bounds
-# are pinned. CAREFL, same nets and scaling, measures the opposite way and
-# uses range_q 0 (carefl.yaml).
+# range_q: 0.05 in the spec: a DELIBERATE deviation from scale_df's min-max
+# Bernstein domain, chosen under the global plateau at init seed 7: the
+# reference's min-max domain (range_q 0) scored do(x2) errors
+# 0.289 / 0.040 / 0.067 against the quantile domain's 0.096 / 0.080 / 0.018.
+# Under the per-node plateau (D5) min-max scores 0.072 / 0.001 / 0.049
+# against 0.080 / 0.068 / 0.092, so D1 is open for revision
+# (docs/paper-replication.md). CAREFL, same nets and scaling, uses range_q 0
+# (carefl.yaml).
 # Rejected deviations, both measured: minibatch stepping (batch
 # 256, lr 0.001-0.004, 300-3000 epochs, constant or plateau) misses the
-# interventional bounds — its optima carry a systematic -0.11 common-mode
+# interventional bounds: its optima carry a systematic -0.11 common-mode
 # offset of the do(x2) means; dropping the input transform fails likewise
 # (raw parents saturate tanh outright: do(x2=-3) error 0.731, and a relu
 # net's error wanders 0.17-0.45). The reference's scale_df + tanh stays.
@@ -46,13 +48,13 @@ variants:
     flow_kwargs:
       seed: 7                 # weight init (repo choice)
       init: glorot            # Keras Dense default: glorot_uniform, zero bias
-    marginal_init: false     # measured: the start shifts the anneal, do(x2=0) error 0.019 -> 0.101 (D4)
+    marginal_init: false     # measured (D4): no gain, do(x2=0) error 0.092 -> 0.102
     fit_kwargs:
       epochs: 10000           # the reference protocol, 1:1
       batch_size: 2500        # = n_train: one full-batch step per epoch
       seed: 0                 # full batch: the shuffle seed has no effect
     learning_rate: 0.001
-    schedule: plateau         # update_learning_rate, the reference rule
+    schedule: plateau         # update_learning_rate, per node (D5)
     plateau_patience: 50
     plateau_factor: 0.1
     plateau_min_lr: 1.0e-7
@@ -68,7 +70,7 @@ variants:
         caption: The model as declared, one edge per term, labelled by the term that owns it.
       training.png:
         title: 'VACA triangle: training'
-        caption: Summed train and validation NLL per epoch under the reference's plateau rule.
+        caption: Summed train and validation NLL per epoch under the reference's plateau rule, applied per node (D5).
       marginals.png:
         title: 'VACA triangle: observed vs sampled marginals'
         caption: The validation rows against a sample of the fitted flow, one panel per node.

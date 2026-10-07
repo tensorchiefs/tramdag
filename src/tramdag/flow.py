@@ -1,4 +1,4 @@
-"""CausalFlowDAG — a single triangular normalizing flow on a user-defined DAG.
+"""CausalFlowDAG: a single triangular normalizing flow on a user-defined DAG.
 
 The flow maps iid standard-logistic latents ``U`` to the observed variables ``X``
 in topological order. ``sample``, ``abduct``, ``pmf`` and ``density`` answer the
@@ -9,8 +9,6 @@ that only read fitted weights live in ``readouts.py``.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import pickle
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -21,10 +19,19 @@ from torch import Tensor, nn
 from . import scores
 from .fitting import FitMixin
 from .modules import ShiftModule
-from .nodes import Node
+from .nodes import (
+    Node,
+    check_columns,
+    check_level_values,
+    load_weights,
+    schema_entry,
+    tensorize,
+    write_checkpoint,
+)
 from .readouts import ReadoutsMixin
 from .spec import (
     NodeSpec,
+    node_parents,
     spec_from_dict,
     spec_to_dict,
     validate_and_sort,
@@ -73,6 +80,18 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Kaiming-uniform), ``"glorot"`` (glorot-uniform weights, zero biases)
         or ``"normal"`` (N(0, 0.05^2) weights and biases). A VC head's
         output layer stays zero either way. Stored in the checkpoint.
+
+    Attributes
+    ----------
+    nodes : nn.ModuleDict
+        One [`Node`][tramdag.nodes.Node] per variable, in topological order.
+    order : list[str]
+        The node names in topological order.
+    history : dict
+        The nodes' fit histories, see
+        [`history`][tramdag.flow.CausalFlowDAG.history].
+    meta : dict
+        The provenance that [`load`][tramdag.flow.CausalFlowDAG.load] fills.
     """
 
     def __init__(
@@ -93,17 +112,16 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.order = validate_and_sort(spec)
         self.init = init
         self.nodes = nn.ModuleDict(
-            {name: Node(spec[name], spec) for name in self.order}
+            {name: Node(name, spec[name], self._schema(name)) for name in self.order}
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        # _calibrate() takes the data-dependent state once; a buffer, not a Python
-        # bool, so the flag rides in the state dict and a loaded flow does not
-        # recalibrate on its next fit
-        self.register_buffer("calibrated", torch.tensor(False))
-        self.history: dict = {"train": []}  # per-node mean train NLL per epoch
-        self.meta: dict = {}  # provenance attached at save() (version, time)
+        self.meta: dict = {}  # provenance a load() fills (version, time)
         self.to(self.device)
+
+    def _schema(self, name: str) -> dict[str, str | int]:
+        """Give a node's parent schema, ``{parent: "continuous" | n_levels}``."""
+        return {p: schema_entry(self.spec[p]) for p in node_parents(self.spec[name])}
 
     def _apply_init(self, init: str) -> None:
         """Re-initialize every linear layer, if asked; VC heads re-zero their output."""
@@ -118,10 +136,10 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
     @property
     def _dtype(self) -> torch.dtype:
-        """Current model dtype: float32, or float64 while ``fit_classical`` runs.
+        """Current model dtype: float32, unless the caller converts the flow.
 
         Every tensor built from a frame takes this dtype, so the read-outs work
-        in both modes without carrying a dtype argument.
+        in either dtype without carrying a dtype argument.
         """
         return next(self.parameters()).dtype
 
@@ -141,7 +159,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         KeyError
-            If the frame lacks one of the columns, by name — a spec/data
+            If the frame lacks one of the columns, by name. A spec/data
             mismatch would otherwise surface deep inside a tensor op.
         ValueError
             If an ordinal column is not a level index of its node. The
@@ -149,51 +167,16 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             silence, or fail inside ``one_hot`` without naming the node.
         """
         cols = self.order if cols is None else cols
-        self._check_columns(df, cols)
-        out = {}
-        for c in cols:
-            values = df[c].to_numpy(dtype=float)
-            if levels and c in self.nodes and self.nodes[c].kind == "ordinal":
-                self._check_level_values(c, values)
-            out[c] = torch.tensor(values, dtype=self._dtype, device=self.device)
-        return out
+        ordinal = {n: nd.levels for n, nd in self.nodes.items() if nd.kind == "ordinal"}
+        return tensorize(df, cols, ordinal if levels else {}, self._dtype, self.device)
 
-    @staticmethod
-    def _check_columns(df: pd.DataFrame, cols) -> None:
-        """Name the columns ``df`` lacks, before any tensor op would."""
-        missing = [c for c in cols if c not in df.columns]
-        if missing:
-            raise KeyError(
-                f"the data frame lacks the column(s) {missing}; this needs "
-                f"{list(cols)}, the frame has {list(df.columns)}"
-            )
-
-    def _check_level_values(self, name: str, values) -> None:
-        """Reject ordinal values that are not level indices of their node.
-
-        ``bincount``, the cutpoint likelihood and the one-hot parent
-        encoding all take the values as ``0..levels-1``; a 1-based or
-        non-integer value would silently be truncated instead of failing.
-        """
-        levels = self.spec[name].levels
-        v = np.asarray(values, dtype=np.float64)
-        if v.size == 0:
-            return
-        fractional = bool((v != np.round(v)).any())
-        if fractional or v.min() < 0 or v.max() >= levels:
-            raise ValueError(
-                f"node {name!r}: an ordinal column holds the level indices "
-                f"0..{levels - 1}, got values in [{v.min()}, {v.max()}]"
-                f"{' (non-integer)' if fractional else ''}"
-            )
-
-    def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
+    def _to_frame(self, values: dict[str, Tensor], index=None) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""
         out = {}
         for k, v in values.items():
             arr = v.cpu().numpy()
             out[k] = arr.astype(np.int64) if self.nodes[k].kind == "ordinal" else arr
-        return pd.DataFrame(out)
+        return pd.DataFrame(out, index=index)
 
     def _generator(self, seed: int | None) -> torch.Generator | None:
         """Give a seeded generator on this flow's device, or None for unseeded."""
@@ -214,10 +197,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             for name, v in values.items()
             if name in self.spec
         }
-
-    def _parent_feats(self, nd: Node, values: dict[str, Tensor]) -> dict[str, Tensor]:
-        """Encode one node's parents out of the raw tensor dict."""
-        return self._features({p: values[p] for p in nd.parents})
 
     def _theta_shift(
         self, nd: Node, feats: dict[str, Tensor], values: dict[str, Tensor], n: int
@@ -269,45 +248,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         $\sigma(s - \vartheta_0)$. No side columns: chained centering is refused
         by the spec, so a treatment node never carries a centered term itself.
         """
-        theta, shift = nd.theta_shift(self._parent_feats(nd, values), n)
+        theta, shift = nd.theta_shift(nd.features(values), n)
         return torch.sigmoid(shift - theta[:, 0])
-
-    def _check_side_columns(self, train_df: pd.DataFrame) -> list[str]:
-        r"""Check the terms' side columns in the frame; give their names.
-
-        A centered ``VC`` needs its propensity column
-        $P(t = 1 \mid \mathrm{pa}_t)$ per training row, merged into
-        ``train_df`` as an ordinary column. The training loss uses the frozen
-        column; every query after the fit recomputes the value live from the
-        treatment node. ``docs/varying-coefficients.md`` says how to compute
-        the column out of fold.
-        """
-        cols: list[str] = []
-        for name in self.order:
-            for m in self.nodes[name].shifts.values():
-                for col in m.side_columns():
-                    if col not in train_df.columns:
-                        raise ValueError(
-                            f"the centered VC on node {name!r} needs its "
-                            f"propensity column {col!r} in the training "
-                            "frame — compute P(t=1|pa_t) out of fold and "
-                            "merge it as a column."
-                        )
-                    m.check_column(name, col, train_df[col].to_numpy())
-                    cols.append(col)
-        return list(dict.fromkeys(cols))
-
-    def _recenter_vc(self, values: dict[str, Tensor]) -> None:
-        r"""Run every shift term's post-fit ``finalize`` (the VC re-centering).
-
-        A VC term re-splits $\beta_0$ and $b_\Theta$ so the head sums to zero
-        over the train rows; the modelled function does not change.
-        """
-        feats = self._features(values)
-        for name in self.order:
-            nd = self.nodes[name]
-            for m in nd.shifts.values():
-                m.finalize(nd, feats)
 
     def _conditional(
         self, df: pd.DataFrame, node: str, do: dict[str, float] | None
@@ -322,70 +264,30 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         df = df.assign(**(do or {}))
         n = len(df)
         values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
-        theta, shift = self._theta_shift(nd, self._parent_feats(nd, values), values, n)
+        theta, shift = self._theta_shift(nd, nd.features(values), values, n)
         return nd, theta, shift, n
-
-    @torch.no_grad()
-    def _mean_nll(self, values: dict[str, Tensor]) -> dict[str, float]:
-        """Give the per-node mean NLL of already tensorized columns."""
-        return {k: float(-v.mean()) for k, v in self.node_log_prob(values).items()}
 
     def _calibrate(
         self, train_df: pd.DataFrame, *, marginal_init: bool = False
     ) -> CausalFlowDAG:
-        r"""Take the data-dependent state from the training rows, once.
+        """Calibrate every node on the training rows ([`Node.calibrate`][]).
 
-        Every term calibrates itself: the intercept term maps its node's
-        train ``range_q``/``1 - range_q`` quantiles (an intercept option,
-        default 5%/95%; ``0.0`` is the min/max) onto the transform's pre-scaled
-        domain, and every term with an ``input_transform=`` freezes its statistics
-        (minmax lo/hi, standardize mean/std, a callable's frozen train
-        columns).
-
-        The first ``fit`` or ``fit_classical`` calls this when it has not run
-        yet; a loaded model is already calibrated, and later fits on other rows
-        reuse this state — data on a new scale needs a new flow.
-
-        ``marginal_init`` additionally starts every simple intercept at its
-        column's marginal: a Bernstein intercept at the Bernstein
-        approximation of $\operatorname{logit} \hat F(y)$, an ordinal one at
-        the marginal class log-odds; spline/affine intercepts and intercepts
-        with parents are untouched. The start rides on this method's guard, so
-        a second ``fit`` (the next phase of a schedule) continues training
-        instead of discarding the intercepts it just trained, and the flag
-        does nothing on a flow that is already calibrated.
-
-        Parameters
-        ----------
-        train_df : pd.DataFrame
-            Training rows, one column per node (plus any side columns).
-        marginal_init : bool, optional
-            Also set the calibrated start, by default ``False``: an
-            uninitialized intercept starts at zuko's zero instead.
-
-        Returns
-        -------
-        CausalFlowDAG
-            ``self``.
+        The columns are checked for all nodes first. When a node refuses the
+        frame, the nodes this call calibrated lose their flag again, so a
+        corrected frame calibrates the whole flow anew.
         """
-        if bool(self.calibrated):
-            return self
-        self._check_columns(train_df, self.order)
-        for name in self.order:
-            nd = self.nodes[name]
-            if nd.kind == "ordinal":
-                self._check_level_values(name, train_df[name].to_numpy())
-            nd.intercept.calibrate_intercept(train_df, train_df[name], nd.ut)
-            for m in nd.shifts.values():
-                m.calibrate(train_df)
-            if marginal_init:
-                theta = nd.marginal_theta(train_df[name].to_numpy())
-                if theta is not None:  # a spline or affine transform has no start
-                    nd.intercept.marginal_start(theta)
-        self.calibrated.fill_(True)
+        check_columns(train_df, self.order)
+        fresh = [nd for nd in self.nodes.values() if not bool(nd.calibrated)]
+        try:
+            for nd in fresh:
+                nd.calibrate(train_df, marginal_init=marginal_init)
+        except ValueError:
+            for nd in fresh:
+                nd.calibrated.fill_(False)
+            raise
         return self
 
-    def node_log_prob(
+    def _node_log_prob(
         self,
         values: dict[str, Tensor],
         nodes: list[str] | None = None,
@@ -425,7 +327,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             Observations, one column per node.
         nodes : list[str] | None, optional
             Sum only these nodes' contributions. A subset is exact, because
-            the per-node losses are independent — ``nodes=["Y"]`` is the
+            the per-node losses are independent: ``nodes=["Y"]`` is the
             conditional log-likelihood of ``Y`` given its parents, per row,
             in log space (safer than the log of [`pmf`][], which
             underflows in the tail). ``None`` (default) is the joint.
@@ -434,15 +336,23 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         -------
         Tensor
             ``log p(x)`` per row, shape ``(n,)``.
+
+        Raises
+        ------
+        ValueError
+            If ``nodes`` is empty, or an ordinal value is not a level index.
+        KeyError
+            If ``nodes`` names an unknown node, or ``df`` lacks a column.
         """
         if nodes is not None and not nodes:
             raise ValueError("nodes=[] sums nothing; omit it for the joint")
         for name in nodes or ():
             self._node(name)  # name the unknown node, not its KeyError
-        per_node = self.node_log_prob(self._tensorize(df), nodes)
+        per_node = self._node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
-    def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
+    @torch.no_grad()
+    def nll(self, df: pd.DataFrame) -> dict[str, float]:
         """Compute the mean negative log-likelihood per node (a diagnostic).
 
         Parameters
@@ -455,9 +365,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         dict[str, float]
             The mean NLL, keyed by node name.
         """
-        return self._mean_nll(self._tensorize(df))
-
-    nll = node_negative_log_prob  # the short name every notebook uses
+        per_node = self._node_log_prob(self._tensorize(df))
+        return {k: float(-v.mean()) for k, v in per_node.items()}
 
     @torch.no_grad()
     def sample(
@@ -492,12 +401,13 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If both ``n`` and ``u`` are omitted.
+            If both ``n`` and ``u`` are omitted, or a ``do`` value of an
+            ordinal node is not a level index.
         """
         do = do or {}
         for name, value in do.items():
             if self._node(name).kind == "ordinal":
-                self._check_level_values(name, [value])
+                check_level_values(name, [value], self.spec[name].levels)
         if u is not None:
             n = len(u)
             u_vals = self._tensorize(u, levels=False)  # latents, not levels
@@ -519,10 +429,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 continue
             nd = self.nodes[name]
             # under do, a centered VC re-derives t_do - e_hat(x); never cached
-            feats = self._parent_feats(nd, values)
+            feats = nd.features(values)
             theta, shift = self._theta_shift(nd, feats, values, n)
             values[name] = nd.sample(theta, shift, u_vals[name])
-        return self._to_frame(values)
+        # the latents' rows, so a counterfactual lines up with its factual row
+        return self._to_frame(values, index=None if u is None else u.index)
 
     @torch.no_grad()
     def abduct(self, df: pd.DataFrame, *, seed: int | None = None) -> pd.DataFrame:
@@ -604,7 +515,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         The continuous counterpart of [`pmf`][]: for every row of ``df``
         the density $p(\text{node} = g \mid \mathrm{pa})$ at each grid value $g$, in
-        closed form from the transform — no sampling.
+        closed form from the transform, with no sampling.
 
         Parameters
         ----------
@@ -671,48 +582,31 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def save(self, path: str | Path) -> None:
         """Write the model, its history and its provenance to a checkpoint.
 
-        The file holds the spec and the weights, the training ``history``,
-        and a ``meta`` block with the tramdag version, the save time and the
-        device.
+        The file holds the spec and the weights, the nodes' training
+        ``history``, and a ``meta`` block with the tramdag version, the save
+        time and the device.
 
         Parameters
         ----------
         path : str | Path
             Target file. Parent directories are created when missing.
         """
-        from . import __version__  # lazy: circular through the package root
-
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        meta = {
-            "tramdag_version": __version__,
-            "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "device": str(self.device),
-        }
-        try:
-            torch.save(
-                {
-                    "spec": spec_to_dict(self.spec),
-                    "init": self.init,
-                    "state_dict": self.state_dict(),
-                    "history": self.history,
-                    "meta": meta,
-                },
-                path,
-            )
-        except (pickle.PicklingError, AttributeError) as err:
-            raise ValueError(
-                "the spec does not serialize: a callable input_transform "
-                "must be a picklable module-level function "
-                "— use 'minmax'/'standardize', or def the function at "
-                "module level."
-            ) from err
+        write_checkpoint(
+            path,
+            {
+                "spec": spec_to_dict(self.spec),
+                "init": self.init,
+                "state_dict": self.state_dict(),
+                "history": {n: nd.history for n, nd in self.nodes.items()},
+            },
+            self.device,
+        )
 
     @classmethod
     def load(cls, path: str | Path, device: str = "cpu") -> CausalFlowDAG:
         """Restore a model from a checkpoint.
 
-        ``flow.history`` and ``flow.meta`` are refilled.
+        The nodes' ``history`` and ``flow.meta`` are refilled.
 
         Parameters
         ----------
@@ -732,18 +626,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             device=device,
             init=ckpt["init"],
         )
-        for name, t in ckpt["state_dict"].items():
-            # a callable transform's train buffer takes the checkpoint's shape
-            if not name.endswith(".train_cols"):
-                continue
-            buf = flow.get_buffer(name)
-            if buf.shape != t.shape:
-                mod_path, _, buf_name = name.rpartition(".")
-                flow.get_submodule(mod_path).register_buffer(
-                    buf_name, torch.empty_like(t)
-                )
-        flow.load_state_dict(ckpt["state_dict"])  # includes the `calibrated` flag
-        flow.history = ckpt["history"]
+        load_weights(flow, ckpt["state_dict"])  # with the `calibrated` flags
+        for name, history in ckpt["history"].items():
+            flow.nodes[name].history = history
         flow.meta = ckpt["meta"]
         flow.eval()
         return flow

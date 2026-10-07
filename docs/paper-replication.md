@@ -4,10 +4,10 @@ The eight variants under `experiments/` replicate the TRAM-DAG paper
 [@sick2025tramdag] against its own R code
 (`tensorchiefs/tram-dag`). For each experiment this page lists the DGP, the
 model, every hyperparameter with its source, what deviates from the paper and
-why, and the numbers. The paper states four training numbers: n = 40000,
-500 epochs, Adam, and Bernstein order 20; it shows its results as figures, so
-where it gives no number the "paper" column names the figure and what it
-shows. The pinned ground truth is `experiments/ground_truth/*.json`;
+why, and the numbers. The paper states five training numbers: n = 40000,
+500 epochs, Adam, lr 0.001 and Bernstein `len_theta` 20 (order 19). It shows
+its results as figures. Where it gives no number, the "paper" column names the
+figure and what it shows. The pinned ground truth is `experiments/ground_truth/*.json`;
 [experiments/README.md](../experiments/README.md) explains the YAML variants,
 the frozen data and the check.
 
@@ -26,7 +26,7 @@ replay, so every seed here is a repository choice.
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
 | calibrated start | none | `marginal_init: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`, VACA) and impossible for CAREFL's `range_q: 0` domain. Calibration without the flag never touches the weights |
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
-| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)` on the summed `history["val"]`, the same rule, verified against torch's source; `experiments/helpers.py::fit_paper` drives it |
+| plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)`, the same rule verified against torch's source, but per node on the node's own validation NLL, deviation D5 below; `experiments/helpers.py::fit_paper` drives it |
 
 ## Triangle, continuous (`triangle.py`): paper Sec. 6.1, App. C.3
 
@@ -57,23 +57,30 @@ Bernstein, the CS net hidden (25, 25) with sigmoid.
 
 | variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, the pinned ground truth |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; App. C.3 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.981 / −0.161 / 0.281 |
-| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.178; 0.088 |
-| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.168; 0.108 |
+| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.981 / −0.161 / 0.281 |
+| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.181; 0.025 |
+| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.168; 0.104 |
 | sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.168; 0.240 on the paper's [−1, 0] window |
-| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09–0.14 | 0.08–0.11 |
-| all | val NLL x3 | — | 2.4607–2.4764 | 2.4606–2.4764 |
+| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | CS variants 0.075 to 0.100; linear-ls bound 0.267 |
+| all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4606 to 2.4614 |
+
+The pinned column gives the `value` of each entry in
+`experiments/ground_truth/*.json`. An error entry has only a `max` bound. Where
+the file's `_note` says that the bounds are 2.5x the measurement, the column
+gives the bound divided by 2.5. Otherwise it gives the bound, labeled as one.
+The triangle pins predate the marginal start (D4) and the per-node shuffle
+seeds. A CI run at the current config does not reproduce them exactly.
 
 β13 measures −0.16 to −0.18 instead of −0.2. β13 multiplies x1, whose two
-mixture components sit at 0.25 and 0.73, so x1 has sd 0.254 against 0.375 for
+mixture components sit at 0.25 and 0.73. So x1 has sd 0.254 against 0.375 for
 x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n = 40000. The value stays within
-about one SE, and β13 is too weakly identified at n = 5000 for the frozen
-5000-row CSVs to serve as fit checks; the fit checks train on the paper's
+about one SE. At n = 5000, β13 is too weakly identified for the frozen
+5000-row CSVs to serve as fit checks. So the fit checks train on the paper's
 n = 40000 protocol.
 
 The (25, 25) hidden stack is what lands `sin-cs` on Fig. 18, including its
-small −1-endpoint deviation; a literal `[2, 25, 25, 2]` reading puts a
-2-sigmoid bottleneck on the input and cannot reproduce the figure at any
+small −1-endpoint deviation. A literal `[2, 25, 25, 2]` reading puts a
+2-sigmoid bottleneck on the input. It cannot reproduce the figure at any
 protocol (cs max err 1.22).
 
 ## Triangle, mixed (`triangle_mixed.py`): paper Sec. 6.2, App. C.4, App. B
@@ -100,21 +107,25 @@ with sigmoid.
 
 | variant | metric | paper | paper protocol, `init: normal` (500 epochs) | CI config, pinned |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / −0.2 / 0.3 | 1.987 / −0.246 / 0.319 | 1.978 / −0.258 / 0.333 |
+| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.978 / −0.258 / 0.333 |
 | linear-ls | odds ratio predicted / DGP | e² ≈ 7.39; C.4 text: 7.74, CI [7.16, 8.38] | 7.29 / 7.19 | 7.23 / 7.19 |
-| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | — (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | 0.050; 0.716 / 0.728 / 0.806 |
-| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.200; 0.156 |
-| exp-cs | CF PMF TV; P(true level) | — | 0.023; 0.917 / 0.921 | 0.024; 0.920 / 0.921 |
+| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV bound 0.124; 0.716 / 0.728 / 0.806 |
+| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.205; 0.143 |
+| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.023; 0.923 / 0.921 |
 
-## VACA / CNF benchmark (`vaca.py`): paper Sec. 5.1–5.2, App. C.1
+The pinned column follows the rule of the continuous table. The
+`triangle-mixed-linear-ls` note does not state the 2.5x rule, so its TV entry
+is the bound.
+
+## VACA / CNF benchmark (`vaca.py`): paper Sec. 5.1 and 5.2, App. C.1
 
 **DGP** [@sanchezmartin2022vaca, App. E.1]: x1 ~ 0.5 N(−2, 1.5) + 0.5
 N(1.5, 1), x2 = −x1 + N(0, 1), x3 = x1 + 0.25 x2 + N(0, 1). The noise is
 Gaussian, outside the logistic-latent family, and the all-`CI` flow must fit
 it. The analytic target is E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's
-Sec. 5.2 text says a ∈ {−3, −2, 0}; its Fig. 5 panels and the R code
-(`vaca_triangle.r`) intervene at a ∈ {−3, −1, 0}, and this repository follows
-the code. do(x2 = −3) is off-manifold extrapolation and takes a looser
+Sec. 5.2 text says a ∈ {−3, −2, 0}. Its Fig. 5 panels and the R code
+(`Figure_Triangle_Linear_Bimodal.R`) intervene at a ∈ {−3, −1, 0}, and this
+repository follows the code. do(x2 = −3) is off-manifold extrapolation and takes a looser
 tolerance.
 
 **Model**: `x1: SI`, `x2: CI(x1)`, `x3: CI(x1, x2)`, Bernstein
@@ -123,33 +134,33 @@ tolerance.
 | hyperparameter | R code | here |
 |---|---|---|
 | train / validation | nTrain 2500 / `dgp(5000)` | 2500 / 5000, two draws |
-| epochs | 10000 (`Figure_Triangle_Linear_Bimodal.R`, the sourcing script, not in our copy of the R code, so EPOCHS/M/nTrain rest on that reading) | 10000, one run, 1:1 |
+| epochs | 10000 (`comparison/Figure_Triangle_Linear_Bimodal.R`: EPOCHS = 10000, M = 30, nTrain = 2500) | 10000, one run, 1:1 |
 | lr | 0.001 | 0.001 |
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
-| schedule | the plateau rule above | the same rule; it fires at about epoch 9050 and freezes an all-bounds point |
+| schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1: at seed 7 the reference's min/max domain scores 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.022, worse at do(x2 = −3) and do(x2 = 0). CAREFL, same nets, measures the opposite way |
-| n_compare | — | 50000 |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, uses `range_q: 0` |
+| n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
 pinned flow value.
 
 | metric | paper | here, the pinned ground truth |
 |---|---|---|
-| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.096 |
-| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.080 |
-| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.022 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.036, error 0.040 |
-| val NLL x3 | — | 1.4427 |
+| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.080 |
+| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.068 |
+| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.092 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
+| val NLL x3 | (none) | 1.4347 |
 
-The result is seed-sensitive at the off-manifold point do(x2 = −3), where the
-error spans 0.03–0.27 over four init draws, against 0.005–0.026 at
-do(x2 = 0). The paper shows one run's densities. The committed bound is 2.5×
-the seed-7 measurement.
+The do(x2) errors are seed-sensitive; D5 below gives the spread over four
+init draws. The paper shows one run's densities. The committed bounds are
+2.5× the seed-7 measurement.
 
 The table below traces what each protocol ingredient is worth under the
-reference protocol, one change at a time, on the paper text's grid −3 / −2 / 0
-with min-max inputs unless the row says otherwise.
+reference protocol with its global plateau, one change at a time. It uses the
+paper text's grid −3 / −2 / 0 and min-max inputs unless the row says
+otherwise.
 
 | variant | error | reading |
 |---|---|---|
@@ -161,19 +172,24 @@ with min-max inputs unless the row says otherwise.
 | … glorot init | 0.035 / 0.006 / 0.007 | the cause (a different random draw than the config's seed 7) |
 | … glorot + min/max | 0.035 / 0.056 / 0.057 | |
 
-A probe of the reference trajectory shows the do(x2) errors descend until
-epoch 6000–8500 and then creep back up; the plateau anneal fires at about
-9050 and freezes them. The reference protocol's quality is its anneal landing
-inside that window. Rejected alternatives, each measured: relu with raw
-parents wanders 0.17–0.45 on do(x2 = −3) and holds the bound only at isolated
-epochs; tanh on raw parents saturates outright at 0.731; minibatch stepping
-(batch 256, even with minmax + tanh) converges with a systematic −0.11
-common-mode offset of all three do-means while the observational fit stays
-perfect.
+A probe of the reference trajectory shows that the do(x2) errors descend
+until epoch 6000 to 8500 and then creep back up. The plateau anneal fires at
+about 9050 and freezes them. The reference protocol's quality is its anneal
+landing inside that window.
+
+Rejected alternatives, each measured:
+
+- relu with raw parents wanders 0.17 to 0.45 on do(x2 = −3). It holds the
+  bound only at isolated epochs.
+- tanh on raw parents saturates outright at 0.731.
+- Minibatch stepping (batch 256, even with minmax + tanh) converges with a
+  systematic −0.11 common-mode offset of all three do-means. The
+  observational fit stays perfect.
 
 ## CAREFL benchmark (`carefl.py`): paper Sec. 5.3, App. C.2
 
-This benchmark is the reference run 1:1 on the reference's own data.
+This benchmark is the reference run 1:1 on the reference's own data, except
+D5 (the plateau per node).
 `carefl_fig5.r` sets `USE_EXTERNAL_DATA = TRUE` and trains on CAREFL's own
 committed 2500 rows (`X.csv`, x3/x4 sd-standardized by 6.0104/1.9114) with
 `val = train`. CAREFL's repository also commits the observation `xObs.csv`,
@@ -198,7 +214,7 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 |---|---|---|
 | train / validation | CAREFL's own `X.csv`, sd-standardized, `val = train` | the same committed `X.csv`, `val = train`; a fresh standardized draw is scored, never trained or annealed on |
 | epochs, lr | 7000 @ 0.001 | 7000 @ 0.001 |
-| batch, schedule, input scaling, init | full batch, plateau 0.1/50/1e-7, `scale_df`, glorot | same |
+| batch, schedule, input scaling, init | full batch, plateau 0.1/50/1e-7, `scale_df`, glorot | same, the plateau per node (D5) |
 | Bernstein domain | train min/max (`scale_df`) | train min/max (`range_q: 0`) |
 | scoring | the single `x_obs`, curves over α (Fig. 6) | the same, plus 300 held-out rows at α ∈ {−1.5, 0, 1.5}, all in standardized units |
 
@@ -206,28 +222,29 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 
 | metric | paper / CAREFL | here, the pinned ground truth |
 |---|---|---|
-| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to ~0.7 at α = −3 | 0.066 |
+| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.063 |
 | Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.204, at the α = −3 grid edge; 0.074 at α = 0 |
-| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | — | 0.015 / 0.009 / 0.013 |
-| held-out CF MAE x4, α = −1.5 / 0 / 1.5 | — | 0.080 / 0.027 / 0.048 |
+| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | (none) | 0.014 / 0.008 / 0.013 |
+| held-out CF MAE x4, α = −1.5 / 0 / 1.5 | (none) | 0.080 / 0.027 / 0.048 |
 
-Three ingredients carry the agreement, each measured with everything else
-held fixed. Training on the committed rows instead of a fresh 2500-row draw
-cut the Fig. 6 x4 max from 0.40 to 0.34 in standardized units. The reference
-optimization, 7000 @ 0.001 with `val = train`, fixed the parabola bottom
-(error at α = 0 from 0.21 to 0.06). The min-max domain cut the grid edges
-(x4 0.37 → 0.20, x3 0.20 → 0.07). On fresh draws the parabola bottom sits
-below the truth near α = 0 for a reason that is neither protocol nor init:
-finite-sample variance of the Laplace 12 % quantile at which the observed
-noise sits, in the sparse region x1 = 2 with about 190 nearby rows; CAREFL's
-own committed draw is a mild one, which is one more reason to train on it.
+Three ingredients carry the agreement. Training on the committed rows
+instead of a fresh 2500-row draw lowers the Fig. 6 x4 error. The reference
+optimization, 7000 @ 0.001 with `val = train`, fits the parabola bottom at
+α = 0. The min-max domain lowers the errors at the grid edges.
 
-Rejected alternatives, each measured: raw parents saturate the sigmoid on the
-Laplace parents as tanh does; relu underfits x3 (val NLL 1.46–1.47 against
-the 1.403 ± 0.05 band) and grows a fragile Bernstein tail, with one held-out
-row inverted to x4 ≈ 580; minibatch underweights the sparse x2 tail where the
-Fig. 6 grid ends (cf MAE x3 at do(x2 = 1.5) 0.40 against the 0.319 bound, and
-the Fig. 6 x3 error 5.9 against the full-batch 2.7).
+On fresh draws the parabola bottom sits below the truth near α = 0. The
+reason is neither protocol nor init. It is the finite-sample variance of the
+Laplace 12 % quantile at which the observed noise sits, in the sparse region
+near x1 = 2. CAREFL's own committed draw is a mild one, which is one more
+reason to train on it.
+
+Rejected alternatives:
+
+- Raw parents saturate the sigmoid on the Laplace parents, as tanh does.
+- relu underfits x3 and grows a fragile Bernstein tail. One held-out row
+  inverts to x4 ≈ 580.
+- Minibatch underweights the sparse x2 tail where the Fig. 6 grid ends. The
+  held-out x3 error at do(x2 = 1.5) and the Fig. 6 x3 error both grow.
 
 ## D4: the marginal start, measured per variant
 
@@ -244,27 +261,56 @@ run per variant with the start off and on, seeds unchanged:
 | triangle sin-cs | 34 → 10 | cs max err 0.240 → 0.088; do(x1) err 0.075 → 0.201, past the 0.188 bound | off: a different optimum, better curve, worse L2 |
 | mixed linear-ls | 42 → 9 | identical | on |
 | mixed exp-cs | 28 → 6 | cs max err 0.143 → 0.060; do(x1) err 0.018 → 0.010 | on |
-| VACA | within 0.5: 2245 → 168 | val NLL 1.4496 → 1.4348; do(x2 = 0) err 0.019 → 0.101, past the 0.044 bound | off: the plateau anneal fires elsewhere and freezes a different point |
-| CAREFL | — | — | impossible: `range_q: 0` has no marginal start |
+| VACA | within 0.5: 2245 → 168 (global plateau) | per-node plateau (D5): val NLL 1.4347 → 1.4347; do(x2) err 0.080 / 0.068 / 0.092 → 0.094 / 0.079 / 0.102 | off: no gain, slightly worse at every do point |
+| CAREFL | (none) | (none) | impossible: `range_q: 0` has no marginal start |
 
 The start is only an initialization. Where the optimizer reaches the same
 basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
-off. The pinned ground truth of the four variants that switched on is
-unchanged: every metric stays
-within its tolerance, and the check's advisory notes on their bounds are
-listed for the next deliberate re-pin.
+off. The triangle rows were measured before the per-node fit and its
+per-node shuffle seeds. The VACA endpoint was measured under the per-node
+plateau.
+
+The pinned ground truth of the four variants that switched on is unchanged.
+Every metric stays within its tolerance. `check.py` prints advisory notes
+where a bound is far from the current measurement, and these notes are kept
+for the next deliberate re-pin. They cover the `triangle-linear-cs` do(x1)
+bound and the `triangle-mixed-exp-cs` cs max err and do(x1) bounds.
+
+## D5: the plateau rule per node
+
+The reference reduces the learning rate of one optimizer when the summed
+validation NLL stops improving. Here every node fits on its own, so no summed
+NLL exists during a fit. Each node runs the same rule on its own validation
+NLL, with its own optimizer. The rule and its constants are unchanged.
+
+The table gives the VACA do(x2) errors at a = −3 / −1 / 0 and the x3
+validation NLL, one run per init seed on the same data.
+
+| init seed | per node (here) | global (reference) |
+|---|---|---|
+| 1 | 0.038 / 0.047 / 0.074, 1.4344 | 0.331 / 0.051 / 0.037, 1.4514 |
+| 2 | 0.038 / 0.032 / 0.076, 1.4351 | 0.213 / 0.044 / 0.041, 1.4476 |
+| 3 | 0.070 / 0.005 / 0.039, 1.4345 | 0.221 / 0.066 / 0.048, 1.4481 |
+| 4 | 0.012 / 0.037 / 0.072, 1.4345 | 0.317 / 0.053 / 0.098, 1.4541 |
+| 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | 0.096 / 0.080 / 0.018, 1.4495 |
+
+The per-node rule gives a lower x3 validation NLL on every seed. Its error at
+the off-manifold point do(x2 = −3) is smaller on every seed, and much smaller
+on seeds 1 to 4. At do(x2 = 0) it is worse on three of the five seeds, and
+seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation
+NLL, and all its bounds hold.
 
 ## Runtime and the CI deviations
 
 The reference protocol's cost is the motivation for every deviation. The
-triangle runs 500 epochs × 1250 steps of batch 32; one epoch takes 3.2 s
-single-process at 2–4 torch threads and 5.5 s at 32 threads, because the
-step is overhead-bound, so one variant takes 42–69 min on the 2-core CI
+triangle runs 500 epochs × 1250 steps of batch 32. One epoch takes 3.2 s
+single-process at 2 to 4 torch threads and 5.5 s at 32 threads, because the
+step is overhead-bound. So one variant takes 42 to 69 min on the 2-core CI
 runners. The triangle scripts therefore use batch 256 at lr 0.004, 8× fewer
-optimizer steps per epoch, chosen from this grid at the paper's 500 epochs
-with glorot init. Every entry is the cs max err unless the column says
+optimizer steps per epoch. This grid at the paper's 500 epochs with glorot
+init chose them. Every entry is the cs max err unless the column says
 otherwise.
 
 | batch / lr / epochs | linear-ls β13 | linear-cs | atan-cs | mixed exp-cs (TV) | steps vs paper |
@@ -273,32 +319,32 @@ otherwise.
 | 128 / 0.001 / 500 | −0.170 | 0.170 | 0.041 | 0.126 (0.023) | 1/4 |
 | 128 / 0.004 / 500 | −0.178 | 0.160 | 0.094 | 0.070 (0.014) | 1/4 |
 | 128 / 0.004 / 250 | −0.170 | 0.147 | 0.070 | 0.131 (0.035) | 1/8 |
-| **256 / 0.004 / 500 (CI)** | −0.171 | 0.132 | 0.073 | 0.072 (0.017) | 1/8 |
+| **256 / 0.004 / 500 (CI batch and lr)** | −0.171 | 0.132 | 0.073 | 0.072 (0.017) | 1/8 |
 | 256 / 0.008 / 500 | −0.181 | 0.163 | 0.113 | 0.073 (0.017) | 1/8 |
 | 512 / 0.010 / 500 | −0.169 | 0.183 | 0.104 | 0.119 (0.015) | 1/16 |
 
 Batch 256 / lr 0.004 is the only row that keeps every cs error within about
 0.02 of the paper protocol. Larger batches or rates bend the misspecified
-linear-cs curve (0.16–0.18), and lr 0.008 hurts atan-cs. At 500 epochs a
-triangle job takes 7–11 min instead of 42–69.
+linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs. At 500 epochs a
+triangle job takes 7 to 11 min instead of 42 to 69.
 
 The epoch floors, measured at that batch and rate:
 
-- **Triangle** holds every bound at 300 epochs; at 150 the run fails atan's
-  do(x1) bound (0.235 > 0.206). `linear-cs` keeps 500, because at 300 its
-  fitted cs curve flattens past |x2| > 0.5 (max err 0.140 against 0.088): the
-  DGP line spans only ±0.3, and the sigmoid net's slow tail convergence is half
-  of that. relu is out, because the 2-unit input layer dies with it (atan:
-  β13 +0.53, cs err 1.42).
+- **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
+  do(x1) bound (0.235 > 0.200). `linear-cs` keeps 500, because at 300 its
+  fitted cs curve flattens past |x2| > 0.5 (max err 0.140 against the pinned
+  0.025 at 500). The DGP line spans only ±0.3, and the sigmoid net's slow
+  tail convergence is half of that. relu is out, because the 2-unit input
+  layer dies with it (atan: β13 +0.53, cs err 1.42).
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
-  and the do(x1) mean: at 100 / 250 / 350 epochs the cs max err is
+  and the do(x1) mean. At 100 / 250 / 350 epochs the cs max err is
   0.344 / 0.177 / 0.156 and the do err 0.033 / 0.060 / 0.022, so it trains
   350. `linear-ls` has no CS net to wait for and trains 200 epochs at
-  lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
-  500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
+  lr 0.002. At that rate it reads the weakly identified β13/β23 slightly
+  closer to the 500-epoch values than at lr 0.004. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).
-- **VACA and CAREFL** run their references 1:1; the rejected shortcuts are in
-  their sections.
+- **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
+  the rejected shortcuts are in their sections.
 
 ## Repository choices the paper does not state
 

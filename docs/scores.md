@@ -104,7 +104,8 @@ covariate. Two causes give this:
   prognostic part, wrongly.
 
 The second cause works through the score. The treatment score of row $i$ is
-$\psi_i = r_i \, t_i$. Here $t_i$ is the treatment of the row. The factor
+$\psi_i = r_i$ times the term's regressor: $t_i$, or $t_i - \hat e_i$ for a
+centered `VC`. Here $t_i$ is the treatment of the row. The factor
 $r_i = \partial \ell_i / \partial s_i$ is the derivative of $\ell_i$ with
 respect to the row's total shift $s_i$, and it acts like a residual. If the
 simple model gets the prognostic effect of `X1` wrong, $r_i$ follows a
@@ -131,8 +132,10 @@ Two cases make the p-value less reliable:
 `t` of `node`. It returns one row per candidate with `stat`, `p_value`,
 `crit_5pct` and `flag`, sorted by `stat`.
 
-- `candidates=` lists the covariates to scan. By default it is every column
-  of `df` except `node` and `t`. A candidate does not have to be a parent.
+- `candidates=` lists the covariates to scan. By default it is every node
+  except `node`, `t` and the descendants of `t`: a modifier is fixed before
+  the treatment, and a descendant would pick up the effect itself. A
+  candidate does not have to be a parent.
 - For a binary ordinal `LS` treatment, `t` resolves to the identified
   contrast of level 1 against level 0. For a `VC` treatment it resolves to
   $\beta_0$, the constant part of $\beta(x)$.
@@ -144,7 +147,7 @@ of `df`, and one column per interpretable shift coefficient of the node.
 
 - A continuous `LS` parent gives one column, named after the parent.
 - An ordinal `LS` parent gives one column per level of its one-hot
-  encoding, named `"t[0]"`, `"t[1]"` and so on. A row's score goes to the
+  encoding, named `"{parent}[0]"`, `"{parent}[1]"` and so on. A row's score goes to the
   column of the level that the row has.
 - A `VC` term gives one column for its $\beta_0$, named after the
   treatment.

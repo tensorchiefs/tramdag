@@ -890,7 +890,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1540,7 +1540,8 @@ covariate. Two causes give this:</p>
   prognostic part, wrongly.</li>
 </ul>
 <p>The second cause works through the score. The treatment score of row <span class="arithmatex">\(i\)</span> is
-<span class="arithmatex">\(\psi_i = r_i \, t_i\)</span>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row. The factor
+<span class="arithmatex">\(\psi_i = r_i\)</span> times the term's regressor: <span class="arithmatex">\(t_i\)</span>, or <span class="arithmatex">\(t_i - \hat e_i\)</span> for a
+centered <code>VC</code>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row. The factor
 <span class="arithmatex">\(r_i = \partial \ell_i / \partial s_i\)</span> is the derivative of <span class="arithmatex">\(\ell_i\)</span> with
 respect to the row's total shift <span class="arithmatex">\(s_i\)</span>, and it acts like a residual. If the
 simple model gets the prognostic effect of <code>X1</code> wrong, <span class="arithmatex">\(r_i\)</span> follows a
@@ -1564,8 +1565,10 @@ misspecification, and both are worth knowing.</p>
 <code>t</code> of <code>node</code>. It returns one row per candidate with <code>stat</code>, <code>p_value</code>,
 <code>crit_5pct</code> and <code>flag</code>, sorted by <code>stat</code>.</p>
 <ul>
-<li><code>candidates=</code> lists the covariates to scan. By default it is every column
-  of <code>df</code> except <code>node</code> and <code>t</code>. A candidate does not have to be a parent.</li>
+<li><code>candidates=</code> lists the covariates to scan. By default it is every node
+  except <code>node</code>, <code>t</code> and the descendants of <code>t</code>: a modifier is fixed before
+  the treatment, and a descendant would pick up the effect itself. A
+  candidate does not have to be a parent.</li>
 <li>For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
   contrast of level 1 against level 0. For a <code>VC</code> treatment it resolves to
   <span class="arithmatex">\(\beta_0\)</span>, the constant part of <span class="arithmatex">\(\beta(x)\)</span>.</li>
@@ -1577,7 +1580,7 @@ of <code>df</code>, and one column per interpretable shift coefficient of the no
 <ul>
 <li>A continuous <code>LS</code> parent gives one column, named after the parent.</li>
 <li>An ordinal <code>LS</code> parent gives one column per level of its one-hot
-  encoding, named <code>"t[0]"</code>, <code>"t[1]"</code> and so on. A row's score goes to the
+  encoding, named <code>"{parent}[0]"</code>, <code>"{parent}[1]"</code> and so on. A row's score goes to the
   column of the level that the row has.</li>
 <li>A <code>VC</code> term gives one column for its <span class="arithmatex">\(\beta_0\)</span>, named after the
   treatment.</li>

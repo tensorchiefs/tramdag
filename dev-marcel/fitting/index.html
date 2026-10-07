@@ -918,7 +918,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1506,15 +1506,15 @@
 <p>This page is the reference for training a
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a> and its nodes. It covers the
 likelihood, the two fitting paths <code>fit</code> and <code>fit_classical</code>, and the hooks of
-the Adam path. Every recipe named here runs end to end in
-<a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>,
-which is the one place for the code and closes with a runtime comparison of
-the recipes on one workload.</p>
+the Adam path. <a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>
+runs the Adam recipes end to end. It closes with a runtime comparison of the
+recipes on one workload. <code>n_jobs</code>, <code>marginal_init</code>, <code>validation_split</code> and
+per-node <code>epochs</code> or <code>learning_rate</code> functions have no notebook example.</p>
 <h2 id="one-module-one-sub-model-per-node">One module, one sub-model per node<a class="headerlink" href="#one-module-one-sub-model-per-node" title="Permanent link">&para;</a></h2>
-<p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code> holding one independent
-sub-model per variable: an intercept that produces the transform parameters
-<span class="arithmatex">\(\theta\)</span>, the monotone transform <span class="arithmatex">\(h\)</span> with range buffers and no weights of its
-own, and one shift module per shift term. The nodes share no parameters. The
+<p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code> with one independent
+sub-model per variable. A sub-model has an intercept that produces the
+transform parameters <span class="arithmatex">\(\theta\)</span> and one shift module per shift term. It also
+has the monotone transform <span class="arithmatex">\(h\)</span>, which holds range buffers but no weights. The nodes share no parameters. The
 DAG lives entirely in which parents each node reads. There is no edge weight
 matrix and no shared trunk. <a href="../code-map/">code-map.md</a> says which class
 implements which term.</p>
@@ -1523,7 +1523,7 @@ implements which term.</p>
 order, and node <span class="arithmatex">\(i\)</span> reads its parents as data. The Jacobian is therefore
 triangular, and the joint log-likelihood decomposes per node,
 <span class="arithmatex">\(\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))\)</span>.
-<code>CausalFlowDAG.node_log_prob</code> computes one term and <code>log_prob</code> sums them.</p>
+<code>Node.row_log_prob</code> computes one term and <code>CausalFlowDAG.log_prob</code> sums them.</p>
 <ul>
 <li><strong>Continuous node.</strong> Change of variables through the monotone transform:
   <span class="arithmatex">\(u = h(x;\theta) + s\)</span> and
@@ -1562,10 +1562,12 @@ reproducible start. It always uses torch's default init; <code>init=</code> exis
 <code>CS</code>, <code>CI</code> or <code>VC</code> term. Per node, it is one minibatch Adam loop that keeps
 the final weights.</p>
 <ul>
-<li><strong>Nodes.</strong> <code>CausalFlowDAG.fit</code> fits the nodes in topological order.
+<li><strong>Nodes.</strong> <code>CausalFlowDAG.fit</code> fits the nodes in topological order. With
+  validation data, the nodes with a centered <code>VC</code> fit last.
   <code>n_jobs=N</code> forks <code>N</code> worker processes (Linux only), one task per node.
-  A worker runs torch on one thread, so it gives the weights of a serial fit
-  on one thread. <code>epochs=</code>, <code>learning_rate=</code> and <code>callbacks=</code> take one value
+  A worker runs torch on one thread. With the same <code>seed=</code>, it gives the
+  weights of a serial fit on one thread. Without <code>seed=</code>, <code>n_jobs &gt; 1</code> draws
+  a base seed from torch's global RNG. <code>epochs=</code>, <code>learning_rate=</code> and <code>callbacks=</code> take one value
   for all nodes or a function of the node name.</li>
 <li><strong>Optimizer.</strong> One optimizer per node, <code>Adam(lr=learning_rate)</code> by default.
   <code>optimizer=</code> takes a factory <code>f(node)</code>, for example to give the networks
@@ -1588,9 +1590,9 @@ the final weights.</p>
   calibrates the node applies it, so a node that <code>fit_classical</code> calibrated
   ignores the flag. <a href="#the-marginal-start">The marginal start</a> says how, and
   when the endpoint changes.</li>
-<li><strong>Validation.</strong> <code>validation_data=</code> takes a frame; <code>validation_split=</code> takes
-  a float and uses the last fraction of <code>train_df</code> unshuffled, so shuffle the
-  frame first if its row order means anything; only the head calibrates. The
+<li><strong>Validation.</strong> <code>validation_data=</code> takes a frame. <code>validation_split=</code> takes
+  a float and uses the last fraction of <code>train_df</code> unshuffled. So shuffle the
+  frame first if its row order means anything. Only the head calibrates. The
   flow splits once, so all nodes see the same rows. With either, <code>fit</code> writes
   the node's validation NLL after every epoch into <code>node.history["val"]</code>.</li>
 <li><strong>History.</strong> <code>node.history</code> holds <code>"train"</code>, <code>"val"</code>, <code>"val_epoch"</code> and
@@ -1646,9 +1648,9 @@ this map. It sets <span class="arithmatex">\(\tilde\vartheta_0 = c_0\)</span> an
 <span class="arithmatex">\(\tilde\vartheta_k = \log(c_k - c_{k-1})\)</span>. At <span class="arithmatex">\(s = 0\)</span> the class
 probabilities are then the empirical frequencies. For counts
 <code>[50, 30, 15, 5]</code> the start gives the PMF <code>[0.50, 0.30, 0.15, 0.05]</code>.</p>
-<p><strong>Continuous node.</strong> <code>BernsteinUT.marginal_init_theta</code> takes the column. A
-Bernstein polynomial of order <span class="arithmatex">\(M\)</span> with control points <span class="arithmatex">\(\vartheta_k\)</span> is close
-to the function whose values at <span class="arithmatex">\(k/M\)</span> are <span class="arithmatex">\(\vartheta_k\)</span>. The transform
+<p><strong>Continuous node.</strong> <code>BernsteinUT.marginal_init_theta</code> takes the column.
+Take a Bernstein polynomial of order <span class="arithmatex">\(M\)</span> with control points <span class="arithmatex">\(\vartheta_k\)</span>.
+It is close to the function whose values at <span class="arithmatex">\(k/M\)</span> are <span class="arithmatex">\(\vartheta_k\)</span>. The transform
 pre-scales the calibrated range onto the domain of the polynomial
 (<a href="../model/#the-three-knobs-on-a-term">model.md</a>). The point <span class="arithmatex">\(k/M\)</span> of the
 domain then belongs to a data value <span class="arithmatex">\(x_k\)</span>. zuko turns <code>n_coeffs</code> parameters
@@ -1661,7 +1663,7 @@ two extra points. The start uses the closeness property in three steps:</p>
 <li>It sets each control point to <span class="arithmatex">\(\operatorname{logit} \hat F(x_k)\)</span>, with
    <span class="arithmatex">\(\hat F(x_k)\)</span> the fraction of rows at or below <span class="arithmatex">\(x_k\)</span>.</li>
 <li>It inverts zuko's parameterization. zuko builds the control points as a
-   cumulative sum of softplus steps and ties the first two and the last two
+   cumulative sum of softplus steps. It ties the first two and the last two
    steps. The start averages each tied pair and inverts the softplus with
    <span class="arithmatex">\(\log(e^d - 1)\)</span>. It adds zuko's centering offset <span class="arithmatex">\(n \log 2 / 2\)</span>, with
    <span class="arithmatex">\(n\)</span> = <code>n_coeffs</code>, to the first parameter.
@@ -1725,7 +1727,7 @@ and need the best-validation weights to recover the causal effect.</p>
 </tr>
 <tr>
 <td>plain Adam</td>
-<td>an all-<code>LS</code> spec that <code>fit_classical</code> refuses, quick looks</td>
+<td>an all-<code>LS</code> spec whose <code>fit_classical</code> report is not converged, quick looks</td>
 </tr>
 <tr>
 <td>multi-phase Adam, one <code>fit</code> call per rate</td>
@@ -1759,7 +1761,8 @@ and need the best-validation weights to recover the causal effect.</p>
 </ul>
 <h2 id="path-b-classical-optimization-with-fit_classical">Path B: classical optimization with <code>fit_classical</code><a class="headerlink" href="#path-b-classical-optimization-with-fit_classical" title="Permanent link">&para;</a></h2>
 <p><code>fit_classical</code> is the optimizer for all-<code>LS</code> models, where every
-node-conditional is an ordered logit or a Colr model. It raises on any <code>CS</code>, <code>CI</code> or <code>VC</code> term.</p>
+node-conditional is an ordered logit or a transformation model with linear
+shifts. It raises on any <code>CS</code>, <code>CI</code> or <code>VC</code> term.</p>
 <ul>
 <li><strong>Full-batch, float64, L-BFGS</strong> with a strong-Wolfe line search; no
   minibatches, schedule or early stopping, so the same init gives
@@ -1784,18 +1787,20 @@ node-conditional is an ordered logit or a Colr model. It raises on any <code>CS<
   checkpoints stay float32.</li>
 <li><strong>Weakly identified directions never settle.</strong> A Bernstein intercept, rare
   one-hot levels or a flat treatment-effect ridge drift along zero-curvature
-  valleys after the likelihood is at its optimum, which is why <code>tolerance_grad</code>
+  valleys after the likelihood is at its optimum. This is why <code>tolerance_grad</code>
   is 0 and the gradient bound is loose. Correctness comes from the comparison with
   classical software in
   <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>.</li>
 </ul>
-<p>A converged <code>fit_classical</code> leaves the model at the MLE, ready for any operation. A
-<code>fit</code> call from there stays put, which is both a check that the classical
-solution is the optimum and a warm start; the <code>VC</code> guide uses it for <code>beta0</code>.</p>
+<p>A converged <code>fit_classical</code> leaves the model at the MLE, ready for any
+operation. A <code>fit</code> call from there stays put. This checks that the classical
+solution is the optimum, and it is a warm start. The <code>VC</code> guide uses it for
+<code>beta0</code>.</p>
 <h2 id="memory-and-disk">Memory and disk<a class="headerlink" href="#memory-and-disk" title="Permanent link">&para;</a></h2>
 <p>Neither path writes to disk. The parameters, the optimizer state and the
 <code>history</code> dicts live in RAM, and whatever a callback records is yours. The
-only disk I/O is the explicit <code>save()</code> and <code>load()</code>.</p>
+only disk I/O is the explicit <code>save()</code> and <code>load()</code>. <code>fit(n_jobs=N)</code> forks
+<code>N</code> copy-on-write copies of the flow and the training frame.</p>
 
 
 

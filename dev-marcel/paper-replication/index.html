@@ -608,10 +608,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1" class="md-nav__link">
+  <a href="#vaca-cnf-benchmark-vacapy-paper-sec-51-and-52-app-c1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        VACA / CNF benchmark (vaca.py): paper Sec. 5.1–5.2, App. C.1
+        VACA / CNF benchmark (vaca.py): paper Sec. 5.1 and 5.2, App. C.1
       
     </span>
   </a>
@@ -923,7 +923,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1427,10 +1427,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1" class="md-nav__link">
+  <a href="#vaca-cnf-benchmark-vacapy-paper-sec-51-and-52-app-c1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        VACA / CNF benchmark (vaca.py): paper Sec. 5.1–5.2, App. C.1
+        VACA / CNF benchmark (vaca.py): paper Sec. 5.1 and 5.2, App. C.1
       
     </span>
   </a>
@@ -1517,10 +1517,10 @@
 (Sick &amp; Dürr, 2025)<sup id="fnref:sick2025tramdag"><a class="footnote-ref" href="#fn:sick2025tramdag">1</a></sup> against its own R code
 (<code>tensorchiefs/tram-dag</code>). For each experiment this page lists the DGP, the
 model, every hyperparameter with its source, what deviates from the paper and
-why, and the numbers. The paper states four training numbers: n = 40000,
-500 epochs, Adam, and Bernstein order 20; it shows its results as figures, so
-where it gives no number the "paper" column names the figure and what it
-shows. The pinned ground truth is <code>experiments/ground_truth/*.json</code>;
+why, and the numbers. The paper states five training numbers: n = 40000,
+500 epochs, Adam, lr 0.001 and Bernstein <code>len_theta</code> 20 (order 19). It shows
+its results as figures. Where it gives no number, the "paper" column names the
+figure and what it shows. The pinned ground truth is <code>experiments/ground_truth/*.json</code>;
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md">experiments/README.md</a> explains the YAML variants,
 the frozen data and the check.</p>
 <p>Seeds are DGP 42, init 7 and shuffle 0. The triangle scripts of the reference
@@ -1651,7 +1651,7 @@ Bernstein, the CS net hidden (25, 25) with sigmoid.</p>
 <tr>
 <td>linear-ls</td>
 <td>β12 / β13 / β23</td>
-<td>Fig. 14 trajectories; App. C.3 text: 1.98 / −0.21 / 0.26</td>
+<td>Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26</td>
 <td>1.987 / −0.170 / 0.282</td>
 <td>1.981 / −0.161 / 0.281</td>
 </tr>
@@ -1660,14 +1660,14 @@ Bernstein, the CS net hidden (25, 25) with sigmoid.</p>
 <td>β13; max |ĝ − (−f)| on [−1, 1]</td>
 <td>Fig. 17: fitted CS is a straight line</td>
 <td>−0.173; 0.122</td>
-<td>−0.178; 0.088</td>
+<td>−0.181; 0.025</td>
 </tr>
 <tr>
 <td>atan-cs</td>
 <td>β13; cs max err</td>
 <td>Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203</td>
 <td>−0.168; 0.059</td>
-<td>−0.168; 0.108</td>
+<td>−0.168; 0.104</td>
 </tr>
 <tr>
 <td>sin-cs</td>
@@ -1680,27 +1680,33 @@ Bernstein, the CS net hidden (25, 25) with sigmoid.</p>
 <td>all</td>
 <td>|E[x3 | do(x1 = −1)] flow − DGP|</td>
 <td>Figs. 16/17: histograms overlap</td>
-<td>0.09–0.14</td>
-<td>0.08–0.11</td>
+<td>0.09 to 0.14</td>
+<td>CS variants 0.075 to 0.100; linear-ls bound 0.267</td>
 </tr>
 <tr>
 <td>all</td>
 <td>val NLL x3</td>
-<td>—</td>
-<td>2.4607–2.4764</td>
-<td>2.4606–2.4764</td>
+<td>(none)</td>
+<td>2.4607 to 2.4764</td>
+<td>2.4606 to 2.4614</td>
 </tr>
 </tbody>
 </table>
+<p>The pinned column gives the <code>value</code> of each entry in
+<code>experiments/ground_truth/*.json</code>. An error entry has only a <code>max</code> bound. Where
+the file's <code>_note</code> says that the bounds are 2.5x the measurement, the column
+gives the bound divided by 2.5. Otherwise it gives the bound, labeled as one.
+The triangle pins predate the marginal start (D4) and the per-node shuffle
+seeds. A CI run at the current config does not reproduce them exactly.</p>
 <p>β13 measures −0.16 to −0.18 instead of −0.2. β13 multiplies x1, whose two
-mixture components sit at 0.25 and 0.73, so x1 has sd 0.254 against 0.375 for
+mixture components sit at 0.25 and 0.73. So x1 has sd 0.254 against 0.375 for
 x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n = 40000. The value stays within
-about one SE, and β13 is too weakly identified at n = 5000 for the frozen
-5000-row CSVs to serve as fit checks; the fit checks train on the paper's
+about one SE. At n = 5000, β13 is too weakly identified for the frozen
+5000-row CSVs to serve as fit checks. So the fit checks train on the paper's
 n = 40000 protocol.</p>
 <p>The (25, 25) hidden stack is what lands <code>sin-cs</code> on Fig. 18, including its
-small −1-endpoint deviation; a literal <code>[2, 25, 25, 2]</code> reading puts a
-2-sigmoid bottleneck on the input and cannot reproduce the figure at any
+small −1-endpoint deviation. A literal <code>[2, 25, 25, 2]</code> reading puts a
+2-sigmoid bottleneck on the input. It cannot reproduce the figure at any
 protocol (cs max err 1.22).</p>
 <h2 id="triangle-mixed-triangle_mixedpy-paper-sec-62-app-c4-app-b">Triangle, mixed (<code>triangle_mixed.py</code>): paper Sec. 6.2, App. C.4, App. B<a class="headerlink" href="#triangle-mixed-triangle_mixedpy-paper-sec-62-app-c4-app-b" title="Permanent link">&para;</a></h2>
 <p><strong>DGP</strong> (<code>triangle_structured_mixed.R</code>): x1 and x2 as above. x3 is ordinal
@@ -1762,7 +1768,7 @@ with sigmoid.</p>
 <tr>
 <td>linear-ls</td>
 <td>β12 / β13 / β23</td>
-<td>Fig. 19: 2 / −0.2 / 0.3</td>
+<td>Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's)</td>
 <td>1.987 / −0.246 / 0.319</td>
 <td>1.978 / −0.258 / 0.333</td>
 </tr>
@@ -1776,34 +1782,37 @@ with sigmoid.</p>
 <tr>
 <td>linear-ls</td>
 <td>CF PMF TV vs analytic; P(true level) flow / analytic / mode bound</td>
-<td>— (App. B qualitative)</td>
+<td>(App. B qualitative)</td>
 <td>0.044; 0.718 / 0.728 / 0.806</td>
-<td>0.050; 0.716 / 0.728 / 0.806</td>
+<td>TV bound 0.124; 0.716 / 0.728 / 0.806</td>
 </tr>
 <tr>
 <td>exp-cs</td>
 <td>β13; cs max err</td>
 <td>Fig. 20: distributions match</td>
 <td>−0.207; 0.142</td>
-<td>−0.200; 0.156</td>
+<td>−0.205; 0.143</td>
 </tr>
 <tr>
 <td>exp-cs</td>
 <td>CF PMF TV; P(true level)</td>
-<td>—</td>
+<td>(none)</td>
 <td>0.023; 0.917 / 0.921</td>
-<td>0.024; 0.920 / 0.921</td>
+<td>0.023; 0.923 / 0.921</td>
 </tr>
 </tbody>
 </table>
-<h2 id="vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1">VACA / CNF benchmark (<code>vaca.py</code>): paper Sec. 5.1–5.2, App. C.1<a class="headerlink" href="#vaca-cnf-benchmark-vacapy-paper-sec-5152-app-c1" title="Permanent link">&para;</a></h2>
+<p>The pinned column follows the rule of the continuous table. The
+<code>triangle-mixed-linear-ls</code> note does not state the 2.5x rule, so its TV entry
+is the bound.</p>
+<h2 id="vaca-cnf-benchmark-vacapy-paper-sec-51-and-52-app-c1">VACA / CNF benchmark (<code>vaca.py</code>): paper Sec. 5.1 and 5.2, App. C.1<a class="headerlink" href="#vaca-cnf-benchmark-vacapy-paper-sec-51-and-52-app-c1" title="Permanent link">&para;</a></h2>
 <p><strong>DGP</strong> (Sánchez-Martín et al., 2022, App. E.1)<sup id="fnref:sanchezmartin2022vaca"><a class="footnote-ref" href="#fn:sanchezmartin2022vaca">2</a></sup>: x1 ~ 0.5 N(−2, 1.5) + 0.5
 N(1.5, 1), x2 = −x1 + N(0, 1), x3 = x1 + 0.25 x2 + N(0, 1). The noise is
 Gaussian, outside the logistic-latent family, and the all-<code>CI</code> flow must fit
 it. The analytic target is E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's
-Sec. 5.2 text says a ∈ {−3, −2, 0}; its Fig. 5 panels and the R code
-(<code>vaca_triangle.r</code>) intervene at a ∈ {−3, −1, 0}, and this repository follows
-the code. do(x2 = −3) is off-manifold extrapolation and takes a looser
+Sec. 5.2 text says a ∈ {−3, −2, 0}. Its Fig. 5 panels and the R code
+(<code>Figure_Triangle_Linear_Bimodal.R</code>) intervene at a ∈ {−3, −1, 0}, and this
+repository follows the code. do(x2 = −3) is off-manifold extrapolation and takes a looser
 tolerance.</p>
 <p><strong>Model</strong>: <code>x1: SI</code>, <code>x2: CI(x1)</code>, <code>x3: CI(x1, x2)</code>, Bernstein
 <code>n_coeffs = 31</code> (reference M = 30, <code>len_theta = 31</code>), the <code>make_model</code> nets.</p>
@@ -1823,7 +1832,7 @@ tolerance.</p>
 </tr>
 <tr>
 <td>epochs</td>
-<td>10000 (<code>Figure_Triangle_Linear_Bimodal.R</code>, the sourcing script, not in our copy of the R code, so EPOCHS/M/nTrain rest on that reading)</td>
+<td>10000 (<code>comparison/Figure_Triangle_Linear_Bimodal.R</code>: EPOCHS = 10000, M = 30, nTrain = 2500)</td>
 <td>10000, one run, 1:1</td>
 </tr>
 <tr>
@@ -1853,7 +1862,7 @@ tolerance.</p>
 </tr>
 <tr>
 <td>n_compare</td>
-<td>—</td>
+<td>(none)</td>
 <td>50000</td>
 </tr>
 </tbody>
@@ -1891,7 +1900,7 @@ pinned flow value.</p>
 </tr>
 <tr>
 <td>val NLL x3</td>
-<td>—</td>
+<td>(none)</td>
 <td>1.4347</td>
 </tr>
 </tbody>
@@ -1949,15 +1958,19 @@ otherwise.</p>
 </tr>
 </tbody>
 </table>
-<p>A probe of the reference trajectory shows the do(x2) errors descend until
-epoch 6000–8500 and then creep back up; the plateau anneal fires at about
-9050 and freezes them. The reference protocol's quality is its anneal landing
-inside that window. Rejected alternatives, each measured: relu with raw
-parents wanders 0.17–0.45 on do(x2 = −3) and holds the bound only at isolated
-epochs; tanh on raw parents saturates outright at 0.731; minibatch stepping
-(batch 256, even with minmax + tanh) converges with a systematic −0.11
-common-mode offset of all three do-means while the observational fit stays
-perfect.</p>
+<p>A probe of the reference trajectory shows that the do(x2) errors descend
+until epoch 6000 to 8500 and then creep back up. The plateau anneal fires at
+about 9050 and freezes them. The reference protocol's quality is its anneal
+landing inside that window.</p>
+<p>Rejected alternatives, each measured:</p>
+<ul>
+<li>relu with raw parents wanders 0.17 to 0.45 on do(x2 = −3). It holds the
+  bound only at isolated epochs.</li>
+<li>tanh on raw parents saturates outright at 0.731.</li>
+<li>Minibatch stepping (batch 256, even with minmax + tanh) converges with a
+  systematic −0.11 common-mode offset of all three do-means. The
+  observational fit stays perfect.</li>
+</ul>
 <h2 id="carefl-benchmark-careflpy-paper-sec-53-app-c2">CAREFL benchmark (<code>carefl.py</code>): paper Sec. 5.3, App. C.2<a class="headerlink" href="#carefl-benchmark-careflpy-paper-sec-53-app-c2" title="Permanent link">&para;</a></h2>
 <p>This benchmark is the reference run 1:1 on the reference's own data, except
 D5 (the plateau per node).
@@ -2026,7 +2039,7 @@ the same <code>make_model</code> nets as VACA, <code>range_q: 0</code> for the r
 <tbody>
 <tr>
 <td>Fig. 6 max |x3^cf error|</td>
-<td>Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to ~0.7 at α = −3</td>
+<td>Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3</td>
 <td>0.063</td>
 </tr>
 <tr>
@@ -2036,32 +2049,33 @@ the same <code>make_model</code> nets as VACA, <code>range_q: 0</code> for the r
 </tr>
 <tr>
 <td>held-out CF MAE x3, α = −1.5 / 0 / 1.5</td>
-<td>—</td>
+<td>(none)</td>
 <td>0.014 / 0.008 / 0.013</td>
 </tr>
 <tr>
 <td>held-out CF MAE x4, α = −1.5 / 0 / 1.5</td>
-<td>—</td>
+<td>(none)</td>
 <td>0.080 / 0.027 / 0.048</td>
 </tr>
 </tbody>
 </table>
-<p>Three ingredients carry the agreement, each measured with everything else
-held fixed. Training on the committed rows instead of a fresh 2500-row draw
-cut the Fig. 6 x4 max from 0.40 to 0.34 in standardized units. The reference
-optimization, 7000 @ 0.001 with <code>val = train</code>, fixed the parabola bottom
-(error at α = 0 from 0.21 to 0.06). The min-max domain cut the grid edges
-(x4 0.37 → 0.20, x3 0.20 → 0.07). On fresh draws the parabola bottom sits
-below the truth near α = 0 for a reason that is neither protocol nor init:
-finite-sample variance of the Laplace 12 % quantile at which the observed
-noise sits, in the sparse region x1 = 2 with about 190 nearby rows; CAREFL's
-own committed draw is a mild one, which is one more reason to train on it.</p>
-<p>Rejected alternatives, each measured: raw parents saturate the sigmoid on the
-Laplace parents as tanh does; relu underfits x3 (val NLL 1.46–1.47 against
-the 1.403 ± 0.05 band) and grows a fragile Bernstein tail, with one held-out
-row inverted to x4 ≈ 580; minibatch underweights the sparse x2 tail where the
-Fig. 6 grid ends (cf MAE x3 at do(x2 = 1.5) 0.40 against the 0.319 bound, and
-the Fig. 6 x3 error 5.9 against the full-batch 2.7).</p>
+<p>Three ingredients carry the agreement. Training on the committed rows
+instead of a fresh 2500-row draw lowers the Fig. 6 x4 error. The reference
+optimization, 7000 @ 0.001 with <code>val = train</code>, fits the parabola bottom at
+α = 0. The min-max domain lowers the errors at the grid edges.</p>
+<p>On fresh draws the parabola bottom sits below the truth near α = 0. The
+reason is neither protocol nor init. It is the finite-sample variance of the
+Laplace 12 % quantile at which the observed noise sits, in the sparse region
+near x1 = 2. CAREFL's own committed draw is a mild one, which is one more
+reason to train on it.</p>
+<p>Rejected alternatives:</p>
+<ul>
+<li>Raw parents saturate the sigmoid on the Laplace parents, as tanh does.</li>
+<li>relu underfits x3 and grows a fragile Bernstein tail. One held-out row
+  inverts to x4 ≈ 580.</li>
+<li>Minibatch underweights the sparse x2 tail where the Fig. 6 grid ends. The
+  held-out x3 error at do(x2 = 1.5) and the Fig. 6 x3 error both grow.</li>
+</ul>
 <h2 id="d4-the-marginal-start-measured-per-variant">D4: the marginal start, measured per variant<a class="headerlink" href="#d4-the-marginal-start-measured-per-variant" title="Permanent link">&para;</a></h2>
 <p><code>marginal_init</code> starts every simple intercept at its column's empirical
 marginal (<a href="../fitting/#the-marginal-start">fitting.md</a>). The reference starts
@@ -2121,8 +2135,8 @@ run per variant with the start off and on, seeds unchanged:</p>
 </tr>
 <tr>
 <td>CAREFL</td>
-<td>—</td>
-<td>—</td>
+<td>(none)</td>
+<td>(none)</td>
 <td>impossible: <code>range_q: 0</code> has no marginal start</td>
 </tr>
 </tbody>
@@ -2131,11 +2145,14 @@ run per variant with the start off and on, seeds unchanged:</p>
 basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
-off. The pinned ground truth of the four variants that switched on is
-unchanged: every metric stays
-within its tolerance, and the check's advisory notes on their bounds are
-listed for the next deliberate re-pin. The per-node shuffle seeds add one:
-the <code>triangle-linear-cs</code> do(x1) bound is 7.4× its measurement of 0.034.</p>
+off. The triangle rows were measured before the per-node fit and its
+per-node shuffle seeds. The VACA endpoint was measured under the per-node
+plateau.</p>
+<p>The pinned ground truth of the four variants that switched on is unchanged.
+Every metric stays within its tolerance. <code>check.py</code> prints advisory notes
+where a bound is far from the current measurement, and these notes are kept
+for the next deliberate re-pin. They cover the <code>triangle-linear-cs</code> do(x1)
+bound and the <code>triangle-mixed-exp-cs</code> cs max err and do(x1) bounds.</p>
 <h2 id="d5-the-plateau-rule-per-node">D5: the plateau rule per node<a class="headerlink" href="#d5-the-plateau-rule-per-node" title="Permanent link">&para;</a></h2>
 <p>The reference reduces the learning rate of one optimizer when the summed
 validation NLL stops improving. Here every node fits on its own, so no summed
@@ -2186,12 +2203,12 @@ seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation
 NLL, and all its bounds hold.</p>
 <h2 id="runtime-and-the-ci-deviations">Runtime and the CI deviations<a class="headerlink" href="#runtime-and-the-ci-deviations" title="Permanent link">&para;</a></h2>
 <p>The reference protocol's cost is the motivation for every deviation. The
-triangle runs 500 epochs × 1250 steps of batch 32; one epoch takes 3.2 s
-single-process at 2–4 torch threads and 5.5 s at 32 threads, because the
-step is overhead-bound, so one variant takes 42–69 min on the 2-core CI
+triangle runs 500 epochs × 1250 steps of batch 32. One epoch takes 3.2 s
+single-process at 2 to 4 torch threads and 5.5 s at 32 threads, because the
+step is overhead-bound. So one variant takes 42 to 69 min on the 2-core CI
 runners. The triangle scripts therefore use batch 256 at lr 0.004, 8× fewer
-optimizer steps per epoch, chosen from this grid at the paper's 500 epochs
-with glorot init. Every entry is the cs max err unless the column says
+optimizer steps per epoch. This grid at the paper's 500 epochs with glorot
+init chose them. Every entry is the cs max err unless the column says
 otherwise.</p>
 <table>
 <thead>
@@ -2238,7 +2255,7 @@ otherwise.</p>
 <td>1/8</td>
 </tr>
 <tr>
-<td><strong>256 / 0.004 / 500 (CI)</strong></td>
+<td><strong>256 / 0.004 / 500 (CI batch and lr)</strong></td>
 <td>−0.171</td>
 <td>0.132</td>
 <td>0.073</td>
@@ -2265,22 +2282,22 @@ otherwise.</p>
 </table>
 <p>Batch 256 / lr 0.004 is the only row that keeps every cs error within about
 0.02 of the paper protocol. Larger batches or rates bend the misspecified
-linear-cs curve (0.16–0.18), and lr 0.008 hurts atan-cs. At 500 epochs a
-triangle job takes 7–11 min instead of 42–69.</p>
+linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs. At 500 epochs a
+triangle job takes 7 to 11 min instead of 42 to 69.</p>
 <p>The epoch floors, measured at that batch and rate:</p>
 <ul>
-<li><strong>Triangle</strong> holds every bound at 300 epochs; at 150 the run fails atan's
-  do(x1) bound (0.235 &gt; 0.206). <code>linear-cs</code> keeps 500, because at 300 its
-  fitted cs curve flattens past |x2| &gt; 0.5 (max err 0.140 against 0.088): the
-  DGP line spans only ±0.3, and the sigmoid net's slow tail convergence is half
-  of that. relu is out, because the 2-unit input layer dies with it (atan:
-  β13 +0.53, cs err 1.42).</li>
+<li><strong>Triangle</strong> holds every bound at 300 epochs. At 150 the run fails atan's
+  do(x1) bound (0.235 &gt; 0.200). <code>linear-cs</code> keeps 500, because at 300 its
+  fitted cs curve flattens past |x2| &gt; 0.5 (max err 0.140 against the pinned
+  0.025 at 500). The DGP line spans only ±0.3, and the sigmoid net's slow
+  tail convergence is half of that. relu is out, because the 2-unit input
+  layer dies with it (atan: β13 +0.53, cs err 1.42).</li>
 <li><strong>Triangle-mixed</strong> <code>exp-cs</code> has two slow parts, the 2-unit sigmoid CS net
-  and the do(x1) mean: at 100 / 250 / 350 epochs the cs max err is
+  and the do(x1) mean. At 100 / 250 / 350 epochs the cs max err is
   0.344 / 0.177 / 0.156 and the do err 0.033 / 0.060 / 0.022, so it trains</li>
 <li><code>linear-ls</code> has no CS net to wait for and trains 200 epochs at
-  lr 0.002, which reads the weakly identified β13/β23 slightly closer to the
-  500-epoch values than lr 0.004 does. relu dies at the sd-0.05 normal init
+  lr 0.002. At that rate it reads the weakly identified β13/β23 slightly
+  closer to the 500-epoch values than at lr 0.004. relu dies at the sd-0.05 normal init
   (cs err 0.859, β13 −0.055).</li>
 <li><strong>VACA and CAREFL</strong> run their references 1:1 except D5 (and D1 for VACA);
   the rejected shortcuts are in their sections.</li>

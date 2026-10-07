@@ -846,7 +846,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1363,7 +1363,7 @@
 repository follows it.</p>
 <h2 id="symbols">Symbols<a class="headerlink" href="#symbols" title="Permanent link">&para;</a></h2>
 <p>Random variables are capital Latin letters, for example <span class="arithmatex">\(Y\)</span>. Their
-realizations — observed or sampled values — are lowercase Latin letters, for
+realizations, observed or sampled values, are lowercase Latin letters, for
 example <span class="arithmatex">\(y\)</span>. The cumulative distribution function of <span class="arithmatex">\(Y\)</span> is <span class="arithmatex">\(F_Y\)</span> and the
 density is <span class="arithmatex">\(f_Y\)</span>. A hat marks an estimate: <span class="arithmatex">\(\hat{F}\)</span> is the fitted
 distribution, <span class="arithmatex">\(F\)</span> the true and often unknown one.</p>
@@ -1372,8 +1372,8 @@ distribution, <span class="arithmatex">\(F\)</span> the true and often unknown o
 <p>A single optimized parameter is a lowercase Greek letter, for example
 <span class="arithmatex">\(\vartheta\)</span> or <span class="arithmatex">\(\beta\)</span>. A vector of parameters is bold lowercase, for example
 <span class="arithmatex">\(\boldsymbol{\vartheta} = (\vartheta_1, \ldots, \vartheta_M)^\top\)</span>. A tuple
-that collects several parameter groups — for example all weight matrices of a
-network — is bold capital, for example <span class="arithmatex">\(\boldsymbol{\Theta}\)</span>.</p>
+that collects several parameter groups, for example all weight matrices of a
+network, is bold capital, for example <span class="arithmatex">\(\boldsymbol{\Theta}\)</span>.</p>
 <p>A function that a parameter vector defines carries it as a subscript:
 <span class="arithmatex">\(h_{\boldsymbol{\vartheta}}\)</span> is the monotone transformation with coefficients
 <span class="arithmatex">\(\boldsymbol{\vartheta}\)</span>.</p>
@@ -1444,16 +1444,10 @@ network — is bold capital, for example <span class="arithmatex">\(\boldsymbol{
 </tr>
 </tbody>
 </table>
-<p>Every node's model is one additive formula on the latent scale:</p>
-<div class="arithmatex">\[
-u \;=\; h(x \mid \mathrm{pa}(x)) \;=\;
-h_{\boldsymbol{\vartheta}(\cdot)}(x)
-\;+\; \sum_j \beta_j\, x_j
-\;+\; \sum_k g_k(x_k)
-\;+\; (\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t .
-\]</div>
-<p>For a continuous node the shifts are added, as written. For an ordinal node
-the shift is subtracted inside the sigmoid:
+<p>Every node's model is one additive formula on the latent scale.
+<a href="../model/#the-components">model.md</a> writes it out. For a continuous node the
+shifts are added. For an ordinal node the shift is subtracted inside the
+sigmoid:
 <span class="arithmatex">\(P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - \text{shift})\)</span>.</p>
 
 

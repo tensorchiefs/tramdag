@@ -775,7 +775,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -2594,7 +2594,7 @@
     <div class="doc doc-contents first">
 
         <p>The term modules: one <code>nn.Module</code> per term, built from the term's spec class.</p>
-<p>A spec term (<a class="autorefs autorefs-internal" title="Term" href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass — <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>I</code>) is plain
+<p>A spec term (<a class="autorefs autorefs-internal" title="Term" href="../spec/#tramdag.spec.Term"><code>Term</code></a> subclass: <code>LS</code>, <code>CS</code>, <code>VC</code>, <code>I</code>) is plain
 data and carries the spec-level rules, and its <code>module</code> attribute is the
 class here that trains it (<code>LinearShift.module is LinearShiftModule</code>). A
 module is constructed from its term and the node's parent schema,
@@ -2751,7 +2751,7 @@ names a term may name to their <code>torch.nn</code> classes.</p>
 
 <span class="sd">        ``Node.calibrate`` calls this once per term; a term without</span>
 <span class="sd">        an ``input_transform`` has nothing to freeze. The intercept slot has a</span>
-<span class="sd">        second step on top of this one — see</span>
+<span class="sd">        second step on top of this one, see</span>
 <span class="sd">        [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].</span>
 <span class="sd">        """</span>
         <span class="n">tr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span>
@@ -2824,7 +2824,7 @@ class attribute would shadow the registered submodule.</p>
         <p>Freeze this term's data-dependent state: the input-transform stats.</p>
 <p><code>Node.calibrate</code> calls this once per term; a term without
 an <code>input_transform</code> has nothing to freeze. The intercept slot has a
-second step on top of this one — see
+second step on top of this one, see
 <a class="autorefs autorefs-internal" title="calibrate_intercept" href="#tramdag.modules.InterceptModule.calibrate_intercept"><code>calibrate_intercept</code></a>.</p>
 
 
@@ -2853,7 +2853,7 @@ second step on top of this one — see
 
 <span class="sd">    ``Node.calibrate`` calls this once per term; a term without</span>
 <span class="sd">    an ``input_transform`` has nothing to freeze. The intercept slot has a</span>
-<span class="sd">    second step on top of this one — see</span>
+<span class="sd">    second step on top of this one, see</span>
 <span class="sd">    [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].</span>
 <span class="sd">    """</span>
     <span class="n">tr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span>
@@ -3369,8 +3369,8 @@ validation split and the minibatch slicing come for free).</p>
         <p>The intercept slot's behavior hooks, on top of its network.</p>
 <p>A node has exactly one intercept term (normalization guarantees
 <code>node.terms[0]</code>); it produces the transform parameters <code>theta</code>.
-<code>groups</code> carries the parent groups — empty for a simple intercept,
-one tuple for a joint net, one per parent for an additive one — and
+<code>groups</code> carries the parent groups (empty for a simple intercept,
+one tuple for a joint net, one per parent for an additive one) and
 <code>ci_parents</code> their flat order. <a class="autorefs autorefs-internal" title="intercept_module" href="#tramdag.modules.intercept_module"><code>intercept_module</code></a> picks the class
 for an <code>I</code> term; each class constructs from <code>(term, schema, n_params)</code>.</p>
 
@@ -3429,8 +3429,8 @@ for an <code>I</code> term; each class constructs from <code>(term, schema, n_pa
 
 <span class="sd">    A node has exactly one intercept term (normalization guarantees</span>
 <span class="sd">    ``node.terms[0]``); it produces the transform parameters ``theta``.</span>
-<span class="sd">    ``groups`` carries the parent groups — empty for a simple intercept,</span>
-<span class="sd">    one tuple for a joint net, one per parent for an additive one — and</span>
+<span class="sd">    ``groups`` carries the parent groups (empty for a simple intercept,</span>
+<span class="sd">    one tuple for a joint net, one per parent for an additive one) and</span>
 <span class="sd">    ``ci_parents`` their flat order. [`intercept_module`][] picks the class</span>
 <span class="sd">    for an ``I`` term; each class constructs from ``(term, schema, n_params)``.</span>
 <span class="sd">    """</span>
@@ -3444,7 +3444,7 @@ for an <code>I</code> term; each class constructs from <code>(term, schema, n_pa
 <span class="sd">        The intercept slot calibrates one thing more than every other term, so</span>
 <span class="sd">        it says so in its own name rather than widening ``calibrate``: ``own``</span>
 <span class="sd">        is the node's training column and ``ut`` its monotone transform</span>
-<span class="sd">        (``None`` for an ordinal node — cutpoints have no domain), whose</span>
+<span class="sd">        (``None`` for an ordinal node: cutpoints have no domain), whose</span>
 <span class="sd">        ``range_q``/``1 - range_q`` quantiles map onto the pre-scaled domain.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
@@ -3499,7 +3499,7 @@ for an <code>I</code> term; each class constructs from <code>(term, schema, n_pa
 <p>The intercept slot calibrates one thing more than every other term, so
 it says so in its own name rather than widening <code>calibrate</code>: <code>own</code>
 is the node's training column and <code>ut</code> its monotone transform
-(<code>None</code> for an ordinal node — cutpoints have no domain), whose
+(<code>None</code> for an ordinal node: cutpoints have no domain), whose
 <code>range_q</code>/<code>1 - range_q</code> quantiles map onto the pre-scaled domain.</p>
 
 
@@ -3531,7 +3531,7 @@ is the node's training column and <code>ut</code> its monotone transform
 <span class="sd">    The intercept slot calibrates one thing more than every other term, so</span>
 <span class="sd">    it says so in its own name rather than widening ``calibrate``: ``own``</span>
 <span class="sd">    is the node's training column and ``ut`` its monotone transform</span>
-<span class="sd">    (``None`` for an ordinal node — cutpoints have no domain), whose</span>
+<span class="sd">    (``None`` for an ordinal node: cutpoints have no domain), whose</span>
 <span class="sd">    ``range_q``/``1 - range_q`` quantiles map onto the pre-scaled domain.</span>
 <span class="sd">    """</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
@@ -4386,7 +4386,7 @@ parents' feature widths.</p>
 
 
 
-        <p><code>LS</code> — one raw-unit coefficient per feature of the single parent, no bias.</p>
+        <p><code>LS</code>: one raw-unit coefficient per feature of the single parent, no bias.</p>
 <p>Keyed by the parent's name.</p>
 
 
@@ -4490,7 +4490,7 @@ parents' feature widths.</p>
 <span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinearShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""``LS``: one raw-unit coefficient per feature of the single parent, no bias.</span>
 
 <span class="sd">    Keyed by the parent's name.</span>
 
@@ -4520,7 +4520,7 @@ parents' feature widths.</p>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">shift_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Give the raw parent column times the weight — no input transform."""</span>
+<span class="w">        </span><span class="sd">"""Give the raw parent column times the weight, with no input transform."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">score_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">dlds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -4616,7 +4616,7 @@ parents' feature widths.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the raw parent column times the weight — no input transform.</p>
+        <p>Give the raw parent column times the weight, with no input transform.</p>
 
 
             <details class="mkdocstrings-source">
@@ -4624,7 +4624,7 @@ parents' feature widths.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">488</span>
 <span class="normal">489</span>
 <span class="normal">490</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">shift_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give the raw parent column times the weight — no input transform."""</span>
+<span class="w">    </span><span class="sd">"""Give the raw parent column times the weight, with no input transform."""</span>
     <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">feats</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4704,7 +4704,7 @@ analytic and exact.</p>
 
 
 
-        <p><code>CS</code> — an additive network shift <code>g(x)</code> over its parents.</p>
+        <p><code>CS</code>: an additive network shift <code>g(x)</code> over its parents.</p>
 <p>One net over the concatenated parents, keyed <code>'a'</code> or <code>'a+b'</code>. The
 term's <code>units</code>, <code>activation</code> and <code>batch_norm</code> size the network.</p>
 
@@ -4800,7 +4800,7 @@ parents' feature widths.</p>
 <span class="normal">537</span>
 <span class="normal">538</span>
 <span class="normal">539</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexShiftModule</span><span class="p">(</span><span class="n">ShiftModule</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""``CS`` — an additive network shift ``g(x)`` over its parents.</span>
+<span class="w">    </span><span class="sd">"""``CS``: an additive network shift ``g(x)`` over its parents.</span>
 
 <span class="sd">    One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The</span>
 <span class="sd">    term's ``units``, ``activation`` and ``batch_norm`` size the network.</span>
@@ -5263,7 +5263,7 @@ treatment's kind.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta0</span> <span class="o">+=</span> <span class="n">delta</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">regressor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies: the treatment, raw.</span>
 
 <span class="sd">        The one-hot level-1 indicator for a binary ordinal treatment, the</span>
 <span class="sd">        value itself for a continuous one; a centered term subtracts its</span>
@@ -5330,8 +5330,8 @@ treatment's kind.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">live_side</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Give the full-data propensity from the flow's own treatment node.</span>
 
-<span class="sd">        Detached — no gradient reaches the treatment node from this node's</span>
-<span class="sd">        loss — and derived from the current parent values, so</span>
+<span class="sd">        Detached (no gradient reaches the treatment node from this node's</span>
+<span class="sd">        loss) and derived from the current parent values, so</span>
 <span class="sd">        ``do``-mutilated sampling centers with the intervened ``t``. Training</span>
 <span class="sd">        uses the frozen column.</span>
 <span class="sd">        """</span>
@@ -5546,7 +5546,7 @@ modifiers this does nothing.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the <code>(n, 1)</code> column <span class="arithmatex">\(\beta\)</span> multiplies — the treatment, raw.</p>
+        <p>Give the <code>(n, 1)</code> column <span class="arithmatex">\(\beta\)</span> multiplies: the treatment, raw.</p>
 <p>The one-hot level-1 indicator for a binary ordinal treatment, the
 value itself for a continuous one; a centered term subtracts its
 propensity column (the regressor <code>t - e_hat(x)</code> of Robinson, 1988). It is
@@ -5573,7 +5573,7 @@ also the score of <code>beta0</code>, so <code>score_columns</code> reads it her
 <span class="normal">648</span>
 <span class="normal">649</span>
 <span class="normal">650</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regressor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the ``(n, 1)`` column $\beta$ multiplies: the treatment, raw.</span>
 
 <span class="sd">    The one-hot level-1 indicator for a binary ordinal treatment, the</span>
 <span class="sd">    value itself for a continuous one; a centered term subtracts its</span>
@@ -5852,8 +5852,8 @@ and score share one definition by construction.</p>
     <div class="doc doc-contents ">
 
         <p>Give the full-data propensity from the flow's own treatment node.</p>
-<p>Detached — no gradient reaches the treatment node from this node's
-loss — and derived from the current parent values, so
+<p>Detached (no gradient reaches the treatment node from this node's
+loss) and derived from the current parent values, so
 <code>do</code>-mutilated sampling centers with the intervened <code>t</code>. Training
 uses the frozen column.</p>
 
@@ -5874,8 +5874,8 @@ uses the frozen column.</p>
 <span class="normal">709</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">live_side</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Give the full-data propensity from the flow's own treatment node.</span>
 
-<span class="sd">    Detached — no gradient reaches the treatment node from this node's</span>
-<span class="sd">    loss — and derived from the current parent values, so</span>
+<span class="sd">    Detached (no gradient reaches the treatment node from this node's</span>
+<span class="sd">    loss) and derived from the current parent values, so</span>
 <span class="sd">    ``do``-mutilated sampling centers with the intervened ``t``. Training</span>
 <span class="sd">    uses the frozen column.</span>
 <span class="sd">    """</span>

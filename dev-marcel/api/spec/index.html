@@ -775,7 +775,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -2274,7 +2274,7 @@
         <p>The DAG specification: nodes, terms, validation and (de)serialization.</p>
 <p>A model is one dict <code>{node_name: NodeSpec}</code> of <a class="autorefs autorefs-internal" title="ContinuousNode" href="#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a> and
 <a class="autorefs autorefs-internal" title="OrdinalNode" href="#tramdag.spec.OrdinalNode"><code>OrdinalNode</code></a>. Each node declares its transformation as an additive
-formula of <a class="autorefs autorefs-internal" title="Term" href="#tramdag.spec.Term"><code>Term</code></a> subclasses — a <code>+</code> sum — whose first entry
+formula of <a class="autorefs autorefs-internal" title="Term" href="#tramdag.spec.Term"><code>Term</code></a> subclasses, a <code>+</code> sum, whose first entry
 is the intercept (<a class="autorefs autorefs-internal" title="Intercept" href="#tramdag.spec.Intercept"><code>Intercept</code></a>, written or prepended as <code>I()</code>) followed
 by shifts (<a class="autorefs autorefs-internal" title="LinearShift" href="#tramdag.spec.LinearShift"><code>LinearShift</code></a>, <a class="autorefs autorefs-internal" title="ComplexShift" href="#tramdag.spec.ComplexShift"><code>ComplexShift</code></a>, <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a>).
 The paper's symbols <code>I</code>, <code>LS</code>, <code>CS</code>, <code>VC</code> are the same classes;
@@ -2321,15 +2321,15 @@ checkpoint form. What the terms mean is <code>docs/model.md</code>.</p>
 
         <p>One additive term of a node's transformation; each kind is a subclass.</p>
 <p>Terms add: <code>I("a") + CS("b")</code> is the plain list of the two terms, a
-node's formula. A term is plain data — comparable, hashable,
-serializable by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a> — and knows its own spec-level rules
+node's formula. A term is plain data (comparable, hashable,
+serializable by <a class="autorefs autorefs-internal" title="spec_to_dict" href="#tramdag.spec.spec_to_dict"><code>spec_to_dict</code></a>) and knows its own spec-level rules
 (<code>check</code>, <code>edge_parents</code>, <code>cells</code>, <code>classical</code>). <code>module</code> is the
 class in <a class="autorefs autorefs-internal" title="tramdag.modules" href="../modules/#tramdag.modules"><code>modules</code></a> that trains it, constructed as
 <code>module(term, schema)</code>; the intercept slot adds <code>n_params</code>.</p>
 <p>Subclass to add a term: set <code>name</code> (what the <code>term</code> key serializes)
 and <code>module</code> (a <a class="autorefs autorefs-internal" title="ShiftModule" href="../modules/#tramdag.modules.ShiftModule"><code>ShiftModule</code></a> subclass)
-as class attributes, and assign the options — the keyword arguments of
-<code>__init__</code>, with their defaults — to <code>self</code>:</p>
+as class attributes, and assign the options (the keyword arguments of
+<code>__init__</code>, with their defaults) to <code>self</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Scaled</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">"Scaled"</span>
     <span class="n">module</span> <span class="o">=</span> <span class="n">ScaledModule</span>
@@ -2505,16 +2505,16 @@ every other built-in term's parents all own their edges.</p>
 <span class="w">    </span><span class="sd">"""One additive term of a node's transformation; each kind is a subclass.</span>
 
 <span class="sd">    Terms add: ``I("a") + CS("b")`` is the plain list of the two terms, a</span>
-<span class="sd">    node's formula. A term is plain data — comparable, hashable,</span>
-<span class="sd">    serializable by [`spec_to_dict`][] — and knows its own spec-level rules</span>
+<span class="sd">    node's formula. A term is plain data (comparable, hashable,</span>
+<span class="sd">    serializable by [`spec_to_dict`][]) and knows its own spec-level rules</span>
 <span class="sd">    (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the</span>
 <span class="sd">    class in [`modules`][tramdag.modules] that trains it, constructed as</span>
 <span class="sd">    ``module(term, schema)``; the intercept slot adds ``n_params``.</span>
 
 <span class="sd">    Subclass to add a term: set ``name`` (what the ``term`` key serializes)</span>
 <span class="sd">    and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)</span>
-<span class="sd">    as class attributes, and assign the options — the keyword arguments of</span>
-<span class="sd">    ``__init__``, with their defaults — to ``self``:</span>
+<span class="sd">    as class attributes, and assign the options (the keyword arguments of</span>
+<span class="sd">    ``__init__``, with their defaults) to ``self``:</span>
 
 <span class="sd">    ```python</span>
 <span class="sd">    class Scaled(Term):</span>
@@ -2546,13 +2546,13 @@ every other built-in term's parents all own their edges.</p>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"module"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: a Term subclass sets `</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> = ...`."</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: a Term subclass sets `</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> = ...`"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">parents</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parents</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parents</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Give everything the term carries, by name — the parents included."""</span>
+<span class="w">        </span><span class="sd">"""Give everything the term carries, by name, the parents included."""</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
     <span class="nd">@classmethod</span>
@@ -2714,7 +2714,7 @@ every other built-in term's parents all own their edges.</p>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"module"</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: a Term subclass sets `</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> = ...`."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: a Term subclass sets `</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> = ...`"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2734,7 +2734,7 @@ every other built-in term's parents all own their edges.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give everything the term carries, by name — the parents included.</p>
+        <p>Give everything the term carries, by name, the parents included.</p>
 
 
             <details class="mkdocstrings-source">
@@ -2742,7 +2742,7 @@ every other built-in term's parents all own their edges.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">445</span>
 <span class="normal">446</span>
 <span class="normal">447</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give everything the term carries, by name — the parents included."""</span>
+<span class="w">    </span><span class="sd">"""Give everything the term carries, by name, the parents included."""</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -3076,7 +3076,7 @@ keyword-only parent (a <code>VC</code> treatment) needs no spelling of its own.<
 
 
         <p>The intercept term <code>I</code>: the parents reshape the monotone transform.</p>
-<p>Without parents it is the paper's simple intercept <strong>SI</strong> — one free
+<p>Without parents it is the paper's simple intercept <strong>SI</strong>: one free
 parameter vector, the same for every row. With parents it is the
 complex intercept <strong>CI</strong>: the transform parameters become a function
 of them. <a class="autorefs autorefs-internal" title="SI" href="#tramdag.spec.SI"><code>SI</code></a> and <a class="autorefs autorefs-internal" title="CI" href="#tramdag.spec.CI"><code>CI</code></a> are the two spellings with their
@@ -3135,7 +3135,7 @@ vector and refuses a transform.</p>
                 <code>transform_kwargs</code>
             </td>
             <td>
-                  <code><span title="Mapping">Mapping</span> | None</code>
+                  <code><span title="dict">dict</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3159,7 +3159,7 @@ them; write them out instead when calling by hand.</p>
               <div class="doc-md-description">
                 <p><code>False</code> makes a multi-parent term <strong>additive</strong>: one network per
 parent, their parameter vectors summed in coefficient space. A node
-takes at most one intercept term with parents — write an additive
+takes at most one intercept term with parents. Write an additive
 intercept with this flag, not with several intercept terms. Default
 <code>True</code>.</p>
               </div>
@@ -3386,10 +3386,15 @@ interaction to disallow needs two).</p>
 <span class="normal">620</span>
 <span class="normal">621</span>
 <span class="normal">622</span>
-<span class="normal">623</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Intercept</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Intercept</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The intercept term ``I``: the parents reshape the monotone transform.</span>
 
-<span class="sd">    Without parents it is the paper's simple intercept **SI** — one free</span>
+<span class="sd">    Without parents it is the paper's simple intercept **SI**: one free</span>
 <span class="sd">    parameter vector, the same for every row. With parents it is the</span>
 <span class="sd">    complex intercept **CI**: the transform parameters become a function</span>
 <span class="sd">    of them. [`SI`][] and [`CI`][] are the two spellings with their</span>
@@ -3405,14 +3410,14 @@ interaction to disallow needs two).</p>
 <span class="sd">        ``"spline"`` or ``"affine"``. ``None``, the default, means the node</span>
 <span class="sd">        picks ``"bernstein"``; an ordinal node's intercept is the cutpoint</span>
 <span class="sd">        vector and refuses a transform.</span>
-<span class="sd">    transform_kwargs : Mapping | None, optional</span>
+<span class="sd">    transform_kwargs : dict | None, optional</span>
 <span class="sd">        The transform's keyword arguments as one mapping. This is the</span>
 <span class="sd">        serialized form, which is how a spec YAML and a checkpoint carry</span>
 <span class="sd">        them; write them out instead when calling by hand.</span>
 <span class="sd">    allow_interaction : bool, optional</span>
 <span class="sd">        ``False`` makes a multi-parent term **additive**: one network per</span>
 <span class="sd">        parent, their parameter vectors summed in coefficient space. A node</span>
-<span class="sd">        takes at most one intercept term with parents — write an additive</span>
+<span class="sd">        takes at most one intercept term with parents. Write an additive</span>
 <span class="sd">        intercept with this flag, not with several intercept terms. Default</span>
 <span class="sd">        ``True``.</span>
 
@@ -3474,24 +3479,29 @@ interaction to disallow needs two).</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">_checked_input_transform</span><span class="p">(</span><span class="n">input_transform</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"a simple intercept has no network inputs — input_transform= "</span>
+                <span class="s2">"a simple intercept has no network inputs; input_transform= "</span>
                 <span class="s2">"belongs on CI/CS/VC terms"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_interaction</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"allow_interaction=False makes a MULTI-parent intercept additive; "</span>
-                <span class="s2">"with one parent there is no interaction to disallow — drop the "</span>
+                <span class="s2">"with one parent there is no interaction to disallow; drop the "</span>
                 <span class="s2">"argument"</span>
             <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">classical</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Say yes only for a parentless ``I()`` — the simple baseline."""</span>
+<span class="w">        </span><span class="sd">"""Say yes only for a parentless ``I()``, the simple baseline."""</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Tag an intercept edge ``CI``: a cell exists only when it has parents."""</span>
-        <span class="k">return</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"CI"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Tag an intercept edge ``CI``: a cell exists only when it has parents.</span>
+
+<span class="sd">        It is joint only when one network reads several parents; an additive</span>
+<span class="sd">        intercept (``allow_interaction=False``) has one network per parent.</span>
+<span class="sd">        """</span>
+        <span class="n">joint</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_interaction</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"CI"</span><span class="p">,</span> <span class="n">joint</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3523,7 +3533,7 @@ interaction to disallow needs two).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Say yes only for a parentless <code>I()</code> — the simple baseline.</p>
+        <p>Say yes only for a parentless <code>I()</code>, the simple baseline.</p>
 
     </div>
 
@@ -3546,15 +3556,27 @@ interaction to disallow needs two).</p>
     <div class="doc doc-contents ">
 
         <p>Tag an intercept edge <code>CI</code>: a cell exists only when it has parents.</p>
+<p>It is joint only when one network reads several parents; an additive
+intercept (<code>allow_interaction=False</code>) has one network per parent.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">621</span>
 <span class="normal">622</span>
-<span class="normal">623</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Tag an intercept edge ``CI``: a cell exists only when it has parents."""</span>
-    <span class="k">return</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"CI"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Tag an intercept edge ``CI``: a cell exists only when it has parents.</span>
+
+<span class="sd">    It is joint only when one network reads several parents; an additive</span>
+<span class="sd">    intercept (``allow_interaction=False``) has one network per parent.</span>
+<span class="sd">    """</span>
+    <span class="n">joint</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_interaction</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"CI"</span><span class="p">,</span> <span class="n">joint</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3652,12 +3674,7 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">626</span>
-<span class="normal">627</span>
-<span class="normal">628</span>
-<span class="normal">629</span>
-<span class="normal">630</span>
-<span class="normal">631</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">631</span>
 <span class="normal">632</span>
 <span class="normal">633</span>
 <span class="normal">634</span>
@@ -3678,7 +3695,12 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
 <span class="normal">649</span>
 <span class="normal">650</span>
 <span class="normal">651</span>
-<span class="normal">652</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinearShift</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LinearShift</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The linear shift ``LS``: $\beta x$, one interpretable raw-unit coefficient.</span>
 
 <span class="sd">    Parameters</span>
@@ -3699,11 +3721,11 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">parents</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">parents</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"LS() takes exactly one parent."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"LS() takes exactly one parent"</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">classical</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Say yes — an LS is a classical coefficient."""</span>
+<span class="w">        </span><span class="sd">"""Say yes: an LS is a classical coefficient."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -3736,7 +3758,7 @@ raw-unit coefficient, so an LS takes no <code>input_transform</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Say yes — an LS is a classical coefficient.</p>
+        <p>Say yes: an LS is a classical coefficient.</p>
 
     </div>
 
@@ -3895,12 +3917,7 @@ transform.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">655</span>
-<span class="normal">656</span>
-<span class="normal">657</span>
-<span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">660</span>
 <span class="normal">661</span>
 <span class="normal">662</span>
 <span class="normal">663</span>
@@ -3939,7 +3956,12 @@ transform.</p>
 <span class="normal">696</span>
 <span class="normal">697</span>
 <span class="normal">698</span>
-<span class="normal">699</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexShift</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComplexShift</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The complex shift ``CS``: an additive network ``g(x)`` on the latent scale.</span>
 
 <span class="sd">    Parameters</span>
@@ -3983,7 +4005,7 @@ transform.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">batch_norm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">_checked_input_transform</span><span class="p">(</span><span class="n">input_transform</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"CS() needs at least one parent."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"CS() needs at least one parent"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4055,7 +4077,7 @@ owns its edge; the modifiers may also appear in the node's other terms.
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The effect modifiers — the covariates that enter <code>b_theta</code>.
+                <p>The effect modifiers, the covariates that enter <span class="arithmatex">\(b_\Theta\)</span>.
 Empty means a constant effect.</p>
               </div>
             </td>
@@ -4101,7 +4123,7 @@ binary (2-level) ordinal node. The term is linear in <code>x_t</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>L2 weight on the <code>b_theta</code> weights, on the total-NLL scale, by
+                <p>L2 weight on the <span class="arithmatex">\(b_\Theta\)</span> weights, on the total-NLL scale, by
 default 1.0. Must be &gt;= 0.</p>
               </div>
             </td>
@@ -4129,7 +4151,7 @@ flow's own treatment node. Requires a binary ordinal <code>t</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Hidden layers of <code>b_theta</code>, by default <code>(16,)</code>.</p>
+                <p>Hidden layers of <span class="arithmatex">\(b_\Theta\)</span>, by default <code>(16,)</code>.</p>
               </div>
             </td>
           </tr>
@@ -4140,7 +4162,7 @@ flow's own treatment node. Requires a binary ordinal <code>t</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Activation of <code>b_theta</code>'s hidden layers, by default <code>"relu"</code>.</p>
+                <p>Activation of <span class="arithmatex">\(b_\Theta\)</span>'s hidden layers, by default <code>"relu"</code>.</p>
               </div>
             </td>
           </tr>
@@ -4151,7 +4173,7 @@ flow's own treatment node. Requires a binary ordinal <code>t</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Batch-normalize <code>b_theta</code>'s hidden layers, by default False.</p>
+                <p>Batch-normalize <span class="arithmatex">\(b_\Theta\)</span>'s hidden layers, by default False.</p>
               </div>
             </td>
           </tr>
@@ -4202,12 +4224,7 @@ applies no transform.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">702</span>
-<span class="normal">703</span>
-<span class="normal">704</span>
-<span class="normal">705</span>
-<span class="normal">706</span>
-<span class="normal">707</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">707</span>
 <span class="normal">708</span>
 <span class="normal">709</span>
 <span class="normal">710</span>
@@ -4337,7 +4354,12 @@ applies no transform.</p>
 <span class="normal">834</span>
 <span class="normal">835</span>
 <span class="normal">836</span>
-<span class="normal">837</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VaryingCoefficient</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
+<span class="normal">837</span>
+<span class="normal">838</span>
+<span class="normal">839</span>
+<span class="normal">840</span>
+<span class="normal">841</span>
+<span class="normal">842</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VaryingCoefficient</span><span class="p">(</span><span class="n">Term</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The varying-coefficient shift ``VC``: $(\beta_0 + b_\Theta(\text{mod}))\, x_t$.</span>
 
 <span class="sd">    $b_\Theta$ is a small network whose weights carry the L2 ``penalty``;</span>
@@ -4351,7 +4373,7 @@ applies no transform.</p>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    *modifiers : str</span>
-<span class="sd">        The effect modifiers — the covariates that enter ``b_theta``.</span>
+<span class="sd">        The effect modifiers, the covariates that enter $b_\Theta$.</span>
 <span class="sd">        Empty means a constant effect.</span>
 <span class="sd">    t : str</span>
 <span class="sd">        The treatment (required keyword). Must be a continuous node or a</span>
@@ -4360,7 +4382,7 @@ applies no transform.</p>
 <span class="sd">    Other Parameters</span>
 <span class="sd">    ----------------</span>
 <span class="sd">    penalty : float, optional</span>
-<span class="sd">        L2 weight on the ``b_theta`` weights, on the total-NLL scale, by</span>
+<span class="sd">        L2 weight on the $b_\Theta$ weights, on the total-NLL scale, by</span>
 <span class="sd">        default 1.0. Must be &gt;= 0.</span>
 <span class="sd">    propensity : str | None, optional</span>
 <span class="sd">        The training-frame column holding the out-of-fold propensities</span>
@@ -4370,11 +4392,11 @@ applies no transform.</p>
 <span class="sd">        frozen data; every query after the fit recomputes $\hat e$ from the</span>
 <span class="sd">        flow's own treatment node. Requires a binary ordinal ``t``.</span>
 <span class="sd">    units : list[int] | tuple[int, ...], optional</span>
-<span class="sd">        Hidden layers of ``b_theta``, by default ``(16,)``.</span>
+<span class="sd">        Hidden layers of $b_\Theta$, by default ``(16,)``.</span>
 <span class="sd">    activation : str, optional</span>
-<span class="sd">        Activation of ``b_theta``'s hidden layers, by default ``"relu"``.</span>
+<span class="sd">        Activation of $b_\Theta$'s hidden layers, by default ``"relu"``.</span>
 <span class="sd">    batch_norm : bool, optional</span>
-<span class="sd">        Batch-normalize ``b_theta``'s hidden layers, by default False.</span>
+<span class="sd">        Batch-normalize $b_\Theta$'s hidden layers, by default False.</span>
 <span class="sd">    input_transform : str | callable | None, optional</span>
 <span class="sd">        As for [`Intercept`][], over the modifiers. ``None``, the default,</span>
 <span class="sd">        applies no transform.</span>
@@ -4400,7 +4422,7 @@ applies no transform.</p>
         <span class="n">input_transform</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">penalty</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VC(): penalty must be &gt;= 0, got </span><span class="si">{</span><span class="n">penalty</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VC(): penalty must be &gt;= 0, got </span><span class="si">{</span><span class="n">penalty</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="c1"># the treatment leads the parents: it is the one that owns an edge</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="o">*</span><span class="n">modifiers</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">penalty</span><span class="p">)</span>
@@ -4435,7 +4457,7 @@ applies no transform.</p>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">: VC(propensity=) names the propensity COLUMN of "</span>
                 <span class="s2">"the training frame (out-of-fold P(t=1|pa_t) per row), or is "</span>
-                <span class="sa">f</span><span class="s2">"None — got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">propensity</span><span class="si">!r}</span><span class="s2">. Cross-fit the propensities "</span>
+                <span class="sa">f</span><span class="s2">"None; got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">propensity</span><span class="si">!r}</span><span class="s2">. Cross-fit the propensities "</span>
                 <span class="s2">"outside, merge them as a column and pass "</span>
                 <span class="s2">"propensity='&lt;column&gt;'."</span>
             <span class="p">)</span>
@@ -4535,10 +4557,10 @@ applies no transform.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">779</span>
-<span class="normal">780</span>
-<span class="normal">781</span>
-<span class="normal">782</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
+<span class="normal">785</span>
+<span class="normal">786</span>
+<span class="normal">787</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_serialized</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Rebuild from the serialized parents: the treatment comes first."""</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">t</span><span class="o">=</span><span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
@@ -4591,12 +4613,7 @@ continuous or an itself-centered treatment.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">784</span>
-<span class="normal">785</span>
-<span class="normal">786</span>
-<span class="normal">787</span>
-<span class="normal">788</span>
-<span class="normal">789</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">789</span>
 <span class="normal">790</span>
 <span class="normal">791</span>
 <span class="normal">792</span>
@@ -4634,7 +4651,12 @@ continuous or an itself-centered treatment.</p>
 <span class="normal">824</span>
 <span class="normal">825</span>
 <span class="normal">826</span>
-<span class="normal">827</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeSpec</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">827</span>
+<span class="normal">828</span>
+<span class="normal">829</span>
+<span class="normal">830</span>
+<span class="normal">831</span>
+<span class="normal">832</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeSpec</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Check the treatment and the centering against the spec.</span>
 
 <span class="sd">    Raises</span>
@@ -4650,7 +4672,7 @@ continuous or an itself-centered treatment.</p>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"node </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">: VC(propensity=) names the propensity COLUMN of "</span>
             <span class="s2">"the training frame (out-of-fold P(t=1|pa_t) per row), or is "</span>
-            <span class="sa">f</span><span class="s2">"None — got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">propensity</span><span class="si">!r}</span><span class="s2">. Cross-fit the propensities "</span>
+            <span class="sa">f</span><span class="s2">"None; got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">propensity</span><span class="si">!r}</span><span class="s2">. Cross-fit the propensities "</span>
             <span class="s2">"outside, merge them as a column and pass "</span>
             <span class="s2">"propensity='&lt;column&gt;'."</span>
         <span class="p">)</span>
@@ -4702,10 +4724,10 @@ continuous or an itself-centered treatment.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">834</span>
-<span class="normal">835</span>
-<span class="normal">836</span>
-<span class="normal">837</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">839</span>
+<span class="normal">840</span>
+<span class="normal">841</span>
+<span class="normal">842</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Tag the treatment cell ``VC`` and the modifiers ``VCm``; never joint."""</span>
     <span class="n">t</span><span class="p">,</span> <span class="n">mods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
     <span class="k">return</span> <span class="p">[(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"VC"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"VCm"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mods</span><span class="p">]</span>
@@ -4775,6 +4797,40 @@ class of the monotone transform is chosen on the intercept term,
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a formula entry is not a term.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the formula has more than one intercept term, or the intercept
+is not first.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
 
 
 
@@ -4783,12 +4839,7 @@ class of the monotone transform is chosen on the intercept term,
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">840</span>
-<span class="normal">841</span>
-<span class="normal">842</span>
-<span class="normal">843</span>
-<span class="normal">844</span>
-<span class="normal">845</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">845</span>
 <span class="normal">846</span>
 <span class="normal">847</span>
 <span class="normal">848</span>
@@ -4817,7 +4868,20 @@ class of the monotone transform is chosen on the intercept term,
 <span class="normal">871</span>
 <span class="normal">872</span>
 <span class="normal">873</span>
-<span class="normal">874</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ContinuousNode</span><span class="p">:</span>
+<span class="normal">874</span>
+<span class="normal">875</span>
+<span class="normal">876</span>
+<span class="normal">877</span>
+<span class="normal">878</span>
+<span class="normal">879</span>
+<span class="normal">880</span>
+<span class="normal">881</span>
+<span class="normal">882</span>
+<span class="normal">883</span>
+<span class="normal">884</span>
+<span class="normal">885</span>
+<span class="normal">886</span>
+<span class="normal">887</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ContinuousNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Continuous variable, modelled by a monotone 1-D transform + shifts.</span>
 
 <span class="sd">    Parameters</span>
@@ -4827,6 +4891,14 @@ class of the monotone transform is chosen on the intercept term,
 <span class="sd">        term. ``None`` (default) is a source node. The</span>
 <span class="sd">        class of the monotone transform is chosen on the intercept term,</span>
 <span class="sd">        ``I(..., transform="spline")``; the default is ``"bernstein"``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If a formula entry is not a term.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the formula has more than one intercept term, or the intercept</span>
+<span class="sd">        is not first.</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">"continuous"</span>
@@ -4834,7 +4906,7 @@ class of the monotone transform is chosen on the intercept term,
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">terms</span> <span class="o">=</span> <span class="n">_normalize_terms</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
         <span class="c1"># the arguments go straight to the transform class; if they are</span>
-        <span class="c1"># wrong, that class says so — this layer does not second-guess it</span>
+        <span class="c1"># wrong, that class says so; this layer does not second-guess it</span>
         <span class="n">intercept</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">intercept</span><span class="o">.</span><span class="n">transform</span> <span class="ow">or</span> <span class="n">DEFAULT_TRANSFORM</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">intercept</span><span class="o">.</span><span class="n">transform_kwargs</span><span class="p">)</span>
@@ -4886,9 +4958,9 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">862</span>
-<span class="normal">863</span>
-<span class="normal">864</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">875</span>
+<span class="normal">876</span>
+<span class="normal">877</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Show the terms and the transform."""</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"ContinuousNode(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="si">!r}</span><span class="s2">, transform=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="si">!r}</span><span class="s2">)"</span>
 </code></pre></div></td></tr></table></div>
@@ -4915,11 +4987,11 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">866</span>
-<span class="normal">867</span>
-<span class="normal">868</span>
-<span class="normal">869</span>
-<span class="normal">870</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">879</span>
+<span class="normal">880</span>
+<span class="normal">881</span>
+<span class="normal">882</span>
+<span class="normal">883</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Compare the terms; the transform is derived from them."""</span>
     <span class="c1"># transform/transform_kwargs are derived from the terms, so equal</span>
     <span class="c1"># term lists already imply an equal transform</span>
@@ -4948,9 +5020,9 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">872</span>
-<span class="normal">873</span>
-<span class="normal">874</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">885</span>
+<span class="normal">886</span>
+<span class="normal">887</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Hash what ``__eq__`` compares, so nodes work in sets and as keys."""</span>
     <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
@@ -5034,6 +5106,40 @@ class of the monotone transform is chosen on the intercept term,
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>levels</code> is below 2, the intercept names a transform, or the
+formula breaks a rule of <a class="autorefs autorefs-internal" title="ContinuousNode" href="#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a formula entry is not a term.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
 
 
 
@@ -5042,20 +5148,7 @@ class of the monotone transform is chosen on the intercept term,
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">877</span>
-<span class="normal">878</span>
-<span class="normal">879</span>
-<span class="normal">880</span>
-<span class="normal">881</span>
-<span class="normal">882</span>
-<span class="normal">883</span>
-<span class="normal">884</span>
-<span class="normal">885</span>
-<span class="normal">886</span>
-<span class="normal">887</span>
-<span class="normal">888</span>
-<span class="normal">889</span>
-<span class="normal">890</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">890</span>
 <span class="normal">891</span>
 <span class="normal">892</span>
 <span class="normal">893</span>
@@ -5084,7 +5177,28 @@ class of the monotone transform is chosen on the intercept term,
 <span class="normal">916</span>
 <span class="normal">917</span>
 <span class="normal">918</span>
-<span class="normal">919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">OrdinalNode</span><span class="p">:</span>
+<span class="normal">919</span>
+<span class="normal">920</span>
+<span class="normal">921</span>
+<span class="normal">922</span>
+<span class="normal">923</span>
+<span class="normal">924</span>
+<span class="normal">925</span>
+<span class="normal">926</span>
+<span class="normal">927</span>
+<span class="normal">928</span>
+<span class="normal">929</span>
+<span class="normal">930</span>
+<span class="normal">931</span>
+<span class="normal">932</span>
+<span class="normal">933</span>
+<span class="normal">934</span>
+<span class="normal">935</span>
+<span class="normal">936</span>
+<span class="normal">937</span>
+<span class="normal">938</span>
+<span class="normal">939</span>
+<span class="normal">940</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">OrdinalNode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Ordinal variable with ``levels`` ordered classes, stored 0 to levels-1.</span>
 
 <span class="sd">    An ordered logit models it: increasing cutpoints plus the shift terms.</span>
@@ -5096,6 +5210,14 @@ class of the monotone transform is chosen on the intercept term,
 <span class="sd">    terms : Term | list[Term] | None, optional</span>
 <span class="sd">        The additive formula, as for [`ContinuousNode`][], by default</span>
 <span class="sd">        ``None``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``levels`` is below 2, the intercept names a transform, or the</span>
+<span class="sd">        formula breaks a rule of [`ContinuousNode`][].</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If a formula entry is not a term.</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">"ordinal"</span>
@@ -5103,7 +5225,7 @@ class of the monotone transform is chosen on the intercept term,
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"OrdinalNode(levels=) must be &gt;= 2, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"OrdinalNode(levels=) must be &gt;= 2, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">terms</span> <span class="o">=</span> <span class="n">_normalize_terms</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
         <span class="n">intercept</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">intercept</span><span class="o">.</span><span class="n">transform</span> <span class="ow">or</span> <span class="n">intercept</span><span class="o">.</span><span class="n">transform_kwargs</span><span class="p">:</span>
@@ -5161,9 +5283,9 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">905</span>
-<span class="normal">906</span>
-<span class="normal">907</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">926</span>
+<span class="normal">927</span>
+<span class="normal">928</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Show the levels and the terms."""</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"OrdinalNode(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="si">!r}</span><span class="s2">)"</span>
 </code></pre></div></td></tr></table></div>
@@ -5190,13 +5312,13 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">909</span>
-<span class="normal">910</span>
-<span class="normal">911</span>
-<span class="normal">912</span>
-<span class="normal">913</span>
-<span class="normal">914</span>
-<span class="normal">915</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">930</span>
+<span class="normal">931</span>
+<span class="normal">932</span>
+<span class="normal">933</span>
+<span class="normal">934</span>
+<span class="normal">935</span>
+<span class="normal">936</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Compare levels and terms."""</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">OrdinalNode</span><span class="p">)</span>
@@ -5227,9 +5349,9 @@ class of the monotone transform is chosen on the intercept term,
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/spec.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">917</span>
-<span class="normal">918</span>
-<span class="normal">919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">938</span>
+<span class="normal">939</span>
+<span class="normal">940</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Hash what ``__eq__`` compares, so nodes work in sets and as keys."""</span>
     <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
@@ -5815,7 +5937,7 @@ only the options it cares about: <a class="autorefs autorefs-internal" title="sp
 term's constructor, which fills in the rest.</p>
 <p>The result is JSON- and YAML-safe (tuple options such as <code>units</code> become
 lists), so a spec round-trips through <code>json</code>/YAML as well as through
-<code>torch.save</code> — except when a term carries a <em>callable</em>
+<code>torch.save</code>, except when a term carries a <em>callable</em>
 <code>input_transform</code>, which serializes only through pickle
 (<code>torch.save</code>) and only as a module-level function.</p>
 <p>A custom term is written as its import path, <code>module.ClassName</code>, and
@@ -5930,7 +6052,7 @@ loads in the same process only.</p>
 
 <span class="sd">    The result is JSON- and YAML-safe (tuple options such as ``units`` become</span>
 <span class="sd">    lists), so a spec round-trips through ``json``/YAML as well as through</span>
-<span class="sd">    ``torch.save`` — except when a term carries a *callable*</span>
+<span class="sd">    ``torch.save``, except when a term carries a *callable*</span>
 <span class="sd">    ``input_transform``, which serializes only through pickle</span>
 <span class="sd">    (``torch.save``) and only as a module-level function.</span>
 

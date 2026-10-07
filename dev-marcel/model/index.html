@@ -896,7 +896,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1590,14 +1590,13 @@ are the classes <code>Intercept</code>, <code>LinearShift</code>, <code>ComplexS
   parents the complex one; <code>SI()</code> and <code>CI(...)</code> spell that out with the arity
   checked.</li>
 <li><strong>Joint versus additive is argument grouping.</strong> Several parents in one term
-  form one network over all of them, an interaction; the same parents in
-  separate terms act additively. For the intercept the grouping is said with
-  <code>allow_interaction</code>, because a node takes at most one intercept with
-  parents.</li>
+  form one network over all of them, an interaction. The same parents in
+  separate terms act additively. A node takes at most one intercept with
+  parents, so for the intercept <code>allow_interaction</code> sets the grouping.</li>
 <li><strong>Every parent enters through exactly one edge-owning term.</strong> The VC
   modifiers are the one exception: <code>CS("X2") + VC("X2", t="T")</code> is the
-  intended pattern, where <span class="arithmatex">\(x_2\)</span> acts prognostically through the shift and
-  modifies the treatment effect.</li>
+  intended pattern. There <span class="arithmatex">\(x_2\)</span> acts prognostically through the shift and
+  also modifies the treatment effect.</li>
 </ul>
 <h3 id="the-three-knobs-on-a-term">The three knobs on a term<a class="headerlink" href="#the-three-knobs-on-a-term" title="Permanent link">&para;</a></h3>
 <p><strong><code>transform=</code> on <code>I</code></strong> picks the class of <span class="arithmatex">\(h_{\boldsymbol{\vartheta}}\)</span> for a
@@ -1614,8 +1613,8 @@ continuous node:</p>
 </ul>
 <p>Extra keyword arguments of <code>I</code> pass straight to the transform class,
 <code>I(transform="spline", bins=16)</code>. Each transform pre-scales the data from the
-training <code>range_q</code> and $1 - $<code>range_q</code> quantiles onto a fixed domain;
-<code>range_q</code> is an intercept option, default 0.05, and <code>range_q=0</code> uses the
+training <code>range_q</code> and $1 - $<code>range_q</code> quantiles onto a fixed domain.
+<code>range_q</code> is an intercept option with default 0.05, and <code>range_q=0</code> uses the
 minimum and maximum. Ordinal nodes have no transform to pick.</p>
 <p><strong><code>input_transform=</code> on <code>I</code>, <code>CS</code>, <code>VC</code></strong> transforms that term's continuous
 network inputs, with statistics frozen at the first fit: <code>"minmax"</code>,
@@ -1630,12 +1629,12 @@ cutpoint vector of an ordered logit,</p>
 P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 \]</div>
 <p>with increasing cutpoints <span class="arithmatex">\(\vartheta\)</span> and <span class="arithmatex">\(s\)</span> the total shift. The shift is
-subtracted where a continuous node adds it; <a href="../notation/">notation.md</a> states
-the convention and <a href="../interpretation/">interpretation.md</a> works through what
-it does to the sign of a coefficient.</p>
-<p>The log-probability of an observed level is the difference of two sigmoids,
-computed in log space with <code>logsigmoid</code> and a stable <code>log(1 - exp(x))</code> and
-taking per element the better-conditioned side. The direct difference of two
+subtracted where a continuous node adds it. <a href="../notation/">notation.md</a> states
+the convention. <a href="../interpretation/">interpretation.md</a> shows what it does to
+the sign of a coefficient.</p>
+<p>The log-probability of an observed level is the difference of two sigmoids.
+The code computes it in log space with <code>logsigmoid</code> and a stable
+<code>log(1 - exp(x))</code>, and per element it takes the better-conditioned side. The direct difference of two
 sigmoids has exactly zero gradient once they saturate in float32, and a node
 that starts there never recovers.</p>
 <p>Parents enter every network as features: a continuous parent raw, in one

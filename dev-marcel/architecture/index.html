@@ -929,7 +929,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1527,8 +1527,8 @@
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
 <p>The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its <code>Term</code> subclass (the spec) and its module in
-<code>modules.py</code>. Node-kind behavior lives in five <code>Node</code> methods and
-<code>nodes.encode</code>. Everything else is framework code.</p>
+<code>modules.py</code>. Node-kind maths lives in five <code>Node</code> methods, <code>nodes.encode</code>
+and the score derivative <code>scores._dl_ds</code>. Everything else is framework code.</p>
 <h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TD
     subgraph data["spec"]
@@ -1546,7 +1546,7 @@ term's two classes: its <code>Term</code> subclass (the spec) and its module in
         scores["scores.py&lt;br/&gt;node_scores,&lt;br/&gt;effect_modifier_scan"]
     end
     callbacks["callbacks.py&lt;br/&gt;Callback, EarlyStopping"]
-    plots["plots.py&lt;br/&gt;plot_dag, plot_marginals,&lt;br/&gt;plot_training (matplotlib optional)"]
+    plots["plots.py&lt;br/&gt;plot_dag, plot_marginals,&lt;br/&gt;plot_training, plot_varying_coef&lt;br/&gt;(matplotlib optional)"]
 
     spec --&gt; modules
     nodes --&gt; spec
@@ -1562,18 +1562,15 @@ term's two classes: its <code>Term</code> subclass (the spec) and its module in
     flow --&gt; scores
     fitting --&gt; callbacks
     readouts --&gt; modules
-    readouts --&gt; spec
-    scores --&gt; spec
     scores --&gt; transforms
     plots --&gt; spec</code></pre>
-<p><code>modules.py</code> imports nothing from <code>spec.py</code>: it reads the node's parent schema,
+<p><code>modules.py</code> imports nothing from <code>spec.py</code> at run time: it reads the node's parent schema,
 <code>{parent: "continuous" | n_levels}</code>, and a term's <code>parents</code> and options. That
 is what lets each term class hold its module class directly
 (<code>LinearShift.module is LinearShiftModule</code>). <code>fitting.py</code> and <code>readouts.py</code>
 are mixins: <code>Node</code> composes <code>NodeFitMixin</code>, and <code>CausalFlowDAG</code> composes
 <code>FitMixin</code> and <code>ReadoutsMixin</code>. <code>fitting</code> imports <code>flow</code> and <code>nodes</code> under
-<code>TYPE_CHECKING</code> only, plus <code>nodes.load_weights</code> lazily in
-<code>FitMixin._fit_nodes</code>. So the import graph is acyclic at module load,
+<code>TYPE_CHECKING</code> only. So the import graph is acyclic at module load,
 although the package UML draws both directions between <code>fitting</code> and <code>nodes</code>.</p>
 <h2 id="the-term-contract">The term contract<a class="headerlink" href="#the-term-contract" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>classDiagram
@@ -1584,7 +1581,7 @@ although the package UML draws both directions between <code>fitting</code> and 
         parents
         __init__(*parents): the base assigns the parents
         options: each subclass's keyword arguments, assigned to self
-        __repr__(): the only one — every entry as name=value
+        __repr__(): the only one, every entry as name=value
         check(name, spec)
         edge_parents
         cells()
@@ -1638,16 +1635,28 @@ stable; <code>tests/test_statedict_stability.py</code> pins them.</p>
   <code>check</code> and <code>edge_parents</code>.</li>
 </ul>
 <h2 id="node-kinds">Node kinds<a class="headerlink" href="#node-kinds" title="Permanent link">&para;</a></h2>
-<p>The two node kinds are continuous and ordinal. They stay an if/else in ONE
-place: the five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>,
-<code>marginal_theta</code> and <code>encode</code> in nodes.py, plus the column encoding
-<code>nodes.encode</code>. Everything else, the term modules included, reads a node's
-schema entry (<code>nodes.schema_entry</code>): <code>"continuous"</code> or a level count.</p>
+<p>The two node kinds are continuous and ordinal. The maths that differs by
+kind is an if/else in three places:</p>
+<ul>
+<li>the five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>marginal_theta</code>
+  and <code>encode</code>, plus the transform choice in <code>Node.__init__</code>;</li>
+<li>the column encoding <code>nodes.encode</code>;</li>
+<li>the score derivative <code>scores._dl_ds</code>.</li>
+</ul>
+<p>Other code reads the kind only to check, convert or display values.
+<code>flow.py</code> checks ordinal levels, sets the output dtype and limits <code>pmf</code> and
+<code>density</code> to their kind. <code>readouts.py</code> refuses an ordinal parent in
+<code>shift_curve</code> and keeps a continuous parent raw in <code>design_matrix</code>.
+<code>effect_modifier_scan</code> finds the score column of a binary ordinal
+treatment. <code>spec.py</code> validates and serializes the kind, and <code>plots.py</code>
+styles the node.
+The term modules read a node's schema entry (<code>nodes.schema_entry</code>):
+<code>"continuous"</code> or a level count.</p>
 <h2 id="guards-that-pin-all-of-this">Guards that pin all of this<a class="headerlink" href="#guards-that-pin-all-of-this" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>tests/tools/statedict_smoke.py</code> — seeded per-DGP state dicts, bit-compared.</li>
+<li><code>tests/tools/statedict_smoke.py</code>: seeded per-DGP state dicts, bit-compared.</li>
 <li>The inline DGP truths (<code>tests/conftest.py</code>) and 45+ regex-pinned refusals.</li>
-<li><code>experiments/ground_truth/*.json</code> — eight CI-checked replications with
+<li><code>experiments/ground_truth/*.json</code>: eight CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.</li>
 </ul>
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
@@ -1687,7 +1696,6 @@ node.</p>
   tramdag --&gt; plots
   tramdag --&gt; spec
   fitting --&gt; callbacks
-  fitting --&gt; nodes
   flow --&gt; fitting
   flow --&gt; modules
   flow --&gt; nodes
@@ -1703,6 +1711,7 @@ node.</p>
   scores --&gt; transforms
   spec --&gt; modules
   fitting ..&gt; flow
+  fitting ..&gt; nodes
   modules ..&gt; nodes
   modules ..&gt; spec</code></pre>
 <h3 id="class-uml-pyreverse">Class UML (pyreverse)<a class="headerlink" href="#class-uml-pyreverse" title="Permanent link">&para;</a></h3>

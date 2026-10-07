@@ -775,7 +775,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1604,7 +1604,7 @@ list is the whole registration; anything not covered here is a
 
 
 
-        <p>Base class of <code>fit(callbacks=)</code> entries — override any of the hooks.</p>
+        <p>Base class of <code>fit(callbacks=)</code> entries; override any of the hooks.</p>
 <p><code>on_fit_begin(node, optimizer)</code> runs once after calibration, before the
 first epoch (the shipped <code>EarlyStopping</code> resets its state here, so one
 instance is safe to reuse across fits). <code>on_epoch_end(node, epoch,
@@ -1644,7 +1644,7 @@ the weights hands them to the re-centering.</p>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Callback</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Base class of ``fit(callbacks=)`` entries — override any of the hooks.</span>
+<span class="w">    </span><span class="sd">"""Base class of ``fit(callbacks=)`` entries; override any of the hooks.</span>
 
 <span class="sd">    ``on_fit_begin(node, optimizer)`` runs once after calibration, before the</span>
 <span class="sd">    first epoch (the shipped ``EarlyStopping`` resets its state here, so one</span>
@@ -1885,6 +1885,41 @@ default) never stops.</p>
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>patience</code> is below 1, or <code>patience=None</code> comes with
+<code>restore_best=False</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeError">RuntimeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>During the fit, if it has no validation data, or at fit end if no
+epoch gave a finite validation NLL to restore.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
 
 
 
@@ -1969,7 +2004,16 @@ default) never stops.</p>
 <span class="normal">134</span>
 <span class="normal">135</span>
 <span class="normal">136</span>
-<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Keep the best-validation weights; optionally stop once they are old.</span>
 
 <span class="sd">    Tracks the node's validation NLL; an epoch improves when it beats the best</span>
@@ -1995,6 +2039,15 @@ default) never stops.</p>
 <span class="sd">    ----------</span>
 <span class="sd">    best_nll, best_epoch</span>
 <span class="sd">        The best validation NLL seen this fit and its epoch.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``patience`` is below 1, or ``patience=None`` comes with</span>
+<span class="sd">        ``restore_best=False``.</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        During the fit, if it has no validation data, or at fit end if no</span>
+<span class="sd">        epoch gave a finite validation NLL to restore.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -2022,7 +2075,7 @@ default) never stops.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Start fresh — neither patience nor the snapshot carries over."""</span>
+<span class="w">        </span><span class="sd">"""Start fresh: neither patience nor the snapshot carries over."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -2042,7 +2095,7 @@ default) never stops.</p>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"EarlyStopping has nothing to restore: no epoch reached "</span>
                 <span class="s2">"on_epoch_end with a finite validation NLL. Either fit() ran no "</span>
-                <span class="s2">"epoch, or the fit diverged — lower learning_rate, or check the "</span>
+                <span class="s2">"epoch, or the fit diverged. Lower learning_rate, or check the "</span>
                 <span class="s2">"validation frame for a column the model cannot score."</span>
             <span class="p">)</span>
         <span class="n">node</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
@@ -2075,15 +2128,15 @@ default) never stops.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Start fresh — neither patience nor the snapshot carries over.</p>
+        <p>Start fresh: neither patience nor the snapshot carries over.</p>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Start fresh — neither patience nor the snapshot carries over."""</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Start fresh: neither patience nor the snapshot carries over."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2109,14 +2162,14 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
     <span class="n">nll</span> <span class="o">=</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
@@ -2148,18 +2201,18 @@ default) never stops.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
 <span class="normal">136</span>
-<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load the best weights back into the node (``restore_best`` only)."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
         <span class="k">return</span>
@@ -2167,7 +2220,7 @@ default) never stops.</p>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="s2">"EarlyStopping has nothing to restore: no epoch reached "</span>
             <span class="s2">"on_epoch_end with a finite validation NLL. Either fit() ran no "</span>
-            <span class="s2">"epoch, or the fit diverged — lower learning_rate, or check the "</span>
+            <span class="s2">"epoch, or the fit diverged. Lower learning_rate, or check the "</span>
             <span class="s2">"validation frame for a column the model cannot score."</span>
         <span class="p">)</span>
     <span class="n">node</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>

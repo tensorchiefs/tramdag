@@ -890,7 +890,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1489,7 +1489,7 @@ that function:</p>
 <li>the <code>log(2)·n/2</code> centering</li>
 <li>the tying of the first two and the last two diffs</li>
 </ul>
-<p>Any upstream reparametrization therefore breaks the calibrated start silently.
+<p>Any upstream reparametrization therefore breaks the marginal start silently.
 A public <code>unconstrain_theta(theta)</code> that takes the target control points is
 ~15 lines upstream. It removes the coupling to these private details. The
 framing is "identity/linear initialization support", a standard flow trick.</p>
@@ -1509,16 +1509,16 @@ flows, and zuko has a precedent in <code>GeneralizedNormal</code>. But zuko can 
 the five.</p>
 <h2 id="anti-candidates-look-upstreamable-are-not">Anti-candidates (look upstreamable, are not)<a class="headerlink" href="#anti-candidates-look-upstreamable-are-not" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Quantile pre-scaling and <code>_ScaledUT</code></strong> — this is a modeling choice. zuko's
+<li><strong>Quantile pre-scaling and <code>_ScaledUT</code></strong>: this is a modeling choice. zuko's
   <code>ComposedTransform</code> with <code>MonotonicAffineTransform</code> already composes it.</li>
-<li><strong>The ordinal ordered-logit transform and log-space <code>ordinal_log_prob</code></strong> —
+<li><strong>The ordinal ordered-logit transform and log-space <code>ordinal_log_prob</code></strong>:
   this transform is not a bijection. It stays outside zuko's flow scope. It is
   torch.distributions material, if anywhere.</li>
-<li><strong>LS, CS, CI and VC terms, the marginal-init policy, propensity centering
-  and scores</strong> — these are TRAM-DAG semantics. zuko's <code>MaskedMLP</code> already
+<li><strong>LS, CS, CI and VC terms, the marginal-start policy, propensity centering
+  and scores</strong>: these are TRAM-DAG semantics. zuko's <code>MaskedMLP</code> already
   supports arbitrary adjacency. tramdag does not use it, because it needs
   per-term interpretability.</li>
-<li><strong>The spline <code>slope</code> knob and the Bernstein <code>eps</code> knob</strong> — zuko already
+<li><strong>The spline <code>slope</code> knob and the Bernstein <code>eps</code> knob</strong>: zuko already
   exposes both upstream.</li>
 </ul>
 

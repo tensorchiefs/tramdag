@@ -890,7 +890,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1454,7 +1454,7 @@ For the model itself see <a href="../model/">model.md</a>, and for the symbols s
 <p>Every claim on this page is checked somewhere that runs. The links say where,
 so nothing here is a number typed into prose.</p>
 <h2 id="which-term-owns-which-edge">Which term owns which edge<a class="headerlink" href="#which-term-owns-which-edge" title="Permanent link">&para;</a></h2>
-<p><code>flow.to_matrix()</code> gives the labelled adjacency matrix of the model. Rows are
+<p><code>flow.to_matrix()</code> gives the labeled adjacency matrix of the model. Rows are
 parents and columns are children. A cell holds the term tag: <code>LS</code>, <code>CS</code>, <code>CI</code>,
 <code>VC</code> for a treatment edge, or <code>VCm</code> for a varying-coefficient modifier. An
 empty cell means no edge. A multi-parent term carries its parent group as a
@@ -1482,8 +1482,10 @@ Those weights are identified only up to a common constant. The one-hot columns
 sum to one in every row. Adding a constant to all of them, and subtracting it
 from the intercept, leaves the likelihood unchanged. Read them as
 differences.
-<code>w[k] - w[0]</code> is the level-k-against-level-0 log-odds ratio, and it is the
-column that <code>flow.design_matrix(df, node, drop_first=True)</code> drops.</p>
+<code>w[k] - w[0]</code> is the level-k-against-level-0 log-odds ratio. It matches the
+coefficient of column <code>{parent}[k]</code> in
+<code>flow.design_matrix(df, node, drop_first=True)</code>, which drops the level-0
+column.</p>
 <p>Checked in <a href="../notebooks/classical_fit_tram_dag/"><code>notebooks/classical_fit_tram_dag.py</code></a>,
 which compares the weights against <code>statsmodels</code> and R, and pinned in
 continuous integration by <code>experiments/triangle_mixed.py</code>, whose
@@ -1511,7 +1513,11 @@ supposed to learn. It goes through the term's own evaluation, so a custom term
 works too.</p>
 <p>A caution on both: a <code>CS</code> term is identified only up to a constant, because
 that constant can move into the intercept. Compare a fitted curve to the truth
-after mean-centring both, not point by point.</p>
+after mean-centering both, not point by point.</p>
+<p><code>density</code> runs in the
+<a href="../notebooks/classical_fit_tram_dag/">classical-fitting notebook</a>, section
+1b. <code>experiments/triangle.py</code> compares the <code>shift_curve</code> of each <code>CS</code> variant
+with the true function against committed ground truth.</p>
 <h2 id="the-price-of-a-complex-intercept">The price of a complex intercept<a class="headerlink" href="#the-price-of-a-complex-intercept" title="Permanent link">&para;</a></h2>
 <p><code>I(...)</code> with parents is the flexible end of the family. The parents control
 the transform parameters, so the node can bend in ways no additive shift can
@@ -1522,7 +1528,7 @@ edge.</p>
 <p>A middle option exists. <code>I("a", "b", allow_interaction=False)</code> builds one
 network per parent and sums their parameter vectors, so the parents act
 additively on the transform. <code>flow.intercept_contributions(df, node)</code> then
-decomposes that sum into mean-centred per-term parts, using the usual additive
+decomposes that sum into mean-centered per-term parts, using the usual additive
 model convention, so the parts become comparable. This is a post-hoc read-out
 and changes nothing about the fitted model.</p>
 <p>Worked through in the <a href="../notebooks/additive_vs_joint_ci/">intercept notebook</a>.</p>

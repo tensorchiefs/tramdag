@@ -134,6 +134,7 @@ fig, ax = plt.subplots(figsize=(5.5, 3))
 ax.hist(df["x1"], bins=80, density=True, alpha=0.7)
 ax.set_title(f"the source $x_1$ has two modes ({N:,} rows)")
 ax.set_xlabel("$x_1$")
+ax.set_ylabel("density")
 fig.tight_layout()
 plt.show()
 
@@ -147,10 +148,11 @@ plt.show()
 # same DAG with interpretable terms.
 #
 # Each node fits on its own Adam loop ([`docs/fitting.md`](../docs/fitting.md)).
-# `validation_data=` scores the validation rows per epoch, `verbose=` prints
-# progress, and the strategy attaches through `callbacks=`: `EarlyStopping`
-# stops each node once its own validation score has plateaued and loads its
-# best weights back, so `epochs=200` is a ceiling and not a budget.
+# `validation_data=` scores the validation rows per epoch, and `verbose=` prints
+# progress. The strategy attaches through `callbacks=`. `EarlyStopping` stops
+# each node when its own validation score stops improving, and loads its best
+# weights back. Thus `epochs=200` is a ceiling and not a budget. The `seed=` of
+# `CausalFlowDAG` makes the initial weights reproducible.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
@@ -165,8 +167,7 @@ plot_dag(spec)
 plt.show()
 
 # %%
-torch.manual_seed(0)
-flow = CausalFlowDAG(spec, device=DEVICE)
+flow = CausalFlowDAG(spec, device=DEVICE, seed=0)
 
 t0 = time.perf_counter()
 flow.fit(
@@ -225,15 +226,16 @@ assert corr_gap < 0.05, f"the sampled dependence structure is off by {corr_gap:.
 fig, axes = plt.subplots(1, 3, figsize=(11, 3.2), sharey=True)
 errors = []
 print("E[x3 | do(x2=a)]     analytic    TRAM-DAG      error")
-for ax, a in zip(axes, (-3.0, -1.0, 0.0), strict=True):
+for i, (ax, a) in enumerate(zip(axes, (-3.0, -1.0, 0.0), strict=True)):
     truth = sample_dgp(len(df), seed=543, do={"x2": a})
-    fitted = flow.sample(len(df), do={"x2": a}, seed=2)
+    fitted = flow.sample(len(df), do={"x2": a}, seed=2 + i)
     bins = np.linspace(truth["x3"].quantile(0.001), truth["x3"].quantile(0.999), 70)
     ax.hist(truth["x3"], bins=bins, density=True, alpha=0.5, label="process")
     ax.hist(
         fitted["x3"], bins=bins, density=True, histtype="step", lw=1.6, label="TRAM-DAG"
     )
-    ax.set_title(f"$p(x_3 \\mid do(x_2={a:+.0f}))$")
+    ax.set_title(f"$p(x_3 \\mid do(x_2={a:g}))$")
+    ax.set_xlabel("$x_3$")
 
     analytic = -0.25 + 0.25 * a
     got = float(fitted["x3"].mean())
@@ -245,8 +247,7 @@ axes[0].legend()
 fig.tight_layout()
 plt.show()
 
-# The bound is almost four times the largest measured error (0.040), which
-# leaves room for another machine and another draw.
+# The bound leaves room for another machine and another draw.
 assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %% [markdown]

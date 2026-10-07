@@ -619,8 +619,13 @@ class Intercept(Term):
         return not self.parents
 
     def cells(self) -> list[tuple[str, str, bool]]:
-        """Tag an intercept edge ``CI``: a cell exists only when it has parents."""
-        return [(p, "CI", len(self.parents) > 1) for p in self.parents]
+        """Tag an intercept edge ``CI``: a cell exists only when it has parents.
+
+        It is joint only when one network reads several parents; an additive
+        intercept (``allow_interaction=False``) has one network per parent.
+        """
+        joint = len(self.parents) > 1 and self.allow_interaction
+        return [(p, "CI", joint) for p in self.parents]
 
 
 class LinearShift(Term):

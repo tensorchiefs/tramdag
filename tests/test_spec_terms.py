@@ -109,6 +109,10 @@ def test_to_matrix_labels_every_term_and_leaves_non_edges_empty():
         {**spec, "y": OrdinalNode(3, CS("a", "b"))}, seed=0
     ).to_matrix()
     assert joint.loc["a", "y"] == "CS['a', 'b']"  # a joint term names its group
+    additive = CausalFlowDAG(
+        {**spec, "y": OrdinalNode(3, I("a", "b", allow_interaction=False))}, seed=0
+    ).to_matrix()
+    assert additive.loc["a", "y"] == "CI"  # one net per parent: not joint
 
 
 def test_ls_coefficients_shape_and_agreement_with_the_modules():

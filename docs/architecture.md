@@ -23,7 +23,7 @@ graph TD
         scores["scores.py<br/>node_scores,<br/>effect_modifier_scan"]
     end
     callbacks["callbacks.py<br/>Callback, EarlyStopping"]
-    plots["plots.py<br/>plot_dag, plot_marginals,<br/>plot_training (matplotlib optional)"]
+    plots["plots.py<br/>plot_dag, plot_marginals,<br/>plot_training, plot_varying_coef<br/>(matplotlib optional)"]
 
     spec --> modules
     nodes --> spec

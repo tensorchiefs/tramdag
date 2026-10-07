@@ -53,7 +53,9 @@ ingredient into the TRAM framework.
   that $\beta$ is the identified level-1-against-0 contrast. The term is
   linear in the treatment.
 - **Read-out.** `flow.varying_coef(df, node)` evaluates $\beta(x)$ in closed
-  form, deterministic and free of the outcome. For a continuous outcome,
+  form, deterministic and free of the outcome.
+  `tramdag.plots.plot_varying_coef(flow, df, node, by=)` draws it along one
+  modifier. For a continuous outcome,
   $\beta(x) = \operatorname{logit} P(Y \le y \mid x, do(T=1)) -
   \operatorname{logit} P(Y \le y \mid x, do(T=0))$ at every $y$. This is an
   interventional quantity and needs no counterfactual. Because `abduct`

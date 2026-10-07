@@ -132,10 +132,11 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 
 | Name | Role |
 |----------------------------------|------------------------------------------------------------------------------|
-| [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. |
-| [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each. |
+| [`plot_dag()`][tramdag.plots.plot_dag] | The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, `joint` for a multi-parent net). Exported as `tramdag.plot_dag`. `style=` (`"light"`, `"dark"` or a dict), `node_kind=` and `modifiers=` (`"edge"` points a VC modifier at its treatment edge). |
+| [`plot_marginals()`][tramdag.plots.plot_marginals] | Observed vs sampled marginal per node, one panel each; `colors=`, `legend=` and `title=`. Every plot function takes `ax=` to draw into a given layout. |
 | [`plot_training()`][tramdag.plots.plot_training] | Summed train/val NLL per epoch, with a dashed mark per `stops=` entry. |
-| (`_layout`, `_term_edges`) | Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split. matplotlib is imported on the first call, never at package import. |
+| [`plot_varying_coef()`][tramdag.plots.plot_varying_coef] | A VC term's $\beta(x)$ along one modifier, the other node columns at an observed median. |
+| (`_layout`, `_term_edges`, `_dag_edges`, `_bulges`, `_clear`) | Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split; each edge's bend, the nearest one that misses every node. matplotlib is imported on the first call, never at package import. |
 
 ## What is *not* in the package
 

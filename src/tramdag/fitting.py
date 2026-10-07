@@ -533,7 +533,7 @@ class NodeFitMixin:
             # a stalled line search stops on the same tolerance as an arrival,
             # so the gradient is what tells the two apart
             converged = stop_reason == "tolerance" and grad_norm <= GRAD_TOL
-            coefs = self.ls_weights()  # read while still float64
+            coefs = self.ls_coefficients()  # read while still float64
         finally:
             self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
         self.eval()

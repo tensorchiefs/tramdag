@@ -35,7 +35,7 @@ def _terms_spec():
 def test_terms_spec_builds_and_scores():
     """A term spec builds a flow whose per-node log-likelihood is finite."""
     flow = CausalFlowDAG(_terms_spec(), seed=0)
-    per_node = flow.node_log_prob(flow._tensorize(_toy_df()))
+    per_node = flow._node_log_prob(flow._tensorize(_toy_df()))
     assert set(per_node) == {"X1", "X2", "X3", "Y"}
     for v in per_node.values():
         assert torch.isfinite(v).all()
@@ -85,8 +85,8 @@ def test_serialization_roundtrip_terms():
     spec2 = spec_from_dict(spec_to_dict(flow.spec))
     flow2 = CausalFlowDAG(spec2, seed=0)
     df = _toy_df()
-    a = flow.node_log_prob(flow._tensorize(df))
-    b = flow2.node_log_prob(flow2._tensorize(df))
+    a = flow._node_log_prob(flow._tensorize(df))
+    b = flow2._node_log_prob(flow2._tensorize(df))
     for k in a:
         assert torch.allclose(a[k], b[k]), k
 

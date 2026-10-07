@@ -178,7 +178,6 @@ classDiagram
   tramdag --> plots
   tramdag --> spec
   fitting --> callbacks
-  fitting --> nodes
   flow --> fitting
   flow --> modules
   flow --> nodes
@@ -194,6 +193,7 @@ classDiagram
   scores --> transforms
   spec --> modules
   fitting ..> flow
+  fitting ..> nodes
   modules ..> nodes
   modules ..> spec
 ```

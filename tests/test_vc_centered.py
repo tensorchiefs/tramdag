@@ -164,7 +164,7 @@ def test_gradient_isolation(confounded):
     flow.fit(df.assign(ps=_oof_propensity(df)[0]), epochs=3, seed=0)
     flow.zero_grad()
     vals = flow._tensorize(df)
-    (-flow.node_log_prob(vals)["Y"].mean()).backward()
+    (-flow._node_log_prob(vals)["Y"].mean()).backward()
     for p in flow.nodes["T"].parameters():
         assert p.grad is None or float(p.grad.abs().max()) == 0.0
     # the Y-node itself DID get gradients (the loss is not degenerate)

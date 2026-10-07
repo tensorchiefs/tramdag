@@ -115,9 +115,9 @@ def test_scores_match_finite_differences():
                 idx = 0  # first element of the parameter
                 with torch.no_grad():
                     flat[idx] += h
-                    lp_plus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_plus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] -= 2 * h
-                    lp_minus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_minus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] += h
                 fd = ((lp_plus - lp_minus) / (2 * h)).numpy()
                 np.testing.assert_allclose(

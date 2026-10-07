@@ -240,7 +240,7 @@ low = Node(
     "low", spec_bw["low"], {"age": "continuous", "lwt": "continuous", "smoke": 2}
 )
 low.fit_classical(bw[["age", "lwt", "smoke", "low"]])
-w_low = low.ls_weights()
+w_low = low.ls_coefficients()
 ll_low = -low.nll(bw) * len(bw)
 print(f"log-likelihood   node alone {ll_low:.6f}   R glm {R_LOGLIK:.6f}")
 print(
@@ -356,7 +356,8 @@ def observed_information(flow, node, data):
     """Give one node's NLL Hessian, the gradient norm, and parameter offsets."""
     flow.double()  # second derivatives need float64
     names, params = zip(*flow.nodes[node].named_parameters(), strict=True)
-    nll = -flow.node_log_prob(flow._tensorize(data))[node].sum()
+    nd = flow.nodes[node]
+    nll = -nd.row_log_prob(nd.tensorize(data)).sum()
     grad = torch.cat(
         [g.reshape(-1) for g in torch.autograd.grad(nll, params, create_graph=True)]
     )

@@ -275,7 +275,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             raise
         return self
 
-    def node_log_prob(
+    def _node_log_prob(
         self,
         values: dict[str, Tensor],
         nodes: list[str] | None = None,
@@ -329,11 +329,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             raise ValueError("nodes=[] sums nothing; omit it for the joint")
         for name in nodes or ():
             self._node(name)  # name the unknown node, not its KeyError
-        per_node = self.node_log_prob(self._tensorize(df), nodes)
+        per_node = self._node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
     @torch.no_grad()
-    def node_negative_log_prob(self, df: pd.DataFrame) -> dict[str, float]:
+    def nll(self, df: pd.DataFrame) -> dict[str, float]:
         """Compute the mean negative log-likelihood per node (a diagnostic).
 
         Parameters
@@ -346,10 +346,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         dict[str, float]
             The mean NLL, keyed by node name.
         """
-        per_node = self.node_log_prob(self._tensorize(df))
+        per_node = self._node_log_prob(self._tensorize(df))
         return {k: float(-v.mean()) for k, v in per_node.items()}
-
-    nll = node_negative_log_prob  # the short name every notebook uses
 
     @torch.no_grad()
     def sample(

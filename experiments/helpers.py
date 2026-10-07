@@ -140,7 +140,7 @@ def snapshot(node, shift: str) -> dict:
     if shift == "ls":
         keys[("x3", "x2")] = "beta23"
     return {
-        key: float(node.ls_weights()[parent][0])
+        key: float(node.ls_coefficients()[parent][0])
         for (child, parent), key in keys.items()
         if child == node.name
     }

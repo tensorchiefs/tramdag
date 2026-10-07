@@ -54,8 +54,7 @@ the same object, so `LS is LinearShift`.
 | [`abduct()`][tramdag.flow.CausalFlowDAG.abduct] | Abduction: recover the latents. |
 | [`pmf()`][tramdag.flow.CausalFlowDAG.pmf] | Analytic class probabilities of an ordinal node, with `do=` overrides. |
 | [`density()`][tramdag.flow.CausalFlowDAG.density] | Analytic conditional density of a continuous node on a grid, with `do=` overrides — the continuous counterpart of `pmf`. |
-| [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`node_negative_log_prob()`][tramdag.flow.CausalFlowDAG.node_negative_log_prob] (alias `nll`) | Joint per-row log-likelihood, or a `nodes=` subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic. |
-| [`node_log_prob()`][tramdag.flow.CausalFlowDAG.node_log_prob] | The per-node decomposition the flow's queries evaluate through; training uses `Node.row_log_prob`. |
+| [`log_prob()`][tramdag.flow.CausalFlowDAG.log_prob] / [`nll()`][tramdag.flow.CausalFlowDAG.nll] | Joint per-row log-likelihood, or a `nodes=` subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic. |
 | [`varying_coef()`][tramdag.flow.CausalFlowDAG.varying_coef] | Closed-form read-out $\beta(x)$ of a fitted VC term. Deterministic, y-free. |
 | [`scores()`][tramdag.flow.CausalFlowDAG.scores] / [`effect_modifier_scan()`][tramdag.flow.CausalFlowDAG.effect_modifier_scan] | Analytic per-observation scores and the CUSUM modifier scan (delegate to `scores.py`). |
 | [`intercept_contributions()`][tramdag.flow.CausalFlowDAG.intercept_contributions] | Post-hoc GAM-style decomposition of a complex intercept into mean-centered per-term parts. |
@@ -95,7 +94,7 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 |----------------------------------|------------------------------------------------------------------------------|
 | [`Node`][tramdag.nodes.Node] | One sub-model per variable, a TRAM regression on its parents, exported as `tramdag.Node`: built from its name, node spec and parent schema `{parent: "continuous" \| n_levels}`; builds its intercept and shift terms through each term's `module`; `theta_shift()` sums the terms' `shift_value`s (plain shifts first, then VC); `net_input()` feeds every term network, `input_transform` applied. |
 | [`Node`][tramdag.nodes.Node] `.log_prob` / `.sample` / `.abduct` / `.marginal_theta` / `.encode` | The continuous-vs-ordinal branches and the parent encoding ([architecture.md](architecture.md#node-kinds)). |
-| [`Node`][tramdag.nodes.Node] `.features` / `.tensorize` / `.calibrate` / `.ls_weights` / `.save` / `.load` | The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and `calibrated` flag, its `LS` weights, its checkpoint. |
+| [`Node`][tramdag.nodes.Node] `.features` / `.tensorize` / `.calibrate` / `.ls_coefficients` / `.save` / `.load` | The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and `calibrated` flag, its `LS` coefficients, its checkpoint. |
 | (`encode`, `schema_entry`, `tensorize`, `check_columns`, `check_level_values`, `write_checkpoint`, `load_weights`) | Shared by the node and the flow: one column's encoding, a node's schema entry, columns as tensors, the column and level checks, the checkpoint writer and loader. |
 
 ## `fitting.py` — `NodeFitMixin` and `FitMixin`

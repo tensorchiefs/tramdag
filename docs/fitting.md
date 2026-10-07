@@ -24,7 +24,7 @@ The flow maps iid standard-logistic latents $U$ to the observed $X$ in causal
 order, and node $i$ reads its parents as data. The Jacobian is therefore
 triangular, and the joint log-likelihood decomposes per node,
 $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
-`CausalFlowDAG.node_log_prob` computes one term and `log_prob` sums them.
+`Node.row_log_prob` computes one term and `CausalFlowDAG.log_prob` sums them.
 
 - **Continuous node.** Change of variables through the monotone transform:
   $u = h(x;\theta) + s$ and

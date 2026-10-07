@@ -142,7 +142,7 @@ class ReadoutsMixin:
             The weights, as ``{node: {parent: array}}``. A node without
             linear-shift terms is absent.
         """
-        weights = {name: self.nodes[name].ls_weights() for name in self.order}
+        weights = {name: self.nodes[name].ls_coefficients() for name in self.order}
         return {name: w for name, w in weights.items() if w}
 
     def to_matrix(self) -> pd.DataFrame:

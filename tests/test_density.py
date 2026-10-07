@@ -19,7 +19,7 @@ def _flow(ls_chain):
 def test_density_equals_exp_log_prob_at_the_observed_value(ls_chain):
     """At a row's own value the density is exp of that row's log-likelihood term."""
     flow, df = _flow(ls_chain)
-    per_node = flow.node_log_prob(flow._tensorize(df))
+    per_node = flow._node_log_prob(flow._tensorize(df))
     expected = per_node["x2"].exp().detach().numpy()
     got = np.array(
         [flow.density(df.iloc[[i]], "x2", [df["x2"].iloc[i]])[0, 0] for i in range(8)]

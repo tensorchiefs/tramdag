@@ -47,6 +47,6 @@ def test_joint_cs_runs_and_decomposes():
         "x3": ContinuousNode(CS("x1", "x2")),
     }
     flow = CausalFlowDAG(spec, seed=0)
-    lp = flow.node_log_prob(flow._tensorize(df))["x3"]
+    lp = flow._node_log_prob(flow._tensorize(df))["x3"]
     assert lp.shape == (len(df),)
     assert torch.isfinite(lp).all()

@@ -376,7 +376,7 @@ class Node(NodeFitMixin, nn.Module):
             shift = shift + m.shift_value(self, feats)
         return theta, shift
 
-    def ls_weights(self) -> dict[str, np.ndarray]:
+    def ls_coefficients(self) -> dict[str, np.ndarray]:
         """Give the ``LS`` weights as ``{parent: array}``; empty without ``LS``."""
         return {
             parent: m.weight.detach().cpu().numpy().ravel().copy()

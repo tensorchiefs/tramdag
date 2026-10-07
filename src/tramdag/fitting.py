@@ -733,8 +733,6 @@ class FitMixin:
     def _fit_nodes(self, train_df: pd.DataFrame, jobs: dict, n_jobs: int) -> None:
         """Run ``Node.fit`` for each job, serially or in forked workers."""
         global _FORK_JOB
-        from .nodes import load_weights  # lazy: nodes imports this module
-
         if n_jobs == 1 or len(jobs) < 2:
             for name, kwargs in jobs.items():
                 self.nodes[name].fit(train_df, **kwargs)
@@ -746,7 +744,8 @@ class FitMixin:
         finally:
             _FORK_JOB = None
         for name, (state, history) in zip(jobs, results, strict=True):
-            load_weights(self.nodes[name], state)
+            # the parent calibrated every node before the fork, so shapes match
+            self.nodes[name].load_state_dict(state)
             self.nodes[name].history = history
             self.nodes[name].eval()
 

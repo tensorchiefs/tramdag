@@ -158,13 +158,13 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         ordinal = {n: nd.levels for n, nd in self.nodes.items() if nd.kind == "ordinal"}
         return tensorize(df, cols, ordinal if levels else {}, self._dtype, self.device)
 
-    def _to_frame(self, values: dict[str, Tensor]) -> pd.DataFrame:
+    def _to_frame(self, values: dict[str, Tensor], index=None) -> pd.DataFrame:
         """Tensors -> DataFrame; an ordinal column goes back as a level index."""
         out = {}
         for k, v in values.items():
             arr = v.cpu().numpy()
             out[k] = arr.astype(np.int64) if self.nodes[k].kind == "ordinal" else arr
-        return pd.DataFrame(out)
+        return pd.DataFrame(out, index=index)
 
     def _generator(self, seed: int | None) -> torch.Generator | None:
         """Give a seeded generator on this flow's device, or None for unseeded."""
@@ -414,7 +414,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             feats = nd.features(values)
             theta, shift = self._theta_shift(nd, feats, values, n)
             values[name] = nd.sample(theta, shift, u_vals[name])
-        return self._to_frame(values)
+        # the latents' rows, so a counterfactual lines up with its factual row
+        return self._to_frame(values, index=None if u is None else u.index)
 
     @torch.no_grad()
     def abduct(self, df: pd.DataFrame, *, seed: int | None = None) -> pd.DataFrame:

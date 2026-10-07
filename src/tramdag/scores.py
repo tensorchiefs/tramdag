@@ -43,6 +43,15 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
     return (sl * (1 - sl) - su * (1 - su)) / (su - sl)
 
 
+def _default_candidates(flow, node: str, t: str) -> list[str]:
+    """Give every node that is neither ``t``, ``node`` nor a descendant of ``t``."""
+    after_t = {t}
+    for name in flow.order:  # parents come first, so one pass finds them all
+        if after_t & set(flow.nodes[name].parents):
+            after_t.add(name)
+    return [c for c in flow.order if c not in after_t | {node}]
+
+
 # %% public functions ------------------------------------------------------------------
 @torch.no_grad()
 def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
@@ -160,8 +169,10 @@ def effect_modifier_scan(
         continuous parent or a VC term, and the identified level-1 column
         ``"{t}[1]"`` for a binary ordinal LS parent.
     candidates : list[str] | None, optional
-        Candidate covariates. Defaults to every column of ``df`` except
-        ``node`` and ``t``.
+        Candidate covariates. Defaults to every node that is not ``t``,
+        not ``node`` and not a descendant of ``t``: a modifier is fixed
+        before the treatment, and a descendant would pick up the effect
+        itself.
     column : str | None, optional
         Score column to scan, overriding the ``t``-derived choice — the
         way to scan one level contrast of a multi-level ordinal
@@ -211,7 +222,7 @@ def effect_modifier_scan(
         raise ValueError(f"score column {col!r} is constant; there is nothing to scan")
 
     if candidates is None:
-        candidates = [c for c in df.columns if c not in (node, t)]
+        candidates = _default_candidates(flow, node, t)
     rows = {}
     for c in candidates:
         order = np.argsort(df[c].to_numpy(), kind="stable")

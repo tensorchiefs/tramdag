@@ -131,8 +131,10 @@ Two cases make the p-value less reliable:
 `t` of `node`. It returns one row per candidate with `stat`, `p_value`,
 `crit_5pct` and `flag`, sorted by `stat`.
 
-- `candidates=` lists the covariates to scan. By default it is every column
-  of `df` except `node` and `t`. A candidate does not have to be a parent.
+- `candidates=` lists the covariates to scan. By default it is every node
+  except `node`, `t` and the descendants of `t`: a modifier is fixed before
+  the treatment, and a descendant would pick up the effect itself. A
+  candidate does not have to be a parent.
 - For a binary ordinal `LS` treatment, `t` resolves to the identified
   contrast of level 1 against level 0. For a `VC` treatment it resolves to
   $\beta_0$, the constant part of $\beta(x)$.

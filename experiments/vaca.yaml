@@ -1,5 +1,5 @@
 # The VACA/CNF benchmark (vaca.py): full model spec + every training
-# hyperparameter. The script reads no defaults of its own — `spec` is the
+# hyperparameter. The script reads no defaults of its own: `spec` is the
 # whole DAG (tramdag.spec_from_dict), `flow_kwargs` construct the flow,
 # `fit_kwargs` go into flow.fit verbatim.
 #
@@ -16,11 +16,11 @@
 #   * make_model: one net per node, dense(10, tanh) -> dense(100, tanh) ->
 #     dense(len_theta), M = 30 so len_theta = 31 (the spec's units and
 #     n_coeffs; zuko ties two extra control points on, order 32 against the
-#     reference's 30 — the free-parameter count is what matches);
+#     reference's 30; the free-parameter count is what matches);
 #   * weights start from Keras' Dense default, glorot_uniform / zero bias
 #     (`init: glorot`, make_model's layer_dense);
 #   * input_transform: minmax on the CI terms (comparison/utils.R::scale_df).
-# range_q: 0.05 in the spec — a DELIBERATE deviation from scale_df's min-max
+# range_q: 0.05 in the spec: a DELIBERATE deviation from scale_df's min-max
 # Bernstein domain, chosen under the global plateau at init seed 7: the
 # reference's min-max domain (range_q 0) scored do(x2) errors
 # 0.289 / 0.040 / 0.067 against the quantile domain's 0.096 / 0.080 / 0.018.
@@ -30,7 +30,7 @@
 # (carefl.yaml).
 # Rejected deviations, both measured: minibatch stepping (batch
 # 256, lr 0.001-0.004, 300-3000 epochs, constant or plateau) misses the
-# interventional bounds — its optima carry a systematic -0.11 common-mode
+# interventional bounds: its optima carry a systematic -0.11 common-mode
 # offset of the do(x2) means; dropping the input transform fails likewise
 # (raw parents saturate tanh outright: do(x2=-3) error 0.731, and a relu
 # net's error wanders 0.17-0.45). The reference's scale_df + tanh stays.

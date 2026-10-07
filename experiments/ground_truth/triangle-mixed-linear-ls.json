@@ -7,12 +7,12 @@
   "beta13": {
     "value": -0.25814151763916016,
     "atol": 0.05,
-    "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 vs unit-scale siblings) \u2014 see the _note and docs/paper-replication.md"
+    "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 against 0.375 for x2). See the _note and docs/paper-replication.md"
   },
   "beta23": {
     "value": 0.3332199156284332,
     "atol": 0.05,
-    "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 vs unit-scale siblings) \u2014 see the _note and docs/paper-replication.md"
+    "why": "weakly identified like beta13 (docs/paper-replication.md); the coefficient multiplies x2 (sd 0.375)"
   },
   "val_nll_x3": {
     "value": 1.226776123046875,

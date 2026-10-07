@@ -98,22 +98,22 @@ def score_counterfactuals(
     The paper's App. B (Fig. 10) makes the point that an individual
     counterfactual is not identified for a variable produced by interval
     censoring. So the flow is not scored against the realised counterfactual
-    level — nothing could get that right — but against the exact
+    level (nothing could get that right) but against the exact
     counterfactual *distribution*.
 
     Two reference points come with the P(true level) score, because that score
     is **not** maximized by the truth. Scoring the analytic law itself gives
     ``E[p_true] = E[sum_i p_i^2]``: what a model that knew the identifiable
     distribution exactly would score. The largest *expected* score is
-    ``E[max_i p_i]``, from always naming the modal level — a strictly worse
+    ``E[max_i p_i]``, from always naming the modal level, a strictly worse
     *distribution* estimate that this score nonetheless rewards.
 
     Both are expectations, and this metric is one finite draw of ``cf_n`` rows,
-    so neither is a per-run ceiling: on the ``linear`` DGP the mode predictor
-    itself scores 0.829 against its own 0.806 expectation. Read them as
+    so neither is a per-run ceiling: one draw of the mode predictor itself
+    can score above its own expectation. Read them as
     reference points a run should sit between, and read
     ``cf_pmf_tv_vs_analytic`` as the metric that cannot be gamed by sharpening
-    a prediction — a flow slightly above the analytic reference is sharper than
+    a prediction: a flow slightly above the analytic reference is sharper than
     the identifiable law, not better than it.
     """
     do = {"x1": config["do_x1"]}

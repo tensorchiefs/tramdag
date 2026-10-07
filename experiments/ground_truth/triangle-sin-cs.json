@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): As triangle-atan-cs with a second nonlinear f. sin has two turning points; cs_curve_max_abs_err is scored on paper Fig. 18's window, x2 in [-1, 0]. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds are 2.5x the measurement.",
+  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): As triangle-atan-cs with a second nonlinear f. sin has two turning points; cs_curve_max_abs_err is scored on paper Fig. 18's window, x2 in [-1, 0]. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds are 2.5x the measurement of the pinned run, which predates the per-node shuffle seeds.",
   "beta12": {
     "value": 1.9808403253555298,
     "atol": 0.05
@@ -7,7 +7,7 @@
   "beta13": {
     "value": -0.16783329844474792,
     "atol": 0.05,
-    "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 vs unit-scale siblings) \u2014 see the _note and docs/paper-replication.md"
+    "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 against 0.375 for x2). See the _note and docs/paper-replication.md"
   },
   "val_nll_x3": {
     "value": 2.461359739303589,

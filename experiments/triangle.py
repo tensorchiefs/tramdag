@@ -85,7 +85,7 @@ def run(variant: str) -> dict:
 
     if config["shift"] == "cs":
         # which paper figure this is depends on f (7 right for atan, 17 for
-        # the misspecified linear case, 18 for sin) — see PAPER_COVERAGE.md
+        # the misspecified linear case, 18 for sin); see PAPER_COVERAGE.md
         metrics["cs_curve_max_abs_err"] = cs_curve_error(
             flow,
             generator,

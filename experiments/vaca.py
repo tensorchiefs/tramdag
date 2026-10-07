@@ -99,8 +99,7 @@ def plot_interventional(generator, flow, config, truth, path, title) -> dict:
         errors[f"mean_x3_flow_do_x2_{value:+.0f}"] = flow_mean
         errors[f"mean_x3_abs_err_do_x2_{value:+.0f}"] = abs(flow_mean - analytic)
         print(
-            f"do(x2={value:+.0f}): E[x3] flow {flow_mean:+.3f} "
-            f"vs analytic {analytic:+.3f}"
+            f"do(x2={value:g}): E[x3] flow {flow_mean:+.3f} vs analytic {analytic:+.3f}"
         )
     axes[0].legend(loc="upper left")
     axes[0].set_ylabel("$p(x_3\\,|\\,do(x_2))$")

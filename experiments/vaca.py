@@ -91,7 +91,7 @@ def plot_interventional(generator, flow, config, truth, path, title) -> dict:
             config["n_compare"], do={"x2": value}, seed=config["sample_seed"]
         )
         continuous_density(ax, dgp["x3"], sampled["x3"])
-        ax.set_title(f"do($x_2$ = {value:+.0f})")
+        ax.set_title(f"do($x_2$ = {value:g})")
         ax.set_xlabel("$x_3$")
 
         analytic = truth["do_x2"][str(value)]["mean_x3_analytic"]
@@ -102,7 +102,7 @@ def plot_interventional(generator, flow, config, truth, path, title) -> dict:
             f"do(x2={value:+.0f}): E[x3] flow {flow_mean:+.3f} "
             f"vs analytic {analytic:+.3f}"
         )
-    axes[0].legend()
+    axes[0].legend(loc="upper left")
     axes[0].set_ylabel("$p(x_3\\,|\\,do(x_2))$")
     fig.suptitle(title)
     finish(fig, path)

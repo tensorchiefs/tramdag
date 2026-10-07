@@ -41,6 +41,7 @@ def framework_figures(flow: CausalFlowDAG, df, out: Path, figs: dict, seed) -> l
         flow,
         df,
         seed=seed,
+        colors=("C0", "C3"),  # the experiments' figures draw the flow in red
         path=out / "plots" / names[2],
         title=figs[names[2]]["title"],
     )
@@ -284,7 +285,7 @@ def plot_cs_curve(grid, fitted, true, path: Path, title: str) -> float:
     anchored = fitted - fitted[middle] + true[middle]
     fig, ax = plt.subplots(figsize=(5, 3.5))
     ax.plot(grid, true, "k-", lw=2, label="DGP  $-f(x_2)$")
-    ax.plot(grid, anchored, "o", ms=3, color="C0", label="fitted CS")
+    ax.plot(grid, anchored, "o", ms=3, color="C3", label="fitted CS")
     ax.set_xlabel("$x_2$")
     ax.set_ylabel("shift")
     ax.legend()

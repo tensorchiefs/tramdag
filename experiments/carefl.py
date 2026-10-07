@@ -85,9 +85,9 @@ def plot_curves(flow_x3, flow_x4, ref, path, title) -> dict:
     ]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
     for ax, (fitted, target, carefl, xlabel) in zip(axes, panels, strict=True):
-        ax.plot(ALPHAS, ref[f"true_{target}"], "-", color="C3", lw=2, label="DGP")
+        ax.plot(ALPHAS, ref[f"true_{target}"], "k-", lw=2, label="DGP")
         ax.plot(ALPHAS, ref[carefl], "o", ms=4, color="gold", label="CAREFL")
-        ax.plot(ALPHAS, fitted, "o", ms=3, color="C0", label="flow")
+        ax.plot(ALPHAS, fitted, "o", ms=3, color="C3", label="flow")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(f"${target[0]}_{target[1]}$")
         ax.legend()

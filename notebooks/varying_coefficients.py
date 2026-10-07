@@ -25,7 +25,7 @@
 # [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) states the
 # model, its penalty and its centering; this notebook runs it.
 #
-# This notebook builds a DGP whose effect function we know exactly, fits the
+# This notebook builds a DGP with a known effect function, fits the
 # model, and scores the recovered `beta(x)` against the truth. It then shows
 # the two things the term exists for that a plain flexible shift does not give:
 # a read-out you can plot, and a **propensity-centered** variant that survives
@@ -36,8 +36,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from tramdag import CS, LS, VC, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CS, LS, SI, VC, CausalFlowDAG, ContinuousNode, OrdinalNode
 from tramdag.callbacks import EarlyStopping
+from tramdag.plots import plot_varying_coef
 
 plt.rcParams["figure.dpi"] = 110
 
@@ -54,8 +55,8 @@ plt.rcParams["figure.dpi"] = 110
 #
 # $$\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3 .$$
 #
-# `X2` is deliberately *both* a confounder and an effect modifier — the case
-# where a naive estimate fails hardest.
+# `X2` is deliberately *both* a confounder and an effect modifier. In this case
+# a naive estimate fails hardest.
 
 # %%
 B0, B2, B3 = -1.0, 0.8, -0.6
@@ -105,7 +106,9 @@ def cheap_all_ls():
 
 screen = CausalFlowDAG(cheap_all_ls(), seed=0)
 screen.fit_classical(train)
-print(screen.effect_modifier_scan(train, "Y", t="T"))
+scan = screen.effect_modifier_scan(train, "Y", t="T")
+print(scan)
+assert scan["flag"][["X1", "X2", "X3"]].all()
 
 # %% [markdown]
 # `X2` and `X3` are the true modifiers, and both flag. `X1` flags too, but it
@@ -131,7 +134,10 @@ def simulate_linear_x1(n, seed):
 well_specified = simulate_linear_x1(4500, 1)
 screen2 = CausalFlowDAG(cheap_all_ls(), seed=0)
 screen2.fit_classical(well_specified)
-print(screen2.effect_modifier_scan(well_specified, "Y", t="T"))
+scan2 = screen2.effect_modifier_scan(well_specified, "Y", t="T")
+print(scan2)
+assert scan2["flag"][["X2", "X3"]].all()
+assert not scan2["flag"]["X1"]
 
 # %% [markdown]
 # The figure draws the scaled running sum $B_j$ of the scan for each candidate
@@ -186,12 +192,13 @@ fig.legend(
     *axes[1].get_legend_handles_labels(), loc="lower center", ncol=4, frameon=False
 )
 fig.tight_layout(rect=(0, 0.07, 1, 1))
+plt.show()
 
 # %% [markdown]
 # ## 3. The spec: prognostic part and effect head are separate
 #
-# `CS("X1", "X2", "X3")` absorbs the prognostic signal — as flexible as you
-# like — while `VC("X2", "X3", t="T")` carries the effect. `X2` and `X3` appear
+# `CS("X1", "X2", "X3")` absorbs the prognostic signal, as flexibly as
+# necessary. `VC("X2", "X3", t="T")` carries the effect. `X2` and `X3` appear
 # twice on purpose: prognostically through the shift, and as modifiers through
 # the head. Only the treatment named by `t=` owns its edge.
 
@@ -224,18 +231,19 @@ print(flow.to_matrix())
 # ## 4. Reading the effect out
 #
 # `varying_coef` gives $\beta(x)$ per row. It is **deterministic** and does not
-# look at the outcome — it is a property of the fitted model, not of the rows'
+# look at the outcome. It is a property of the fitted model, not of the rows'
 # `Y` values.
 
 # %%
 beta_hat = flow.varying_coef(test, "Y")
 beta_true = true_beta(test)
 corr = float(np.corrcoef(beta_hat, beta_true)[0, 1])
-beta0 = float(flow.nodes["Y"].shifts["T"].beta0)
+beta0 = flow.nodes["Y"].shifts["T"].beta0.item()
 
 print(f"corr(beta_hat, beta_true) = {corr:.3f}")
 print(f"beta0 = {beta0:+.3f}   (true constant part {B0:+.1f})")
 print(f"mean |error| = {np.abs(beta_hat - beta_true).mean():.3f}")
+assert corr > 0.95, f"the fitted beta(x) correlates only {corr:.3f} with the truth"
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
 axes[0].scatter(beta_true, beta_hat, s=6, alpha=0.35)
@@ -245,31 +253,36 @@ axes[0].set_xlabel(r"true $\beta(x)$")
 axes[0].set_ylabel(r"fitted $\hat\beta(x)$")
 axes[0].set_title(f"recovery, corr = {corr:.3f}")
 
-order = np.argsort(test["X2"].to_numpy())
-axes[1].plot(test["X2"].to_numpy()[order], beta_true[order], "k-", lw=2, label="true")
-axes[1].scatter(test["X2"], beta_hat, s=6, alpha=0.3, color="C0", label="fitted")
-axes[1].set_xlabel("$X_2$")
-axes[1].set_ylabel(r"$\beta$")
-axes[1].set_title(r"$\beta$ against a modifier")
-axes[1].legend()
+plot_varying_coef(flow, test, "Y", by="X2", ax=axes[1])
+x3_med = test["X3"].median()
+grid = np.linspace(test["X2"].min(), test["X2"].max(), 2)
+axes[1].plot(grid, B0 + B2 * grid + B3 * x3_med, "k--", lw=1)
+along_x2 = test.assign(X3=x3_med)
+gap_x2 = np.abs(flow.varying_coef(along_x2, "Y") - true_beta(along_x2)).max()
+print(f"X3 at its median: max |beta_hat - beta_true| along X2 = {gap_x2:.3f}")
+assert gap_x2 < 0.75, f"the fitted beta(X2) leaves the true line by {gap_x2:.3f}"
+axes[1].legend(["fitted", r"$\beta = 0$", "true"])
+axes[1].set_title(r"$\beta$ along $X_2$, $X_3$ at its median")
 fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# The scatter against `X2` alone is a band rather than a line, because the true
-# effect also depends on `X3` — exactly as it should be.
+# The right panel holds `X3` at its median, because the effect also depends on
+# `X3`. Along `X2`, the fitted line follows the true line.
 
 # %% [markdown]
 # ## 5. The read-out is an identity, not a summary
 #
 # For a binary treatment, $\beta(x)$ *equals* the difference of the abducted
-# latents between the two arms, with the outcome held fixed. That is a
-# definition the implementation must satisfy, and it does, to float precision:
+# latents between the two arms, with the outcome held fixed. The
+# implementation must satisfy this definition to float precision:
 
 # %%
 u1 = flow.abduct(test.assign(T=1.0), seed=0)["Y"].to_numpy()
 u0 = flow.abduct(test.assign(T=0.0), seed=0)["Y"].to_numpy()
-print(f"max |beta(x) - (u(T=1) - u(T=0))| = {np.abs(beta_hat - (u1 - u0)).max():.2e}")
+gap = np.abs(beta_hat - (u1 - u0)).max()
+print(f"max |beta(x) - (u(T=1) - u(T=0))| = {gap:.2e}")
+assert gap < 1e-5, f"the read-out differs from the latent difference by {gap:.2e}"
 
 # %% [markdown]
 # ## 6. Confounding: why `propensity=` exists
@@ -282,9 +295,10 @@ print(f"max |beta(x) - (u(T=1) - u(T=0))| = {np.abs(beta_hat - (u1 - u0)).max():
 # covariate, a strong propensity $e(x)=\sigma(2x)$, a constant true effect
 # $\tau = -1$, and a quadratic prognostic part fitted with a linear term.
 # `propensity="ps"` replaces $t$ by $t - \hat e(x)$ with out-of-fold propensities
-# from the training-frame column `ps`; the guide says why they must be out of
-# fold. Stage 1, the propensities, is yours. Here, five classical fits of the
-# treatment spec.
+# from the training-frame column `ps`.
+# [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) says why
+# they must be out of fold. Stage 1, the propensities, is yours. Here, five
+# classical fits of the treatment spec give them.
 
 # %%
 TAU = -1.0
@@ -301,12 +315,13 @@ def confounded(n, seed):
 c_train, c_val, c_test = confounded(5400, 0), confounded(600, 7), confounded(3000, 1000)
 
 # stage 1 of the centered design, the caller's job: cross-fitted P(T=1|X), each
-# fold predicted by a treatment model that never saw it (the DML requirement)
+# fold predicted by a treatment model that never saw it (as double machine
+# learning requires)
 fold_id = np.random.default_rng(0).permutation(len(c_train)) % 5
 e_oof = np.empty(len(c_train))
 for j in range(5):
     t_spec = {
-        "X": ContinuousNode(I(transform="affine")),
+        "X": ContinuousNode(SI(transform="affine")),
         "T": OrdinalNode(2, LS("X")),
     }
     proxy = CausalFlowDAG(t_spec, seed=0)
@@ -316,7 +331,7 @@ for j in range(5):
 mae = {}
 for propensity in (None, "ps"):
     spec_c = {
-        "X": ContinuousNode(I(transform="affine")),
+        "X": ContinuousNode(SI(transform="affine")),
         "T": OrdinalNode(2, LS("X")),
         # linear prognostic term, though the truth is quadratic
         "Y": ContinuousNode(LS("X") + VC("X", propensity=propensity, t="T")),

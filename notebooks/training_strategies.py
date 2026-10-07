@@ -20,10 +20,10 @@
 # `callbacks=`.
 #
 # This notebook runs every shipped strategy on one small workload, so the
-# comparison is like for like, and prints what each one leaves behind in
-# `flow.history`, and closes with a runtime comparison of the recipes on this
-# one workload. For which strategy to pick see the table in
-# [`docs/fitting.md`](../docs/fitting.md).
+# comparison is like for like. It prints what each strategy leaves in
+# `flow.history`. At the end, a scoreboard compares the runtime of the recipes
+# on this workload. The table in [`docs/fitting.md`](../docs/fitting.md) tells
+# which strategy to pick.
 
 # %%
 import time
@@ -45,7 +45,7 @@ REPO = next(
     p for p in [Path.cwd(), *Path.cwd().parents] if (p / "pyproject.toml").exists()
 )
 
-# The tracked 1000-row VACA sample, the same benchmark the Colab demo uses.
+# The tracked 1000-row VACA sample, drawn from the same process as the Colab demo.
 df = pd.read_csv(REPO / "notebooks" / "data" / "vaca.csv")
 train, val = df.iloc[:900], df.iloc[900:]
 
@@ -87,9 +87,9 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 # %% [markdown]
 # ## 1. What `fit` records without any callback
 #
-# Pass `validation_data=` and `fit` scores the validation set once per epoch,
-# centrally. `EarlyStopping` reads that one computation rather than
-# repeating it. Four keys appear in `flow.history`:
+# Pass `validation_data=` and `fit` scores each node's validation NLL once per
+# epoch. `EarlyStopping` reads it from `node.history`. Four keys appear in
+# `flow.history`:
 #
 # - `train`, one dict of per-node negative log-likelihood per epoch,
 # - `val`, the same for the validation rows, only when validation is on,
@@ -170,15 +170,14 @@ assert len(flow.history["train"]) == 300, "the second fit did not continue the h
 # %% [markdown]
 # ## 4. `EarlyStopping`: keep the best weights
 #
-# The loop keeps the final weights, which is what makes the classical
-# agreement exact. A flexible model does not always want that: it can reach a
-# better validation score part way through and then drift. `EarlyStopping`
-# snapshots each node's best epoch and loads it back at the end of that node's
-# fit.
+# The loop keeps the final weights. An all-`LS` model wants the final weights,
+# because they are the MLE ([`docs/fitting.md`](../docs/fitting.md)). A
+# flexible model does not always want them. It can reach a better validation
+# score part way through and then drift. `EarlyStopping` snapshots each node's
+# best epoch and loads it back at the end of that node's fit.
 #
-# The check below is the one a static code block cannot make. After the fit,
-# each node's validation score equals the *minimum* over its recorded epochs,
-# not the last one.
+# The check below confirms it. After the fit, each node's validation score
+# equals the *minimum* over its recorded epochs, not the last one.
 
 # %%
 flow = build()
@@ -297,12 +296,38 @@ for name, rates in flow.history["lr"][-1].items():
 # A one-line callable is often enough. This one records each node's
 # validation NLL after every epoch. Put it in a list: on the flow a callable
 # alone is a function of the node name.
-#
-# ```python
-# trace = []
-# flow.fit(train, epochs=100, validation_data=val,
-#          callbacks=[lambda node, epoch, opt: trace.append(node.nll(val))])
-# ```
+
+# %%
+trace = []
+build().fit(
+    train,
+    epochs=5,
+    batch_size=256,
+    callbacks=[lambda node, epoch, opt: trace.append((node.name, node.nll(val)))],
+)
+print(f"{len(trace)} entries, the first: {trace[0]}")
+assert len(trace) == 5 * len(SPEC)
+
+# %% [markdown]
+# `optimizer=` takes a factory `f(node)`. This one gives the networks weight
+# decay in their own parameter group. `flow.history["lr"]` records the rate of
+# each group, so it shows both groups of every node.
+
+
+# %%
+def adam_with_net_decay(node):
+    """Adam with weight decay on the network parameters only."""
+    named = list(node.named_parameters())
+    nets = [p for name, p in named if ".net." in name]
+    rest = [p for name, p in named if ".net." not in name]
+    groups = [{"params": rest}, {"params": nets, "weight_decay": 1e-4}]
+    return torch.optim.Adam(groups, lr=1e-2)
+
+
+flow = build()
+flow.fit(train, epochs=20, batch_size=256, optimizer=adam_with_net_decay)
+print("rates per group, last epoch:", flow.history["lr"][-1])
+assert all(set(rates) == {0, 1} for rates in flow.history["lr"][-1].values())
 
 # %% [markdown]
 # ## 7. One node alone
@@ -324,14 +349,13 @@ print(f"x3 alone: {len(x3.history['train'])} epochs, val NLL {x3.nll(val):.4f}")
 assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4  # the restored best
 
 # %% [markdown]
-# ## 8. The scoreboard: a poor man's runtime comparison
+# ## 8. The scoreboard: a runtime comparison
 #
-# One workload, one seed, one machine, every recipe: the wall-clock seconds
-# each one took, the node-epochs it spent (summed over the nodes), its
-# validation NLL and the gap to the best NLL on the board. A recipe that stops
-# itself wins on seconds only if it also stays near the best NLL, which is
-# what the last two columns show side by side. Absolute seconds are this
-# machine's; the ranking is what travels.
+# The board has one workload, one seed, one machine and every recipe. Each row
+# gives the wall-clock seconds and the node-epochs (summed over the nodes). It
+# also gives the validation NLL and the gap to the best NLL on the board. A
+# recipe that stops itself wins on seconds only if its NLL also stays near the
+# best. The absolute seconds apply to this machine only.
 
 # %%
 board = pd.DataFrame(scoreboard).set_index("strategy")
@@ -349,6 +373,7 @@ for name, row in board.iterrows():
         textcoords="offset points",
         fontsize=8,
     )
+ax.margins(x=0.15)
 ax.set_xlabel("wall-clock seconds")
 ax.set_ylabel("validation NLL above the best recipe")
 ax.set_title("cost against quality, one workload")
@@ -360,13 +385,19 @@ assert nll_best <= nll_plain + 1e-6, (
     f"EarlyStopping scored {nll_best:.4f} against plain Adam's {nll_plain:.4f}"
 )
 
+# %% [markdown]
+# The restored `EarlyStopping` score lies below the minimum of the plain Adam
+# curve. Each node restores its own best epoch, but the summed curve has one
+# epoch for all nodes.
+
 # %%
+assert nll_best <= min(history_plain) + 1e-6
 fig, ax = plt.subplots(figsize=(7, 3.4))
 ax.plot(np.arange(1, len(history_plain) + 1), history_plain, label="plain Adam")
 ax.axhline(nll_best, ls="--", lw=1, color="C1", label="EarlyStopping, restored")
 ax.set_xlabel("epoch")
 ax.set_ylabel("validation NLL (total)")
-ax.set_ylim(min(history_plain) - 0.02, min(history_plain) + 0.4)
+ax.set_ylim(min(nll_best, min(history_plain)) - 0.02, min(history_plain) + 0.4)
 ax.legend()
 ax.set_title("keeping the best epoch against keeping the last")
 fig.tight_layout()

@@ -288,3 +288,22 @@ def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain)
     flow.fit(df, epochs=2, batch_size=100)
     with pytest.raises(ValueError, match="ordinal parent"):
         flow.shift_curve("y", "t", np.linspace(0, 1, 5))
+
+
+def test_sample_runs_in_float64_with_an_ordinal_parent():
+    """An ordinal draw takes the model's dtype, so a float64 flow can sample."""
+    spec = {"a": OrdinalNode(2), "b": ContinuousNode(LS("a"))}
+    flow = CausalFlowDAG(spec, seed=0).double()
+    out = flow.sample(20, seed=0)
+    assert out.shape == (20, 2)
+
+
+def test_a_counterfactual_keeps_the_rows_of_its_latents():
+    """sample(u=abduct(df)) keeps df's index, so cf - factual lines up."""
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame({"x": rng.normal(size=50)}, index=range(100, 150))
+    df["y"] = df["x"] + rng.logistic(size=50)
+    spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
+    cf = flow.sample(u=flow.abduct(df), do={"x": 0.0})
+    assert list(cf.index) == list(df.index)

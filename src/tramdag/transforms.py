@@ -249,7 +249,7 @@ def ordinal_sample(theta_tilde: Tensor, shift: Tensor, z: Tensor) -> Tensor:
         The levels as floats, shape ``(n,)``.
     """
     finite = ordinal_cutpoints(theta_tilde)[:, 1:-1] - shift.view(-1, 1)
-    return (z.view(-1, 1) > finite).sum(dim=1).float()
+    return (z.view(-1, 1) > finite).sum(dim=1).to(shift.dtype)
 
 
 def ordinal_abduct(

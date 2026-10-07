@@ -2,7 +2,7 @@
 
 A model is one dict ``{node_name: NodeSpec}`` of [`ContinuousNode`][] and
 [`OrdinalNode`][]. Each node declares its transformation as an additive
-formula of [`Term`][] subclasses — a ``+`` sum — whose first entry
+formula of [`Term`][] subclasses, a ``+`` sum, whose first entry
 is the intercept ([`Intercept`][], written or prepended as ``I()``) followed
 by shifts ([`LinearShift`][], [`ComplexShift`][], [`VaryingCoefficient`][]).
 The paper's symbols ``I``, ``LS``, ``CS``, ``VC`` are the same classes;
@@ -114,7 +114,7 @@ def _check_term(value) -> Term:
     if isinstance(value, Term):
         return value
     raise TypeError(
-        "a transformation is built from terms (I/LS/CS/VC) — got "
+        "a transformation is built from terms (I/LS/CS/VC), got "
         f"{type(value).__name__}. A '+' sum is already a flat list, so do "
         "not nest one inside another list: write a sum."
     )
@@ -148,7 +148,7 @@ def _normalize_terms(value):
             )
         raise ValueError(
             "a formula takes exactly one intercept term, and CI(...) already "
-            "contains the baseline — drop the extra I/SI"
+            "contains the baseline; drop the extra I/SI"
         )
     if not intercept_at:
         return [Intercept(), *items]
@@ -164,8 +164,8 @@ def _check_node(name: str, node: NodeSpec, spec: dict[str, NodeSpec]) -> None:
     """Validate one node against the spec: parents exist, each owns one edge.
 
     A term validates its own shape when it is built (arity, option
-    values); what needs the spec — parents exist, the ``VC`` treatment and
-    centering rules — runs here, through the term's ``check``.
+    values); what needs the spec (parents exist, the ``VC`` treatment and
+    centering rules) runs here, through the term's ``check``.
 
     Raises
     ------
@@ -320,7 +320,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
 
     The result is JSON- and YAML-safe (tuple options such as ``units`` become
     lists), so a spec round-trips through ``json``/YAML as well as through
-    ``torch.save`` — except when a term carries a *callable*
+    ``torch.save``, except when a term carries a *callable*
     ``input_transform``, which serializes only through pickle
     (``torch.save``) and only as a module-level function.
 
@@ -396,16 +396,16 @@ class Term:
     """One additive term of a node's transformation; each kind is a subclass.
 
     Terms add: ``I("a") + CS("b")`` is the plain list of the two terms, a
-    node's formula. A term is plain data — comparable, hashable,
-    serializable by [`spec_to_dict`][] — and knows its own spec-level rules
+    node's formula. A term is plain data (comparable, hashable,
+    serializable by [`spec_to_dict`][]) and knows its own spec-level rules
     (``check``, ``edge_parents``, ``cells``, ``classical``). ``module`` is the
     class in [`modules`][tramdag.modules] that trains it, constructed as
     ``module(term, schema)``; the intercept slot adds ``n_params``.
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
     and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)
-    as class attributes, and assign the options — the keyword arguments of
-    ``__init__``, with their defaults — to ``self``:
+    as class attributes, and assign the options (the keyword arguments of
+    ``__init__``, with their defaults) to ``self``:
 
     ```python
     class Scaled(Term):
@@ -437,13 +437,13 @@ class Term:
         super().__init_subclass__(**kwargs)
         for attr in ("name", "module"):
             if attr not in cls.__dict__:
-                raise TypeError(f"{cls.__name__}: a Term subclass sets `{attr} = ...`.")
+                raise TypeError(f"{cls.__name__}: a Term subclass sets `{attr} = ...`")
 
     def __init__(self, *parents: str):
         self.parents = tuple(parents)
 
     def options(self) -> dict:
-        """Give everything the term carries, by name — the parents included."""
+        """Give everything the term carries, by name, the parents included."""
         return dict(vars(self))
 
     @classmethod
@@ -518,7 +518,7 @@ class Term:
 class Intercept(Term):
     """The intercept term ``I``: the parents reshape the monotone transform.
 
-    Without parents it is the paper's simple intercept **SI** — one free
+    Without parents it is the paper's simple intercept **SI**: one free
     parameter vector, the same for every row. With parents it is the
     complex intercept **CI**: the transform parameters become a function
     of them. [`SI`][] and [`CI`][] are the two spellings with their
@@ -534,14 +534,14 @@ class Intercept(Term):
         ``"spline"`` or ``"affine"``. ``None``, the default, means the node
         picks ``"bernstein"``; an ordinal node's intercept is the cutpoint
         vector and refuses a transform.
-    transform_kwargs : Mapping | None, optional
+    transform_kwargs : dict | None, optional
         The transform's keyword arguments as one mapping. This is the
         serialized form, which is how a spec YAML and a checkpoint carry
         them; write them out instead when calling by hand.
     allow_interaction : bool, optional
         ``False`` makes a multi-parent term **additive**: one network per
         parent, their parameter vectors summed in coefficient space. A node
-        takes at most one intercept term with parents — write an additive
+        takes at most one intercept term with parents. Write an additive
         intercept with this flag, not with several intercept terms. Default
         ``True``.
 
@@ -603,19 +603,19 @@ class Intercept(Term):
         self.input_transform = _checked_input_transform(input_transform)
         if not self.parents and self.input_transform is not None:
             raise ValueError(
-                "a simple intercept has no network inputs — input_transform= "
+                "a simple intercept has no network inputs; input_transform= "
                 "belongs on CI/CS/VC terms"
             )
         if not self.allow_interaction and len(self.parents) < 2:
             raise ValueError(
                 "allow_interaction=False makes a MULTI-parent intercept additive; "
-                "with one parent there is no interaction to disallow — drop the "
+                "with one parent there is no interaction to disallow; drop the "
                 "argument"
             )
 
     @property
     def classical(self) -> bool:
-        """Say yes only for a parentless ``I()`` — the simple baseline."""
+        """Say yes only for a parentless ``I()``, the simple baseline."""
         return not self.parents
 
     def cells(self) -> list[tuple[str, str, bool]]:
@@ -649,11 +649,11 @@ class LinearShift(Term):
     def __init__(self, *parents: str):
         super().__init__(*parents)
         if len(self.parents) != 1:
-            raise ValueError("LS() takes exactly one parent.")
+            raise ValueError("LS() takes exactly one parent")
 
     @property
     def classical(self) -> bool:
-        """Say yes — an LS is a classical coefficient."""
+        """Say yes: an LS is a classical coefficient."""
         return True
 
 
@@ -701,7 +701,7 @@ class ComplexShift(Term):
         self.batch_norm = batch_norm
         self.input_transform = _checked_input_transform(input_transform)
         if not self.parents:
-            raise ValueError("CS() needs at least one parent.")
+            raise ValueError("CS() needs at least one parent")
 
 
 class VaryingCoefficient(Term):
@@ -718,7 +718,7 @@ class VaryingCoefficient(Term):
     Parameters
     ----------
     *modifiers : str
-        The effect modifiers — the covariates that enter ``b_theta``.
+        The effect modifiers, the covariates that enter $b_\Theta$.
         Empty means a constant effect.
     t : str
         The treatment (required keyword). Must be a continuous node or a
@@ -727,7 +727,7 @@ class VaryingCoefficient(Term):
     Other Parameters
     ----------------
     penalty : float, optional
-        L2 weight on the ``b_theta`` weights, on the total-NLL scale, by
+        L2 weight on the $b_\Theta$ weights, on the total-NLL scale, by
         default 1.0. Must be >= 0.
     propensity : str | None, optional
         The training-frame column holding the out-of-fold propensities
@@ -737,11 +737,11 @@ class VaryingCoefficient(Term):
         frozen data; every query after the fit recomputes $\hat e$ from the
         flow's own treatment node. Requires a binary ordinal ``t``.
     units : list[int] | tuple[int, ...], optional
-        Hidden layers of ``b_theta``, by default ``(16,)``.
+        Hidden layers of $b_\Theta$, by default ``(16,)``.
     activation : str, optional
-        Activation of ``b_theta``'s hidden layers, by default ``"relu"``.
+        Activation of $b_\Theta$'s hidden layers, by default ``"relu"``.
     batch_norm : bool, optional
-        Batch-normalize ``b_theta``'s hidden layers, by default False.
+        Batch-normalize $b_\Theta$'s hidden layers, by default False.
     input_transform : str | callable | None, optional
         As for [`Intercept`][], over the modifiers. ``None``, the default,
         applies no transform.
@@ -767,7 +767,7 @@ class VaryingCoefficient(Term):
         input_transform: object = None,
     ):
         if penalty < 0:
-            raise ValueError(f"VC(): penalty must be >= 0, got {penalty}")
+            raise ValueError(f"VC(): penalty must be >= 0, got {penalty!r}")
         # the treatment leads the parents: it is the one that owns an edge
         super().__init__(t, *modifiers)
         self.penalty = float(penalty)
@@ -802,7 +802,7 @@ class VaryingCoefficient(Term):
             raise ValueError(
                 f"node {name!r}: VC(propensity=) names the propensity COLUMN of "
                 "the training frame (out-of-fold P(t=1|pa_t) per row), or is "
-                f"None — got {self.propensity!r}. Cross-fit the propensities "
+                f"None; got {self.propensity!r}. Cross-fit the propensities "
                 "outside, merge them as a column and pass "
                 "propensity='<column>'."
             )
@@ -852,6 +852,14 @@ class ContinuousNode:
         term. ``None`` (default) is a source node. The
         class of the monotone transform is chosen on the intercept term,
         ``I(..., transform="spline")``; the default is ``"bernstein"``.
+
+    Raises
+    ------
+    TypeError
+        If a formula entry is not a term.
+    ValueError
+        If the formula has more than one intercept term, or the intercept
+        is not first.
     """
 
     kind = "continuous"
@@ -859,7 +867,7 @@ class ContinuousNode:
     def __init__(self, terms=None):
         self.terms = _normalize_terms(terms)
         # the arguments go straight to the transform class; if they are
-        # wrong, that class says so — this layer does not second-guess it
+        # wrong, that class says so; this layer does not second-guess it
         intercept = self.terms[0]
         self.transform = intercept.transform or DEFAULT_TRANSFORM
         self.transform_kwargs = dict(intercept.transform_kwargs)
@@ -891,6 +899,14 @@ class OrdinalNode:
     terms : Term | list[Term] | None, optional
         The additive formula, as for [`ContinuousNode`][], by default
         ``None``.
+
+    Raises
+    ------
+    ValueError
+        If ``levels`` is below 2, the intercept names a transform, or the
+        formula breaks a rule of [`ContinuousNode`][].
+    TypeError
+        If a formula entry is not a term.
     """
 
     kind = "ordinal"
@@ -898,7 +914,7 @@ class OrdinalNode:
     def __init__(self, levels: int, terms=None):
         self.levels = int(levels)
         if self.levels < 2:
-            raise ValueError(f"OrdinalNode(levels=) must be >= 2, got {self.levels}")
+            raise ValueError(f"OrdinalNode(levels=) must be >= 2, got {self.levels!r}")
         self.terms = _normalize_terms(terms)
         intercept = self.terms[0]
         if intercept.transform or intercept.transform_kwargs:
@@ -924,11 +940,10 @@ class OrdinalNode:
         return hash((self.kind, self.levels, tuple(self.terms)))
 
 
+# %% alias -----------------------------------------------------------------------------
 # kept after the classes: the union is evaluated at definition time
 NodeSpec = ContinuousNode | OrdinalNode
 
-
-# %% alias -----------------------------------------------------------------------------
 # The paper's symbols are the notation of the docs and the spelling nearly
 # every caller uses; they are the classes above, unchanged.
 I = Intercept  # noqa: E741 - ambiguous only out of context

@@ -1,6 +1,6 @@
 """Figures of a TRAM-DAG: the labelled DAG, the marginals, the training curve.
 
-matplotlib is an optional dependency — ``pip install "tramdag[plots]"``. It is
+matplotlib is an optional dependency: ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
 """
 
@@ -134,7 +134,7 @@ def _term_edges(child: str, term) -> list[tuple[str, str, str, bool]]:
 
     Read off the term's adjacency ``cells``: the tag is the term name (``CI``
     for an intercept edge, ``VCm`` for a VC modifier) and ``joint`` is the
-    term's own answer — ``cells`` is the per-term authority here.
+    term's own answer; ``cells`` is the per-term authority here.
     """
     return [
         (parent, child, EDGE_LABEL.get(tag, tag), joint)
@@ -422,7 +422,8 @@ def plot_dag(
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure sized to the layout.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
         Axes title, by default none.
 
@@ -430,6 +431,11 @@ def plot_dag(
     -------
     matplotlib.axes.Axes
         The axes drawn into.
+
+    Raises
+    ------
+    ValueError
+        If the spec has no node.
     """
     plt = _plt()
     spec = getattr(spec_or_flow, "spec", spec_or_flow)  # a flow draws its spec
@@ -502,7 +508,7 @@ def plot_marginals(
     ncols : int, optional
         Panels per row of a new figure, by default 3.
     seed : int | None, optional
-        Seed of the flow's sample.
+        Seed of the flow's sample, by default None.
     colors : tuple[str, str], optional
         Colours of the data and of the flow's sample, by default
         ``("C0", "C1")``.
@@ -513,7 +519,8 @@ def plot_marginals(
         Draw into these panels, one per node in the flow's order; by default
         a new figure.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
         Figure title, by default ``"observed vs sampled marginals"``;
         ``None`` for none.
@@ -608,7 +615,8 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
     title : str | None, optional
         Axes title, by default ``"training"``.
 
@@ -616,6 +624,11 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     -------
     matplotlib.axes.Axes
         The axes drawn into.
+
+    Raises
+    ------
+    ValueError
+        If ``flow.history`` is empty.
     """
     plt = _plt()
     hist = flow.history
@@ -686,7 +699,8 @@ def plot_varying_coef(
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure.
     path : str | Path | None, optional
-        Save the figure here (150 dpi) after drawing.
+        Save the figure here (150 dpi) after drawing, by default None (not
+        saved).
 
     Returns
     -------

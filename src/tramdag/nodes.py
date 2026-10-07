@@ -129,9 +129,8 @@ def write_checkpoint(path: str | Path, payload: dict, device) -> None:
     except (pickle.PicklingError, AttributeError) as err:
         raise ValueError(
             "the spec does not serialize: a callable input_transform "
-            "must be a picklable module-level function "
-            "— use 'minmax'/'standardize', or def the function at "
-            "module level."
+            "must be a picklable module-level function; use "
+            "'minmax'/'standardize', or def the function at module level"
         ) from err
 
 
@@ -159,11 +158,11 @@ class Node(NodeFitMixin, nn.Module):
 
     It is an intercept plus additive shift terms. The intercept produces the
     transform parameters $\vartheta$. The shift terms add up on the latent
-    scale. The likelihood, sampling and encoding branches on the node kind
-    live in the five methods ``log_prob``, ``sample``, ``abduct``,
-    ``marginal_theta`` and ``encode``, and in the module function ``encode``;
-    the rest of the package reads ``kind`` or the schema entry for dispatch
-    and display only.
+    scale. The node-kind maths lives in the five methods ``log_prob``,
+    ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, in the module
+    function ``encode`` and in the score derivative ``scores._dl_ds``. The
+    rest of the package reads ``kind`` or the schema entry to check, convert
+    or display values.
 
     Parameters
     ----------
@@ -175,6 +174,16 @@ class Node(NodeFitMixin, nn.Module):
         The parent schema, ``{parent: "continuous" | n_levels}``. It sizes
         the parent features: a continuous parent enters raw, an ordinal one
         one-hot over its levels.
+
+    Attributes
+    ----------
+    history : dict
+        The fit history, see [`fit`][tramdag.nodes.Node.fit].
+    calibrated : Tensor
+        Boolean buffer, set by the first fit's calibration and kept in the
+        checkpoint.
+    meta : dict
+        The provenance that [`load`][tramdag.nodes.Node.load] fills.
     """
 
     def __init__(self, name: str, node_spec: NodeSpec, schema: dict[str, str | int]):
@@ -196,7 +205,7 @@ class Node(NodeFitMixin, nn.Module):
             n_params = node_spec.levels - 1
         self.encoding = schema_entry(node_spec)  # this node's own schema entry
         # the intercept slot: the free theta_0, one joint net, or one net per
-        # parent summed in coefficient space — `intercept_module` picks
+        # parent summed in coefficient space; `intercept_module` picks
         self.intercept = terms[0].module(terms[0], self.schema, n_params)
         # one module per shift term, built in formula order (the seeded RNG
         # stream is pinned to it); each names its own key: the parent, "a+b"
@@ -315,7 +324,7 @@ class Node(NodeFitMixin, nn.Module):
         r"""Give the node's marginal-start $\vartheta$, or ``None`` when there is none.
 
         Ordinal: the empirical class log-odds. Continuous: the transform's own
-        marginal start over the same column (``None`` for spline/affine —
+        marginal start over the same column (``None`` for spline/affine,
         nothing to set). Only a free intercept applies it.
         """
         if self.kind == "ordinal":
@@ -329,8 +338,8 @@ class Node(NodeFitMixin, nn.Module):
         ``key`` names the term ("@I" for the intercept, the shift key
         otherwise); a term with an ``input_transform`` gets its continuous
         parent columns transformed with the statistics frozen at
-        calibration. Every network input goes through here — training and
-        the read-outs (``varying_coef``, ``intercept_contributions``) alike —
+        calibration. Every network input goes through here, training and
+        the read-outs (``varying_coef``, ``intercept_contributions``) alike,
         so the model seen at inference is the model that was fitted. Linear
         shifts and the VC treatment column are not network inputs and never
         pass through.
@@ -352,7 +361,7 @@ class Node(NodeFitMixin, nn.Module):
         ----------
         feats : dict[str, Tensor]
             Encoded parent features keyed by parent name, plus the terms'
-            side columns (a centered VC's propensities — frozen from the
+            side columns (a centered VC's propensities, frozen from the
             training frame, injected live by the flow at query time).
         n : int
             Batch size.

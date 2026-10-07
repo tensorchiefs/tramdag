@@ -44,8 +44,8 @@ __all__ = [
     "ordinal_sample",
 ]
 
-# half-width B of the pre-scaled domain [-B, B]. Fixed: nothing ever set it,
-# and the quantile pre-map makes one canonical domain work for any data scale.
+# half-width B of the pre-scaled domain [-B, B]. Fixed: the quantile pre-map
+# makes one canonical domain work for any data scale.
 BOUND = 5.0
 
 # quantile level of the range pre-map. The flow's calibration scales the
@@ -334,14 +334,14 @@ class _ScaledUT(torch.nn.Module, ABC):
     def __init__(self, range_q: float = RANGE_Q):
         super().__init__()
         if not 0.0 <= range_q < 0.5:
-            raise ValueError(f"range_q must be in [0, 0.5), got {range_q}")
+            raise ValueError(f"range_q must be in [0, 0.5), got {range_q!r}")
         self.range_q = range_q
         self.bound = BOUND
         self.register_buffer("xmin", torch.tensor(0.0))
         self.register_buffer("xmax", torch.tensor(1.0))
 
     def marginal_init_theta(self, column: np.ndarray | None) -> Tensor | None:
-        """Give the calibrated marginal start, or ``None`` — no such start.
+        """Give the calibrated marginal start, or ``None`` for no such start.
 
         ``BernsteinUT`` overrides with its empirical-marginal start; a
         spline or affine transform has none and silently skips the
@@ -504,7 +504,8 @@ class BernsteinUT(_ScaledUT):
     Parameters
     ----------
     n_coeffs : int, optional
-        Number of Bernstein coefficients, by default 20.
+        Number of unconstrained coefficients, by default 20. The polynomial
+        has degree ``n_coeffs + 1`` (tram's ``order``).
     range_q : float, optional
         Domain quantile level, see ``_ScaledUT``.
     """
@@ -543,7 +544,7 @@ class BernsteinUT(_ScaledUT):
         ------
         ValueError
             With ``range_q=0``: the domain ends are the data min/max, whose
-            latent quantile target $\operatorname{logit} 0$ is undefined — skip
+            latent quantile target $\operatorname{logit} 0$ is undefined. Skip
             ``marginal_init`` for a min-max-domain model.
 
         Returns
@@ -562,7 +563,7 @@ class BernsteinUT(_ScaledUT):
         if self.range_q == 0:
             raise ValueError(
                 "the marginal start maps the domain ends onto the latent "
-                "range_q quantiles, and logit(0) is undefined — a "
+                "range_q quantiles, and logit(0) is undefined; a "
                 "range_q=0 (min-max domain) model has no marginal start; "
                 "fit it with marginal_init=False"
             )
@@ -632,7 +633,13 @@ class SplineUT(_ScaledUT):
 
 
 class AffineUT(_ScaledUT):
-    """Monotone affine transform: the node-conditional is a logistic GLM."""
+    """Monotone affine transform: the node-conditional is a logistic GLM.
+
+    Parameters
+    ----------
+    range_q : float, optional
+        Domain quantile level, see ``_ScaledUT``.
+    """
 
     @property
     def n_params(self) -> int:

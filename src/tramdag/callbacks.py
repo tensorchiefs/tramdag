@@ -28,7 +28,7 @@ def _last_val(node, cb: Callback) -> float:
     val_epoch = node.history.get("val_epoch", [])
     if not val_epoch or val_epoch[-1] != len(node.history["train"]):
         raise RuntimeError(
-            f"{type(cb).__name__} reads node.history['val'] — pass validation_data= "
+            f"{type(cb).__name__} reads node.history['val']; pass validation_data= "
             "or validation_split= to fit()"
         )
     return node.history["val"][-1]
@@ -36,7 +36,7 @@ def _last_val(node, cb: Callback) -> float:
 
 # %% public classes --------------------------------------------------------------------
 class Callback:
-    """Base class of ``fit(callbacks=)`` entries — override any of the hooks.
+    """Base class of ``fit(callbacks=)`` entries; override any of the hooks.
 
     ``on_fit_begin(node, optimizer)`` runs once after calibration, before the
     first epoch (the shipped ``EarlyStopping`` resets its state here, so one
@@ -84,6 +84,15 @@ class EarlyStopping(Callback):
     ----------
     best_nll, best_epoch
         The best validation NLL seen this fit and its epoch.
+
+    Raises
+    ------
+    ValueError
+        If ``patience`` is below 1, or ``patience=None`` comes with
+        ``restore_best=False``.
+    RuntimeError
+        During the fit, if it has no validation data, or at fit end if no
+        epoch gave a finite validation NLL to restore.
     """
 
     def __init__(
@@ -111,7 +120,7 @@ class EarlyStopping(Callback):
         self._state = None
 
     def on_fit_begin(self, node, optimizer) -> None:
-        """Start fresh — neither patience nor the snapshot carries over."""
+        """Start fresh: neither patience nor the snapshot carries over."""
         self._reset()
 
     def on_epoch_end(self, node, epoch: int, optimizer) -> bool:
@@ -131,7 +140,7 @@ class EarlyStopping(Callback):
             raise RuntimeError(
                 "EarlyStopping has nothing to restore: no epoch reached "
                 "on_epoch_end with a finite validation NLL. Either fit() ran no "
-                "epoch, or the fit diverged — lower learning_rate, or check the "
+                "epoch, or the fit diverged. Lower learning_rate, or check the "
                 "validation frame for a column the model cannot score."
             )
         node.load_state_dict(self._state)

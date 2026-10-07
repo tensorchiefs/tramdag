@@ -42,8 +42,16 @@ class ReadoutsMixin:
         Returns
         -------
         np.ndarray
-            The shift values, shape ``(m,)`` — the curve a replication plots
+            The shift values, shape ``(m,)``: the curve a replication plots
             against the data-generating truth.
+
+        Raises
+        ------
+        KeyError
+            If ``node`` is unknown, or the node has no shift term keyed
+            ``parent``.
+        ValueError
+            If ``parent`` is an ordinal node.
         """
         nd = self._node(node)
         if parent not in nd.shifts:
@@ -110,7 +118,7 @@ class ReadoutsMixin:
             if isinstance(m, VaryingCoefficientModule)
         }
         if not vcs:
-            raise ValueError(f"node {node!r} has no VC term.")
+            raise ValueError(f"node {node!r} has no VC term")
         if t is None:
             if len(vcs) > 1:
                 raise ValueError(
@@ -184,17 +192,16 @@ class ReadoutsMixin:
             Rows over which to center and at which to evaluate the
             contributions. Must contain every intercept-parent column.
         node : str
-            Name of a node with at least one complex-intercept (``I``) term
-            that has parents.
+            Name of a node whose intercept term has parents.
 
         Returns
         -------
         dict
             Three keys. ``"baseline"`` is the absorbed constant, a ``(P,)``
-            array — the sum of the per-term means. ``P`` is the node's
+            array: the sum of the per-term means. ``P`` is the node's
             transform-parameter count: ``ut.n_params`` for a continuous
             node, ``levels - 1`` cutpoint parameters for an ordinal node.
-            ``"contributions"`` is ``{term_label: (n, P) array}`` — each
+            ``"contributions"`` is ``{term_label: (n, P) array}``: each
             term's mean-centered contribution at each row, columns summing
             to about zero over the rows. ``term_label`` is the term's
             parents joined by ``"+"``. ``"parents"`` is
@@ -206,7 +213,7 @@ class ReadoutsMixin:
             If ``node`` is unknown, or if an intercept-parent column is
             missing from ``df``.
         ValueError
-            If the node has no complex-intercept term with parents.
+            If the node's intercept term has no parents.
 
         Notes
         -----
@@ -251,7 +258,7 @@ class ReadoutsMixin:
 
         A continuous parent stays raw in one column named after it. An
         ordinal parent becomes one column per level, named
-        ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.
+        ``"{parent}[{k}]"``, the same one-hot the flow builds internally.
 
         Use ``drop_first=True`` to get the design a classical reference
         expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the
@@ -271,6 +278,13 @@ class ReadoutsMixin:
         -------
         pd.DataFrame
             One column per encoded feature, indexed like ``df``.
+
+        Raises
+        ------
+        KeyError
+            If ``node`` is unknown, or ``df`` lacks a parent column.
+        ValueError
+            If an ordinal parent value is not a level index.
         """
         nd = self._node(node)
         feats = nd.features(self._tensorize(df, nd.parents))

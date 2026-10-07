@@ -1,4 +1,4 @@
-"""CausalFlowDAG — a single triangular normalizing flow on a user-defined DAG.
+"""CausalFlowDAG: a single triangular normalizing flow on a user-defined DAG.
 
 The flow maps iid standard-logistic latents ``U`` to the observed variables ``X``
 in topological order. ``sample``, ``abduct``, ``pmf`` and ``density`` answer the
@@ -80,6 +80,18 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Kaiming-uniform), ``"glorot"`` (glorot-uniform weights, zero biases)
         or ``"normal"`` (N(0, 0.05^2) weights and biases). A VC head's
         output layer stays zero either way. Stored in the checkpoint.
+
+    Attributes
+    ----------
+    nodes : nn.ModuleDict
+        One [`Node`][tramdag.nodes.Node] per variable, in topological order.
+    order : list[str]
+        The node names in topological order.
+    history : dict
+        The nodes' fit histories, see
+        [`history`][tramdag.flow.CausalFlowDAG.history].
+    meta : dict
+        The provenance that [`load`][tramdag.flow.CausalFlowDAG.load] fills.
     """
 
     def __init__(
@@ -147,7 +159,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         KeyError
-            If the frame lacks one of the columns, by name — a spec/data
+            If the frame lacks one of the columns, by name. A spec/data
             mismatch would otherwise surface deep inside a tensor op.
         ValueError
             If an ordinal column is not a level index of its node. The
@@ -315,7 +327,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             Observations, one column per node.
         nodes : list[str] | None, optional
             Sum only these nodes' contributions. A subset is exact, because
-            the per-node losses are independent — ``nodes=["Y"]`` is the
+            the per-node losses are independent: ``nodes=["Y"]`` is the
             conditional log-likelihood of ``Y`` given its parents, per row,
             in log space (safer than the log of [`pmf`][], which
             underflows in the tail). ``None`` (default) is the joint.
@@ -324,6 +336,13 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         -------
         Tensor
             ``log p(x)`` per row, shape ``(n,)``.
+
+        Raises
+        ------
+        ValueError
+            If ``nodes`` is empty, or an ordinal value is not a level index.
+        KeyError
+            If ``nodes`` names an unknown node, or ``df`` lacks a column.
         """
         if nodes is not None and not nodes:
             raise ValueError("nodes=[] sums nothing; omit it for the joint")
@@ -382,7 +401,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If both ``n`` and ``u`` are omitted.
+            If both ``n`` and ``u`` are omitted, or a ``do`` value of an
+            ordinal node is not a level index.
         """
         do = do or {}
         for name, value in do.items():
@@ -495,7 +515,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         The continuous counterpart of [`pmf`][]: for every row of ``df``
         the density $p(\text{node} = g \mid \mathrm{pa})$ at each grid value $g$, in
-        closed form from the transform — no sampling.
+        closed form from the transform, with no sampling.
 
         Parameters
         ----------

@@ -1,6 +1,6 @@
 """The term modules: one ``nn.Module`` per term, built from the term's spec class.
 
-A spec term ([`Term`][] subclass — ``LS``, ``CS``, ``VC``, ``I``) is plain
+A spec term ([`Term`][] subclass: ``LS``, ``CS``, ``VC``, ``I``) is plain
 data and carries the spec-level rules, and its ``module`` attribute is the
 class here that trains it (``LinearShift.module is LinearShiftModule``). A
 module is constructed from its term and the node's parent schema,
@@ -159,7 +159,7 @@ class _InputTransform(nn.Module):
     ``calibrate`` takes the statistics from the training rows once:
     ``"minmax"`` freezes per-column lo/hi, ``"standardize"`` mean/std, and a
     callable keeps the raw training columns and is applied per batch as
-    ``fn(x, train)`` — so train statistics inside the callable are always the
+    ``fn(x, train)``, so train statistics inside the callable are always the
     frozen training data, never the batch's.
     """
 
@@ -217,7 +217,7 @@ class TermModule(nn.Module):
 
         ``Node.calibrate`` calls this once per term; a term without
         an ``input_transform`` has nothing to freeze. The intercept slot has a
-        second step on top of this one — see
+        second step on top of this one, see
         [`calibrate_intercept`][tramdag.modules.InterceptModule.calibrate_intercept].
         """
         tr = self.input_transform
@@ -301,8 +301,8 @@ class InterceptModule(TermModule, ABC):
 
     A node has exactly one intercept term (normalization guarantees
     ``node.terms[0]``); it produces the transform parameters ``theta``.
-    ``groups`` carries the parent groups — empty for a simple intercept,
-    one tuple for a joint net, one per parent for an additive one — and
+    ``groups`` carries the parent groups (empty for a simple intercept,
+    one tuple for a joint net, one per parent for an additive one) and
     ``ci_parents`` their flat order. [`intercept_module`][] picks the class
     for an ``I`` term; each class constructs from ``(term, schema, n_params)``.
     """
@@ -316,7 +316,7 @@ class InterceptModule(TermModule, ABC):
         The intercept slot calibrates one thing more than every other term, so
         it says so in its own name rather than widening ``calibrate``: ``own``
         is the node's training column and ``ut`` its monotone transform
-        (``None`` for an ordinal node — cutpoints have no domain), whose
+        (``None`` for an ordinal node: cutpoints have no domain), whose
         ``range_q``/``1 - range_q`` quantiles map onto the pre-scaled domain.
         """
         self.calibrate(train_df)
@@ -456,7 +456,7 @@ class AdditiveInterceptModule(InterceptModule):
 
 
 class LinearShiftModule(ShiftModule):
-    r"""``LS`` — one raw-unit coefficient per feature of the single parent, no bias.
+    r"""``LS``: one raw-unit coefficient per feature of the single parent, no bias.
 
     Keyed by the parent's name.
 
@@ -486,7 +486,7 @@ class LinearShiftModule(ShiftModule):
         return self.fc(x).squeeze(-1)
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
-        """Give the raw parent column times the weight — no input transform."""
+        """Give the raw parent column times the weight, with no input transform."""
         return self(torch.cat([feats[p] for p in self.parents], dim=1))
 
     def score_columns(self, node: Node, feats: dict, dlds) -> dict:
@@ -503,7 +503,7 @@ class LinearShiftModule(ShiftModule):
 
 
 class ComplexShiftModule(ShiftModule):
-    """``CS`` — an additive network shift ``g(x)`` over its parents.
+    """``CS``: an additive network shift ``g(x)`` over its parents.
 
     One net over the concatenated parents, keyed ``'a'`` or ``'a+b'``. The
     term's ``units``, ``activation`` and ``batch_norm`` size the network.
@@ -631,7 +631,7 @@ class VaryingCoefficientModule(ShiftModule):
         self.beta0 += delta
 
     def regressor(self, feats: dict) -> Tensor:
-        r"""Give the ``(n, 1)`` column $\beta$ multiplies — the treatment, raw.
+        r"""Give the ``(n, 1)`` column $\beta$ multiplies: the treatment, raw.
 
         The one-hot level-1 indicator for a binary ordinal treatment, the
         value itself for a continuous one; a centered term subtracts its
@@ -698,8 +698,8 @@ class VaryingCoefficientModule(ShiftModule):
     def live_side(self, flow, values: dict, n: int) -> dict:
         """Give the full-data propensity from the flow's own treatment node.
 
-        Detached — no gradient reaches the treatment node from this node's
-        loss — and derived from the current parent values, so
+        Detached (no gradient reaches the treatment node from this node's
+        loss) and derived from the current parent values, so
         ``do``-mutilated sampling centers with the intervened ``t``. Training
         uses the frozen column.
         """

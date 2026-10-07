@@ -1,4 +1,4 @@
-"""Figures of a TRAM-DAG: the labelled DAG, the marginals, the training curve.
+"""Figures of a TRAM-DAG: the DAG, the marginals, the training curve, a VC's beta.
 
 matplotlib is an optional dependency: ``pip install "tramdag[plots]"``. It is
 imported on the first call, so importing tramdag never needs it.
@@ -223,7 +223,7 @@ def _hits(spec, pos, pts, skip=()) -> bool:
             & (np.abs(pts[:, 1] - y) < NODE_H / 2 + 0.1)
         ).any()
         for n, (x, y) in pos.items()
-        if n not in skip
+        if n in spec and n not in skip  # a modifier's target point is no node
     )
 
 
@@ -282,34 +282,30 @@ def _draw_edge(
         )
 
 
-def _draw_modifier(ax, patches, pos, mod: str, target, treatment: str, st: dict):
+def _draw_modifier(ax, patches, pos, edge, bulge: float, st: dict) -> None:
     """Draw a VC modifier's arrow onto the midpoint of its treatment edge.
 
-    The arrow bends around the treatment node when the straight line would
-    cross it, as it does for a modifier in the treatment's row.
+    ``edge`` runs from the modifier to the midpoint, whose position ``pos``
+    holds under the edge's own key; ``bulge`` bends it around the nodes.
     """
     from matplotlib.patches import FancyArrowPatch
 
-    (x0, y0), (tx, ty) = pos[mod], target
-    (cx, cy) = pos[treatment]
-    dx, dy = tx - x0, ty - y0
-    s = np.clip(((cx - x0) * dx + (cy - y0) * dy) / (dx * dx + dy * dy), 0.0, 1.0)
-    crosses = np.hypot(x0 + s * dx - cx, y0 + s * dy - cy) < NODE_H
-    rad = (0.4 if cy <= y0 else -0.4) if crosses else 0.0
+    mod, target = edge
+    (x0, y0), (x1, y1) = pos[mod], pos[target]
     style = _edge_style("VC modifier", st)
     ax.add_patch(
         FancyArrowPatch(
             (x0, y0),
-            target,
+            (x1, y1),
             patchA=patches[mod],
             arrowstyle="-|>,head_length=5,head_width=2.5",
-            connectionstyle=f"arc3,rad={rad}",
+            connectionstyle=f"arc3,rad={-2 * bulge / np.hypot(x1 - x0, y1 - y0)}",
             shrinkA=2,
             shrinkB=3,
             **style,
         )
     )
-    ax.plot(*target, "o", ms=3.5, color=style["color"])
+    ax.plot(x1, y1, "o", ms=3.5, color=style["color"])
 
 
 def _dag_edges(spec, modifiers: str) -> tuple[list, list]:
@@ -370,6 +366,43 @@ def _legend(ax, names: set[str], st: dict) -> None:
         )
         for text in leg.get_texts():
             text.set_color(st["text"])
+
+
+def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
+    """Draw one node's observed against sampled marginal into ``panel``."""
+    if node.kind == "ordinal":
+        lv, w = np.arange(node.levels), 0.4
+        for x, d, label, color in [
+            (lv - w / 2, df, "data", colors[0]),
+            (lv + w / 2, sample, "flow", colors[1]),
+        ]:
+            counts = d[name].value_counts(normalize=True).reindex(lv, fill_value=0)
+            panel.bar(x, counts, w, label=label, color=color)
+        panel.set_xticks(lv)
+        panel.set_ylabel("proportion")
+    else:
+        # 30 bins over the central 99.8 %, so an outlier cannot flatten the
+        # panel; the density counts every row, also those outside the bins
+        edges = np.linspace(*np.quantile(df[name], [0.001, 0.999]), 31)
+        width = edges[1] - edges[0]
+        panel.hist(
+            df[name],
+            bins=edges,
+            weights=np.full(len(df), 1 / (len(df) * width)),
+            alpha=0.5,
+            color=colors[0],
+            label="data",
+        )
+        panel.hist(
+            sample[name],
+            bins=edges,
+            weights=np.full(len(sample), 1 / (len(sample) * width)),
+            histtype="step",
+            lw=1.5,
+            color=colors[1],
+            label="flow",
+        )
+        panel.set_ylabel("density")
 
 
 def _finish(fig, path, created: bool) -> None:
@@ -445,7 +478,16 @@ def plot_dag(
     pos, layer_dx = _layout(spec)
     edges, mods = _dag_edges(spec, modifiers)
     bulges = _bulges(spec, pos, layer_dx, edges)
-    x_lo, x_hi, y_lo, y_hi = _limits(spec, pos, bulges)
+    # a modifier points at its treatment edge's midpoint, a position of its own
+    pos_all = pos | {
+        (mod, t_edge): tuple(_arc(pos, t_edge, bulges[t_edge], [0.5])[0])
+        for mod, t_edge in mods
+    }
+    mod_bulges = {
+        (mod, (mod, t_edge)): _clear(spec, pos_all, (mod, (mod, t_edge)), 0.0)
+        for mod, t_edge in mods
+    }
+    x_lo, x_hi, y_lo, y_hi = _limits(spec, pos_all, bulges | mod_bulges)
     created = ax is None
     if created:
         _, ax = plt.subplots(
@@ -465,9 +507,8 @@ def plot_dag(
     }
     for edge, bulge in bulges.items():
         _draw_edge(ax, patches, spec, pos, edge, labels, bulge, st)
-    for mod, treatment in mods:
-        target = tuple(_arc(pos, treatment, bulges[treatment], [0.5])[0])
-        _draw_modifier(ax, patches, pos, mod, target, treatment[0], st)
+    for edge, bulge in mod_bulges.items():
+        _draw_modifier(ax, patches, pos_all, edge, bulge, st)
     if legend:
         names = {e for _, _, e, _ in bulges} | ({"VC modifier"} if mods else set())
         _legend(ax, names, st)
@@ -522,8 +563,9 @@ def plot_marginals(
         Save the figure here (150 dpi) after drawing, by default None (not
         saved).
     title : str | None, optional
-        Figure title, by default ``"observed vs sampled marginals"``;
-        ``None`` for none.
+        Title of a new figure, by default ``"observed vs sampled
+        marginals"``; ``None`` for none. A figure passed through ``ax`` keeps
+        its own title.
 
     Returns
     -------
@@ -545,40 +587,7 @@ def plot_marginals(
         axes = np.asarray(ax, dtype=object)
         fig = axes.flat[0].figure
     for panel, name in zip(axes.flat, flow.order, strict=False):
-        node = flow.spec[name]
-        if node.kind == "ordinal":
-            lv, w = np.arange(node.levels), 0.4
-            for x, d, label, color in [
-                (lv - w / 2, df, "data", colors[0]),
-                (lv + w / 2, sample, "flow", colors[1]),
-            ]:
-                counts = d[name].value_counts(normalize=True).reindex(lv, fill_value=0)
-                panel.bar(x, counts, w, label=label, color=color)
-            panel.set_xticks(lv)
-            panel.set_ylabel("proportion")
-        else:
-            # 30 bins over the central 99.8 %, so an outlier cannot flatten the
-            # panel; the density counts every row, also those outside the bins
-            edges = np.linspace(*np.quantile(df[name], [0.001, 0.999]), 31)
-            width = edges[1] - edges[0]
-            panel.hist(
-                df[name],
-                bins=edges,
-                weights=np.full(len(df), 1 / (len(df) * width)),
-                alpha=0.5,
-                color=colors[0],
-                label="data",
-            )
-            panel.hist(
-                sample[name],
-                bins=edges,
-                weights=np.full(len(sample), 1 / (len(sample) * width)),
-                histtype="step",
-                lw=1.5,
-                color=colors[1],
-                label="flow",
-            )
-            panel.set_ylabel("density")
+        _marginal_panel(panel, name, flow.spec[name], df, sample, colors)
         panel.set_title(name)
         if legend == "axes":
             panel.legend(fontsize=8, frameon=False)
@@ -590,7 +599,7 @@ def plot_marginals(
             ncol=2,
             frameon=False,
         )
-    if title:
+    if title and created:
         fig.suptitle(title)
     _finish(fig, path, created)
     return axes
@@ -648,8 +657,12 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
         ax.plot(x, curve, label=f"{label} NLL (total)")
     # zoom past the initial drop: the top keeps each curve after 10 % of its
     # epochs, so a validation curve that rises later stays in view
-    lo = min(c.min() for _, c in curves.values())
-    hi = max(c[len(c) // 10 :].max() for _, c in curves.values())
+    # finite values only: a diverged epoch must not blow the limits up
+    lo = min(c[np.isfinite(c)].min() for _, c in curves.values())
+    hi = max(
+        c[len(c) // 10 :][np.isfinite(c[len(c) // 10 :])].max()
+        for _, c in curves.values()
+    )
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
     for name, epoch in sorted((stops or {}).items(), key=lambda kv: kv[1]):
@@ -679,8 +692,9 @@ def plot_varying_coef(
 ):
     r"""Draw a VC term's effect $\beta(x)$ along one modifier.
 
-    The grid spans ``by`` over its range in ``df``; every other modifier is
-    held at its median in ``df``. The values come from
+    The grid spans ``by`` over its range in ``df``, or its levels for an
+    ordinal ``by``; every other node column is held at an observed median
+    in ``df``. The values come from
     [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef], on the node's
     latent scale. A dotted line marks $\beta = 0$.
 
@@ -709,8 +723,14 @@ def plot_varying_coef(
         The axes drawn into.
     """
     plt = _plt()
-    grid = np.linspace(df[by].min(), df[by].max(), 200)
-    rows = pd.DataFrame({c: np.full(len(grid), df[c].median()) for c in df.columns})
+    if flow.nodes[by].kind == "ordinal":
+        grid = np.unique(df[by])
+    else:
+        grid = np.linspace(df[by].min(), df[by].max(), 200)
+    # an observed median per node column, so an ordinal value is a level
+    nodes = [c for c in flow.order if c in df.columns]
+    medians = {c: df[c].quantile(0.5, interpolation="nearest") for c in nodes}
+    rows = pd.DataFrame({c: np.full(len(grid), m) for c, m in medians.items()})
     rows[by] = grid
     beta = flow.varying_coef(rows, node, t=t)
     created = ax is None

@@ -29,7 +29,7 @@ def test_plot_dag_draws_every_node_and_edge():
     """One patch per node, one arrow per edge, a label per edge, a legend."""
     spec = _every_term_spec()
     ax = plot_dag(spec)
-    n_edges = 1 + 2 + 2 + 1 + 1  # CI, LS+CS, joint CS (2 parents), VC, VC mod
+    n_edges = 1 + 2 + 2 + 1 + 1  # CI, LS+CS, joint CS (2 parents), VC, VC modifier
     arrows = [p for p in ax.patches if type(p).__name__ == "FancyArrowPatch"]
     assert len(ax.patches) == len(spec) + n_edges
     assert len(arrows) == n_edges
@@ -81,7 +81,7 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert axes.shape == (1, 2)
     assert (tmp_path / "m.png").exists()
     ax = plot_training(flow, path=tmp_path / "t.png", title="t")
-    assert ax.get_title() == "t"
+    assert ax.get_title(loc="left") == "t"
     assert len(ax.lines) == 2  # train and val, no marks without stops=
     assert (tmp_path / "t.png").exists()
     stops = {n: len(nd.history["train"]) for n, nd in flow.nodes.items()}
@@ -172,3 +172,16 @@ def test_plot_varying_coef_draws_the_vc_effect(ls_chain):
     line = ax.get_lines()[0]
     grid = pd.DataFrame({"x": line.get_xdata()})
     assert np.allclose(line.get_ydata(), flow.varying_coef(grid, "y"))
+
+
+def test_plot_training_survives_a_diverged_epoch(ls_chain):
+    """An infinite NLL in the history must not blow the zoom up."""
+    import math
+
+    df = ls_chain["draw"](200, 2)[["x1", "x2"]]
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=20, validation_split=0.2)
+    flow.nodes["x2"].history["val"][12] = math.inf
+    lo, hi = plot_training(flow).get_ylim()
+    assert math.isfinite(lo)
+    assert math.isfinite(hi)

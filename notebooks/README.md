@@ -40,7 +40,7 @@ provenance.
 
 **VS Code / Cursor**: open the `.py` directly. With the Python and Jupyter
 extensions, every `# %%` cell gets a "Run Cell" link. Pick the `.venv`
-interpreter that `uv sync` created. No conversion is needed.
+interpreter that `uv sync` created. You need no conversion.
 
 **Classic Jupyter / JupyterLab**: generate a local `.ipynb` (stays untracked):
 
@@ -55,7 +55,7 @@ the `.py`, then *Open With*, then *Notebook*. Edits save straight back to the
 `--set-formats ipynb,py:percent` and then `--sync`. Your interactive edits then
 flow back into the tracked `.py`. The paired `.ipynb` stays git-ignored.
 `--set-formats` adds `ipynb` to the `.py` header. Revert that one-line header
-change before you commit, because the committed notebooks are paired to
+change before you commit, because the committed notebooks pair to
 `py:percent` only.
 
 **Headless check** (runs all cells top-to-bottom, plots suppressed):

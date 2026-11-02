@@ -1,7 +1,7 @@
 # Upstream candidates for zuko
 
 This document lists what tramdag works around in
-[zuko](https://zuko.readthedocs.io/stable/) (1.6.0). The list is ranked by
+[zuko](https://zuko.readthedocs.io/stable/) (1.6.0). The list ranks them by
 value against effort, as candidate upstream PRs or issues. tramdag uses zuko
 in one place only. It uses these three transforms from `zuko.transforms`:
 
@@ -23,7 +23,7 @@ It also makes the per-node loss un-`torch.compile`-able. Autograd in the
 forward pass gives a double backward, and `aot_autograd` does not support one.
 Therefore the op-count axis stays closed in eager mode.
 
-The derivative is closed form: `f'(x) = order·Δθ` against the order−1 basis.
+The derivative has a closed form: `f'(x) = order·Δθ` against the order−1 basis.
 zuko already computes it in `_offset_and_slope` for the tail slopes. An
 override is therefore ~25 lines and needs no API change.
 `MonotonicRQSTransform` already has such an override. tramdag gets a free

@@ -42,6 +42,6 @@ $\boldsymbol{\vartheta}$.
 
 Every node's model is one additive formula on the latent scale.
 [model.md](model.md#the-components) writes it out. For a continuous node the
-shifts are added. For an ordinal node the shift is subtracted inside the
+shifts add. For an ordinal node the shift subtracts inside the
 sigmoid:
 $P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - \text{shift})$.

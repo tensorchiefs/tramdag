@@ -10,8 +10,8 @@ care, not as a by-product. Every claim here runs in
 which is the one place for the code, or in the tests that the text names.
 
 Modifiers may appear twice in a node, as prognostic parents through `CS` or
-`LS` and as effect modifiers through `VC`. That pattern is intended. Only the
-treatment named by `t=` owns its edge, and a second term that declares it
+`LS` and as effect modifiers through `VC`. The design intends this pattern.
+Only the treatment named by `t=` owns its edge, and a second term that declares it
 raises an error.
 
 ## Why not a joint `CS` over treatment and modifiers
@@ -21,7 +21,7 @@ Any shift decomposes as $s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t$. But the
 `CS` form has no effect-specific regularization. The likelihood rewards a
 good average fit of $s(x,t)$, and nothing rewards a smooth difference between
 the arms. So the read-out is the difference of two jointly fitted,
-unregularized networks, and it amplifies noise. On the `vc_hetero` process
+unregularized networks. It amplifies random variation. On the `vc_hetero` process
 the `VC` term reaches a correlation of about 0.99 with the true effect
 function. The `CS` reduced form reaches a clearly lower correlation on the
 same protocol, although the model is in-class. Causal forests and R-learners
@@ -99,10 +99,10 @@ The design is two-stage and frozen, because the naive versions are wrong.
 - **Inference**, in `log_prob`, `sample`, `abduct`, `pmf` and `scores`,
   recomputes $\hat e$ from the flow's own fitted treatment node on the current
   parent values, detached. Under `do(T=t)` the regressor becomes
-  $t - \hat e(x)$. Nothing is cached.
+  $t - \hat e(x)$. The flow caches nothing.
 - **Interpretation.** $\beta_0$ is the mean of $\beta(x)$ over the training
   rows, with or without centering, because `fit` re-centers the head in both
-  cases. `varying_coef` is unchanged, because centering moves the regressor
+  cases. `varying_coef` stays the same, because centering moves the regressor
   and not $\beta$. Centering requires a binary ordinal treatment.
 
 ## Validation
@@ -110,12 +110,12 @@ The design is two-stage and frozen, because the naive versions are wrong.
 The `vc_hetero` process in [`tests/conftest.py`](../tests/conftest.py) is a
 logistic-shift SCM with a known $\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3$. It
 has a nonlinear prognostic part and confounded assignment, and $X_2$ is
-confounder and modifier at once. That is the configuration in which the `CS`
-reduced form fails hardest. `tests/test_vc_term.py` requires three things:
-a recovery correlation of at least 0.9 with 4500 training rows, a fitted
-$\beta_0$ that matches `fit_classical` under a large penalty, and the
-read-out identities.
+confounder and modifier at once. In this configuration the `CS`
+reduced form fails hardest. `tests/test_vc_term.py` requires three things.
+It requires a recovery correlation of at least 0.9 with 4500 training rows.
+It requires a fitted $\beta_0$ that matches `fit_classical` under a large
+penalty. It requires the read-out identities.
 `tests/test_vc_centered.py` tests the centering claims on the `confounded`
 process.
-[scores.md](scores.md) covers the scan that shortlists modifiers before a `VC`
-term is declared.
+[scores.md](scores.md) covers the scan that shortlists modifiers before you
+declare a `VC` term.

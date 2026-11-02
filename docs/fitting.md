@@ -13,7 +13,8 @@ per-node `epochs` or `learning_rate` functions have no notebook example.
 A `CausalFlowDAG` is a single `torch.nn.Module` with one independent
 sub-model per variable. A sub-model has an intercept that produces the
 transform parameters $\theta$ and one shift module per shift term. It also
-has the monotone transform $h$, which holds range buffers but no weights. The nodes share no parameters. The
+has the monotone transform $h$, which holds range buffers but no weights.
+The nodes share no parameters. The
 DAG lives entirely in which parents each node reads. There is no edge weight
 matrix and no shared trunk. [code-map.md](code-map.md) says which class
 implements which term.
@@ -42,22 +43,22 @@ per-row joint.
 
 ## One node alone
 
-A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on
-its parents, and it needs no DAG. It takes its name, its node spec and a
-parent schema, `{parent: "continuous" | n_levels}`.
+A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on its
+parents, and it needs no DAG. It takes its name, its node spec and a parent
+schema, `{parent: "continuous" | n_levels}`.
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py) fits
 one with Adam, and
 [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
 fits one classically against R `glm`. The frame needs the node's column, its
-parents' columns and its side columns; the fit ignores other columns. `fit`, `fit_classical`, `nll`, `save` and
-`load` work as on the flow, for one node. `nll` gives one float, and the
-`fit_classical` report is the per-node report. `fit` takes an optimizer
-instance or a factory `f(node)`, but no `n_jobs`. A centered `VC` needs its
-propensity column in every frame, because only the flow can compute it live
-from the treatment node. A flow derives each node's shuffling seed from
-`fit(seed=)` and the node's index. So `Node.fit(seed=)` alone does not
-repeat a node of a seeded flow fit. A node built alone draws its initial
-weights from torch's global RNG; call `torch.manual_seed` first for a
+parents' columns and its side columns; the fit ignores other columns. `fit`,
+`fit_classical`, `nll`, `save` and `load` work as on the flow, for one node.
+`nll` gives one float, and the `fit_classical` report is the per-node report.
+`fit` takes an optimizer instance or a factory `f(node)`, but no `n_jobs`. A
+centered `VC` needs its propensity column in every frame, because only the flow
+can compute it live from the treatment node. A flow derives each node's
+shuffling seed from `fit(seed=)` and the node's index. So `Node.fit(seed=)`
+alone does not repeat a node of a seeded flow fit. A node built alone draws its
+initial weights from torch's global RNG; call `torch.manual_seed` first for a
 reproducible start. It always uses torch's default init; `init=` exists on
 `CausalFlowDAG` only.
 
@@ -72,8 +73,9 @@ the final weights.
   `n_jobs=N` forks `N` worker processes (Linux only), one task per node.
   A worker runs torch on one thread. With the same `seed=`, it gives the
   weights of a serial fit on one thread. Without `seed=`, `n_jobs > 1` draws
-  a base seed from torch's global RNG. `epochs=`, `learning_rate=` and `callbacks=` take one value
-  for all nodes or a function of the node name.
+  a base seed from torch's global RNG.
+  `epochs=`, `learning_rate=` and `callbacks=` take one value for all
+  nodes or a function of the node name.
 - **Optimizer.** One optimizer per node, `Adam(lr=learning_rate)` by default.
   `optimizer=` takes a factory `f(node)`, for example to give the networks
   weight decay in their own parameter group. `Node.fit` also takes an
@@ -297,5 +299,5 @@ solution is the optimum, and it is a warm start. The `VC` guide uses it for
 
 Neither path writes to disk. The parameters, the optimizer state and the
 `history` dicts live in RAM, and whatever a callback records is yours. The
-only disk I/O is the explicit `save()` and `load()`. `fit(n_jobs=N)` forks
+only disk access is the explicit `save()` and `load()`. `fit(n_jobs=N)` forks
 `N` copy-on-write copies of the flow and the training frame.

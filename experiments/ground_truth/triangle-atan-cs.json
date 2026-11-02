@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): Paper Fig. 7/15/16. The complex shift must recover -f(x2) up to a constant; cs_curve_max_abs_err is measured after anchoring at x2=0. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds are 2.5x the measurement of the pinned run.",
+  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): Paper Fig. 7/15/16. The complex shift must recover -f(x2) up to a constant; cs_curve_max_abs_err is measured after anchoring at x2=0. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds sit at 1.5x to 4x the measurement of the pinned run.",
   "beta12": {
     "value": 1.9855079650878906,
     "atol": 0.05

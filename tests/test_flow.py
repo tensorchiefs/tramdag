@@ -305,6 +305,18 @@ def test_a_counterfactual_keeps_the_rows_of_its_latents():
     assert list(cf.index) == list(df.index)
 
 
+def test_a_reversed_frame_gives_the_same_nll():
+    """A reversed frame is a negative-stride view; its nll equals the forward one."""
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame({"x": rng.normal(size=60)})
+    df["y"] = df["x"] + rng.logistic(size=60)
+    spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1)
+    forward = flow.nll(df)
+    reverse = flow.nll(df.iloc[::-1])
+    assert reverse == pytest.approx(forward, rel=1e-5)
+
+
 def test_outcome_is_the_single_sink():
     """``outcome`` names the one childless node and refuses several."""
     chain = {

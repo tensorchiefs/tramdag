@@ -101,7 +101,7 @@ def tensorize(
     check_columns(df, cols)
     out = {}
     for c in cols:
-        values = df[c].to_numpy(dtype=float)
+        values = np.ascontiguousarray(df[c].to_numpy(dtype=float))
         if c in levels:
             check_level_values(c, values, levels[c])
         elif not np.isfinite(values).all():

@@ -1,16 +1,10 @@
-# Docs: MkDocs site (guides, executed notebooks, API from the numpy
-# docstrings) published per ref with mike — main at the site root as
-# `latest`, every dev-* branch under its own version — plus one PDF of README,
-# guides and executed notebooks typeset by pandoc + XeLaTeX, so the math is
-# real math. The PDF is a convenience: its step is continue-on-error and the
-# previous copy is republished when it fails.
 name: docs
 on:
   push:
     branches: [main, dev-*]
   workflow_dispatch:
 permissions:
-  contents: write   # mike pushes gh-pages
+  contents: write
 concurrency:
   group: gh-pages
   cancel-in-progress: false
@@ -23,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
-        fetch-depth: 0   # mike reads and writes the gh-pages branch
+        fetch-depth: 0
     - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7   # v10.2.0
       with:
         enable-cache: true
@@ -37,20 +31,12 @@ jobs:
         sudo apt-get install -y --no-install-recommends \
           texlive-xetex texlive-latex-recommended texlive-fonts-recommended lmodern fonts-dejavu-core
         mkdir -p build/pdf/nb
-        # every input is staged through the same two rewrites:
-        #   badges  -- noise in a PDF, and a remote .svg badge makes pandoc emit
-        #              \includesvg, which needs inkscape and fails the build
-        #   [x][ref] -- mkdocstrings cross-references. The site resolves them;
-        #              pandoc prints them raw, and the reference is one long
-        #              unbreakable token that overflows its table column. The
-        #              visible half already carries its own backticks.
         stage() {
           sed -E -e 's#\[!\[[^]]*\]\([^)]*\)\]\([^)]*\)##g' \
                  -e 's#!\[[^]]*\]\(https?://[^)]*\)##g' \
                  -e 's#\[([^]]+)\]\[[^]]+\]#\1#g' "$1" > "$2"
         }
         stage README.md build/pdf/README.md
-        # architecture.md is deliberately absent: it is mostly mermaid fences, which the site renders and pandoc prints as raw code
         for d in model notation interpretation fitting scores \
                  varying-coefficients paper-replication code-map zuko-upstream; do
           stage "docs/$d.md" "build/pdf/$d.md"
@@ -61,12 +47,6 @@ jobs:
           uv run jupyter nbconvert --to markdown "build/pdf/nb/$n.ipynb" --output "$n" --output-dir build/pdf/nb
           stage "build/pdf/nb/$n.md" "build/pdf/nb/$n.staged" && mv "build/pdf/nb/$n.staged" "build/pdf/nb/$n.md"
         done
-        # pandoc's own `markdown` reader, not `gfm`: only it derives the table
-        # column widths from the separator row, so a wide table wraps inside
-        # p{} columns instead of running off the page in l columns. citeproc
-        # resolves the guides' [@key] citations with the site's .bib and CSL
-        # and appends one bibliography at the end.
-        # the pandoc that pypandoc-binary bundles, the one the site formats with
         pandoc=$(uv run python -c "import pypandoc; print(pypandoc.get_pandoc_path())")
         "$pandoc" -f markdown+tex_math_dollars --pdf-engine=xelatex \
           --citeproc --bibliography=docs/references.bib --csl=docs/apa.csl \
@@ -83,10 +63,7 @@ jobs:
       run: |
         set -euo pipefail
         if [ ! -f docs/tramdag-docs.pdf ]; then
-          dir="$REF"   # mike's latest alias is a symlink git show cannot traverse
-          # a warning, not a silent republish: the step before is
-          # continue-on-error, so without this a permanently broken PDF build
-          # hides behind a green job and the site serves a stale document
+          dir="$REF"
           git show "origin/gh-pages:$dir/tramdag-docs.pdf" > docs/tramdag-docs.pdf 2>/dev/null \
             && echo "::warning::the PDF build failed; republishing the previous, now stale PDF" \
             || echo "::warning::the PDF build failed and there is none to republish"

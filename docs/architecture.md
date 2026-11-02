@@ -145,6 +145,25 @@ The term modules read a node's schema entry (`nodes.schema_entry`):
 - `experiments/ground_truth/*.json`: eight CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.
 
+## Docs build
+
+`mkdocs.yml` carries no comments. The reasons for its settings follow.
+
+- `strict: true` fails the build on a warning. A docstring that documents a
+  parameter the signature lacks, or a link to a moved page, would otherwise
+  print only a log line.
+- `scoped_crossrefs` and `relative_crossrefs` let a docstring name a sibling as
+  `` [`pmf`][] ``. A cross-reference then carries no dotted path that goes stale
+  on a rename.
+- `docs/hooks.py` is not a notebook, so mkdocs-jupyter ignores it. The hook sets
+  `execute` to true when `DOCS_EXECUTE=true`, as in CI.
+- mkdocs-bibtex links each citation to its entry as a footnote.
+- mkdocs-bibtex formats through the ASCII markdown of pandoc, so a page range
+  arrives as `488--508`. The `smarty` extension turns the dashes back into
+  typographic dashes and leaves quotes and ellipses alone.
+- The `mermaid` fence class renders the diagrams on this page. Material ships
+  the mermaid.js integration for that class.
+
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
 ## Generated views
 

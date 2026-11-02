@@ -4,9 +4,6 @@ site_url: https://tensorchiefs.github.io/tramdag/
 repo_url: https://github.com/tensorchiefs/tramdag
 edit_uri: blob/main/
 docs_dir: docs
-# A docstring that documents a parameter the signature does not have, or a
-# link to a page that moved, is only a log line otherwise. Both had already
-# happened, so the build fails on a warning instead of printing it.
 strict: true
 exclude_docs: |
   __pycache__/
@@ -72,30 +69,21 @@ plugins:
           members_order: source
           show_root_heading: true
           separate_signature: true
-          # a docstring names a sibling as `[`pmf`][]` and the handler resolves
-          # it in scope, so a cross-reference does not carry a dotted path that
-          # goes stale on a rename
           scoped_crossrefs: true
           relative_crossrefs: true
 - mkdocs-jupyter:
     include: ['*.py']
-    ignore: [hooks.py]    # the link hook is not a notebook
-    execute: false  # docs/hooks.py turns this on when DOCS_EXECUTE=true (CI)
+    ignore: [hooks.py]
+    execute: false
     allow_errors: false
     include_source: true
 
 markdown_extensions:
 - admonition
-# mkdocs-bibtex links each citation to its entry as a footnote
 - footnotes
-# mkdocs-bibtex writes citations and bibliography entries through pandoc's
-# ASCII markdown, so a page range arrives as "488--508"; smarty turns the
-# dashes back into typographic ones and leaves quotes and ellipses alone
 - smarty: {smart_quotes: false, smart_angled_quotes: false, smart_ellipses: false}
 - tables
 - toc: {permalink: true}
-# the mermaid fence renders the architecture diagrams; Material ships the
-# mermaid.js integration once the fence class is "mermaid"
 - pymdownx.superfences:
     custom_fences:
     - name: mermaid

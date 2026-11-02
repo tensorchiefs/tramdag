@@ -32,7 +32,10 @@ tensors, so it serializes and compares without torch.
 
 [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] holds one
 [`Node`][tramdag.nodes.Node] per variable in topological order. Construction
-seeds the weights, so the constructor seed is the reproducibility knob. A lone
+seeds each node's weights from the constructor seed and the node's name. A node
+starts from the same weights in every spec that contains it. Construction ends
+with `torch.manual_seed(seed)`, which seeds the unseeded shuffling of `fit`. The
+constructor seed is the reproducibility knob. A lone
 `Node` needs `torch.manual_seed` before you build it. The class composes
 `FitMixin` and `ReadoutsMixin`. The modules below list their methods.
 
@@ -133,7 +136,8 @@ The signatures hold the defaults. This list keeps the reasons.
 - **`fit(epochs=)` has no default.** No default epoch count fits both an `LS`
   and a flexible model ([fitting.md](fitting.md)).
 - **Weight initialization is `CausalFlowDAG(init=)`.** Initialization happens
-  at construction, so the constructor seed is the reproducibility knob.
+  at construction, so the constructor seed is the reproducibility knob. Each
+  node draws from a stream keyed on the seed and the node's name.
   `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras `Dense`
   default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. `zero_shift_networks=True` starts every `CS` shift

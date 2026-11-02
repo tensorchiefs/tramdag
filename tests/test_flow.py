@@ -336,3 +336,25 @@ def test_zero_shift_networks_zeroes_only_the_cs_output_layers(init):
     x2 = zeroed.nodes["x2"]
     _, shift = x2.theta_shift(x2.features(x2.tensorize(df, ["x0", "x1"])), 3)
     assert torch.equal(shift, torch.zeros(3))
+
+
+@pytest.mark.parametrize("init", ["torch", "glorot", "normal"])
+def test_node_start_ignores_other_nodes(init):
+    base = {"a": ContinuousNode(), "y": ContinuousNode(LS("a"))}
+    other = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(CS("a")),
+        "y": ContinuousNode(LS("a")),
+    }
+    s1 = CausalFlowDAG(base, seed=3, init=init).nodes["y"].state_dict()
+    s2 = CausalFlowDAG(other, seed=3, init=init).nodes["y"].state_dict()
+    s3 = CausalFlowDAG(base, seed=4, init=init).nodes["y"].state_dict()
+    assert all(torch.equal(s1[k], s2[k]) for k in s1)
+    assert not all(torch.equal(s1[k], s3[k]) for k in s1)
+
+
+def test_seed_ends_with_the_global_stream_seeded():
+    CausalFlowDAG({"x": ContinuousNode()}, seed=5)
+    got = torch.rand(3)
+    torch.manual_seed(5)
+    assert torch.equal(got, torch.rand(3))

@@ -86,13 +86,12 @@ The pinned column gives the `value` of each entry in
 `experiments/ground_truth/*.json`. An error entry has only a `max` bound. Where
 the file's `_note` says that the bounds are 2.5x the measurement, the column
 gives the bound divided by 2.5. Otherwise it gives the bound, labeled as one.
-The triangle pins predate the marginal start (D4) and the per-node shuffle
-seeds. A CI run at the current config does not reproduce them exactly.
+The triangle pins come from one run at the current config.
 
 β13 measures −0.15 to −0.18 instead of −0.2. β13 multiplies x1, whose two
 mixture components sit at 0.25 and 0.73. So x1 has sd 0.254 against 0.375 for
 x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n = 40000. The value stays within
-about one SE. At n = 5000, β13 is too weakly identified for the frozen
+about 1.3 SE. At n = 5000, β13 is too weakly identified for the frozen
 5000-row CSVs to serve as fit checks. So the fit checks train on the paper's
 n = 40000 protocol.
 

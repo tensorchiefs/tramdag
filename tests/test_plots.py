@@ -91,6 +91,8 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     flow2 = CausalFlowDAG(spec, seed=0)
     flow2.fit(df, epochs=3, batch_size=100)
     assert len(plot_training(flow2).lines) == 1
+    with pytest.raises(TypeError, match="stops"):
+        plot_training(flow, stops={"a": 1})
 
 
 def test_plots_refuse_nothing_to_draw():

@@ -416,12 +416,11 @@ def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
 def _mark_stops(ax, flow) -> None:
     """Mark each node's stop epoch with a line and its best epoch with a triangle."""
     nodes = flow.nodes.items()
-    ends = {name: len(nd.history["train"]) for name, nd in nodes}
     bests = [nd.history["best_epoch"] for _, nd in nodes if "best_epoch" in nd.history]
-    for name, epoch in sorted(ends.items(), key=lambda kv: kv[1]):
-        ax.axvline(epoch, ls="--", lw=1, color="gray")
+    for name, nd in nodes:
+        ax.axvline(len(nd.history["train"]), ls="--", lw=1, color="gray")
         ax.text(
-            epoch,
+            len(nd.history["train"]),
             1.01,
             name,
             transform=ax.get_xaxis_transform(),
@@ -675,7 +674,9 @@ def plot_training(flow, *, stops=False, ax=None, path=None, title=None):
     stops : bool, optional
         Mark each node's stop epoch, the length of its ``history["train"]``,
         with a dashed line, and its ``history["best_epoch"]``, where a fit
-        recorded one, with a triangle at the top. By default no marks.
+        recorded one, with a triangle at the top. By default no marks. The
+        triangles come from the last fit that ran ``EarlyStopping``; a fit
+        without it removes ``history["best_epoch"]``.
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure.
     path : str | Path | None, optional
@@ -691,9 +692,13 @@ def plot_training(flow, *, stops=False, ax=None, path=None, title=None):
 
     Raises
     ------
+    TypeError
+        If ``stops`` is not a bool.
     ValueError
         If ``flow.history`` is empty.
     """
+    if not isinstance(stops, bool):
+        raise TypeError(f"stops must be a bool, got {stops!r}")
     plt = _plt()
     hist = flow.history
     if not hist.get("train"):

@@ -40,12 +40,16 @@ from tramdag.plots import plot_training
 
 plt.rcParams["figure.dpi"] = 110
 
-# repo-relative data, whether the notebook runs from the repo root or notebooks/
 REPO = next(
     p for p in [Path.cwd(), *Path.cwd().parents] if (p / "pyproject.toml").exists()
 )
 
-# The tracked 1000-row VACA sample, drawn from the same process as the Colab demo.
+# %% [markdown]
+# The data is the tracked 1000-row VACA sample, drawn from the same process as
+# the Colab demo. The repo root is found from `pyproject.toml`, so the notebook
+# runs from the repo root or from `notebooks/`.
+
+# %%
 df = pd.read_csv(REPO / "notebooks" / "data" / "vaca.csv")
 train, val = df.iloc[:900], df.iloc[900:]
 
@@ -54,7 +58,7 @@ SPEC = {
     "x2": ContinuousNode(I("x1")),
     "x3": ContinuousNode(I("x1", "x2")),
 }
-CEILING = 600  # epoch ceiling for every recipe below
+CEILING = 600
 scoreboard = []
 
 
@@ -182,7 +186,7 @@ assert len(flow.history["train"]) == 300, "the second fit did not continue the h
 # %%
 flow = build()
 t0 = time.perf_counter()
-stopper = EarlyStopping()  # restore_best is on by default, no patience
+stopper = EarlyStopping()
 flow.fit(
     train,
     epochs=CEILING,
@@ -346,7 +350,7 @@ x3.fit(
     callbacks=EarlyStopping(patience=25),
 )
 print(f"x3 alone: {len(x3.history['train'])} epochs, val NLL {x3.nll(val):.4f}")
-assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4  # the restored best
+assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4
 
 # %% [markdown]
 # ## 8. The scoreboard: a runtime comparison
@@ -380,7 +384,6 @@ ax.set_title("cost against quality, one workload")
 fig.tight_layout()
 plt.show()
 
-# Keeping the best weights cannot score worse than keeping the last ones.
 assert nll_best <= nll_plain + 1e-6, (
     f"EarlyStopping scored {nll_best:.4f} against plain Adam's {nll_plain:.4f}"
 )

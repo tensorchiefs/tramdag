@@ -260,3 +260,15 @@ def test_pmf_and_density_name_an_unknown_do_node(ls_chain):
         flow.pmf(df, "y", do={"zz": 0.0})
     with pytest.raises(KeyError, match="unknown node 'zz'"):
         flow.density(df, "x2", np.linspace(-1, 1, 5), do={"zz": 0.0})
+
+
+def test_pmf_and_density_refuse_a_do_key_that_is_not_a_parent(ls_chain):
+    df = ls_chain["draw"](50, 0)[["x1", "x2"]]
+    df["y"] = np.arange(50) % 3
+    flow = CausalFlowDAG(_spec(), seed=0)
+    flow._calibrate(df)
+    with pytest.raises(ValueError, match="do key 'x2' is not a parent of node 'y'"):
+        flow.pmf(df, "y", do={"x2": 0.0})
+    with pytest.raises(ValueError, match="do key 'x2' is not a parent of node 'x1'"):
+        flow.density(df, "x1", np.linspace(-1, 1, 5), do={"x2": 0.0})
+    assert len(flow.pmf(df, "y", do={"x1": 0.0})) == 50

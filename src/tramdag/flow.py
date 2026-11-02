@@ -266,10 +266,18 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         its transform parameters, its shift and the row count.
         """
         nd = self._node(node)
-        self._check_do(do or {})
-        df = df.assign(**(do or {}))
+        do = do or {}
+        self._check_do(do)
+        columns = list(nd.parents) + self._query_side_columns(nd)
+        for name in do:
+            if name not in columns:
+                raise ValueError(
+                    f"do key {name!r} is not a parent of node {node!r}; "
+                    f"its parents are {columns!r}"
+                )
+        df = df.assign(**do)
         n = len(df)
-        values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
+        values = self._tensorize(df, columns)
         theta, shift = self._theta_shift(nd, nd.features(values), values, n)
         return nd, theta, shift, n
 

@@ -192,7 +192,6 @@ $$
 For the first and last class, the outer cutpoint is $\mp\infty$ and its
 $\sigma'$ is zero.
 
-The function only reads
-the fitted model. It changes neither fitting nor sampling. The tests check that
-each column sums to about zero at a fitted optimum, and that the scores agree
-with float64 finite differences.
+The function only reads the fitted model. It changes neither fitting nor
+sampling. The tests check that each column sums to about zero at a fitted
+optimum, and that the scores agree with float64 finite differences.

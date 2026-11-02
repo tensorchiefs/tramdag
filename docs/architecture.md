@@ -2,8 +2,9 @@
 
 The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its `Term` subclass (the spec) and its module in
-`modules.py`. Node-kind maths lives in five `Node` methods, `nodes.encode`
-and the score derivative `scores._dl_ds`. Everything else is framework code.
+`modules.py`. Node-kind maths lives in five `Node` methods, `nodes.encode` and
+the score derivative in `scores.py` ([scores.md](scores.md)). Everything else is
+framework code.
 
 ## Module map
 ```mermaid
@@ -127,7 +128,7 @@ kind is an if/else in three places.
 - The five `Node` methods `log_prob`, `sample`, `abduct`, `marginal_theta` and
   `encode`, plus the transform choice in `Node.__init__`.
 - The column encoding `nodes.encode`.
-- The score derivative `scores._dl_ds`.
+- The score derivative in `scores.py` ([scores.md](scores.md)).
 
 Other code reads a node's schema entry (`nodes.schema_entry`):
 `"continuous"` or a level count. `CLAUDE.md` at the repository root states the conventions

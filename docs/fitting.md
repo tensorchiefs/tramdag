@@ -213,7 +213,7 @@ docstring.
   parent on a large raw scale next to a rare level. Newton steps on the exact
   Hessian then finish the fit.
 - **The model is float32.** The fit restores float32 afterwards, and
-  checkpoints stay float32. `ls_coefficients`, `pmf` and `log_prob` thus use
+  checkpoints are float32. `ls_coefficients`, `pmf` and `log_prob` thus use
   the fitted values rounded by about 1e-7 relative. The report's
   `coefficients` are the float64 values; compare those with other software.
 - **`converged` means that the run stopped on its own.** The Newton steps

@@ -26,7 +26,7 @@ tensors, so it serializes and compares without torch.
 | [`StandardLogistic`][tramdag.transforms.StandardLogistic] | The TRAM base distribution. zuko has none ([zuko-upstream.md](zuko-upstream.md)). |
 | [`BernsteinUT`][tramdag.transforms.BernsteinUT] / [`SplineUT`][tramdag.transforms.SplineUT] / [`AffineUT`][tramdag.transforms.AffineUT] | The three transforms of a continuous node ([model.md](model.md#the-three-knobs-on-a-term)). |
 | [`make_univariate_transform()`][tramdag.transforms.make_univariate_transform] | Name to transform instance. |
-| [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] and the other `ordinal_*` functions | The ordinal likelihood and its inverses. The log probability stays in log space ([model.md](model.md#ordinal-nodes)). |
+| [`ordinal_log_prob()`][tramdag.transforms.ordinal_log_prob] and the other `ordinal_*` functions | The ordinal likelihood and its inverses. The log probability is in log space ([model.md](model.md#ordinal-nodes)). |
 
 ## `flow.py`: the model
 

@@ -406,7 +406,7 @@ def spectrum_split(evals, tau):
 
     The flat block is the directions near zero. The weak block is the
     directions above the widest log-gap among the eigenvalues at or below
-    ``tau``. They are still dropped by ``tau``. The result gives the size of
+    ``tau``. ``tau`` drops them too. The result gives the size of
     the flat block and its largest eigenvalue, and the smallest weak
     eigenvalue, so that a caller can place a second threshold between them.
     """

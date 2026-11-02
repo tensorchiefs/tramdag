@@ -166,7 +166,7 @@ class Node(NodeFitMixin, nn.Module):
     transform parameters $\vartheta$. The shift terms add up on the latent
     scale. The node-kind maths lives in the five methods ``log_prob``,
     ``sample``, ``abduct``, ``marginal_theta`` and ``encode``, in the module
-    function ``encode`` and in the score derivative ``scores._dl_ds``. The
+    function ``encode`` and in the score derivative of ``scores``. The
     rest of the package reads ``kind`` or the schema entry to check, convert
     or display values.
 

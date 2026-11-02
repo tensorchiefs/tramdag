@@ -22,10 +22,10 @@ Run `pytest` with no path: `testpaths` in `pyproject.toml` then picks up both
 [`tests/README.md`](tests/README.md) documents what the suite guarantees, what
 `slow` marks, how CI splits the runs, and where each reference number comes
 from. Two rules apply to a new test. Validate a causal feature against known
-truth, and keep `experiments/` out of framework tests. `CLAUDE.md` states both
-in its hard rules, together with the `experiments/data/` contract. Mark a
-long fit `@pytest.mark.slow` so PR CI stays fast, but never the fit that *is*
-a feature's acceptance measurement.
+truth, and keep `experiments/` out of framework tests. `CLAUDE.md` states both,
+together with the `experiments/data/` contract. Mark a long fit
+`@pytest.mark.slow` so PR CI is fast, but never the fit that *is* a feature's
+acceptance measurement.
 
 ## Linting
 

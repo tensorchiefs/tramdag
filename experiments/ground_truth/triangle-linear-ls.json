@@ -1,5 +1,5 @@
 {
-  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): Paper Sec. 6.1 truth: beta12 +2, beta13 -0.2, beta23 +0.3. beta13 multiplies x1, a two-component mixture at 0.25 and 0.73 with sd 0.254 against 0.375 for x2, so it is weakly identified and the fitted value sits above the truth. mean_x3_flow_do_x1 stays unpinned on purpose: the DGP center plus the abs-err bound covers it.",
+  "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): Paper Sec. 6.1 truth: beta12 +2, beta13 -0.2, beta23 +0.3. beta13 multiplies x1, a two-component mixture at 0.25 and 0.73 with sd 0.254 against 0.375 for x2, so it is weakly identified and the fitted value sits above the truth. mean_x3_flow_do_x1 is unpinned on purpose: the DGP center plus the abs-err bound covers it.",
   "beta12": {
     "value": 1.9855079650878906,
     "atol": 0.05

@@ -53,6 +53,16 @@ Bernstein, the CS net hidden (25, 25) with sigmoid.
 | schedule / early stop / init | none / none, final weights / random_normal | none / none / `init: normal` |
 | coefficient read-out | after every epoch (Keras loop) | `fit(callbacks=)`, every epoch |
 
+The scripts follow the R code in these points. Each epoch shuffles one
+compiled model, so one continuous optimizer run fits it. No term has an
+`input_transform`, so the nets read raw parents. The Bernstein domain comes from
+the train 5 %/95 % quantiles. The fit keeps the final weights. The `linear-cs`
+variant is the misspecified case of App. C.3.3 (Fig. 17): the DGP effect is
+linear, and the complex shift must recover the straight line instead of bending
+to follow the sample. `atan-cs` is the headline complex-shift run (Fig. 7, 15,
+16). `sin-cs` shows that the recovery is not specific to atan, and its grid
+covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
+
 **Results**
 
 | variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, the pinned ground truth |
@@ -102,6 +112,14 @@ with sigmoid.
 | `n_coeffs` (x1, x2) | 20 | 20 |
 | odds-ratio check (App. C.4) | odds(x2 ≤ −1) under do(x1 += 1), theory e² ≈ 7.39 | 40000 rows, seed 99 |
 | counterfactual PMF (App. B) | Fig. 10 explains why point counterfactuals fail for the ordinal node | 2000 rows × 200 draws |
+
+The scripts follow the R code as in the continuous triangle. They use one
+compiled model with shuffled batches and keep the final weights. They have no
+schedule and no `input_transform`, and the domain is the 5 %/95 % quantiles. The
+CS net uses hidden (2, 2) with sigmoid, read as in/out dims around the hidden
+stack like the continuous (25, 25). `exp-cs` pairs the ordinal node with a
+nonlinear f. `linear-ls` is the headline mixed case (Fig. 9, 19, and the C.4
+odds-ratio check). It is the only mixed variant with a true β23.
 
 **Results**
 
@@ -182,9 +200,10 @@ Rejected alternatives, each measured:
 - relu with raw parents wanders 0.17 to 0.45 on do(x2 = −3). It holds the
   bound only at isolated epochs.
 - tanh on raw parents saturates outright at 0.731.
-- Minibatch stepping (batch 256, even with minmax + tanh) converges with a
-  systematic −0.11 common-mode offset of all three do-means. The
-  observational fit stays perfect.
+- Minibatch stepping converges with a systematic −0.11 common-mode offset of
+  all three do-means. This holds for batch 256, lr 0.001 to 0.004, 300 to 3000
+  epochs, constant or plateau rate, and minmax + tanh. The observational fit
+  stays perfect.
 
 ## CAREFL benchmark (`carefl.py`): paper Sec. 5.3, App. C.2
 
@@ -230,7 +249,9 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 Three ingredients carry the agreement. Training on the committed rows
 instead of a fresh 2500-row draw lowers the Fig. 6 x4 error. The reference
 optimization, 7000 @ 0.001 with `val = train`, fits the parabola bottom at
-α = 0. The min-max domain lowers the errors at the grid edges.
+α = 0. The min-max domain lowers the errors at the grid edges. The 5 %/95 %
+default misweights the tails here: the Fig. 6 error drops from 0.37 to 0.20
+for x4 and from 0.20 to 0.07 for x3.
 
 On fresh draws the parabola bottom sits below the truth near α = 0. The
 reason is neither protocol nor init. It is the finite-sample variance of the
@@ -338,21 +359,25 @@ The epoch floors, measured at that batch and rate:
   layer dies with it (atan: β13 +0.53, cs err 1.42).
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
   and the do(x1) mean. At 100 / 250 / 350 epochs the cs max err is
-  0.344 / 0.177 / 0.156 and the do err 0.033 / 0.060 / 0.022, so it trains
-  350. `linear-ls` has no CS net to wait for and trains 200 epochs at
-  lr 0.002. At that rate it reads the weakly identified β13/β23 slightly
-  closer to the 500-epoch values than at lr 0.004. relu dies at the sd-0.05 normal init
-  (cs err 0.859, β13 −0.055).
+  0.344 / 0.177 / 0.156 and the do err 0.033 / 0.060 / 0.022, against
+  0.107 / 0.016 at 500, so it trains 350. The coefficient trajectories are
+  flat from about epoch 50. `linear-ls` has no CS net to wait for and trains
+  200 epochs at lr 0.002. At 100 epochs, the weakly identified β13 sits 57 %
+  into its tolerance (−0.271 against the pinned −0.243). At 200 epochs it is
+  safe. The lower rate reads the weakly identified β13/β23 slightly closer to
+  the 500-epoch values than lr 0.004 does (β23 0.333 against 0.337, pin
+  0.306). relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
 - **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
   the rejected shortcuts are in their sections.
 
 ## Repository choices the paper does not state
 
-- the seeds,
+- the seeds (the reference seeds R's RNG with 42, which torch cannot
+  replay; a full-batch run ignores the shuffle seed),
 - the validation draw sizes for the triangle scripts (the R code's `test`),
-- `n_compare`,
+- `n_compare`, and `n_scatter` = 2000 points per VACA scatter panel (Fig. 4),
 - `n_heldout = 300` and the α set {−1.5, 0, 1.5}, scored next to the single
-  `x_obs`,
+  `x_obs`, drawn at the seed offset 999 from `dgp_seed`,
 - the mixed cutpoints from the R code,
 - the odds-ratio sample (40000 rows),
 - the counterfactual-PMF sample (2000 rows × 200 draws).

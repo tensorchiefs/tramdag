@@ -1,6 +1,3 @@
-# Activate in a fresh clone with (plain `install` wires up the pre-commit
-# stage only and leaves commitizen dormant):
-#   pre-commit install --install-hooks -t pre-commit -t commit-msg
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.16.9
@@ -18,7 +15,6 @@ repos:
   - id: check-shebang-scripts-are-executable
   - id: check-toml
   - id: check-yaml
-    # syntax-only: mkdocs.yml needs the !!python/name mermaid-fence tag
     args: [--unsafe]
   - id: end-of-file-fixer
   - id: mixed-line-ending
@@ -31,20 +27,15 @@ repos:
     args: [--autofix, --indent, '2']
   - id: pretty-format-toml
     args: [--autofix]
-    exclude: ^uv\.lock$   # uv owns this file; formatting reorders 2883 lines
+    exclude: ^uv\.lock$
 
 - repo: https://github.com/codespell-project/codespell
   rev: v2.4.3
   hooks:
-  # nd: the _Node variable in flow.py; continous: quotes the upstream
-  # R script's filename (tensorchiefs/tram-dag), typo and all; lik: R prints
-  # its log-likelihood as "'log Lik.'", quoted verbatim in a notebook
   - id: codespell
     name: codespell (tracked files)
     args: [-L, 'nd,continous,lik']
     exclude: ^(experiments/.*/data/|uv\.lock|.*\.ipynb$|.*texfrag/)
-  # a commit-msg-stage hook is handed ONLY the message file, so the message is
-  # spell-checked without the file excludes above applying to it
   - id: codespell
     alias: codespell-commit-msg
     name: codespell (commit message)
@@ -54,43 +45,33 @@ repos:
 - repo: https://github.com/rohaquinlop/complexipy-pre-commit
   rev: v8.0.1
   hooks:
-  # cognitive complexity, tiered: framework code may be intricate where the
-  # maths is; examples and tests must stay simple enough to read as prose
   - id: complexipy
     alias: complexipy-src
     name: complexipy (src + tools, max 15)
     args: [--max-complexity-allowed, '15']
-    # tools/ is developer code, so it belongs on the framework tier rather
-    # than the examples one; it matched neither before, and gen_diagrams.py
-    # had drifted to 22 unnoticed
     files: ^(src|tools)/
   - id: complexipy
     alias: complexipy-examples
     name: complexipy (experiments/notebooks/tests, max 10)
     args: [--max-complexity-allowed, '10']
     files: ^(experiments|notebooks|tests)/
-    exclude: \.ipynb$   # generated from the .py sources
+    exclude: \.ipynb$
 
 - repo: https://github.com/rhysd/actionlint
   rev: v1.7.12
   hooks:
-  - id: actionlint   # workflow syntax, expressions, runner labels, shellcheck
+  - id: actionlint
 
 - repo: https://github.com/astral-sh/uv-pre-commit
   rev: 0.12.19
   hooks:
-  - id: uv-lock   # keep uv.lock in sync when pyproject dependencies change
+  - id: uv-lock
 
 - repo: https://github.com/commitizen-tools/commitizen
   rev: v4.19.0
   hooks:
-  - id: commitizen   # conventional-commit message check, per message
+  - id: commitizen
     stages: [commit-msg]
-    # `commitizen-branch` (pre-push) is deliberately not wired up: pre-commit
-    # exports PRE_COMMIT_FROM_REF/TO_REF only when both refs exist, so the
-    # first push of a new branch hands commitizen the literal
-    # "$PRE_COMMIT_FROM_REF..$PRE_COMMIT_TO_REF" and it aborts. The commit-msg
-    # hook above already checks every message as it is written.
 
 - repo: local
   hooks:

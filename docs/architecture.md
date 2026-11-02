@@ -82,7 +82,7 @@ classDiagram
         __init__(term, schema): builds the net, sets key and parents
         order
         shift_value(node, feats)
-        post_init()
+        post_init() / zero_start()
         regularizer() -> Tensor | None
         finalize(node, feats)
         score_columns(node, feats, dlds)

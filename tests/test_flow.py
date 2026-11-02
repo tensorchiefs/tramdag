@@ -316,3 +316,23 @@ def test_outcome_is_the_single_sink():
     fork = {**chain, "d": ContinuousNode(LS("a"))}
     with pytest.raises(ValueError, match=r"\['c', 'd'\]"):
         _ = CausalFlowDAG(fork).outcome
+
+
+@pytest.mark.parametrize("init", ["torch", "glorot"])
+def test_zero_shift_networks_zeroes_only_the_cs_output_layers(init):
+    """Every CS shift starts at 0; every other weight is the seed's."""
+    spec = {
+        "x0": ContinuousNode(),
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(I("x0") + CS("x1")),
+        "y": OrdinalNode(3, LS("x0") + CS("x1", "x2")),
+    }
+    base = CausalFlowDAG(spec, seed=0, init=init).state_dict()
+    zeroed = CausalFlowDAG(spec, seed=0, init=init, zero_shift_networks=True)
+    out = {"nodes.x2.shifts.x1.net.6.weight", "nodes.y.shifts.x1+x2.net.6.weight"}
+    for k, v in zeroed.state_dict().items():
+        assert torch.equal(v, torch.zeros_like(v) if k in out else base[k]), k
+    df = pd.DataFrame({"x0": [-1.0, 0.5, 2.0], "x1": [0.3, -2.0, 1.0]})
+    x2 = zeroed.nodes["x2"]
+    _, shift = x2.theta_shift(x2.features(x2.tensorize(df, ["x0", "x1"])), 3)
+    assert torch.equal(shift, torch.zeros(3))

@@ -276,6 +276,9 @@ class ShiftModule(TermModule, ABC):
     def post_init(self) -> None:
         """Re-apply construction-time invariants after a global weight init."""
 
+    def zero_start(self) -> None:
+        """Zero the output layer of the term's network; a term without one skips."""
+
     def regularizer(self) -> Tensor | None:
         """Give the term's penalty on the total-likelihood scale, or ``None``."""
         return None
@@ -554,6 +557,10 @@ class ComplexShiftModule(ShiftModule):
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
         return self.net(x).squeeze(-1)
+
+    def zero_start(self) -> None:
+        """Zero the output layer, so the shift starts at 0."""
+        nn.init.zeros_(self.net[-1].weight)
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the net over this term's (possibly input-transformed) features."""

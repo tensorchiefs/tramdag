@@ -80,6 +80,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Kaiming-uniform), ``"glorot"`` (glorot-uniform weights, zero biases)
         or ``"normal"`` (N(0, 0.05^2) weights and biases). A VC head's
         output layer stays zero either way. Stored in the checkpoint.
+    zero_shift_networks : bool, optional
+        Zero the output layer of every ``CS`` network after ``init``, so
+        each shift starts at 0, by default ``False``. It draws no random
+        numbers, so the other weights stay those of the seed. A ``VC`` head
+        starts at zero anyway. Not stored: a checkpoint holds the weights.
 
     Attributes
     ----------
@@ -103,6 +108,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         device: str = "cpu",
         seed: int | None = None,
         init: str = "torch",
+        zero_shift_networks: bool = False,
     ):
         super().__init__()
         if init not in ("torch", "glorot", "normal"):
@@ -118,6 +124,10 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             {name: Node(name, spec[name], self._schema(name)) for name in self.order}
         )
         self._apply_init(init)
+        if zero_shift_networks:
+            for m in self.modules():
+                if isinstance(m, ShiftModule):
+                    m.zero_start()
         self.device = torch.device(device)
         self.meta: dict = {}
         self.to(self.device)

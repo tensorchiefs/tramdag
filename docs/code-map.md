@@ -136,7 +136,8 @@ The signatures hold the defaults. This list keeps the reasons.
   at construction, so the constructor seed is the reproducibility knob.
   `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras `Dense`
   default, the paper's reference, and it is decisive under the paper's
-  full-batch protocol.
+  full-batch protocol. `zero_shift_networks=True` starts every `CS` shift
+  at 0.
 - **Network widths and `activation=`** follow the default classes of the
   PyTorch reference, for parity. The `VC` head has no counterpart there, so
   its width comes from the recovery measurement. `"sigmoid"` and `"tanh"` are

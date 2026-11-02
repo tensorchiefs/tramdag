@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
+from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 from .callbacks import Callback
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 # %% global variables ------------------------------------------------------------------
 __all__ = ["FitMixin", "NodeFitMixin"]
 
-GRAD_TOL = 1e-2
+DECREMENT_TOL = 1e-9
 
 _FORK_JOB: tuple | None = None
 
@@ -175,6 +176,51 @@ def _fit_epoch(
             "cannot normalize over it. Give at least two rows."
         )
     return acc / trained
+
+
+def _newton(node: Node, values: dict[str, Tensor]) -> tuple[float, float, Tensor]:
+    """Give the mean NLL, the Newton decrement and the Newton step of a node.
+
+    The step inverts the exact Hessian with the absolute values of its
+    eigenvalues, so it always points downhill, and it skips the eigenvalues at
+    float64 noise level, so it does not move along a direction the data do not
+    identify. The decrement is half the gradient times the step: the NLL
+    decrease that the quadratic model of the NLL still expects.
+    """
+    params = list(node.parameters())
+    loss = -node.row_log_prob(values).mean()
+    grad = torch.cat(
+        [g.flatten() for g in torch.autograd.grad(loss, params, create_graph=True)]
+    )
+    rows = [torch.autograd.grad(g, params, retain_graph=True) for g in grad]
+    hess = torch.stack([torch.cat([h.flatten() for h in row]) for row in rows])
+    evals, evecs = torch.linalg.eigh(hess)
+    floor = evals.abs().max() * len(evals) * torch.finfo(evals.dtype).eps
+    inv = torch.where(evals.abs() > floor, 1 / evals.abs(), 0)
+    grad = grad.detach()
+    step = evecs @ (inv * (evecs.T @ grad))
+    return float(loss.detach()), float(grad @ step) / 2, step
+
+
+def _newton_polish(node: Node, values: dict[str, Tensor]) -> float:
+    """Take Newton steps while they lower the NLL; give the last decrement.
+
+    Each step halves its length up to 20 times until the NLL goes down. The
+    first step that cannot lower the NLL ends the polish, so it stops at the
+    float64 resolution of the optimum.
+    """
+    params = list(node.parameters())
+    while True:
+        nll, decrement, step = _newton(node, values)
+        x = parameters_to_vector(params).detach()
+        with torch.no_grad():
+            for k in range(20):
+                vector_to_parameters(x - 0.5**k * step, params)
+                if float(-node.row_log_prob(values).mean()) < nll:
+                    break
+            else:
+                vector_to_parameters(x, params)
+                return decrement
 
 
 def _node_seed(seed: int, index: int) -> int:
@@ -462,9 +508,10 @@ class NodeFitMixin:
         """Fit a simple intercept with ``LS`` terms the classical way.
 
         The fit uses full batches, float64, and L-BFGS with a strong-Wolfe
-        line search. There are no minibatches, no schedule and no early
-        stopping, so the fit is deterministic; the report says whether it
-        reached the maximum-likelihood estimate. Any other term raises.
+        line search, then Newton steps on the exact Hessian. There are no
+        minibatches, no schedule and no early stopping, so the fit is
+        deterministic; the report says whether it reached the
+        maximum-likelihood estimate. Any other term raises.
         ``docs/fitting.md`` says why.
 
         Parameters
@@ -480,14 +527,14 @@ class NodeFitMixin:
         -------
         dict
             A convergence report: ``converged``, ``stop_reason``, ``n_iter``,
-            ``final_nll``, ``grad_norm``, ``seconds``, and the fitted ``LS``
-            weights as ``coefficients``, ``{parent: array}``.
+            ``final_nll``, ``grad_norm``, ``decrement``, ``seconds``, and the
+            fitted ``LS`` weights as ``coefficients``, ``{parent: array}``.
 
         Warns
         -----
         UserWarning
             If the report is not ``converged``, with its ``stop_reason`` and
-            ``grad_norm``.
+            ``decrement``.
 
         Raises
         ------
@@ -500,11 +547,11 @@ class NodeFitMixin:
 
         Notes
         -----
-        ``tolerance_grad`` is 0 because the gradient norm never settles on the
-        flat ridges. A stalled line search stops on the same tolerance as an
-        arrival, so the gradient tells the two apart. The coefficients are read
-        while the node is still float64. The cast back to float32 loses about
-        1e-7, which is harmless.
+        L-BFGS stops when one iteration lowers the NLL by less than 1e-9. On an
+        ill-conditioned NLL, for example a parent on a large raw scale next to a
+        rare level, this happens short of the optimum. Newton steps on the exact
+        Hessian then finish the fit. The coefficients are read while the node
+        is still float64. The cast back to float32 loses about 1e-7 relative.
 
         float64 is a transient compute mode. The node is upcast for the fit,
         and ``self.double()`` converts the parameters and the range buffers of
@@ -517,12 +564,13 @@ class NodeFitMixin:
         than 1e-9, ``"max_iter"`` when the iteration budget ran out, and
         ``"max_eval"`` when torch's evaluation budget (``max_iter * 5 // 4``
         closure calls, line searches included) ran out first.
-        ``tolerance_grad`` is 0, so the gradient never ends the run.
+        ``tolerance_grad`` is 0, so the gradient never ends the run. Only a
+        ``"tolerance"`` stop gets the Newton steps.
 
-        ``converged`` needs BOTH: the run stopped on its own AND the gradient
-        norm is at most ``GRAD_TOL`` (1e-2). The objective is the mean NLL, so
-        its gradient does not scale with the number of rows and an absolute
-        bound is meaningful.
+        ``converged`` needs BOTH: the run stopped on its own AND the
+        ``decrement`` is at most ``DECREMENT_TOL`` (1e-9). The decrement is the
+        decrease of the mean NLL that a Newton step still expects. It does not
+        depend on the scale of the parents, which the gradient norm does.
         """
         self._check_classical()
         self.calibrate(train_df)
@@ -556,14 +604,17 @@ class NodeFitMixin:
                 stop_reason = "max_eval"
             else:
                 stop_reason = "tolerance"
-            with torch.no_grad():
-                final_nll = float(-self.row_log_prob(values).mean())
+            if stop_reason == "tolerance":
+                decrement = _newton_polish(self, values)
+            else:
+                decrement = _newton(self, values)[1]
+            final_nll = float(closure().detach())
             grad_norm = float(
                 torch.nn.utils.get_total_norm(
                     [p.grad for p in self.parameters() if p.grad is not None]
                 )
             )
-            converged = stop_reason == "tolerance" and grad_norm <= GRAD_TOL
+            converged = stop_reason == "tolerance" and decrement <= DECREMENT_TOL
             coefs = self.ls_coefficients()
         finally:
             self.float()
@@ -573,7 +624,7 @@ class NodeFitMixin:
             warnings.warn(
                 f"fit_classical did not converge on node {self.name!r}: "
                 f"stop_reason={stop_reason!r} after {n_iter} iterations, "
-                f"grad_norm={grad_norm:.2e} (bound {GRAD_TOL}). Raise max_iter "
+                f"decrement={decrement:.2e} (bound {DECREMENT_TOL}). Raise max_iter "
                 "or read the report.",
                 UserWarning,
                 stacklevel=2,
@@ -584,6 +635,7 @@ class NodeFitMixin:
             "n_iter": n_iter,
             "final_nll": final_nll,
             "grad_norm": grad_norm,
+            "decrement": decrement,
             "seconds": time.perf_counter() - t0,
             "coefficients": coefs,
         }
@@ -840,7 +892,7 @@ class FitMixin:
         """Fit an all-``ls`` model the classical way, node by node.
 
         Each node runs [`Node.fit_classical`][tramdag.nodes.Node.fit_classical]:
-        float64, full batch, L-BFGS. The joint objective is a sum of per-node
+        float64, full batch, L-BFGS and Newton. The joint objective is a sum of per-node
         terms with disjoint parameters, so the per-node optima are the joint
         one. Any term other than a simple intercept or ``LS`` raises before a
         node is fitted.
@@ -861,6 +913,13 @@ class FitMixin:
             the per-node mean NLLs), ``seconds``, the fitted ``coefficients``
             as ``{node: {parent: array}}`` (a node without ``LS`` terms is
             absent), and ``nodes``, the per-node reports.
+
+        Notes
+        -----
+        The report holds the float64 values of the fit. The flow keeps float32
+        parameters, so ``ls_coefficients``, ``pmf`` and ``log_prob`` use these
+        values rounded to float32, about 1e-7 relative. Compare the report with
+        other software.
 
         Warns
         -----

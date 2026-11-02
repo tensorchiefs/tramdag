@@ -207,18 +207,23 @@ shifts. It raises on any `CS`, `CI` or `VC` term. The options and the report
 are in the [`fit_classical`][tramdag.flow.CausalFlowDAG.fit_classical]
 docstring.
 
-- **Full batch, float64, L-BFGS.** There are no minibatches, schedule or early
-  stopping, so the same initialization gives bit-identical results. The fit
-  restores float32 afterwards, and checkpoints stay float32.
-- **`converged` needs two conditions.** The run must stop on its own, and
-  `grad_norm` must be at most `tramdag.fitting.GRAD_TOL`. The tolerance rule
-  also fires when the line search stalls far from the optimum. Such a run
-  stops on `"tolerance"` with a large gradient norm and is not converged.
-- **Weakly identified directions never settle.** A Bernstein intercept, rare
-  one-hot levels or a flat treatment-effect ridge drift along zero-curvature
-  valleys after the likelihood is at its optimum. This is why `tolerance_grad`
-  is off and the gradient bound is loose. Correctness comes from the
-  comparison with classical software in
+- **Full batch, float64, L-BFGS, Newton.** There are no minibatches or
+  schedules, so the same initialization gives bit-identical results. L-BFGS
+  stops short of the optimum on an ill-conditioned NLL. One cause is a
+  parent on a large raw scale next to a rare level. Newton steps on the exact
+  Hessian then finish the fit.
+- **The model stays float32.** The fit restores float32 afterwards, and
+  checkpoints stay float32. `ls_coefficients`, `pmf` and `log_prob` thus use
+  the fitted values rounded by about 1e-7 relative. The report's
+  `coefficients` are the float64 values; compare those with other software.
+- **`converged` needs two conditions.** The run must stop on its own, and the
+  report's `decrement` must be at most `tramdag.fitting.DECREMENT_TOL`. The
+  decrement is the decrease of the mean NLL that a Newton step still expects.
+  Thus a run that stalls short of the optimum is not converged.
+- **Unidentified directions do not move.** The one-hot of an ordinal parent
+  and the cutpoints share one direction with zero curvature. The Newton step
+  skips it, so compare the contrasts `w[k] - w[0]` with other software.
+  Correctness comes from the comparison with classical software in
   [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py).
 
 A converged `fit_classical` leaves the model at the MLE, ready for any

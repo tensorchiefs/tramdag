@@ -32,6 +32,35 @@ def _ls_spec() -> dict:
     }
 
 
+def _draw_stall() -> pd.DataFrame:
+    """Draw an ordinal outcome whose NLL stalls L-BFGS short of the optimum.
+
+    Two parents sit on a large raw scale (``time``, ``lab``) and ``level`` 5
+    has 15 of 1275 rows. The Hessian then spans about seven orders of
+    magnitude. The outcome is not exactly proportional odds (``score`` and
+    ``lab`` enter non-linearly), as in a real cohort.
+    """
+    rng = np.random.default_rng(0)
+    n = 1275
+    age = rng.normal(70, 10, n)
+    level = rng.choice(6, n, p=[0.45, 0.2, 0.15, 0.1, 0.09, 0.01])
+    score = rng.gamma(2.0, 4.0, n)
+    time = rng.gamma(4.0, 50.0, n)
+    lab = rng.normal(130, 40, n)
+    eta = (
+        0.04 * (age - 70)
+        + np.array([0.0, 0.5, 1.0, 1.4, 1.8, 3.0])[level]
+        + 0.12 * score
+        + 0.02 * score**1.5
+        + 0.004 * time
+        + 0.00005 * (lab - 100) ** 2
+    )
+    y = np.digitize(eta + rng.logistic(size=n), [-0.5, 0.5, 1.5, 2.5, 3.5, 4.5])
+    return pd.DataFrame(
+        {"age": age, "level": level, "score": score, "time": time, "lab": lab, "y": y}
+    )
+
+
 # %% public functions ------------------------------------------------------------------
 def test_rejects_non_all_ls():
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
@@ -75,6 +104,18 @@ def test_dtype_round_trip_and_usable(ls_chain):
     assert node_keys <= rep["nodes"]["y"].keys()
     assert flow.pmf(obs.head(5), "y").shape == (5, 4)
     assert flow.sample(10, seed=0).shape == (10, 4)
+
+
+def test_the_flow_holds_the_reported_coefficients_rounded_to_float32(ls_chain):
+    """The report keeps the float64 fit; the float32 model holds it rounded."""
+    obs = ls_chain["draw"](800, 3)
+    flow = CausalFlowDAG(_ls_spec(), seed=0)
+    rep = flow.fit_classical(obs)
+    for node, coefs in rep["coefficients"].items():
+        for parent, value in coefs.items():
+            assert value.dtype == np.float64
+            held = flow.ls_coefficients()[node][parent]
+            np.testing.assert_array_equal(held, value.astype(np.float32))
 
 
 def test_continuous_only_all_ls_recovers_the_true_shift(ls_chain):
@@ -156,10 +197,58 @@ def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
 
 
 def test_an_unreachable_gradient_bound_is_never_converged(ls_chain, monkeypatch):
-    monkeypatch.setattr(fitting, "GRAD_TOL", 0.0)
+    monkeypatch.setattr(fitting, "DECREMENT_TOL", -1.0)
     obs = ls_chain["draw"](800, 3)
     rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=2000)
     assert rep["converged"] is False
+
+
+def test_an_ill_conditioned_ordinal_fit_reaches_the_r_optimum():
+    """fit_classical reaches R's proportional-odds MLE where L-BFGS stalls.
+
+    The reference is ``MASS::polr(factor(y) ~ age + factor(level) + score +
+    time + lab, control = list(reltol = 1e-15))`` on the rows of
+    ``_draw_stall`` (R 4.5.3, MASS 7.3.66). ``tram::Polr`` 1.4.7 on the same
+    rows agrees with it to 6.3e-5 in the coefficients and 2.6e-10 in the mean
+    NLL. The bounds sit just above that agreement. L-BFGS alone stopped
+    6.4e-5 above this NLL, with the ``level[5]`` contrast at 2.48.
+    """
+    df = _draw_stall()
+    spec = {
+        "age": ContinuousNode(),
+        "level": OrdinalNode(6),
+        "score": ContinuousNode(),
+        "time": ContinuousNode(),
+        "lab": ContinuousNode(),
+        "y": OrdinalNode(
+            7, LS("age") + LS("level") + LS("score") + LS("time") + LS("lab")
+        ),
+    }
+    rep = CausalFlowDAG(spec, seed=0).nodes["y"].fit_classical(df)
+    coefs = rep["coefficients"]
+    w = coefs["level"].ravel()
+    fitted = {
+        "age": coefs["age"][0],
+        "score": coefs["score"][0],
+        "time": coefs["time"][0],
+        "lab": coefs["lab"][0],
+        **{f"level[{k}]": w[k] - w[0] for k in range(1, 6)},
+    }
+    polr = {
+        "age": 0.04010988684,
+        "level[1]": 0.6813326904,
+        "level[2]": 1.077043920,
+        "level[3]": 1.292667491,
+        "level[4]": 1.800885529,
+        "level[5]": 2.656473502,
+        "score": 0.2065914806,
+        "time": 0.003984036509,
+        "lab": 0.002231438710,
+    }
+    assert rep["converged"] is True
+    assert rep["final_nll"] == pytest.approx(2059.0944331980 / 1275, abs=1e-9)
+    for name, value in polr.items():
+        assert fitted[name] == pytest.approx(value, abs=1e-4), name
 
 
 @pytest.mark.slow

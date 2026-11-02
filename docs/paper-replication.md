@@ -163,7 +163,7 @@ a looser tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. In the D4/D5 study run, min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342). The quantiles score 0.080 / 0.068 / 0.092 (1.4347). The replication keeps the quantiles. The two plateau rules rank the domains in opposite order, so the measurements do not favor one domain. CAREFL, same nets, uses `range_q: 0` |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. The replication keeps the quantiles. The two plateau rules rank the domains in opposite order, so the measurements do not favor one domain. CAREFL, same nets, uses `range_q: 0` |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -365,13 +365,12 @@ The epoch floors, measured at that batch and rate:
   and the do(x1) mean. The cs max err is 0.344 / 0.177 / 0.156 at 100 / 250 /
   350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same epochs. At 500
   epochs the errors are 0.107 / 0.016, so it trains 350. The coefficient
-  trajectories are flat from about epoch 50. `linear-ls` has no CS net to wait
-  for, and at lr 0.002 it trains 200 epochs. At 100 epochs, the weakly
-  identified β13 sits 57 % into its tolerance (−0.271 against the pinned
-  −0.243). At 200 epochs it is safe. The lower rate reads the weakly identified
-  β13/β23 slightly closer to the 500-epoch values. It does so more than lr 0.004
-  does. For β23 it is 0.333 against 0.337, and 0.306
-  is the pin. relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
+  trajectories are flat from about epoch 50 on. `linear-ls` has no CS net to wait
+  for, and at lr 0.002 it trains 200 epochs. A study run at 100 epochs measured the
+  weakly identified β13 at −0.271. That used 57 % of its tolerance. At 200
+  epochs it stays well inside. In the same study, the lower lr 0.002 lands
+  closer to the 500-epoch values. It reads β23 as 0.333, where lr 0.004 reads
+  0.337 instead. relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
 - **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
   the rejected shortcuts are in their sections.
 

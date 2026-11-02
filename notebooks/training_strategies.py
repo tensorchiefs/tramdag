@@ -321,10 +321,10 @@ assert len(trace) == 5 * len(SPEC)
 # %%
 def adam_with_net_decay(node):
     """Adam with weight decay on the network parameters only."""
-    named = list(node.named_parameters())
-    nets = [p for name, p in named if ".net." in name]
-    rest = [p for name, p in named if ".net." not in name]
-    groups = [{"params": rest}, {"params": nets, "weight_decay": 1e-4}]
+    groups = node.parameter_groups()
+    rest = groups["intercept"] + groups["linear"]
+    nets = {"params": groups["networks"], "weight_decay": 1e-4}
+    groups = [{"params": rest}, nets]
     return torch.optim.Adam(groups, lr=1e-2)
 
 

@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CI, LS, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
+from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import Callback
 from tramdag.fitting import _node_seed
 
@@ -149,3 +149,28 @@ def test_a_generator_of_callbacks_reaches_every_node(ls_chain):
     for callbacks in (lambda name: (c for c in [StopAt2()]), (c for c in [StopAt2()])):
         flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=50, callbacks=callbacks)
         assert [len(nd.history["train"]) for nd in flow.nodes.values()] == [2, 2]
+
+
+def test_parameter_groups_give_every_parameter_once_by_role():
+    """The kinds pin the split an optimizer factory decays: networks only."""
+    spec = {
+        "x1": ContinuousNode(),
+        "t": OrdinalNode(2, LS("x1")),
+        "x2": ContinuousNode(CI("x1")),
+        "y": ContinuousNode(LS("x1") + CS("x2") + VC("x1", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    y = flow.nodes["y"]
+    groups = y.parameter_groups()
+    assert list(groups) == ["intercept", "linear", "networks"]
+    named = {id(p): n for n, p in y.named_parameters()}
+    names = {role: [named[id(p)] for p in ps] for role, ps in groups.items()}
+    assert names["intercept"] == ["intercept.theta"]
+    assert names["linear"] == ["shifts.x1.fc.weight", "shifts.t.beta0"]
+    assert names["networks"] == [
+        n for n in named.values() if n.startswith("shifts.") and ".net." in n
+    ]
+    assert sorted(n for ns in names.values() for n in ns) == sorted(named.values())
+    x2 = flow.nodes["x2"].parameter_groups()
+    assert x2["networks"] == list(flow.nodes["x2"].parameters())
+    assert x2["intercept"] == x2["linear"] == []

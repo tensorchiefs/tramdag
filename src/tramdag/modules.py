@@ -214,6 +214,14 @@ class TermModule(nn.Module):
         """
         return self._modules.get("_input_transform")
 
+    def parameter_groups(self) -> dict[str, list[nn.Parameter]]:
+        """Give the term's parameters by role; all of them are ``"networks"`` here.
+
+        A term with a free intercept or an interpretable coefficient overrides
+        this and gives those as ``"intercept"`` or ``"linear"``.
+        """
+        return {"networks": list(self.parameters())}
+
     def calibrate(self, train_df: pd.DataFrame) -> None:
         """Freeze this term's data-dependent state: the input-transform stats.
 
@@ -372,6 +380,10 @@ class SimpleInterceptModule(InterceptModule):
         """Broadcast the free theta over the batch."""
         return self(n)
 
+    def parameter_groups(self) -> dict[str, list[nn.Parameter]]:
+        """Give the free theta as ``"intercept"``."""
+        return {"intercept": [self.theta]}
+
     def marginal_start(self, theta: Tensor) -> None:
         """Start at the node's data marginal."""
         with torch.no_grad():
@@ -489,6 +501,10 @@ class LinearShiftModule(ShiftModule):
     def forward(self, x: Tensor) -> Tensor:
         """Give the shift ``(n,)`` from the encoded features ``(n, n_features)``."""
         return self.fc(x).squeeze(-1)
+
+    def parameter_groups(self) -> dict[str, list[nn.Parameter]]:
+        """Give the weight as ``"linear"``."""
+        return {"linear": [self.fc.weight]}
 
     def shift_value(self, node: Node, feats: dict) -> Tensor:
         """Give the raw parent column times the weight, with no input transform."""
@@ -672,6 +688,11 @@ class VaryingCoefficientModule(ShiftModule):
         if self.net is None or self.penalty == 0:
             return None
         return self.penalty * self.l2()
+
+    def parameter_groups(self) -> dict[str, list[nn.Parameter]]:
+        r"""Give $\beta_0$ as ``"linear"`` and $b_\Theta$ as ``"networks"``."""
+        nets = [] if self.net is None else list(self.net.parameters())
+        return {"linear": [self.beta0], "networks": nets}
 
     def finalize(self, node: Node, feats: dict) -> None:
         """Re-split ``beta0``/``b_theta``: the head sums to zero over train."""

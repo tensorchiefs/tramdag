@@ -79,7 +79,8 @@ the final weights.
 - **Optimizer.** One optimizer per node, `Adam(lr=learning_rate)` by default.
   `optimizer=` takes a factory `f(node)`, for example to give the networks
   weight decay in their own parameter group. `Node.fit` also takes an
-  optimizer instance.
+  optimizer instance. `node.parameter_groups()` gives the parameters by kind:
+  `"intercept"`, `"linear"` and `"networks"`.
 - **Minibatches.** A fresh shuffle each epoch. `seed=` seeds the shuffle
   only, not the weight init; each node gets its own seed derived from
   `(seed, node index)`.

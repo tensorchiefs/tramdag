@@ -399,6 +399,27 @@ class Node(NodeFitMixin, nn.Module):
             if isinstance(m, LinearShiftModule)
         }
 
+    def parameter_groups(self) -> dict[str, list[nn.Parameter]]:
+        r"""Give every parameter of the node once, by its kind.
+
+        An optimizer factory builds its parameter groups from this, for
+        example weight decay on ``"networks"`` only.
+
+        Returns
+        -------
+        dict[str, list[nn.Parameter]]
+            ``"intercept"``: the free $\vartheta$ of a simple intercept.
+            ``"linear"``: the ``LS`` weights and each ``VC``'s $\beta_0$.
+            ``"networks"``: every network, the ``CI``, ``CS`` and $b_\Theta$
+            of a ``VC``. Each term module gives its own through
+            ``parameter_groups``.
+        """
+        groups = {"intercept": [], "linear": [], "networks": []}
+        for m in (self.intercept, *self.shifts.values()):
+            for role, params in m.parameter_groups().items():
+                groups[role] += params
+        return groups
+
     def save(self, path: str | Path) -> None:
         """Write the node, its history and its provenance to a checkpoint.
 

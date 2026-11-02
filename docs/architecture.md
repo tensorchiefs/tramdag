@@ -76,6 +76,7 @@ classDiagram
     class TermModule {
         <<modules.py, nn.Module>>
         input_transform / calibrate(train_df)
+        parameter_groups()
     }
     class ShiftModule {
         __init__(term, schema): builds the net, sets key and parents

@@ -39,7 +39,7 @@ constructor seed is the reproducibility knob. A lone
 `Node` needs `torch.manual_seed` before you build it. The class composes
 `FitMixin` and `ReadoutsMixin`. The modules below list their methods.
 
-- `CausalFlowDAG.outcome` gives the one node without children.
+- `CausalFlowDAG.outcome()` gives the one node without children.
 - `sample` covers observational, interventional (`do=`, graph mutilation) and
   counterfactual (`u=`) sampling. `abduct` recovers the latents. `pmf` and
   `density` give the analytic conditionals.

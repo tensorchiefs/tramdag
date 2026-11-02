@@ -96,9 +96,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         One [`Node`][tramdag.nodes.Node] per variable, in topological order.
     order : list[str]
         The node names in topological order.
-    outcome : str
-        The one node without children, see
-        [`outcome`][tramdag.flow.CausalFlowDAG.outcome].
     history : dict
         The nodes' fit histories, see
         [`history`][tramdag.flow.CausalFlowDAG.history].
@@ -135,7 +132,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.meta: dict = {}
         self.to(self.device)
 
-    @property
     def outcome(self) -> str:
         """Give the one node that no other node reads.
 

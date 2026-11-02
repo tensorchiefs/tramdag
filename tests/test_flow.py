@@ -1,6 +1,8 @@
 """Unit tests for the tramdag causal flow."""
 
 # %% imports ---------------------------------------------------------------------------
+import inspect
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -318,16 +320,16 @@ def test_a_reversed_frame_gives_the_same_nll():
 
 
 def test_outcome_is_the_single_sink():
-    """``outcome`` names the one childless node and refuses several."""
+    """``outcome()`` names the one childless node and refuses several."""
     chain = {
         "a": ContinuousNode(),
         "b": ContinuousNode(LS("a")),
         "c": OrdinalNode(3, [LS("b")]),
     }
-    assert CausalFlowDAG(chain).outcome == "c"
+    assert CausalFlowDAG(chain).outcome() == "c"
     fork = {**chain, "d": ContinuousNode(LS("a"))}
     with pytest.raises(ValueError, match=r"\['c', 'd'\]"):
-        _ = CausalFlowDAG(fork).outcome
+        CausalFlowDAG(fork).outcome()
 
 
 @pytest.mark.parametrize("init", ["torch", "glorot"])
@@ -370,3 +372,15 @@ def test_seed_ends_with_the_global_stream_seeded():
     got = torch.rand(3)
     torch.manual_seed(5)
     assert torch.equal(got, torch.rand(3))
+
+
+def test_hasattr_outcome_does_not_raise_on_two_sinks():
+    """``outcome`` is a method, so ``hasattr`` and ``getmembers`` do not raise."""
+    spec = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(LS("a")),
+        "c": ContinuousNode(LS("a")),
+    }
+    flow = CausalFlowDAG(spec)
+    assert hasattr(flow, "outcome")
+    assert "outcome" in dict(inspect.getmembers(flow))

@@ -10,7 +10,7 @@ dev = [
   { include-group = "test" },
   "pre-commit",
   "pylsp-rope",
-  "ruff==0.16.9",
+  "ruff==0.17.2",
   "shellcheck-py",
   "python-lsp-ruff",
   "python-lsp-server[all]"

@@ -620,13 +620,13 @@ class NodeFitMixin:
                 stop_reason = "max_eval"
             else:
                 stop_reason = "tolerance"
-            settled = False
             if stop_reason == "tolerance":
                 decrement, steps, settled = _newton_polish(
                     self, values, max_iter - n_iter
                 )
                 n_iter += steps
-                stop_reason = "tolerance" if settled else "max_iter"
+                if not settled:
+                    stop_reason = "max_iter"
             else:
                 decrement = _newton(self, values)[1]
             final_nll = float(closure().detach())
@@ -635,7 +635,7 @@ class NodeFitMixin:
                     [p.grad for p in self.parameters() if p.grad is not None]
                 )
             )
-            converged = settled
+            converged = stop_reason == "tolerance"
             coefs = self.ls_coefficients()
         finally:
             self.float()

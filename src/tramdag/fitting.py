@@ -202,16 +202,22 @@ def _newton(node: Node, values: dict[str, Tensor]) -> tuple[float, float, Tensor
     return float(loss.detach()), float(grad @ step) / 2, step
 
 
-def _newton_polish(node: Node, values: dict[str, Tensor]) -> float:
-    """Take Newton steps while they lower the NLL; give the last decrement.
+def _newton_polish(
+    node: Node, values: dict[str, Tensor], max_steps: int
+) -> tuple[float, int, bool]:
+    """Take Newton steps until the decrement is at most ``DECREMENT_TOL``.
 
-    Each step halves its length up to 20 times until the NLL goes down. The
-    first step that cannot lower the NLL ends the polish, so it stops at the
-    float64 resolution of the optimum.
+    Each step halves its length up to 20 times until the NLL goes down. A step
+    that cannot lower the NLL also ends the polish: the NLL is then at its
+    float64 resolution, or at a kink of a piecewise smooth transform. Give the
+    last decrement, the number of steps, and whether the polish ended on its
+    own before ``max_steps``.
     """
     params = list(node.parameters())
-    while True:
+    for steps in range(max_steps):
         nll, decrement, step = _newton(node, values)
+        if decrement <= DECREMENT_TOL:
+            return decrement, steps, True
         x = parameters_to_vector(params).detach()
         with torch.no_grad():
             for k in range(20):
@@ -220,7 +226,8 @@ def _newton_polish(node: Node, values: dict[str, Tensor]) -> float:
                     break
             else:
                 vector_to_parameters(x, params)
-                return decrement
+                return decrement, steps, True
+    return _newton(node, values)[1], max_steps, False
 
 
 def _node_seed(seed: int, index: int) -> int:
@@ -519,7 +526,8 @@ class NodeFitMixin:
         train_df : pd.DataFrame
             Training rows: the node's column and its parents' columns.
         max_iter : int, optional
-            Upper limit on L-BFGS iterations, by default 5000.
+            Upper limit on L-BFGS iterations and Newton steps together, by
+            default 5000.
         history_size : int, optional
             L-BFGS memory, by default 50.
 
@@ -559,18 +567,26 @@ class NodeFitMixin:
         the stored model and ``save``/``load`` stay float32. Double precision
         is what lets the line search resolve the optimum cleanly.
 
-        ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS
-        stopped on its own, because the NLL or the parameters moved by less
-        than 1e-9, ``"max_iter"`` when the iteration budget ran out, and
-        ``"max_eval"`` when torch's evaluation budget (``max_iter * 5 // 4``
-        closure calls, line searches included) ran out first.
-        ``tolerance_grad`` is 0, so the gradient never ends the run. Only a
-        ``"tolerance"`` stop gets the Newton steps.
+        ``stop_reason`` is what ended the run: ``"tolerance"`` when L-BFGS and
+        the Newton steps stopped on their own, ``"max_iter"`` when the
+        iteration budget ran out, and ``"max_eval"`` when torch's evaluation
+        budget (``max_iter * 5 // 4`` closure calls, line searches included)
+        ran out first. ``n_iter`` counts the L-BFGS iterations and the Newton
+        steps. ``tolerance_grad`` is 0, so the gradient never ends the run.
+        Only a ``"tolerance"`` stop of L-BFGS gets the Newton steps.
 
-        ``converged`` needs BOTH: the run stopped on its own AND the
-        ``decrement`` is at most ``DECREMENT_TOL`` (1e-9). The decrement is the
-        decrease of the mean NLL that a Newton step still expects. It does not
-        depend on the scale of the parents, which the gradient norm does.
+        The Newton steps stop when the ``decrement`` is at most
+        ``DECREMENT_TOL`` (1e-9), or when no step lowers the NLL. The decrement
+        is the decrease of the mean NLL that a Newton step still expects. It
+        does not depend on the scale of the parents, which the gradient norm
+        does. A Bernstein NLL converges only linearly in its weakly curved
+        tail coefficients, so this can take some hundred steps. A spline NLL
+        is only piecewise smooth: at a kink its Hessian is indefinite, no step
+        lowers the NLL, and the decrement stays above the bound.
+
+        ``converged`` is ``stop_reason == "tolerance"``: a stall short of the
+        optimum is not converged, because the Newton steps continue from it
+        until they stop on their own or spend the budget.
         """
         self._check_classical()
         self.calibrate(train_df)
@@ -604,8 +620,13 @@ class NodeFitMixin:
                 stop_reason = "max_eval"
             else:
                 stop_reason = "tolerance"
+            settled = False
             if stop_reason == "tolerance":
-                decrement = _newton_polish(self, values)
+                decrement, steps, settled = _newton_polish(
+                    self, values, max_iter - n_iter
+                )
+                n_iter += steps
+                stop_reason = "tolerance" if settled else "max_iter"
             else:
                 decrement = _newton(self, values)[1]
             final_nll = float(closure().detach())
@@ -614,7 +635,7 @@ class NodeFitMixin:
                     [p.grad for p in self.parameters() if p.grad is not None]
                 )
             )
-            converged = stop_reason == "tolerance" and decrement <= DECREMENT_TOL
+            converged = settled
             coefs = self.ls_coefficients()
         finally:
             self.float()
@@ -902,7 +923,8 @@ class FitMixin:
         train_df : pd.DataFrame
             Training data, one column per node.
         max_iter : int, optional
-            Upper limit on L-BFGS iterations per node, by default 5000.
+            Upper limit on L-BFGS iterations and Newton steps per node, by
+            default 5000.
         history_size : int, optional
             L-BFGS memory, by default 50.
 

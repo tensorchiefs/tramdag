@@ -173,7 +173,8 @@ class EarlyStopping(Callback):
             raise RuntimeError(
                 "EarlyStopping has nothing to restore: no epoch reached "
                 "on_epoch_end with a finite validation NLL. Either fit() ran no "
-                "epoch, or the fit diverged. Lower learning_rate, or check the "
-                "validation frame for a column the model cannot score."
+                "epoch, or fewer epochs than min_epochs, or the fit diverged. "
+                "Lower learning_rate, or check the validation frame for a column "
+                "the model cannot score."
             )
         node.load_state_dict(self._state)

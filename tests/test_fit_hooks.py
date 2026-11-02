@@ -548,3 +548,16 @@ def test_the_best_epoch_is_on_record_across_fits_and_checkpoints(ls_chain, tmp_p
         assert nd.history["best_epoch"] == flow.nodes[name].history["best_epoch"]
     flow.fit(df, epochs=1)
     assert not any("best_epoch" in nd.history for nd in flow.nodes.values())
+
+
+def test_min_epochs_above_the_epochs_run_is_named_in_the_error(ls_chain):
+    """A fit shorter than min_epochs snapshots nothing; the message says so."""
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(RuntimeError, match="min_epochs"):
+        flow.fit(
+            df,
+            epochs=2,
+            validation_split=0.2,
+            callbacks=EarlyStopping(min_epochs=5),
+        )

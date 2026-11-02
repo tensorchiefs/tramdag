@@ -22,7 +22,7 @@ hand:
 
 The docs workflow executes every notebook here, on pushes to `main` and to
 `dev-*` branches. That execution is what keeps them working against the
-current API. A notebook that is not in that workflow's loop does not belong in
+API. A notebook that is not in that workflow's loop does not belong in
 this directory.
 
 Data a notebook reads lives in `notebooks/data/`. Its README gives the

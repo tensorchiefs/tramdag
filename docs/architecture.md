@@ -140,7 +140,8 @@ The term modules read a node's schema entry (`nodes.schema_entry`):
 
 ## Guards that pin all of this
 
-- `tests/tools/statedict_smoke.py`: seeded per-DGP state dicts, bit-compared.
+- `tests/tools/statedict_smoke.py` records seeded per-DGP state dicts;
+  `tests/test_statedict_stability.py` compares them bit for bit.
 - The inline DGP truths (`tests/conftest.py`) and 45+ regex-pinned refusals.
 - `experiments/ground_truth/*.json`: eight CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.

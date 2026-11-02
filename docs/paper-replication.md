@@ -9,7 +9,8 @@ why, and the numbers. The paper states five training numbers: n = 40000,
 its results as figures. Where it gives no number, the "paper" column names the
 figure and what it shows. The pinned ground truth is `experiments/ground_truth/*.json`;
 [experiments/README.md](../experiments/README.md) explains the YAML variants,
-the frozen data and the check.
+the frozen data and the check. The tables of D4 and D5 are study runs of
+their own. They are not the pinned run.
 
 Seeds are DGP 42, init 7 and shuffle 0. The triangle scripts of the reference
 run unseeded. The comparison scripts seed R's RNG, which torch cannot
@@ -76,24 +77,23 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 | variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, the pinned ground truth |
 |---|---|---|---|---|
 | linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.986 / −0.153 / 0.261 |
-| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.176; 0.025 |
+| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.176; 0.031 |
 | atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.156; 0.053 |
-| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.165; 0.240 on the paper's [−1, 0] window |
-| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | CS variants 0.031 to 0.080; linear-ls bound 0.267 |
+| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.165; 0.255 on the paper's [−1, 0] window |
+| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | 0.031 to 0.125 (linear-cs, atan-cs, sin-cs); linear-ls 0.115 |
 | all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4608 to 2.4632 |
 
-The pinned column gives the `value` of each entry in
-`experiments/ground_truth/*.json`. An error entry has only a `max` bound. Where
-the file's `_note` says that the bounds are 2.5x the measurement, the column
-gives the bound divided by 2.5. Otherwise it gives the bound, labeled as one.
-The triangle pins come from one run at the current config.
+The pinned column gives the measurement of the pinned run, from its
+`metrics.json`. Each `value` entry in `experiments/ground_truth/*.json` is
+this measurement. Each `max` bound sits at 1.5x to 4x of it. No cell in this
+column is a bound. The triangle pins come from one run at the current config.
 
-β13 measures −0.15 to −0.18 instead of −0.2. β13 multiplies x1, whose two
-mixture components sit at 0.25 and 0.73. So x1 has sd 0.254 against 0.375 for
-x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n = 40000. The value stays within
-about 1.3 SE. At n = 5000, β13 is too weakly identified for the frozen
-5000-row CSVs to serve as fit checks. So the fit checks train on the paper's
-n = 40000 protocol.
+β13 measures −0.15 to −0.18 instead of −0.2 in the continuous triangle variants.
+β13 multiplies x1, whose two mixture components sit at 0.25 and 0.73. So x1 has
+sd 0.254 against 0.375 for x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n =
+40000. The value stays within about 1.3 SE. At n = 5000, β13 is too weakly
+identified for the frozen 5000-row CSVs to serve as fit checks. So the fit
+checks train on the paper's n = 40000 protocol.
 
 The (25, 25) hidden stack is what lands `sin-cs` on Fig. 18, including its
 small −1-endpoint deviation. A literal `[2, 25, 25, 2]` reading puts a
@@ -134,13 +134,12 @@ odds-ratio check). It is the only mixed variant with a true β23.
 |---|---|---|---|---|
 | linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.979 / −0.258 / 0.318 |
 | linear-ls | odds ratio predicted / DGP | e² ≈ 7.39; C.4 text: 7.74, CI [7.16, 8.38] | 7.29 / 7.19 | 7.23 / 7.19 |
-| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV bound 0.124; 0.715 / 0.728 / 0.806 |
+| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV 0.050; 0.715 / 0.728 / 0.806 |
 | exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.209; 0.064 |
-| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.023; 0.920 / 0.921 |
+| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.020; 0.920 / 0.921 |
 
-The pinned column follows the rule of the continuous table. The
-`triangle-mixed-linear-ls` note does not state the 2.5x rule, so its TV entry
-is the bound.
+The pinned column follows the rule of the continuous table: every cell is a
+measurement.
 
 ## VACA / CNF benchmark (`vaca.py`): paper Sec. 5.1 and 5.2, App. C.1
 
@@ -164,7 +163,7 @@ a looser tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342). The quantiles score 0.080 / 0.068 / 0.092 (1.4347). So D1 is open for revision. CAREFL, same nets, uses `range_q: 0` |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. In the D4/D5 study run, min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342). The quantiles score 0.080 / 0.068 / 0.092 (1.4347). The replication keeps the quantiles. The two plateau rules rank the domains in opposite order, so the measurements do not favor one domain. CAREFL, same nets, uses `range_q: 0` |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -172,15 +171,15 @@ pinned flow value.
 
 | metric | paper | here, the pinned ground truth |
 |---|---|---|
-| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.080 |
-| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.068 |
-| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.092 |
+| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.097 |
+| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.078 |
+| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.099 |
 | sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
 | val NLL x3 | (none) | 1.4353 |
 
 The do(x2) errors vary with the seed. D5 below gives the spread over four
-init draws. The paper shows one run's densities. The committed bounds are
-2.5× the seed-7 measurement.
+init draws. The paper shows one run's densities. The committed bounds sit at
+1.5x to 4x of the pinned measurement.
 
 The table below traces what each protocol ingredient is worth under the
 reference protocol with its global plateau, one change at a time. It uses the
@@ -279,8 +278,7 @@ Rejected alternatives:
 `marginal_init` starts every simple intercept at its column's empirical
 marginal ([fitting.md](fitting.md#the-marginal-start)). The reference starts
 `bernp$beta` at zero. Measured on this machine at the CI protocol, one
-run per variant with the start off and on, seeds unchanged. This table is
-its own study run. It is not the pinned run:
+run per variant with the start off and on, seeds unchanged:
 
 | variant | epochs to within 0.01 of the final train NLL, off → on | endpoint, off → on | verdict |
 |---|---|---|---|
@@ -313,8 +311,7 @@ NLL exists during a fit. Each node runs the same rule on its own validation
 NLL, with its own optimizer. The rule and its constants stay the same.
 
 The table gives the VACA do(x2) errors at a = −3 / −1 / 0. It also gives the
-x3 validation NLL, with one run per init seed on the same data. This table
-is its own study run. It is not the pinned run.
+x3 validation NLL, with one run per init seed on the same data.
 
 | init seed | per node (here) | global (reference) |
 |---|---|---|
@@ -361,7 +358,7 @@ The epoch floors, measured at that batch and rate:
 - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
   do(x1) bound (0.235 > 0.200). `linear-cs` keeps 500, because at 300 its fitted
   cs curve flattens past |x2| > 0.5. The max err there is 0.140 against the
-  pinned 0.025 at 500 epochs. The DGP line spans only ±0.3, and the sigmoid
+  pinned 0.031 at 500 epochs. The DGP line spans only ±0.3, and the sigmoid
   net's slow tail convergence is half of that. relu is out, because the 2-unit
   input layer dies (atan: β13 +0.53, cs err 1.42).
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net

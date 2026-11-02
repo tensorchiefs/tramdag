@@ -580,7 +580,7 @@ class NodeFitMixin:
         is the decrease of the mean NLL that a Newton step still expects. It
         does not depend on the scale of the parents, which the gradient norm
         does. A Bernstein NLL converges only linearly in its weakly curved
-        tail coefficients, so this can take some hundred steps. A spline NLL
+        tail coefficients, so this can take many steps. A spline NLL
         is only piecewise smooth: at a kink its Hessian is indefinite, no step
         lowers the NLL, and the decrement stays above the bound.
 

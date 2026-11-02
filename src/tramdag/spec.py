@@ -361,7 +361,7 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     return out
 
 
-def spec_from_dict(d: dict, strict: bool = False) -> dict[str, NodeSpec]:
+def spec_from_dict(d: dict, *, strict: bool = False) -> dict[str, NodeSpec]:
     """Rebuild a spec from its serialized form.
 
     Each term is rebuilt through its class, so a wrong arity fails as the

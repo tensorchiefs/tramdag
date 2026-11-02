@@ -418,9 +418,10 @@ def _mark_stops(ax, flow) -> None:
     nodes = flow.nodes.items()
     bests = [nd.history["best_epoch"] for _, nd in nodes if "best_epoch" in nd.history]
     for name, nd in nodes:
-        ax.axvline(len(nd.history["train"]), ls="--", lw=1, color="gray")
+        stop = len(nd.history["train"])
+        ax.axvline(stop, ls="--", lw=1, color="gray")
         ax.text(
-            len(nd.history["train"]),
+            stop,
             1.01,
             name,
             transform=ax.get_xaxis_transform(),

@@ -89,9 +89,6 @@ Four implementation conventions are easy to get wrong, and tests pin each:
 - the log-space ordinal likelihood ([`docs/model.md`](docs/model.md));
 - the seeding ([`docs/code-map.md`](docs/code-map.md)).
 
-Read [`docs/architecture.md`](docs/architecture.md) before you change
-anything in `src/tramdag/`.
-
 ## Citations
 
 Every cited work has one entry in
@@ -152,7 +149,7 @@ Config files carry no comments. The hooks `no-config-comments` and
   needs the `!!python/name` tag of the mermaid fence.
 - `pretty-format-toml` excludes `uv.lock`. uv owns that file, and formatting
   reorders thousands of lines.
-- codespell ignores three words. `nd` is the `_Node` variable in `flow.py`.
+- codespell ignores three words. `nd` is the node variable in `flow.py`.
   `continous` is a quote of the filename of the upstream R script in
   `tensorchiefs/tram-dag`, with its typo. `lik` is a quote of the R output `'log
   Lik.'` in a notebook.

@@ -28,6 +28,15 @@ replay. So every seed here is a repository choice.
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
 | plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)`, the same rule verified against torch's source, but per node on the node's own validation NLL, deviation D5 below; `experiments/helpers.py::fit_paper` drives it |
 
+The deviations have these labels:
+
+- **D1** is the Bernstein domain. VACA keeps the quantiles (see VACA).
+- **D2** was the weight init. The comparison runs now use glorot, as the
+  reference does, so no deviation remains.
+- **D3** is the bias-free intercept output layer (the table above).
+- **D4** is the marginal start (the section D4 below).
+- **D5** is the plateau rule per node (the section D5 below).
+
 ## Triangle, continuous (`triangle.py`): paper Sec. 6.1, App. C.3
 
 **DGP** (`summerof24/triangle_structured_continous.R`):
@@ -351,13 +360,13 @@ triangle job takes 7 to 11 min instead of 42 to 69.
 
 The epoch floors, measured at that batch and rate:
 
-- - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
+- **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
   do(x1) bound (0.235 > 0.200). `linear-cs` keeps 500, because at 300 its fitted
   cs curve flattens past |x2| > 0.5. The max err there is 0.140 against the
   pinned 0.025 at 500 epochs. The DGP line spans only ±0.3, and the sigmoid
   net's slow tail convergence is half of that. relu is out, because the 2-unit
   input layer dies (atan: β13 +0.53, cs err 1.42).
-- - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
+- **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
   and the do(x1) mean. The cs max err is 0.344 / 0.177 / 0.156 at 100 / 250 /
   350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same epochs. At 500
   epochs the errors are 0.107 / 0.016, so it trains 350. The coefficient

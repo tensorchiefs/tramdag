@@ -53,7 +53,7 @@ cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
   (`docs/model.md`). Parents enter raw or one-hot; seeding happens at
   construction (`docs/code-map.md`).
 - Modules keep the `# %%` section markers, the NumPy docstrings and the
-  complexipy limits of `CONTRIBUTING.md`.
+  complexipy limits of `.pre-commit-config.yaml`.
 - Error messages: lowercase, values as `{name!r}`, no trailing period unless
   several sentences.
 - Commits follow conventional commits; `cz bump` tags the release and

@@ -79,6 +79,19 @@ instead.
 Read [`docs/architecture.md`](docs/architecture.md) before you change
 anything in `src/tramdag/`.
 
+## Conventions worth knowing
+
+Four implementation conventions are easy to get wrong, and tests pin each:
+
+- the latent-scale signs ([`docs/notation.md`](docs/notation.md));
+- the raw continuous against one-hot ordinal parent encoding
+  ([`docs/model.md`](docs/model.md));
+- the log-space ordinal likelihood ([`docs/model.md`](docs/model.md));
+- the seeding ([`docs/code-map.md`](docs/code-map.md)).
+
+Read [`docs/architecture.md`](docs/architecture.md) before you change
+anything in `src/tramdag/`.
+
 ## Citations
 
 Every cited work has one entry in

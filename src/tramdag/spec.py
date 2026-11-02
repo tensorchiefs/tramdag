@@ -90,6 +90,13 @@ def _serialized(term: Term) -> dict:
     }
 
 
+def _check_written(name: str, ordinal: bool, wire: dict, term: Term) -> None:
+    """Raise if the wire entry of ``term`` omits one of its acting options."""
+    for k in term.acting_options(ordinal):
+        if k not in wire["options"]:
+            raise ValueError(f"node {name!r}: term {wire['term']!r} omits option {k!r}")
+
+
 def _checked_input_transform(value):
     """Give ``input_transform`` back, or refuse a value no term can apply.
 
@@ -354,18 +361,21 @@ def spec_to_dict(spec: dict[str, NodeSpec]) -> dict:
     return out
 
 
-def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
+def spec_from_dict(d: dict, strict: bool = False) -> dict[str, NodeSpec]:
     """Rebuild a spec from its serialized form.
 
     Each term is rebuilt through its class, so a wrong arity fails as the
     term's own ``ValueError`` and a misspelled option key as Python's own
     ``TypeError``, naming the keyword. An option the entry does not mention
-    takes its constructor default.
+    takes its constructor default, unless ``strict`` is set.
 
     Parameters
     ----------
     d : dict
         The serialized spec, as produced by [`spec_to_dict`][].
+    strict : bool, optional
+        Refuse an entry that omits an option that shapes its term, see
+        [`acting_options`][tramdag.spec.Term.acting_options]. Default False.
 
     Returns
     -------
@@ -375,7 +385,8 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
     Raises
     ------
     ValueError
-        If the entry names an unknown term, or a term's own checks refuse it.
+        If the entry names an unknown term, a term's own checks refuse it, or
+        ``strict`` finds an omitted option.
     TypeError
         If a term does not take an option the entry names.
     """
@@ -384,7 +395,10 @@ def spec_from_dict(d: dict) -> dict[str, NodeSpec]:
         terms = []
         for t in entry["terms"]:
             cls = _term_class(t["term"])
-            terms.append(cls.from_serialized(tuple(t["parents"]), t["options"]))
+            term = cls.from_serialized(tuple(t["parents"]), t["options"])
+            if strict:
+                _check_written(name, entry["kind"] == "ordinal", t, term)
+            terms.append(term)
         if entry["kind"] == "continuous":
             spec[name] = ContinuousNode(terms)
         elif entry["kind"] == "ordinal":
@@ -448,6 +462,17 @@ class Term:
     def options(self) -> dict:
         """Give everything the term carries, by name, the parents included."""
         return dict(vars(self))
+
+    def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
+        """Give the options that shape this term and that a strict spec writes.
+
+        These are the architecture and the penalty: ``units``, ``activation``
+        and ``penalty``, where the term has them. The off-by-default switches
+        (``batch_norm``, ``input_transform``, ``propensity``) stay out, so
+        does an option that cannot act on this term. ``ordinal`` says whether
+        the node is ordinal. A subclass overrides this to say otherwise.
+        """
+        return tuple(k for k in ("units", "activation", "penalty") if k in vars(self))
 
     @classmethod
     def from_serialized(cls, parents: tuple[str, ...], options: dict) -> Term:
@@ -611,6 +636,15 @@ class Intercept(Term):
                 "with one parent there is no interaction to disallow; drop the "
                 "argument"
             )
+
+    def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
+        """Give the transform options of a continuous node and the network's.
+
+        A parentless term has no network, and an ordinal node's intercept is
+        the cutpoint vector, which takes no transform.
+        """
+        transform = () if ordinal else ("transform", "transform_kwargs")
+        return transform + (("units", "activation") if self.parents else ())
 
     @property
     def classical(self) -> bool:

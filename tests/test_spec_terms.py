@@ -147,3 +147,21 @@ def test_ordinal_node_refuses_a_transform():
 def test_a_misspelt_intercept_option_is_a_type_error():
     with pytest.raises(TypeError, match="activaton"):
         CI("a", activaton="tanh")
+
+
+def test_strict_spec_loading_names_the_omitted_option():
+    """``strict=True`` refuses an entry that omits an option that shapes its term."""
+    d = spec_to_dict(_terms_spec())
+    assert spec_from_dict(d, strict=True) == _terms_spec()
+    del d["X3"]["terms"][1]["options"]["units"]
+    assert spec_from_dict(d) == spec_from_dict(d, strict=False)
+    with pytest.raises(ValueError, match=r"node 'X3'.*'CS'.*'units'"):
+        spec_from_dict(d, strict=True)
+
+
+def test_strict_spec_loading_skips_options_that_cannot_act():
+    """A parentless or ordinal intercept needs no network or transform options."""
+    d = spec_to_dict({"A": ContinuousNode(), "Y": OrdinalNode(3, [CI("A")])})
+    del d["A"]["terms"][0]["options"]["units"]
+    del d["Y"]["terms"][0]["options"]["transform"]
+    spec_from_dict(d, strict=True)

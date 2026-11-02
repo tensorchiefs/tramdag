@@ -133,10 +133,14 @@ class EarlyStopping(Callback):
         return self.patience is not None and epoch - self.best_epoch >= self.patience
 
     def on_fit_end(self, node, optimizer) -> None:
-        """Load the best weights back into the node (``restore_best`` only)."""
+        """Load the best weights back into the node (``restore_best`` only).
+
+        A first finite NLL always beats inf, so no snapshot means that no epoch
+        reached a finite validation NLL.
+        """
         if not self.restore_best:
             return
-        if self._state is None:  # a first finite NLL always beats inf
+        if self._state is None:
             raise RuntimeError(
                 "EarlyStopping has nothing to restore: no epoch reached "
                 "on_epoch_end with a finite validation NLL. Either fit() ran no "

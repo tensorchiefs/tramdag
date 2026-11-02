@@ -160,14 +160,16 @@ class _InputTransform(nn.Module):
     ``"minmax"`` freezes per-column lo/hi, ``"standardize"`` mean/std, and a
     callable keeps the raw training columns and is applied per batch as
     ``fn(x, train)``, so train statistics inside the callable are always the
-    frozen training data, never the batch's.
+    frozen training data, never the batch's. ``cols`` are the term's continuous
+    parents, in parent order. A callable receives the raw train columns, shaped
+    at ``calibrate``.
     """
 
     def __init__(self, value, cols: tuple[str, ...]):
         super().__init__()
         self.method = "callable" if callable(value) else value
         self.fn = value if callable(value) else None
-        self.cols = cols  # the term's continuous parents, in parent order
+        self.cols = cols
         k = len(cols)
         if self.method == "minmax":
             self.register_buffer("lo", torch.zeros(k))
@@ -175,7 +177,7 @@ class _InputTransform(nn.Module):
         elif self.method == "standardize":
             self.register_buffer("mean", torch.zeros(k))
             self.register_buffer("std", torch.ones(k))
-        else:  # callable: the raw train columns, shaped at calibrate
+        else:
             self.register_buffer("train_cols", torch.zeros(0, k))
 
     def set_stats(self, cols: Tensor) -> None:
@@ -242,10 +244,14 @@ class ShiftModule(TermModule, ABC):
     (``VaryingCoefficientModule`` keeps ``mods``/``t_is_ord``/``propensity_col``).
     Layers are built in a fixed order under fixed attribute names, so
     state-dict paths and the seeded RNG stream stay bit-stable.
+
+    ``scored`` is true when ``score_columns`` gives coefficients. ``order``
+    sets the summing order of the shifts; VC comes last, which is the pinned
+    order.
     """
 
-    scored = False  # True when score_columns gives coefficients
-    order = 0  # shifts sum in this order (VC last: the pinned order)
+    scored = False
+    order = 0
 
     key: str
     parents: tuple[str, ...]
@@ -415,7 +421,8 @@ class AdditiveInterceptModule(InterceptModule):
     """``allow_interaction=False``: one net per parent, outputs summed.
 
     Each parent reshapes the transform independently, in unconstrained
-    coefficient space.
+    coefficient space. The submodule stays named ``nets``, because
+    ``tests/test_statedict_stability.py`` pins the state-dict path.
 
     Parameters
     ----------
@@ -433,8 +440,6 @@ class AdditiveInterceptModule(InterceptModule):
         super().__init__()
         self.groups = [(p,) for p in term.parents]
         self.ci_parents = list(term.parents)
-        # the submodule stays named `nets`: tests/test_statedict_stability.py
-        # pins the state-dict path
         self.nets = nn.ModuleList(
             _nn(
                 feat_width(schema, grp),
@@ -495,7 +500,7 @@ class LinearShiftModule(ShiftModule):
         $\partial \ell_i / \partial \beta = (\partial \ell_i / \partial s_i)\, x_i$,
         analytic and exact.
         """
-        (parent,) = self.parents  # an LS term has exactly one parent
+        (parent,) = self.parents
         psi = (dlds.unsqueeze(1) * feats[parent]).cpu().numpy()
         if node.schema[parent] != "continuous":
             return {f"{parent}[{k}]": psi[:, k] for k in range(psi.shape[1])}
@@ -571,7 +576,6 @@ class VaryingCoefficientModule(ShiftModule):
         self.register_buffer("center", torch.zeros(()))
         n_features = feat_width(schema, mods)
         if n_features > 0:
-            # zero-initialised output: beta(x) == beta0 at init
             self.net = _nn(
                 n_features,
                 term.units,

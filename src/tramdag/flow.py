@@ -116,7 +116,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         )
         self._apply_init(init)
         self.device = torch.device(device)
-        self.meta: dict = {}  # provenance a load() fills (version, time)
+        self.meta: dict = {}
         self.to(self.device)
 
     def _schema(self, name: str) -> dict[str, str | int]:
@@ -191,7 +191,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         return self.nodes[name]
 
     def _features(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
-        # spec columns only; side columns travel through _side_feats
         return {
             name: self.nodes[name].encode(v)
             for name, v in values.items()
@@ -347,7 +346,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         if nodes is not None and not nodes:
             raise ValueError("nodes=[] sums nothing; omit it for the joint")
         for name in nodes or ():
-            self._node(name)  # name the unknown node, not its KeyError
+            self._node(name)
         per_node = self._node_log_prob(self._tensorize(df), nodes)
         return torch.stack(list(per_node.values()), dim=0).sum(dim=0)
 
@@ -403,6 +402,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         ValueError
             If both ``n`` and ``u`` are omitted, or a ``do`` value of an
             ordinal node is not a level index.
+
+        Notes
+        -----
+        Under ``do``, a centered VC re-derives ``t_do - e_hat(x)``, so the
+        features of a node are never cached. With ``u`` given, the result takes
+        the index of ``u``, so a counterfactual lines up with its factual row.
         """
         do = do or {}
         for name, value in do.items():
@@ -410,7 +415,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 check_level_values(name, [value], self.spec[name].levels)
         if u is not None:
             n = len(u)
-            u_vals = self._tensorize(u, levels=False)  # latents, not levels
+            u_vals = self._tensorize(u, levels=False)
         elif n is not None:
             gen = self._generator(seed)
             u_vals = {
@@ -428,11 +433,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 )
                 continue
             nd = self.nodes[name]
-            # under do, a centered VC re-derives t_do - e_hat(x); never cached
             feats = nd.features(values)
             theta, shift = self._theta_shift(nd, feats, values, n)
             values[name] = nd.sample(theta, shift, u_vals[name])
-        # the latents' rows, so a counterfactual lines up with its factual row
         return self._to_frame(values, index=None if u is None else u.index)
 
     @torch.no_grad()
@@ -495,7 +498,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is continuous.
         """
-        if self._node(node).kind != "ordinal":  # a domain error, not a type error
+        if self._node(node).kind != "ordinal":
             raise ValueError(
                 f"pmf() requires an ordinal node, {node!r} is continuous; use density()"
             )
@@ -515,7 +518,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         The continuous counterpart of [`pmf`][]: for every row of ``df``
         the density $p(\text{node} = g \mid \mathrm{pa})$ at each grid value $g$, in
-        closed form from the transform, with no sampling.
+        closed form from the transform, with no sampling. The evaluation takes one
+        (row, grid value) pair per entry: the rows repeat and the grid tiles.
 
         Parameters
         ----------
@@ -538,14 +542,13 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         ValueError
             If ``node`` is ordinal; use ``pmf`` for it.
         """
-        if self._node(node).kind != "continuous":  # a domain error, not a type error
+        if self._node(node).kind != "continuous":
             raise ValueError(
                 f"density() requires a continuous node, {node!r} is ordinal; use pmf()"
             )
         nd, theta, shift, n = self._conditional(df, node, do)
         y = torch.tensor(np.asarray(grid), dtype=self._dtype, device=self.device)
         m = y.numel()
-        # one (row, grid value) pair per evaluation: rows repeat, the grid tiles
         u0, ladj = nd.ut.forward(theta.repeat_interleave(m, 0), y.repeat(n))
         log_p = StandardLogistic.log_prob(u0 + shift.repeat_interleave(m)) + ladj
         return log_p.exp().view(n, m).cpu().numpy()
@@ -626,7 +629,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             device=device,
             init=ckpt["init"],
         )
-        load_weights(flow, ckpt["state_dict"])  # with the `calibrated` flags
+        load_weights(flow, ckpt["state_dict"])
         for name, history in ckpt["history"].items():
             flow.nodes[name].history = history
         flow.meta = ckpt["meta"]

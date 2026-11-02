@@ -13,6 +13,10 @@ arity checked.
 exactly one edge-owning term (VC modifiers may repeat) and gives the
 topological order. [`spec_to_dict`][] and [`spec_from_dict`][] are the
 checkpoint form. What the terms mean is ``docs/model.md``.
+
+The ``NodeSpec`` union follows the classes, because Python evaluates the union
+at definition time. The alias block at the end holds the paper's symbols,
+the notation of the docs and the spelling nearly every caller uses.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -59,7 +63,6 @@ def _term_class(name: str) -> type[Term]:
             "path, module.ClassName, and that module must be importable here."
         ) from err
     if not (isinstance(cls, type) and issubclass(cls, Term)):
-        # a domain error (a wrong serialized entry), not a Python type error
         raise ValueError(  # noqa: TRY004
             f"unknown term {name!r}: it is not a tramdag.Term subclass"
         )
@@ -416,7 +419,7 @@ class Term:
             super().__init__(*parents)
             self.scale = scale
             if len(self.parents) != 1:
-                raise ValueError("Scaled() takes exactly one parent.")
+                raise ValueError("Scaled() takes exactly one parent")
     ```
 
     A term is exactly its ``__dict__``: the parents the base assigns and the
@@ -566,6 +569,13 @@ class Intercept(Term):
         ``I(n_coeffs=40)``. A keyword written out here wins over the same
         key inside ``transform_kwargs``.
 
+    Notes
+    -----
+    Python's argument binding is the pass-through boundary: what binds to an
+    option above is an option of the term, and what is left over is a keyword
+    of the transform class. ``module`` is a function, so ``staticmethod`` stops
+    it from binding as a method.
+
     Raises
     ------
     ValueError
@@ -575,7 +585,7 @@ class Intercept(Term):
     """
 
     name = "I"
-    module = staticmethod(intercept_module)  # a function, not a class: no binding
+    module = staticmethod(intercept_module)
 
     def __init__(
         self,
@@ -589,10 +599,6 @@ class Intercept(Term):
         input_transform: object = None,
         **transform_options,
     ):
-        # Python's argument binding IS the pass-through boundary: what binds
-        # above is an option of the term, whatever is left over is a keyword of
-        # the transform class. A written-out keyword wins over the same key
-        # inside a serialized transform_kwargs mapping, hence the merge order.
         super().__init__(*parents)
         self.transform = transform
         self.transform_kwargs = {**(transform_kwargs or {}), **transform_options}
@@ -712,7 +718,8 @@ class VaryingCoefficient(Term):
     re-centered to mean zero over the training rows after the fit, so
     ``beta0`` is the main effect. Read the fitted effect out with
     [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef]. Only ``t``
-    owns its edge; the modifiers may also appear in the node's other terms.
+    owns its edge, so the treatment leads the parents; the modifiers may also
+    appear in the node's other terms.
     ``docs/varying-coefficients.md`` is the guide.
 
     Parameters
@@ -768,7 +775,6 @@ class VaryingCoefficient(Term):
     ):
         if penalty < 0:
             raise ValueError(f"VC(): penalty must be >= 0, got {penalty!r}")
-        # the treatment leads the parents: it is the one that owns an edge
         super().__init__(t, *modifiers)
         self.penalty = float(penalty)
         self.propensity = propensity
@@ -851,7 +857,9 @@ class ContinuousNode:
         The additive formula for ``h``: a ``+`` sum of terms or a single
         term. ``None`` (default) is a source node. The
         class of the monotone transform is chosen on the intercept term,
-        ``I(..., transform="spline")``; the default is ``"bernstein"``.
+        ``I(..., transform="spline")``; the default is ``"bernstein"``. The
+        arguments go straight to the transform class. If they are wrong, that
+        class says so; this layer does not second-guess it.
 
     Raises
     ------
@@ -866,8 +874,6 @@ class ContinuousNode:
 
     def __init__(self, terms=None):
         self.terms = _normalize_terms(terms)
-        # the arguments go straight to the transform class; if they are
-        # wrong, that class says so; this layer does not second-guess it
         intercept = self.terms[0]
         self.transform = intercept.transform or DEFAULT_TRANSFORM
         self.transform_kwargs = dict(intercept.transform_kwargs)
@@ -878,8 +884,6 @@ class ContinuousNode:
 
     def __eq__(self, other):
         """Compare the terms; the transform is derived from them."""
-        # transform/transform_kwargs are derived from the terms, so equal
-        # term lists already imply an equal transform
         return isinstance(other, ContinuousNode) and self.terms == other.terms
 
     def __hash__(self):
@@ -941,11 +945,8 @@ class OrdinalNode:
 
 
 # %% alias -----------------------------------------------------------------------------
-# kept after the classes: the union is evaluated at definition time
 NodeSpec = ContinuousNode | OrdinalNode
 
-# The paper's symbols are the notation of the docs and the spelling nearly
-# every caller uses; they are the classes above, unchanged.
 I = Intercept  # noqa: E741 - ambiguous only out of context
 LS = LinearShift
 CS = ComplexShift

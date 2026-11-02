@@ -23,7 +23,6 @@ from .transforms import ordinal_bounds
 # %% global variables ------------------------------------------------------------------
 __all__ = ["effect_modifier_scan", "node_scores", "sup_bb_pvalue"]
 
-# 5% critical value of sup |Brownian bridge| (Kolmogorov distribution)
 CRIT_5PCT = 1.3581
 
 
@@ -38,15 +37,18 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
     if nd.kind == "continuous":
         z0, _ = nd.ut.forward(theta, x)
         return 1.0 - 2.0 * torch.sigmoid(z0 + shift)
-    lower, upper = ordinal_bounds(theta, shift, x)  # already include -s
+    lower, upper = ordinal_bounds(theta, shift, x)
     sl, su = torch.sigmoid(lower), torch.sigmoid(upper)
     return (sl * (1 - sl) - su * (1 - su)) / (su - sl)
 
 
 def _default_candidates(flow, node: str, t: str) -> list[str]:
-    """Give every node that is neither ``t``, ``node`` nor a descendant of ``t``."""
+    """Give every node that is neither ``t``, ``node`` nor a descendant of ``t``.
+
+    Parents come first in ``flow.order``, so one pass finds all descendants.
+    """
     after_t = {t}
-    for name in flow.order:  # parents come first, so one pass finds them all
+    for name in flow.order:
         if after_t & set(flow.nodes[name].parents):
             after_t.add(name)
     return [c for c in flow.order if c not in after_t | {node}]
@@ -82,6 +84,12 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
         binary ordinal treatment that score belongs to the identified
         contrast of level 1 against level 0.
 
+    Notes
+    -----
+    The scores are not free of ``y``, because the derivative of the log-likelihood
+    needs the node column ``x``. The scores also need the ``e_hat`` inputs of
+    centered terms.
+
     Raises
     ------
     KeyError
@@ -98,9 +106,8 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
             "at least one interpretable shift coefficient."
         )
 
-    # not y-free: l_i needs x. Plus the e_hat inputs of centered terms.
     needed = [*nd.parents, node, *flow._query_side_columns(nd)]
-    values = flow._tensorize(df, needed)  # names a missing column
+    values = flow._tensorize(df, needed)
     feats = nd.features(values)
     feats |= flow._side_feats(nd, values, len(df))
     dlds = _dl_ds(nd, feats, values[node])
@@ -123,13 +130,21 @@ def sup_bb_pvalue(stat: float) -> float:
     -------
     float
         The p-value, clipped to [0, 1].
+
+    Notes
+    -----
+    The series has 100 terms, and all are needed. The k-th term is
+    ``exp(-2 k^2 stat^2)``. It underflows past ``k`` about 10 only for a large
+    statistic. A small statistic converges slowly. At ``stat = 0.02``, a cut at
+    ``k = 10`` returns 0.084 where the full series gives 0.9997. A perfectly
+    stable coefficient then looks significant. ``stat = 0.2`` still needs 20
+    terms.
+
+    The function returns 1.0 for ``stat <= 0``. There the series alternates to
+    0.0, which is the wrong tail.
     """
     if stat <= 0:
-        return 1.0  # the series alternates to 0.0 here, which is the wrong tail
-    # 100 terms, and they are all needed. The k-th is exp(-2k^2 stat^2), which
-    # underflows past k ~ 10 only for a LARGE statistic. A small one converges
-    # slowly, and an early truncation reports a perfectly stable coefficient
-    # as significant. stat = 0.2 still needs 20 terms.
+        return 1.0
     s = sum(
         (-1) ** (k + 1) * math.exp(-2.0 * k * k * stat * stat) for k in range(1, 101)
     )
@@ -207,7 +222,7 @@ def effect_modifier_scan(
         and flow.spec[t].levels == 2
         and f"{t}[1]" in psi_df.columns
     ):
-        col = f"{t}[1]"  # the identified contrast of a binary ordinal LS parent
+        col = f"{t}[1]"
     else:
         raise KeyError(
             f"no score column for treatment {t!r} on node {node!r} "

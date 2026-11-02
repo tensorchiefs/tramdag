@@ -33,10 +33,8 @@ if TYPE_CHECKING:
 # %% global variables ------------------------------------------------------------------
 __all__ = ["FitMixin", "NodeFitMixin"]
 
-# gradient norm at which a self-stopped classical fit counts as converged
 GRAD_TOL = 1e-2
 
-# the flow and the per-node fit arguments a forked worker reads (n_jobs > 1)
 _FORK_JOB: tuple | None = None
 
 
@@ -123,13 +121,17 @@ def _learning_rates(opt) -> dict[int, float]:
 def _log_epoch(
     node, epoch: int, epochs: int, verbose: int, stopped: bool, has_val: bool
 ):
-    """Print one ``verbose`` progress line on the Nth and the final epoch."""
+    """Print one ``verbose`` progress line on the Nth and the final epoch.
+
+    ``has_val`` is true only when this fit validates, so the line never shows
+    a stale validation value of an earlier fit.
+    """
     last = stopped or epoch == epochs
     if not verbose or (epoch % verbose and not last):
         return
     line = f"{node.name}: epoch {epoch}/{epochs}"
     line += f"  train {node.history['train'][-1]:.4f}"
-    if has_val:  # THIS fit's validation, not a stale earlier one
+    if has_val:
         line += f"  val {node.history['val'][-1]:.4f}"
     print(line)
 
@@ -142,19 +144,24 @@ def _fit_epoch(
     penalized: list,
     generator: torch.Generator | None,
 ) -> float:
-    """One shuffled pass over the rows; give the epoch-mean train NLL."""
+    """One shuffled pass over the rows; give the epoch-mean train NLL.
+
+    The mean runs over the rows stepped on, not over ``n``. A skipped trailing
+    row would otherwise scale the epoch NLL down by 1/n. The penalty joins the
+    loss but not the history.
+    """
     n = len(values[node.name])
     acc = 0.0
     trained = 0
     perm = torch.randperm(n, generator=generator).to(values[node.name].device)
     for idx in perm.split(batch_size):
         if idx.numel() < 2:
-            continue  # batch norm needs two rows, and one row is no gradient
+            continue
         trained += int(idx.numel())
         batch = {k: v[idx] for k, v in values.items()}
         nll = -node.row_log_prob(batch).mean()
         loss = nll
-        for m in penalized:  # the penalty joins the loss, not the history
+        for m in penalized:
             loss = loss + m.regularizer() / n
         opt.zero_grad()
         loss.backward()
@@ -167,8 +174,6 @@ def _fit_epoch(
             "those, because a one-row batch carries no gradient and batch_norm "
             "cannot normalize over it. Give at least two rows."
         )
-    # over the rows actually stepped on, not over n: a skipped trailing row
-    # would otherwise scale the epoch NLL down by 1/n
     return acc / trained
 
 
@@ -187,9 +192,15 @@ def _per_node(value, name: str):
 
 
 def _fit_in_child(name: str):
-    """Fit one node in a forked worker; give its state and history back."""
+    """Fit one node in a forked worker; give its state and history back.
+
+    The worker reads the flow and the per-node fit arguments from
+    ``_FORK_JOB``.
+
+    The worker uses one thread, because a forked child that starts OpenMP
+    threads can deadlock.
+    """
     flow, train_df, jobs = _FORK_JOB
-    # one thread: a forked child that starts OpenMP threads can deadlock
     torch.set_num_threads(1)
     nd = flow.nodes[name]
     nd.fit(train_df, **jobs[name])
@@ -349,6 +360,23 @@ class NodeFitMixin:
         Node
             ``self``, fitted, in eval mode.
 
+        Notes
+        -----
+        ``fit`` validates the frames before it calibrates, so a malformed frame
+        cannot half-mutate the node. A batch of one row is skipped: batch norm
+        needs two rows and one row gives no gradient.
+
+        ``history["val_epoch"]`` holds the train epoch of each validation
+        entry. ``history`` accumulates across ``fit`` calls, so an unvalidated
+        fit would otherwise shift every later validation entry away from its
+        own epoch.
+
+        Every callback runs at each epoch end, so a stop does not skip a
+        monitoring callback. The learning rate is read after the callbacks, so
+        a scheduler's decision for this epoch shows. ``on_fit_end`` runs before
+        the VC re-centering, so weights that a callback restores (such as
+        ``EarlyStopping``) still take part in it.
+
         Raises
         ------
         ValueError
@@ -367,7 +395,6 @@ class NodeFitMixin:
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )
-        # validate BEFORE calibrate: a malformed frame must not half-mutate the node
         cols = (self.name, *self.parents, *self._check_side_columns(train_df))
         values = self.tensorize(train_df, cols)
         val_values = (
@@ -392,14 +419,9 @@ class NodeFitMixin:
                 with torch.no_grad():
                     val = float(-self.row_log_prob(val_values).mean())
                 self.history.setdefault("val", []).append(val)
-                # which train epoch this entry belongs to: `history` accumulates
-                # across `fit` calls, so an unvalidated fit would shift every
-                # later validation entry away from its own epoch
                 n_train_epochs = len(self.history["train"])
                 self.history.setdefault("val_epoch", []).append(n_train_epochs)
-            # every callback runs (a stop must not skip a monitoring one)
             stops = [bool(cb.on_epoch_end(self, epoch, opt)) for cb in cbs]
-            # after the callbacks, so a scheduler's decision for this epoch shows
             self.history.setdefault("lr", []).append(_learning_rates(opt))
             _log_epoch(
                 self,
@@ -412,8 +434,6 @@ class NodeFitMixin:
             if any(stops):
                 break
         for cb in cbs:
-            # before the VC re-centering, so weights a callback restores
-            # (EarlyStopping) still take part in it
             cb.on_fit_end(self, opt)
         self._recenter(values)
         self.eval()
@@ -477,6 +497,12 @@ class NodeFitMixin:
 
         Notes
         -----
+        ``tolerance_grad`` is 0 because the gradient norm never settles on the
+        flat ridges. A stalled line search stops on the same tolerance as an
+        arrival, so the gradient tells the two apart. The coefficients are read
+        while the node is still float64. The cast back to float32 loses about
+        1e-7, which is harmless.
+
         float64 is a transient compute mode. The node is upcast for the fit,
         and ``self.double()`` converts the parameters and the range buffers of
         the transform in one call. Afterwards the node returns to float32, so
@@ -497,7 +523,7 @@ class NodeFitMixin:
         """
         self._check_classical()
         self.calibrate(train_df)
-        self.double()  # parameters + buffers (xmin/xmax) -> float64, one call
+        self.double()
         t0 = time.perf_counter()
         try:
             values = self.tensorize(train_df)
@@ -507,7 +533,7 @@ class NodeFitMixin:
                 lr=1.0,
                 max_iter=max_iter,
                 history_size=history_size,
-                tolerance_grad=0.0,  # |grad| never settles on the flat ridges
+                tolerance_grad=0.0,
                 tolerance_change=1e-9,
                 line_search_fn="strong_wolfe",
             )
@@ -534,12 +560,10 @@ class NodeFitMixin:
                     [p.grad for p in self.parameters() if p.grad is not None]
                 )
             )
-            # a stalled line search stops on the same tolerance as an arrival,
-            # so the gradient is what tells the two apart
             converged = stop_reason == "tolerance" and grad_norm <= GRAD_TOL
-            coefs = self.ls_coefficients()  # read while still float64
+            coefs = self.ls_coefficients()
         finally:
-            self.float()  # restore canonical float32 (lossy ~1e-7, harmless)
+            self.float()
         self.eval()
 
         if not converged:
@@ -586,7 +610,7 @@ class FitMixin:
         Nodes stop at different epochs. A node that stopped earlier repeats
         its last entry, so a summed curve stays defined. A node without
         entries for a key shows NaN there. ``"val_epoch"`` is the longest
-        node's.
+        node's, which is exact while every fit validates.
         """
         out = {}
         for key in ("train", "val", "lr"):
@@ -594,7 +618,6 @@ class FitMixin:
             if key == "train" or any(rows.values()):
                 out[key] = _pad_last(rows)
         if "val" in out:
-            # ponytail: one node's val epochs; exact while every fit validates
             out["val_epoch"] = max(
                 (nd.history.get("val_epoch", []) for nd in self.nodes.values()),
                 key=len,
@@ -678,6 +701,14 @@ class FitMixin:
         CausalFlowDAG
             ``self``, fitted, in eval mode.
 
+        Notes
+        -----
+        Without a ``seed``, ``n_jobs > 1`` draws one from torch's RNG, because
+        forked workers would otherwise replay one RNG state. A centered VC
+        validates against the live propensity of its fitted treatment node, as
+        every query does. Those nodes therefore fit second. The callbacks
+        normalize once here, so an iterator of callbacks survives a single pass.
+
         Raises
         ------
         TypeError
@@ -698,10 +729,10 @@ class FitMixin:
             train_df, validation_data, validation_split
         )
         self._check_frames(train_df, validation_data)
-        if seed is None and n_jobs > 1:  # forked workers would replay one RNG state
+        if seed is None and n_jobs > 1:
             seed = int(torch.randint(2**62, ()))
         if not callable(callbacks) or isinstance(callbacks, type):
-            callbacks = _normalize_callbacks(callbacks)  # one pass over an iterator
+            callbacks = _normalize_callbacks(callbacks)
         jobs = {
             name: dict(
                 epochs=_per_node(epochs, name),
@@ -720,8 +751,6 @@ class FitMixin:
             _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
             kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
         self._calibrate(train_df, marginal_init=marginal_init)
-        # a centered VC's validation NLL uses the live propensity of the fitted
-        # treatment node, as every query does, so those nodes fit second
         later = [n for n in self.order if self.nodes[n].side_columns()]
         if validation_data is None:
             later = []
@@ -742,7 +771,11 @@ class FitMixin:
             nd._check_side_columns(train_df)
 
     def _fit_nodes(self, train_df: pd.DataFrame, jobs: dict, n_jobs: int) -> None:
-        """Run ``Node.fit`` for each job, serially or in forked workers."""
+        """Run ``Node.fit`` for each job, serially or in forked workers.
+
+        The parent calibrates every node before the fork, so the shapes of the
+        returned states match.
+        """
         global _FORK_JOB
         if n_jobs == 1 or len(jobs) < 2:
             for name, kwargs in jobs.items():
@@ -755,7 +788,6 @@ class FitMixin:
         finally:
             _FORK_JOB = None
         for name, (state, history) in zip(jobs, results, strict=True):
-            # the parent calibrated every node before the fork, so shapes match
             self.nodes[name].load_state_dict(state)
             self.nodes[name].history = history
             self.nodes[name].eval()
@@ -814,7 +846,7 @@ class FitMixin:
         """
         for nd in self.nodes.values():
             nd._check_classical()
-        self._tensorize(train_df)  # every column and level, before a node fits
+        self._tensorize(train_df)
         self._calibrate(train_df)
         reports = {
             name: self.nodes[name].fit_classical(

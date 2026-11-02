@@ -115,7 +115,7 @@ def write_checkpoint(path: str | Path, payload: dict, device) -> None:
         If the spec does not pickle (a callable ``input_transform`` that is not
         a module-level function).
     """
-    from . import __version__  # lazy: circular through the package root
+    from . import __version__
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,6 +164,12 @@ class Node(NodeFitMixin, nn.Module):
     rest of the package reads ``kind`` or the schema entry to check, convert
     or display values.
 
+    The node builds one module per shift term in formula order, because the
+    seeded RNG stream is pinned to it. Each shift names its own key: the
+    parent, ``"a+b"`` for a joint CS, the treatment for a VC. The
+    ``intercept_module`` of the first term picks the intercept slot: the free
+    theta_0, one joint net, or one net per parent summed in coefficient space.
+
     Parameters
     ----------
     name : str
@@ -178,10 +184,12 @@ class Node(NodeFitMixin, nn.Module):
     Attributes
     ----------
     history : dict
-        The fit history, see [`fit`][tramdag.nodes.Node.fit].
+        The fit history, see [`fit`][tramdag.nodes.Node.fit]. ``"train"`` holds
+        the mean train NLL per epoch.
     calibrated : Tensor
         Boolean buffer, set by the first fit's calibration and kept in the
-        checkpoint.
+        checkpoint. It is a buffer, not a Python bool, so the flag rides in the
+        state dict and a loaded node does not recalibrate on its next fit.
     meta : dict
         The provenance that [`load`][tramdag.nodes.Node.load] fills.
     """
@@ -203,23 +211,15 @@ class Node(NodeFitMixin, nn.Module):
             self.ut = None
             self.levels = node_spec.levels
             n_params = node_spec.levels - 1
-        self.encoding = schema_entry(node_spec)  # this node's own schema entry
-        # the intercept slot: the free theta_0, one joint net, or one net per
-        # parent summed in coefficient space; `intercept_module` picks
+        self.encoding = schema_entry(node_spec)
         self.intercept = terms[0].module(terms[0], self.schema, n_params)
-        # one module per shift term, built in formula order (the seeded RNG
-        # stream is pinned to it); each names its own key: the parent, "a+b"
-        # for a joint CS, the treatment for a VC
         self.shifts = nn.ModuleDict()
         for term in terms[1:]:
             m = term.module(term, self.schema)
             self.shifts[m.key] = m
-        # calibrate() takes the data-dependent state once; a buffer, not a Python
-        # bool, so the flag rides in the state dict and a loaded node does not
-        # recalibrate on its next fit
         self.register_buffer("calibrated", torch.tensor(False))
-        self.history: dict = {"train": []}  # mean train NLL per epoch
-        self.meta: dict = {}  # provenance a load() fills (version, time)
+        self.history: dict = {"train": []}
+        self.meta: dict = {}
 
     def encode(self, values: Tensor) -> Tensor:
         """Encode this node's values for use as a parent feature.
@@ -272,7 +272,8 @@ class Node(NodeFitMixin, nn.Module):
         the marginal class log-odds; spline/affine intercepts and intercepts
         with parents are untouched. The start rides on this method's guard, so
         a second ``fit`` (the next phase of a schedule) continues training
-        instead of discarding the intercept it just trained.
+        instead of discarding the intercept it just trained. A spline or
+        affine transform has no start.
 
         Parameters
         ----------
@@ -289,13 +290,13 @@ class Node(NodeFitMixin, nn.Module):
         """
         if bool(self.calibrated):
             return self
-        self.tensorize(train_df)  # the columns and the ordinal levels
+        self.tensorize(train_df)
         self.intercept.calibrate_intercept(train_df, train_df[self.name], self.ut)
         for m in self.shifts.values():
             m.calibrate(train_df)
         if marginal_init:
             theta = self.marginal_theta(train_df[self.name].to_numpy())
-            if theta is not None:  # a spline or affine transform has no start
+            if theta is not None:
                 self.intercept.marginal_start(theta)
         self.calibrated.fill_(True)
         return self
@@ -357,6 +358,9 @@ class Node(NodeFitMixin, nn.Module):
     def theta_shift(self, feats: dict[str, Tensor], n: int) -> tuple[Tensor, Tensor]:
         """Compute the transform parameters and the total shift of the node.
 
+        The shifts add in ``order``, plain shifts first and VC last. The stable
+        sort keeps the pinned order.
+
         Parameters
         ----------
         feats : dict[str, Tensor]
@@ -380,7 +384,6 @@ class Node(NodeFitMixin, nn.Module):
         """
         theta = self.intercept.theta_value(self, feats, n)
         shift = torch.zeros(n, dtype=theta.dtype, device=theta.device)
-        # plain shifts first, then VC (stable sort keeps the pinned order)
         for m in sorted(self.shifts.values(), key=lambda m: m.order):
             shift = shift + m.shift_value(self, feats)
         return theta, shift

@@ -29,6 +29,9 @@ class ReadoutsMixin:
 
         The parent runs over ``grid`` with the term's other inputs absent, so the
         term must read exactly this one parent (an ``LS`` or one-parent ``CS``).
+        The evaluation runs through the term's own ``shift_value``, so custom
+        terms work too. The grid is copied, as in ``_tensorize``: torch warns on
+        a non-writable numpy array, which a broadcast or read-only grid is.
 
         Parameters
         ----------
@@ -60,18 +63,14 @@ class ReadoutsMixin:
                 f"available: {sorted(nd.shifts)}"
             )
         if self.spec[parent].kind == "ordinal":
-            # a domain error (wrong parent kind), not a Python type error
             raise ValueError(
                 f"{parent!r} is an ordinal parent, so it enters the term "
                 "one-hot over all its levels and a 1-D grid of level indices "
                 "is not its input. Read its effect with ls_coefficients() "
                 "instead, whose weights are the level contrasts."
             )
-        # copy, like `_tensorize`: torch warns on a non-writable numpy array,
-        # which a broadcast or read-only grid is
         x = torch.as_tensor(np.array(grid), dtype=self._dtype, device=self.device)
         x = x.view(-1, 1)
-        # through the term's own evaluation, so custom terms work too
         curve = nd.shifts[parent].shift_value(nd, {parent: x})
         return curve.cpu().numpy().ravel()
 
@@ -169,7 +168,6 @@ class ReadoutsMixin:
         m = pd.DataFrame("", index=list(self.order), columns=list(self.order))
         for child in self.order:
             for term in self.spec[child].terms:
-                # a VC modifier may share its cell with an edge-owning term
                 for p, tag, joint in term.cells():
                     if joint:
                         tag = f"{tag}{list(term.parents)}"
@@ -230,16 +228,14 @@ class ReadoutsMixin:
                 "Its intercept is unconditional, so there is nothing to decompose."
             )
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
-        # one net per group: the additive intercept holds them in `nets`, every
-        # other intercept is itself the one network
         nets = getattr(nd.intercept, "nets", [nd.intercept])
 
         contributions: dict[str, np.ndarray] = {}
         parents: dict[str, tuple] = {}
         baseline = None
         for net, grp in zip(nets, groups, strict=True):
-            raw = net(nd.net_input(feats, grp, "@I"))  # (n, P)
-            mean = raw.mean(dim=0, keepdim=True)  # (1, P)
+            raw = net(nd.net_input(feats, grp, "@I"))
+            mean = raw.mean(dim=0, keepdim=True)
             label = "+".join(grp)
             contributions[label] = (raw - mean).cpu().numpy()
             parents[label] = grp
@@ -291,7 +287,7 @@ class ReadoutsMixin:
         cols: dict[str, np.ndarray] = {}
         for p in nd.parents:
             arr = feats[p].cpu().numpy()
-            if self.spec[p].kind == "continuous":  # raw
+            if self.spec[p].kind == "continuous":
                 cols[p] = arr[:, 0]
             else:
                 for k in range(1 if drop_first else 0, arr.shape[1]):

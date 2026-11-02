@@ -125,7 +125,7 @@ def main() -> None:
                 "pyreverse",
                 "-o",
                 "mmd",
-                "-k",  # class names + inheritance only
+                "-k",
                 "-p",
                 "tramdag",
                 str(ROOT / "src/tramdag"),

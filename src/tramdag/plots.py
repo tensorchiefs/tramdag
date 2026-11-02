@@ -16,7 +16,6 @@ from .spec import NodeSpec, node_parents, validate_and_sort
 
 # %% global variables ------------------------------------------------------------------
 __all__ = ["plot_dag", "plot_marginals", "plot_training", "plot_varying_coef"]
-# how each term draws its edge; an unregistered term falls back to dotted gray
 EDGE_STYLE = {
     "LS": dict(ls="-", lw=1.3),
     "CS": dict(ls="-", lw=2.4),
@@ -24,8 +23,7 @@ EDGE_STYLE = {
     "VC": dict(ls="-", lw=2.4),
     "VC modifier": dict(ls=":", lw=1.4),
 }
-EDGE_LABEL = {"VCm": "VC modifier"}  # to_matrix's tag for a VC modifier
-# the colours of every drawn element; `style=` picks one or overrides keys
+EDGE_LABEL = {"VCm": "VC modifier"}
 STYLES = {
     "light": dict(
         text="black",
@@ -52,9 +50,9 @@ STYLES = {
         font_scale=1.0,
     ),
 }
-NODE_H, ROW_DY = 0.56, 1.1  # layout units: node height, distance between rows
-INCH_PER_UNIT = 0.9  # a new DAG figure's size per layout unit; the fonts fit it
-BULGE = 0.5  # how far an edge that skips a layer bends out, per skipped layer
+NODE_H, ROW_DY = 0.56, 1.1
+INCH_PER_UNIT = 0.9
+BULGE = 0.5
 
 
 # %% private functions -----------------------------------------------------------------
@@ -216,14 +214,17 @@ def _arc(pos, edge, bulge: float, t) -> np.ndarray:
 
 
 def _hits(spec, pos, pts, skip=()) -> bool:
-    """Say whether any point lies on a node other than those in ``skip``."""
+    """Say whether any point lies on a node other than those in ``skip``.
+
+    A modifier's target point is no node, so it is not tested.
+    """
     return any(
         (
             (np.abs(pts[:, 0] - x) < _node_width(n, spec[n]) / 2 + 0.1)
             & (np.abs(pts[:, 1] - y) < NODE_H / 2 + 0.1)
         ).any()
         for n, (x, y) in pos.items()
-        if n in spec and n not in skip  # a modifier's target point is no node
+        if n in spec and n not in skip
     )
 
 
@@ -243,12 +244,18 @@ def _clear(spec, pos, edge, bulge: float) -> float:
 def _draw_edge(
     ax, patches, spec, pos, edge, labels: bool, bulge: float, st: dict
 ) -> None:
+    """Draw one edge as an arc and, with ``labels``, its term name.
+
+    An ``arc3`` connection bulges by ``rad * length / 2`` to the right of its
+    direction of travel. The label sits toward the child, so crossing edges
+    into different children separate. It moves to the midpoint when that spot
+    lies on a node.
+    """
     from matplotlib.patches import FancyArrowPatch
 
     parent, child, name, joint = edge
     (x0, y0), (x1, y1) = pos[parent], pos[child]
     style = _edge_style(name, st)
-    # arc3 bulges by rad * length / 2 to the right of its direction of travel
     dist = float(np.hypot(x1 - x0, y1 - y0))
     rad = -2 * bulge / dist
     arrow = FancyArrowPatch(
@@ -265,8 +272,6 @@ def _draw_edge(
     ax.add_patch(arrow)
     if labels:
         box = st["label_box"]
-        # toward the child, so crossing edges into different children separate;
-        # the midpoint when that spot lies on a node
         at = _arc(pos, edge, bulge, [0.62])
         if _hits(spec, pos, at):
             at = _arc(pos, edge, bulge, [0.5])
@@ -369,7 +374,12 @@ def _legend(ax, names: set[str], st: dict) -> None:
 
 
 def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
-    """Draw one node's observed against sampled marginal into ``panel``."""
+    """Draw one node's observed against sampled marginal into ``panel``.
+
+    A continuous node uses 30 bins over the central 99.8 %, so an outlier
+    cannot flatten the panel. The density counts every row, also those outside
+    the bins.
+    """
     if node.kind == "ordinal":
         lv, w = np.arange(node.levels), 0.4
         for x, d, label, color in [
@@ -381,8 +391,6 @@ def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
         panel.set_xticks(lv)
         panel.set_ylabel("proportion")
     else:
-        # 30 bins over the central 99.8 %, so an outlier cannot flatten the
-        # panel; the density counts every row, also those outside the bins
         edges = np.linspace(*np.quantile(df[name], [0.001, 0.999]), 31)
         width = edges[1] - edges[0]
         panel.hist(
@@ -432,7 +440,16 @@ def plot_dag(
     Each edge is drawn by the term that owns it: ``LS`` thin gray, ``CS`` thick
     blue, a complex intercept (``CI``) dashed orange, a ``VC`` treatment edge
     red; a multi-parent CS/CI is labelled ``joint``. A VC modifier is a dotted
-    red arrow onto the treatment edge it modifies.
+    red arrow onto the treatment edge it modifies. A term without an entry in
+    ``EDGE_STYLE`` draws dotted gray. ``EDGE_LABEL`` maps the ``to_matrix`` tag
+    ``VCm`` to the label ``VC modifier``.
+
+    The layout units are ``NODE_H`` for the node height and ``ROW_DY`` for the
+    distance between rows. A new figure measures ``INCH_PER_UNIT`` inches per
+    unit, and the fonts fit it. An edge that skips a layer bends out by
+    ``BULGE`` per skipped layer. Given axes shrink the fonts with the space
+    they have per layout unit. A modifier points at the midpoint of its
+    treatment edge, a position of its own.
 
     Parameters
     ----------
@@ -471,14 +488,13 @@ def plot_dag(
         If the spec has no node.
     """
     plt = _plt()
-    spec = getattr(spec_or_flow, "spec", spec_or_flow)  # a flow draws its spec
+    spec = getattr(spec_or_flow, "spec", spec_or_flow)
     if not spec:
         raise ValueError("plot_dag needs a spec with at least one node")
     st = _style(style)
     pos, layer_dx = _layout(spec)
     edges, mods = _dag_edges(spec, modifiers)
     bulges = _bulges(spec, pos, layer_dx, edges)
-    # a modifier points at its treatment edge's midpoint, a position of its own
     pos_all = pos | {
         (mod, t_edge): tuple(_arc(pos, t_edge, bulges[t_edge], [0.5])[0])
         for mod, t_edge in mods
@@ -496,7 +512,7 @@ def plot_dag(
                 INCH_PER_UNIT * (y_hi - y_lo) + 0.5,
             )
         )
-    else:  # the fonts shrink with the space the given axes has per layout unit
+    else:
         box = ax.get_position()
         w, h = ax.figure.get_size_inches()
         per_unit = min(box.width * w / (x_hi - x_lo), box.height * h / (y_hi - y_lo))
@@ -611,7 +627,16 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
     every epoch the flow has trained, not only the last call. Each validation
     entry is drawn at the epoch it was measured in, which is what keeps the two
-    curves aligned when one ``fit`` validated and another did not.
+    curves aligned when one ``fit`` validated and another did not: an
+    unvalidated fit in between leaves a gap instead of shifting the curve back
+    to epoch 1.
+
+    The y axis zooms past the initial drop: its top keeps each curve after 10 %
+    of its epochs, so a validation curve that rises later stays in view. The
+    limits use finite values only, so a diverged epoch does not blow them up.
+    The legend sits below the axes, off the curves, and the title stays left of
+    the stop names. The stop marks come after the zoom, so they hang
+    from the visible top.
 
     Parameters
     ----------
@@ -647,17 +672,12 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     curves = {"train": (np.arange(1, len(train) + 1), train)}
     if hist.get("val"):
         val = np.array([sum(d.values()) for d in hist["val"]])
-        # each entry's own epoch, so an unvalidated fit in between leaves a gap
-        # rather than shifting the whole curve back to epoch 1
         curves["val"] = (np.asarray(hist["val_epoch"], dtype=float), val)
     created = ax is None
     if created:
         _, ax = plt.subplots(figsize=(7.5, 3.6))
     for label, (x, curve) in curves.items():
         ax.plot(x, curve, label=f"{label} NLL (total)")
-    # zoom past the initial drop: the top keeps each curve after 10 % of its
-    # epochs, so a validation curve that rises later stays in view
-    # finite values only: a diverged epoch must not blow the limits up
     lo = min(c[np.isfinite(c)].min() for _, c in curves.values())
     hi = max(
         c[len(c) // 10 :][np.isfinite(c[len(c) // 10 :])].max()
@@ -680,7 +700,6 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
         )
     ax.set_xlabel("epoch")
     ax.set_ylabel("NLL")
-    # below the axes, off the curves; the title stays left of the stop names
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
     ax.set_title(title or "training", loc="left")
     _finish(ax.figure, path, created)
@@ -694,7 +713,7 @@ def plot_varying_coef(
 
     The grid spans ``by`` over its range in ``df``, or its levels for an
     ordinal ``by``; every other node column is held at an observed median
-    in ``df``. The values come from
+    in ``df``, so an ordinal value stays a level. The values come from
     [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef], on the node's
     latent scale. A dotted line marks $\beta = 0$.
 
@@ -727,7 +746,6 @@ def plot_varying_coef(
         grid = np.unique(df[by])
     else:
         grid = np.linspace(df[by].min(), df[by].max(), 200)
-    # an observed median per node column, so an ordinal value is a level
     nodes = [c for c in flow.order if c in df.columns]
     medians = {c: df[c].quantile(0.5, interpolation="nearest") for c in nodes}
     rows = pd.DataFrame({c: np.full(len(grid), m) for c, m in medians.items()})

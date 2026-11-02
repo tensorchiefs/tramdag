@@ -11,6 +11,27 @@ flow from the standard-logistic latent to the observed variables.
   cutpoints $\vartheta$.
 
 ``docs/model.md`` is the guide to both.
+
+Notes
+-----
+``BOUND`` is the half-width $B$ of the pre-scaled domain. It is fixed, because the
+quantile pre-map makes one domain work for any data scale.
+
+``RANGE_Q`` is the quantile level of the range pre-map. The flow calibration scales
+the train ``q``/``1 - q`` quantiles onto $[-B, B]$. ``marginal_init_theta`` maps that
+domain onto the latent ``q``/``1 - q`` quantiles. Both must use the same level,
+because they calibrate each other only then.
+
+``_CDF_EPS`` has two uses in the marginal starts. As a floor on an empirical CDF
+value, it bounds the initial cutpoints at about $\pm\operatorname{logit}(10^{-3})
+\approx \pm 6.9$. An empty class or a saturated tail then starts implausible but
+finite. As a floor on the latent-scale gap between two neighbouring cutpoints or
+Bernstein control points, it keeps the sequence strictly increasing. The softplus
+inverse needs this.
+
+``_U_EPS`` is the clamp margin of the uniform draw in ``StandardLogistic``. The
+value ``1e-7`` keeps ``u`` off 0 and 1 at float32 resolution. It caps $|z|$ at about
+16.1, which is past any latent that a fitted shift reaches.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -44,35 +65,25 @@ __all__ = [
     "ordinal_sample",
 ]
 
-# half-width B of the pre-scaled domain [-B, B]. Fixed: the quantile pre-map
-# makes one canonical domain work for any data scale.
 BOUND = 5.0
 
-# quantile level of the range pre-map. The flow's calibration scales the
-# train q/1-q quantiles onto [-BOUND, BOUND], and ``marginal_init_theta`` maps
-# that domain onto the latent's q/1-q quantiles -- one constant, because the two
-# only calibrate each other if they use the same level.
 RANGE_Q = 0.05
 
-# used twice in the marginal starts, for two different things. As a floor on
-# an empirical CDF value it bounds the initial cutpoints at +-logit(1e-3) ~
-# +-6.9, so an empty class or a saturated tail starts implausible but finite.
-# As a floor on the latent-scale gap between two neighbouring cutpoints or
-# Bernstein control points it only keeps the sequence strictly increasing,
-# which the softplus inverse needs.
 _CDF_EPS = 1e-3
 
-# clamp margin of the uniform draw in StandardLogistic. 1e-7 keeps u off 0 and 1
-# at float32 resolution, capping |z| at ~16.1 -- past any latent a fitted shift
-# reaches.
 _U_EPS = 1e-7
 
 
 # %% private functions -----------------------------------------------------------------
 def _log1mexp(x: Tensor) -> Tensor:
-    r"""Give $\log(1 - e^{x})$ for $x \le 0$, stable on both sides of $\log 2$."""
+    r"""Give $\log(1 - e^{x})$ for $x \le 0$, stable on both sides of $\log 2$.
+
+    Notes
+    -----
+    Each branch gets its own clamped input. The unused branch then cannot
+    produce inf or NaN gradients.
+    """
     branch = x > -math.log(2.0)
-    # mask each branch's input so the unused branch cannot produce inf/NaN grads
     x_hi = x.clamp(min=-math.log(2.0))
     x_lo = x.clamp(max=-math.log(2.0))
     return torch.where(
@@ -125,6 +136,11 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
     Tensor
         Increasing cutpoints with ``-inf``/``+inf`` ends, shape
         ``(n, K+1)``.
+
+    Notes
+    -----
+    For ``K == 2``, ``theta_tilde[:, 1:]`` is empty and its ``cumsum`` has shape
+    ``(n, 0)``. This case needs no special treatment.
     """
     n = theta_tilde.shape[0]
     neg_inf = torch.full(
@@ -134,7 +150,6 @@ def ordinal_cutpoints(theta_tilde: Tensor) -> Tensor:
         (n, 1), torch.inf, device=theta_tilde.device, dtype=theta_tilde.dtype
     )
     first = theta_tilde[:, :1]
-    # cumsum over the empty slice is (n, 0), so K == 2 needs no special case
     rest = first + torch.cumsum(torch.exp(theta_tilde[:, 1:]), dim=1)
     return torch.cat([neg_inf, first, rest, pos_inf], dim=1)
 
@@ -164,9 +179,9 @@ def ordinal_marginal_init_theta(counts) -> Tensor:
     """
     counts = np.asarray(counts, dtype=np.float64)
     p = counts / counts.sum()
-    F = np.clip(np.cumsum(p)[:-1], _CDF_EPS, 1 - _CDF_EPS)  # P(Y<=k), k=0..K-2
-    c = np.log(F) - np.log1p(-F)  # logit -> non-decreasing
-    diffs = np.maximum(np.diff(c), _CDF_EPS)  # guard ties (empty classes)
+    F = np.clip(np.cumsum(p)[:-1], _CDF_EPS, 1 - _CDF_EPS)
+    c = np.log(F) - np.log1p(-F)
+    diffs = np.maximum(np.diff(c), _CDF_EPS)
     tt = np.empty_like(c)
     tt[0] = c[0]
     tt[1:] = np.log(diffs)
@@ -199,11 +214,13 @@ def ordinal_log_prob(theta_tilde: Tensor, shift: Tensor, y: Tensor) -> Tensor:
     or the survival side). Do not replace this with the difference of two
     sigmoids: that form has exactly zero gradient once the sigmoids saturate
     in float32, and a node stuck there never recovers.
+
+    The survival side is the CDF side of the negated, swapped bounds. One
+    evaluation with flipped inputs replaces the computation of both sides and the
+    selection between them.
     """
     lower, upper = ordinal_bounds(theta_tilde, shift, y)
     ls = torch.nn.functional.logsigmoid
-    # the survival side is the CDF side of the negated, swapped bounds, so one
-    # evaluation with flipped inputs replaces computing both and selecting
     flip = upper + lower > 0
     a = torch.where(flip, -upper, lower)
     b = torch.where(flip, -lower, upper)
@@ -321,6 +338,8 @@ class _ScaledUT(torch.nn.Module, ABC):
     An affine pre-map takes $[x_{\min}, x_{\max}]$ to $[-B, B]$ with
     $B$ = ``BOUND``, then a zuko transform maps to the latent scale.
     Subclasses define ``n_params`` and ``_build(theta) -> zuko Transform``.
+    The Jacobian term takes its dtype from the range buffers. A float64 flow then
+    stays float64, without float32 literal promotion, inside ``fit_classical``.
 
     Parameters
     ----------
@@ -387,8 +406,6 @@ class _ScaledUT(torch.nn.Module, ABC):
 
     @property
     def _log_dt_dx(self) -> Tensor:
-        # derive dtype from the range buffers so float64 stays pure (no float32
-        # literal promotion) inside fit_classical
         two_b = torch.as_tensor(
             2.0 * self.bound, dtype=self.xmin.dtype, device=self.xmin.device
         )
@@ -433,8 +450,6 @@ class _ScaledUT(torch.nn.Module, ABC):
         Tensor
             The values in original units, shape ``(n,)``.
         """
-        # zuko inverts by bisection inside the bound and in closed form
-        # (linear / identity) outside
         with torch.no_grad():
             t = self._build(theta).inv(z0)
         return self._unscale(t)
@@ -567,17 +582,12 @@ class BernsteinUT(_ScaledUT):
                 "range_q=0 (min-max domain) model has no marginal start; "
                 "fit it with marginal_init=False"
             )
-        order = n + 1  # constrained control points: n+2
+        order = n + 1
         points = self._init_control_points(column if n >= 3 else None, order)
         diffs = np.maximum(np.diff(points), _CDF_EPS)
-        # zuko ties diff 1 to diff 2 and diff n to diff n+1 (smooth bounds);
-        # averaging each pair keeps every later control point where it was. The
-        # two pairs overlap below n=3, which is why such a transform takes the
-        # equally spaced start: with 4 control points and both ends tied there
-        # is no shape left to fit.
         first, last = diffs[:2].mean(), diffs[-2:].mean()
         diffs[:2], diffs[-2:] = first, last
-        shift = math.log(2.0) * n / 2.0  # zuko's centering offset
+        shift = math.log(2.0) * n / 2.0
         theta = np.empty(n)
         theta[0] = points[0] + shift
         theta[1:] = np.log(np.expm1(diffs[1:n]))
@@ -591,7 +601,7 @@ class BernsteinUT(_ScaledUT):
         otherwise.
         """
         q = self.range_q
-        a = math.log(q) - math.log(1.0 - q)  # logit(q) = -2.9444 at q=.05
+        a = math.log(q) - math.log(1.0 - q)
         lo, hi = float(self.xmin), float(self.xmax)
         u = np.arange(order + 1) / order
         if column is None or hi <= lo:
@@ -650,5 +660,4 @@ class AffineUT(_ScaledUT):
         return MonotonicAffineTransform(theta[..., 0], theta[..., 1])
 
 
-# kept after the classes it maps to: the dict values are evaluated at definition time
 _TRANSFORMS = {"bernstein": BernsteinUT, "spline": SplineUT, "affine": AffineUT}

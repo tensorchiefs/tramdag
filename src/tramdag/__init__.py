@@ -1,7 +1,7 @@
 """Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch."""
 
 # %% imports ---------------------------------------------------------------------------
-from importlib.metadata import version
+from importlib.metadata import version as _version
 
 from .flow import CausalFlowDAG
 from .nodes import Node
@@ -49,4 +49,4 @@ __all__ = [
     "spec_to_dict",
     "validate_and_sort",
 ]
-__version__ = version("tramdag")
+__version__ = _version("tramdag")

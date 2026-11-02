@@ -686,7 +686,8 @@ class FitMixin:
         Nodes stop at different epochs. A node that stopped earlier repeats
         its last entry, so a summed curve stays defined. A node without
         entries for a key shows NaN there. ``"val_epoch"`` is the longest
-        node's, which is exact while every fit validates.
+        node's, which is exact while every fit validates. Each node's best
+        epoch is in ``node.history["best_epoch"]``.
         """
         out = {}
         for key in ("train", "val", "lr"):

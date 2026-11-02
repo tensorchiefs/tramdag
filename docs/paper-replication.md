@@ -31,7 +31,7 @@ replay. So every seed here is a repository choice.
 The deviations have these labels:
 
 - **D1** is the Bernstein domain. VACA keeps the quantiles (see VACA).
-- **D2** is not in use: the comparison runs use the reference's glorot init.
+- **D2**: no deviation carries this label.
 - **D3** is the bias-free intercept output layer (the table above).
 - **D4** is the marginal start (the section D4 below).
 - **D5** is the plateau rule per node (the section D5 below).

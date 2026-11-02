@@ -31,7 +31,32 @@ def _dl_ds(nd, feats: dict, x: torch.Tensor) -> torch.Tensor:
     r"""Give $\partial \ell_i / \partial s_i$, shape ``(n,)``.
 
     This is the closed-form derivative of the per-row log-likelihood with
-    respect to the total shift of the node.
+    respect to the total shift $s$ of the node.
+
+    Notes
+    -----
+    Here $h$ is the fitted monotone transformation and $\sigma$ the logistic
+    function.
+
+    For a continuous node with value $y$, the latent value is $u = h(y) + s$
+    and $\ell = \log f(u) + \log h'(y)$, with $f$ the standard-logistic
+    density. Then
+
+    $$
+    \frac{\partial \ell}{\partial s} = 1 - 2\sigma(u).
+    $$
+
+    For an ordinal node, $P(Y = y) = \sigma(b) - \sigma(a)$ with the shifted
+    cutpoints $a = \vartheta_{y-1} - s$ and $b = \vartheta_y - s$. Then
+
+    $$
+    \frac{\partial \ell}{\partial s} =
+    \frac{\sigma'(a) - \sigma'(b)}{\sigma(b) - \sigma(a)},
+    \qquad \sigma' = \sigma(1 - \sigma).
+    $$
+
+    For the first and last class, the outer cutpoint is $\mp\infty$ and its
+    $\sigma'$ is zero.
     """
     theta, shift = nd.theta_shift(feats, x.shape[0])
     if nd.kind == "continuous":

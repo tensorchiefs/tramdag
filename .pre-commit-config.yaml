@@ -121,3 +121,37 @@ repos:
     entry: ^# %%(?! (imports|global variables|private functions|public functions|private classes|public classes|alias|main) -+$)
     language: pygrep
     files: ^(src|tools|tests|experiments)/.*\.py$
+  - id: no-python-comments
+    name: python carries no comments
+    entry: python tools/check_comments.py
+    language: python
+    types: [python]
+  - id: no-config-comments
+    name: config files carry no comments
+    entry: (^|\s)#(?! v\d+\.\d+\.\d+$)
+    language: pygrep
+    files: ^(pyproject\.toml|\.pre-commit-config\.yaml|mkdocs\.yml|\.github/workflows/.*\.ya?ml)$
+  - id: no-experiment-yaml-comments
+    name: experiment yaml carries only the dag line
+    entry: (^|\s)#(?!\s\w+ ~ )
+    language: pygrep
+    files: ^experiments/[^/]+\.ya?ml$
+  - id: error-message-style
+    name: error messages start lowercase, no trailing period
+    entry: raise \w+\(f?"([A-Z][a-z]* |(?![^"]*\. )[^"]*\."\))
+    language: pygrep
+    files: ^src/.*\.py$
+  - id: vale
+    name: vale (docs prose)
+    entry: vale
+    language: python
+    additional_dependencies: [vale==3.26.0.1]
+    types: [markdown]
+    exclude: ^CHANGELOG\.md$
+  - id: pymarkdown
+    name: prose lines of at most 80 columns
+    entry: pymarkdown scan
+    language: python
+    additional_dependencies: [pymarkdownlnt==0.9.41]
+    types: [markdown]
+    exclude: ^CHANGELOG\.md$

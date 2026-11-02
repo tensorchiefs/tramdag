@@ -137,6 +137,14 @@ source = "vcs"
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"
 
+[tool.pymarkdown]
+extensions.markdown-tables.enabled = true
+plugins.md013.code_blocks = false
+plugins.md013.enabled = true
+plugins.md013.headings = false
+plugins.md013.tables = false
+plugins.selectively_enable_rules = true
+
 [tool.pytest.ini_options]
 addopts = ["-v", "--tb=short"]
 # -n auto is passed by the CI invocation, not baked into addopts, so a bare

@@ -39,8 +39,6 @@ import pandas as pd
 from ._common import DatasetDraws, clamp, resolve_latents
 
 # %% global variables ------------------------------------------------------------------
-# the paper's Fig. 5 panels and its R code (vaca_triangle.r) intervene at -3, -1, 0;
-# the paper's text says -3, -2, 0 — the code is followed
 DO_X2_VALUES = (-3.0, -1.0, 0.0)
 
 
@@ -66,7 +64,6 @@ def main(argv: list[str] | None = None) -> None:
     obs.to_csv(args.out / "obs.csv", index=False)
 
     truth = {
-        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 App. C.1 (orig. Sanchez-Martin 2022 E.1)",
         "seed": args.seed,
         "n_obs": args.n_obs,
@@ -95,8 +92,8 @@ class VacaTriangle(DatasetDraws):
         """Draw the latent noise of every variable, ``n`` rows each."""
         return {
             "x1_mix": rng.uniform(size=n),
-            "x1_a": rng.normal(size=n),  # N(-2, sqrt(1.5)) branch
-            "x1_b": rng.normal(size=n),  # N(1.5, 1) branch
+            "x1_a": rng.normal(size=n),
+            "x1_b": rng.normal(size=n),
             "x2": rng.normal(size=n),
             "x3": rng.normal(size=n),
         }
@@ -130,8 +127,6 @@ class VacaTriangle(DatasetDraws):
         do = do or {}
         latents, n = resolve_latents(self, n, rng, latents)
 
-        # one if/else per variable, in topological order: an intervened
-        # variable is clamped and its structural equation skipped
         if "x1" in do:
             x1 = clamp(do["x1"], n)
         else:

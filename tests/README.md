@@ -71,13 +71,14 @@ Four kinds of test, in rough order of how much trust they carry:
    - DAG validation catches cycles and orders the nodes correctly
      (`test_cycle_detected`, `test_topological_order`).
 
-## How the ground truth is obtained
+## Where the ground truth comes from
 
 The reference values that the tests compare against come from two sources:
 
-- **By construction.** The inline DGPs are *built as* logistic-latent flows with fixed coefficients, cutpoints and effect
-  functions. The true parameters are therefore the numbers that generate the
-  data. The DGPs are numpy-only and deliberately independent of the flow.
+- **By construction.** The inline DGPs are logistic-latent flows with fixed
+  coefficients, cutpoints and effect functions. The true parameters are
+  therefore the numbers that generate the data. The DGPs are numpy-only and
+  deliberately independent of the flow.
 - **Independent software.** The classical-equivalence tests fit `statsmodels`
   `OrderedModel` at test time on the same design matrix that the flow builds.
   An all-`ls` outcome node *is* an ordered-logit model. This is therefore an
@@ -120,3 +121,12 @@ Note: the additive-CI and joint-CS *known-truth* acceptance tests carry the
 slow marker. The fast lane (`-m "not slow"`) therefore covers those features
 with build smokes and finiteness smokes only. The truth bars run in the full
 suite.
+
+Note: `test_ordinal_log_prob_matches_pmf` compares the log-space form with
+the pmf only where the pmf is accurate. Below about 1e-4 the naive
+sigmoid-difference pmf hits float32 quantization (eps about 1.2e-7 near
+sigmoid = 1). The log-space form stays accurate there.
+
+Note: `_halve` in `test_input_transform.py` sits at module level. `save()`
+accepts only a picklable input transform, and a local function is not
+picklable.

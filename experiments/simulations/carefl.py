@@ -45,8 +45,6 @@ import pandas as pd
 from ._common import DatasetDraws, clamp, resolve_latents
 
 # %% global variables ------------------------------------------------------------------
-# the paper's observation in raw units: noise (2, 1.5, 1.4, -1) pushed through the
-# SCM; the paper prints x3/x4 divided by CAREFL's sample sds (6.01, 1.91)
 X_OBS = {"x1": 2.00, "x2": 1.50, "x3": 5.0875, "x4": -0.5}
 ALPHA_GRID = np.round(np.linspace(-3.0, 3.0, 61), 4)
 _SCALE = 1.0 / np.sqrt(2.0)
@@ -73,7 +71,6 @@ def main(argv: list[str] | None = None) -> None:
     obs.to_csv(args.out / "obs.csv", index=False)
 
     truth = {
-        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 App. C.2 (orig. Khemakhem 2021 Fig. 5)",
         "seed": args.seed,
         "n_obs": args.n_obs,
@@ -136,8 +133,6 @@ class Carefl4(DatasetDraws):
         do = do or {}
         latents, n = resolve_latents(self, n, rng, latents)
 
-        # one if/else per variable, in topological order: an intervened
-        # variable is clamped and its structural equation skipped
         if "x1" in do:
             x1 = clamp(do["x1"], n)
         else:

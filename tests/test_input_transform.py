@@ -30,12 +30,12 @@ def _tensors(df):
 
 def _frame(n=200, seed=0):
     rng = np.random.default_rng(seed)
-    x1 = rng.normal(5.0, 3.0, n)  # far from [0, 1]: a raw tanh net saturates
+    x1 = rng.normal(5.0, 3.0, n)
     x2 = 0.5 * x1 + rng.normal(size=n)
     return pd.DataFrame({"x1": x1, "x2": x2, "x3": x2 - x1 + rng.normal(size=n)})
 
 
-def _halve(x, train):  # module-level: picklable, so save() accepts it
+def _halve(x, train):
     return x / 2.0
 
 
@@ -67,7 +67,6 @@ def test_net_inputs_span_unit_interval_after_first_fit():
         scaled = node.net_input(feats, ("x1",), key)
         assert torch.allclose(scaled.min(0).values, torch.zeros(scaled.shape[1]))
         assert torch.allclose(scaled.max(0).values, torch.ones(scaled.shape[1]))
-    # a second fit on other rows keeps the first frozen statistics
     flow.fit(df + 10.0, epochs=1, batch_size=100)
     lo = float(flow.nodes["x2"].intercept.input_transform.lo[0])
     assert lo == pytest.approx(df["x1"].min())
@@ -99,7 +98,6 @@ def test_callable_gets_the_frozen_train_column():
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100)
     nd = flow.nodes["x2"]
-    # a 3-row batch is transformed with the TRAIN std, not the batch's
     batch = {"x1": torch.tensor([[1.0], [2.0], [3.0]])}
     got = nd.net_input(batch, ("x1",), "@I")
     train_std = float(torch.tensor(df["x1"].to_numpy(), dtype=torch.float32).std())
@@ -156,7 +154,6 @@ def test_mixed_node_transforms_only_its_own_term():
     grid = df["x1"].to_numpy()
     with torch.no_grad():
         _, shift = nd.theta_shift(feats, len(df))
-    # public routes: the CS curve (through its input transform) + the raw LS
     cs = flow.shift_curve("x3", "x1", grid)
     ls = float(flow.ls_coefficients()["x3"]["x2"][0]) * df["x2"].to_numpy()
     np.testing.assert_allclose(shift.numpy(), cs + ls, atol=1e-5)

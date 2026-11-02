@@ -43,9 +43,9 @@ def test_terms_spec_builds_and_scores():
 
 def test_node_internal_structure_matches():
     flow = CausalFlowDAG(_terms_spec(), seed=0)
-    assert flow.nodes["X3"].intercept.ci_parents == ["X1"]  # I("X1") -> ci-parent
-    assert set(flow.nodes["X3"].shifts) == {"X2"}  # CS("X2") -> shift
-    assert flow.nodes["X3"].parents == ("X1", "X2")  # ordered parent names
+    assert flow.nodes["X3"].intercept.ci_parents == ["X1"]
+    assert set(flow.nodes["X3"].shifts) == {"X2"}
+    assert flow.nodes["X3"].parents == ("X1", "X2")
 
 
 def test_ls_requires_exactly_one_parent():
@@ -64,8 +64,8 @@ def test_joint_terms_build(term, n_shift, n_ci):
         "X3": ContinuousNode([term]),
     }
     node = CausalFlowDAG(spec, seed=0).nodes["X3"]
-    assert len(node.shifts) == n_shift  # joint CS -> a single shift module
-    assert len(node.intercept.ci_parents) == n_ci  # joint I -> both parents pooled
+    assert len(node.shifts) == n_shift
+    assert len(node.intercept.ci_parents) == n_ci
 
 
 def test_duplicate_parent_across_terms_raises():
@@ -96,23 +96,23 @@ def test_to_matrix_labels_every_term_and_leaves_non_edges_empty():
     spec = {
         "a": ContinuousNode(),
         "b": ContinuousNode(),
-        "y": OrdinalNode(3, I("a") + CS("b")),  # one edge-owning term each
+        "y": OrdinalNode(3, I("a") + CS("b")),
     }
     m = CausalFlowDAG(spec, seed=0).to_matrix()
-    assert list(m.index) == list(m.columns)  # square, node-ordered
-    assert m.loc["a", "y"] == "CI"  # an I term reads as CI
+    assert list(m.index) == list(m.columns)
+    assert m.loc["a", "y"] == "CI"
     assert m.loc["b", "y"] == "CS"
-    assert m.loc["y", "a"] == ""  # no edge -> empty, not NaN
+    assert m.loc["y", "a"] == ""
     assert m.loc["a", "b"] == ""
 
     joint = CausalFlowDAG(
         {**spec, "y": OrdinalNode(3, CS("a", "b"))}, seed=0
     ).to_matrix()
-    assert joint.loc["a", "y"] == "CS['a', 'b']"  # a joint term names its group
+    assert joint.loc["a", "y"] == "CS['a', 'b']"
     additive = CausalFlowDAG(
         {**spec, "y": OrdinalNode(3, I("a", "b", allow_interaction=False))}, seed=0
     ).to_matrix()
-    assert additive.loc["a", "y"] == "CI"  # one net per parent: not joint
+    assert additive.loc["a", "y"] == "CI"
 
 
 def test_ls_coefficients_shape_and_agreement_with_the_modules():
@@ -130,10 +130,10 @@ def test_ls_coefficients_shape_and_agreement_with_the_modules():
     flow = CausalFlowDAG(spec, seed=0)
     coefs = flow.ls_coefficients()
 
-    assert set(coefs) == {"y"}  # sources have no shift terms
+    assert set(coefs) == {"y"}
     assert set(coefs["y"]) == {"x", "t"}
     assert coefs["y"]["x"].shape == (1,)
-    assert coefs["y"]["t"].shape == (3,)  # one per ordinal level
+    assert coefs["y"]["t"].shape == (3,)
 
 
 def test_ordinal_node_refuses_a_transform():

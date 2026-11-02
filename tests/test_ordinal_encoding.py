@@ -51,17 +51,15 @@ def test_one_hot_ls_weights_are_identified_only_up_to_a_constant():
         fits.append((weights, float(sum(flow.nll(df).values()))))
 
     nlls = [nll for _, nll in fits]
-    assert max(nlls) - min(nlls) < 1e-4  # the same optimum
+    assert max(nlls) - min(nlls) < 1e-4
 
     first = fits[0][0]
-    assert not all(np.allclose(w, first) for w, _ in fits[1:])  # different weights
-    for weights, _ in fits[1:]:  # identical once the flat direction is removed
+    assert not all(np.allclose(w, first) for w, _ in fits[1:])
+    for weights, _ in fits[1:]:
         np.testing.assert_allclose(
             weights - weights.mean(), first - first.mean(), atol=1e-3
         )
 
-    # the identified contrasts recover the DGP's per-level step (latent sign
-    # convention: a positive effect on y is a negative shift)
     steps = -np.diff(first)
     np.testing.assert_allclose(steps, 0.7, atol=0.1)
 
@@ -75,7 +73,7 @@ def test_design_matrix_drops_the_flat_direction():
     reduced = flow.design_matrix(df, "y", drop_first=True)
     assert list(full.columns) == [f"p[{k}]" for k in range(4)]
     assert list(reduced.columns) == [f"p[{k}]" for k in range(1, 4)]
-    assert (full.sum(axis=1) == 1).all()  # the row sum that makes it flat
+    assert (full.sum(axis=1) == 1).all()
 
 
 @pytest.mark.parametrize("bad", [1.5, 9.0, -1.0])
@@ -92,7 +90,7 @@ def test_a_non_level_ordinal_value_is_refused_at_every_entry_point(bad):
     with pytest.raises(ValueError, match=r"level indices 0\.\.3"):
         flow.sample(10, do={"p": bad})
 
-    assert len(flow.sample(10, do={"p": 2})) == 10  # a level still passes
+    assert len(flow.sample(10, do={"p": 2})) == 10
 
 
 def test_a_latent_frame_skips_the_level_check():
@@ -101,7 +99,7 @@ def test_a_latent_frame_skips_the_level_check():
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)
     u = flow.abduct(df, seed=0)
-    assert not np.allclose(u["p"], np.round(u["p"]))  # latents, not levels
+    assert not np.allclose(u["p"], np.round(u["p"]))
     back = flow.sample(u=u)
     np.testing.assert_array_equal(back["p"].to_numpy(), df["p"].to_numpy())
 

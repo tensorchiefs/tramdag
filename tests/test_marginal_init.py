@@ -34,9 +34,9 @@ def _mixed_flow_and_df():
     not a root.
     """
     spec = {
-        "x1": ContinuousNode(),  # Bernstein root
-        "y": OrdinalNode(levels=4),  # ordinal root
-        "x2": ContinuousNode(I("x1")),  # -> ComplexInterceptModule
+        "x1": ContinuousNode(),
+        "y": OrdinalNode(levels=4),
+        "x2": ContinuousNode(I("x1")),
     }
     torch.manual_seed(0)
     flow = CausalFlowDAG(spec)
@@ -55,17 +55,17 @@ def _mixed_flow_and_df():
 def test_bernstein_marginal_init_is_calibrated_logistic_map():
     """marginal_init θ maps the pre-scaled domain onto [logit .05, logit .95]."""
     ut = BernsteinUT()
-    ut.set_range(-5.0, 5.0)  # range == bound -> _scale is identity
-    theta = ut.marginal_init_theta(None)  # the data-free map, q=0.05 default
+    ut.set_range(-5.0, 5.0)
+    theta = ut.marginal_init_theta(None)
     x = torch.tensor([-5.0, 0.0, 5.0])
     z0, _ = ut.forward(theta.unsqueeze(0).expand(3, -1), x)
-    logit05 = math.log(0.05) - math.log(0.95)  # -2.9444
+    logit05 = math.log(0.05) - math.log(0.95)
     np.testing.assert_allclose(z0.detach().numpy(), [logit05, 0.0, -logit05], atol=1e-3)
 
 
 def test_ordinal_marginal_init_reproduces_class_frequencies():
     """Cutpoints from class counts reproduce the empirical class PMF."""
-    counts = np.array([50, 30, 15, 5])  # K=4 levels
+    counts = np.array([50, 30, 15, 5])
     tt = ordinal_marginal_init_theta(counts)
     pmf = ordinal_pmf(tt.unsqueeze(0), torch.zeros(1))[0].numpy()
     np.testing.assert_allclose(pmf, counts / counts.sum(), atol=1e-4)
@@ -73,7 +73,6 @@ def test_ordinal_marginal_init_reproduces_class_frequencies():
 
 def test_marginal_init_only_touches_simple_intercepts():
     flow, df = _mixed_flow_and_df()
-    # sanity: the parented node really has a ComplexInterceptModule
     assert isinstance(flow.nodes["x2"].intercept, ComplexInterceptModule)
     assert isinstance(flow.nodes["x1"].intercept, SimpleInterceptModule)
 
@@ -86,7 +85,6 @@ def test_marginal_init_only_touches_simple_intercepts():
 
     assert flow._calibrate(df, marginal_init=True) is flow
 
-    # the two roots are now calibrated (changed from their zero init)...
     assert not torch.allclose(flow.nodes["x1"].intercept.theta.detach(), root_x1_before)
     assert not torch.allclose(flow.nodes["y"].intercept.theta.detach(), root_y_before)
     np.testing.assert_allclose(
@@ -94,14 +92,13 @@ def test_marginal_init_only_touches_simple_intercepts():
         flow.nodes["x1"].ut.marginal_init_theta(df["x1"].to_numpy()).numpy(),
         atol=1e-6,
     )
-    # ...while the parented node's ComplexInterceptModule is untouched
     for k, v in flow.nodes["x2"].intercept.state_dict().items():
         assert torch.equal(v.detach(), ci_before[k]), f"ci param {k} changed"
 
 
 def test_calibrate_leaves_the_weights_alone_unless_asked():
     flow, df = _mixed_flow_and_df()
-    flow._calibrate(df)  # zuko's zero start: the marginal start is opt-in
+    flow._calibrate(df)
     assert torch.allclose(
         flow.nodes["x1"].intercept.theta.detach(),
         torch.zeros_like(flow.nodes["x1"].intercept.theta),
@@ -181,9 +178,7 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     loaded = CausalFlowDAG.load(tmp_path / "m.pt")
 
     before = loaded.nodes["y"].intercept.theta.detach().clone()
-    loaded._calibrate(df)  # no-op: the calibrated flag traveled in the checkpoint
-    # lr 0: the epoch runs (and would recalibrate, if the flag were lost)
-    # without moving any weight
+    loaded._calibrate(df)
     loaded.fit(df, epochs=1, learning_rate=0.0, batch_size=128)
     assert torch.equal(before, loaded.nodes["y"].intercept.theta.detach())
 
@@ -209,12 +204,11 @@ def test_bernstein_marginal_init_follows_the_empirical_marginal():
         nll_linear = float(sum(flow.nll(df).values()))
 
         flow = CausalFlowDAG({"x": ContinuousNode()}, seed=0)
-        flow._calibrate(df, marginal_init=True)  # the empirical start
+        flow._calibrate(df, marginal_init=True)
         empirical = flow.nodes["x"].intercept.theta.detach()
         assert float(sum(flow.nll(df).values())) < nll_linear - 0.2, name
         assert not torch.allclose(empirical, linear)
 
-    # a degenerate range falls back to the linear map instead of dividing by zero
     ut = BernsteinUT()
     ut.set_range(1.0, 1.0)
     np.testing.assert_allclose(

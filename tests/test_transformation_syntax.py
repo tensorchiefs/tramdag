@@ -35,7 +35,6 @@ def test_sum_chains_flatten_in_order():
 
 
 def test_single_term_and_implicit_intercept():
-    # a shifts-only formula gets the implicit simple intercept, first
     assert ContinuousNode(LS("x1")).terms == [SI(), LS("x1")]
     assert ContinuousNode(LS("x1")) == ContinuousNode([SI(), LS("x1")])
 
@@ -101,7 +100,6 @@ def test_bare_i_can_carry_the_source_transform():
 
 
 def test_two_i_transforms_conflict():
-    # two intercepts is the error now, whatever they carry
     with pytest.raises(ValueError, match="exactly one intercept"):
         ContinuousNode(I(transform="spline") + I("a", transform="affine"))
 
@@ -143,15 +141,15 @@ def test_additive_flag_builds_one_net_per_parent():
     node = flow.nodes["y"]
     assert len(node.intercept.nets) == 2
     assert node.intercept.groups == [("a",), ("b",)]
-    assert node.intercept.ci_parents == ["a", "b"]  # flat, for introspection
+    assert node.intercept.ci_parents == ["a", "b"]
 
     joint = CausalFlowDAG({**spec, "y": ContinuousNode([I("a", "b")])})
-    assert not hasattr(joint.nodes["y"].intercept, "nets")  # one joint net
+    assert not hasattr(joint.nodes["y"].intercept, "nets")
     assert joint.nodes["y"].intercept.groups == [("a", "b")]
     assert joint.nodes["y"].intercept.ci_parents == ["a", "b"]
 
     single = CausalFlowDAG({**spec, "y": ContinuousNode([I("a")])})
-    assert not hasattr(single.nodes["y"].intercept, "nets")  # one single net
+    assert not hasattr(single.nodes["y"].intercept, "nets")
     assert single.nodes["y"].intercept.ci_parents == ["a"]
 
 
@@ -285,7 +283,7 @@ def test_spec_survives_a_json_roundtrip():
     }
     back = spec_from_dict(json.loads(json.dumps(spec_to_dict(spec))))
     assert back == spec
-    assert back["y"].terms[0].units == (8, 8)  # the CI intercept comes first
+    assert back["y"].terms[0].units == (8, 8)
     assert hash(back["y"].terms[1]) == hash(spec["y"].terms[1])
 
 
@@ -296,9 +294,9 @@ def test_wrong_term_option_errors_instead_of_defaulting():
     is the check and the refusal is Python's own TypeError.
     """
     with pytest.raises(TypeError, match="unexpected keyword argument 'penalty'"):
-        CS("a", penalty=1.0)  # penalty is VC's
+        CS("a", penalty=1.0)
     with pytest.raises(AttributeError):
-        _ = LS("x").penalty  # reading a foreign option refuses too
+        _ = LS("x").penalty
     d = {
         "x": {
             "kind": "continuous",

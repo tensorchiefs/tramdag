@@ -13,7 +13,7 @@ import yaml
 
 # %% global variables ------------------------------------------------------------------
 EXPERIMENTS = Path(__file__).resolve().parents[1]
-CONFIGS = sorted(EXPERIMENTS.glob("*.yaml"))  # the same glob the workflow plans from
+CONFIGS = sorted(EXPERIMENTS.glob("*.yaml"))
 
 
 # %% private functions -----------------------------------------------------------------
@@ -28,7 +28,6 @@ def _keys_read(script: Path, pattern: str) -> set[str]:
 # %% public functions ------------------------------------------------------------------
 @pytest.mark.parametrize("config", CONFIGS, ids=lambda p: p.stem)
 def test_every_yaml_key_is_read_by_the_script(config):
-    # every variant is read through the one `config` dict
     sections = yaml.safe_load(config.read_text())["variants"]
     read = _keys_read(config.with_suffix(".py"), r"""config\[["']([a-z_0-9]+)["']\]""")
     for section, values in sections.items():

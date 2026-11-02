@@ -29,20 +29,18 @@ def test_plot_dag_draws_every_node_and_edge():
     """One patch per node, one arrow per edge, a label per edge, a legend."""
     spec = _every_term_spec()
     ax = plot_dag(spec)
-    n_edges = 1 + 2 + 2 + 1 + 1  # CI, LS+CS, joint CS (2 parents), VC, VC modifier
+    n_edges = 1 + 2 + 2 + 1 + 1
     arrows = [p for p in ax.patches if type(p).__name__ == "FancyArrowPatch"]
     assert len(ax.patches) == len(spec) + n_edges
     assert len(arrows) == n_edges
     labels = {t.get_text() for t in ax.texts}
     assert {"CI", "LS", "CS", "CS joint", "VC"} <= labels
-    assert len(ax.lines) == 1  # the modifier's dot on the treatment edge
+    assert len(ax.lines) == 1
     legend = {t.get_text() for t in ax.get_legend().get_texts()}
     assert "VC modifier" in legend
-    # the modifier as an edge into the outcome, with its own label
     node_mode = plot_dag(spec, modifiers="node")
     assert "VC modifier" in {t.get_text() for t in node_mode.texts}
     assert not node_mode.lines
-    # a flow draws its spec; labels and legend are optional
     flow = CausalFlowDAG(spec, seed=0)
     ax2 = plot_dag(flow, labels=False, legend=False, title="d")
     assert ax2.get_title() == "d"
@@ -82,12 +80,11 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert (tmp_path / "m.png").exists()
     ax = plot_training(flow, path=tmp_path / "t.png", title="t")
     assert ax.get_title(loc="left") == "t"
-    assert len(ax.lines) == 2  # train and val, no marks without stops=
+    assert len(ax.lines) == 2
     assert (tmp_path / "t.png").exists()
     stops = {n: len(nd.history["train"]) for n, nd in flow.nodes.items()}
     ax = plot_training(flow, stops=stops)
-    assert len(ax.lines) == 2 + len(stops)  # one mark per stop
-    # no validation history, no marks: one line
+    assert len(ax.lines) == 2 + len(stops)
     flow2 = CausalFlowDAG(spec, seed=0)
     flow2.fit(df, epochs=3, batch_size=100)
     assert len(plot_training(flow2).lines) == 1
@@ -137,9 +134,9 @@ def test_plots_draw_into_given_axes_and_take_a_style(ls_chain):
     fig, (left, right) = plt.subplots(1, 2)
     ax = plot_dag(_every_term_spec(), ax=left, style="dark", node_kind=False)
     assert ax is left
-    assert len(fig.axes) == 2  # no new figure, no new axes
+    assert len(fig.axes) == 2
     texts = {t.get_text() for t in left.texts}
-    assert "continuous" not in texts  # no kind sub-labels
+    assert "continuous" not in texts
     assert {t.get_color() for t in left.texts if t.get_text() == "x1"} == {"white"}
     df = ls_chain["draw"](200, 1)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}

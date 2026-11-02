@@ -60,7 +60,6 @@ def test_callbacks_all_run_and_any_stops(ls_chain):
             calls.append(("begin", 0))
 
         def on_epoch_end(self, nd, epoch, opt):
-            # also pins the callback contract: live node, 1-based epoch, optimizer
             assert nd is node
             assert isinstance(opt, torch.optim.Adam)
             calls.append(("stop?", epoch))
@@ -78,7 +77,7 @@ def test_callbacks_all_run_and_any_stops(ls_chain):
         ("stop?", 1),
         ("log", 1),
         ("stop?", 2),
-        ("log", 2),  # the logger still ran on the stop epoch
+        ("log", 2),
         ("end", 0),
     ]
 
@@ -104,7 +103,7 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     node = flow.nodes["x2"]
     node.calibrate(df)
-    opt = torch.optim.SGD(node.parameters(), lr=0.0)  # a zero step: nothing moves
+    opt = torch.optim.SGD(node.parameters(), lr=0.0)
     before = copy.deepcopy(node.state_dict())
     node.fit(df, epochs=2, learning_rate=1e-2, optimizer=opt)
     assert all(torch.equal(before[k], v) for k, v in node.state_dict().items())
@@ -162,7 +161,7 @@ def test_restore_best_matches_the_manual_six_line_callback(ls_chain):
         validation_data=val,
         callbacks=[keep_best, best],
     )
-    assert len(node.history["train"]) == 40  # no patience: full budget
+    assert len(node.history["train"]) == 40
     assert (best.best_nll, best.best_epoch) == (manual["nll"], manual["epoch"])
     assert node.nll(val) == pytest.approx(best.best_nll, rel=1e-6)
 
@@ -177,8 +176,8 @@ def test_restore_best_resets_between_fits(ls_chain):
     node.fit(df, epochs=5, validation_data=df, callbacks=best)
     first = (best.best_nll, best.best_epoch)
     node.fit(df, epochs=3, validation_data=df, callbacks=best)
-    assert best.best_epoch <= 3  # counted within the second fit
-    assert best.best_nll <= first[0] + 1e-9  # training continued, no stale state
+    assert best.best_epoch <= 3
+    assert best.best_nll <= first[0] + 1e-9
 
 
 def test_early_stopping_stops_and_restores_the_best(ls_chain):
@@ -208,9 +207,7 @@ def test_early_stopping_without_restore_keeps_the_final_weights(ls_chain):
         callbacks=lambda name: EarlyStopping(patience=5, restore_best=False),
     )
     final = sum(flow.nll(val).values())
-    assert final == pytest.approx(
-        sum(flow.history["val"][-1].values()), rel=1e-6
-    )  # each node's last epoch, not its best
+    assert final == pytest.approx(sum(flow.history["val"][-1].values()), rel=1e-6)
     with pytest.raises(ValueError, match="no-op"):
         EarlyStopping(restore_best=False)
 
@@ -253,7 +250,7 @@ def test_verbose_prints_every_nth_and_final_epoch(ls_chain, capsys):
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     flow.fit(df, epochs=5, verbose=2, validation_data=df.head(50))
     lines = capsys.readouterr().out.strip().splitlines()
-    assert len(lines) == 6  # per node: epochs 2, 4 and the final 5
+    assert len(lines) == 6
     assert all("train" in ln and "val" in ln for ln in lines)
     assert lines[0].startswith("x1:")
     assert lines[-1].startswith("x2:")
@@ -266,7 +263,6 @@ def test_validation_split_takes_the_tail(ls_chain):
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     flow.fit(df, epochs=2, validation_split=0.25, batch_size=50)
     assert len(flow.history["val"]) == 2
-    # calibration saw only the head: the range is the head's quantiles
     head = df.iloc[:150]
     lo = float(flow.nodes["x1"].ut.xmin)
     assert lo == pytest.approx(head["x1"].quantile(0.05), abs=1e-6)
@@ -294,7 +290,6 @@ def test_each_node_stops_on_its_own_and_keeps_the_mle(ls_chain):
         assert ran < 4000
         assert ran - stops[name].best_epoch == 40
         assert len(nd.history["lr"]) == ran
-    # the flow view repeats a stopped node's last entry
     assert len(flow.history["train"]) == max(
         len(nd.history["train"]) for nd in flow.nodes.values()
     )
@@ -310,8 +305,8 @@ def test_callbacks_reject_stale_validation_from_an_earlier_fit(ls_chain):
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())
     with pytest.raises(RuntimeError, match="validation_data"):
-        flow.fit(df, epochs=2, callbacks=EarlyStopping())  # no validation now
-    flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())  # fine again
+        flow.fit(df, epochs=2, callbacks=EarlyStopping())
+    flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())
 
 
 def test_callbacks_reject_the_class_instead_of_an_instance(ls_chain):
@@ -357,7 +352,7 @@ def test_early_stopping_min_delta_counts_a_small_gain_as_flat(ls_chain):
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     stopping = EarlyStopping(min_delta=1e6)
     flow.fit(df, epochs=5, validation_data=df, callbacks=stopping)
-    assert stopping.best_epoch == 1  # nothing beats epoch 1 by a million
+    assert stopping.best_epoch == 1
 
 
 def test_two_restoring_callbacks_are_refused(ls_chain):
@@ -402,7 +397,7 @@ def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):
     assert float(coefs["x1"][0]) == pytest.approx(res.params["x1"], abs=0.03)
     assert float(coefs["x2"][0]) == pytest.approx(res.params["x2"], abs=0.03)
     assert (w_t[1] - w_t[0]) == pytest.approx(res.params["t[1]"], abs=0.06)
-    assert len(flow.nodes["y"].history["train"]) < 4000  # the callback stopped it
+    assert len(flow.nodes["y"].history["train"]) < 4000
 
 
 def test_history_accumulates_across_fit_calls(ls_chain):
@@ -444,7 +439,7 @@ def test_the_epoch_nll_averages_over_the_rows_it_trained_on(ls_chain):
     """A skipped trailing row must not scale every node's epoch NLL down."""
     df = ls_chain["draw"](201, 1)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    flow.fit(df, epochs=1, batch_size=100)  # 100 + 100 + 1: the last is skipped
+    flow.fit(df, epochs=1, batch_size=100)
     trimmed = CausalFlowDAG(_two_node_spec(), seed=0)
     trimmed.fit(df.iloc[:200], epochs=1, batch_size=100)
     a = sum(flow.history["train"][-1].values())

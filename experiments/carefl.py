@@ -44,7 +44,6 @@ from simulations.carefl import Carefl4
 # %% global variables ------------------------------------------------------------------
 DATA = Path(__file__).resolve().parent / "data" / "carefl-cf"
 COLUMNS = ["x1", "x2", "x3", "x4"]
-# the curve files' grid: carefl_fig5.r's seq(-3, 2.9, 0.1)
 ALPHAS = np.round(np.arange(-3.0, 3.0, 0.1), 4)
 
 
@@ -154,7 +153,6 @@ def run(variant: str) -> dict:
         f"fitting the flexible flow on CAREFL's own rows, n={len(ref['train'])}: "
         f"{config['fit_kwargs']['epochs']} epochs at lr {config['learning_rate']:g} ..."
     )
-    # val = train, as in carefl_fig5.r: the plateau rule watches the train NLL
     flow, _, fit_seconds = fit_paper(ref["train"], ref["train"], config, out)
     x_obs = ", ".join(f"{value:.2f}" for value in ref["x_obs"].iloc[0])
     figs = figure_specs(config, x_obs=x_obs)
@@ -171,7 +169,6 @@ def run(variant: str) -> dict:
     figures.append("cf_curves.png")
     generator = Carefl4(seed=config["dgp_seed"])
     metrics.update(heldout_errors(generator, flow, ref["sds"], config))
-    # the reference holds nothing out; a fresh standardized draw scores the fit
     heldout = standardized(
         generator.observational(config["n_val"], seed_offset=1), ref["sds"]
     )

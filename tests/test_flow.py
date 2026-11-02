@@ -54,10 +54,10 @@ def test_univariate_roundtrip(ut):
     ut.set_range(-3.0, 7.0)
     n = 200
     theta = torch.randn(n, ut.n_params)
-    x = torch.linspace(-6.0, 10.0, n)  # includes values outside the fitted range
+    x = torch.linspace(-6.0, 10.0, n)
     z0, ladj = ut.forward(theta, x)
     assert torch.isfinite(z0).all()
-    far = ut.inverse(theta[:2], torch.tensor([-40.0, 60.0]))  # far tails: closed form
+    far = ut.inverse(theta[:2], torch.tensor([-40.0, 60.0]))
     assert torch.isfinite(far).all()
     assert torch.isfinite(ladj).all()
     x_rec = ut.inverse(theta, z0)
@@ -70,8 +70,6 @@ def test_ordinal_log_prob_matches_pmf():
     y = torch.randint(0, 7, (128,)).float()
     lp = ordinal_log_prob(theta, shift, y)
     p = ordinal_pmf(theta, shift)[torch.arange(128), y.long()]
-    # below ~1e-4 the naive sigmoid-difference pmf hits float32 quantization
-    # (eps ~ 1.2e-7 near sigmoid = 1); the log-space form stays accurate there
     ok = p > 1e-4
     assert ok.sum() > 100
     assert torch.allclose(lp[ok], torch.log(p[ok]), atol=2e-3)
@@ -82,9 +80,9 @@ def test_ordinal_log_prob_gradient_survives_saturation():
     in float32) has exactly-zero gradients and can never recover. The log-space
     form must keep finite, non-zero gradients.
     """
-    theta = torch.zeros(8, 1, requires_grad=True)  # binary node
-    shift = torch.full((8,), -60.0, requires_grad=True)  # heavily saturated
-    y = torch.ones(8)  # observed level has p ~ 0
+    theta = torch.zeros(8, 1, requires_grad=True)
+    shift = torch.full((8,), -60.0, requires_grad=True)
+    y = torch.ones(8)
     lp = ordinal_log_prob(theta, shift, y)
     assert torch.isfinite(lp).all()
     lp.sum().backward()
@@ -95,7 +93,7 @@ def test_ordinal_log_prob_gradient_survives_saturation():
 
 
 def test_ordinal_cutpoints_increasing_and_pmf_sums_to_one():
-    theta = torch.randn(64, 6)  # 7 levels
+    theta = torch.randn(64, 6)
     cuts = ordinal_cutpoints(theta)
     assert (cuts[:, 1:] >= cuts[:, :-1]).all()
     pmf = ordinal_pmf(theta, torch.randn(64))
@@ -145,7 +143,6 @@ def test_counterfactual_only_changes_descendants(fitted_flow):
     sub = df.iloc[:300]
     u = flow.abduct(sub, seed=5)
     cf = flow.sample(do={"Y": 3}, u=u)
-    # X is not a descendant of Y -> unchanged; Y is clamped; W may change
     assert np.abs(cf["X"].values - sub["X"].values).max() < 1e-3
     assert (cf["Y"].values == 3).all()
 
@@ -196,13 +193,11 @@ def test_ls_node_equals_proportional_odds():
         method="bfgs", disp=False
     )
 
-    # our model: P(Y<=k) = sigmoid(theta_k - (w1 x1 + w2 x2)); statsmodels likewise
     coefs = flow.ls_coefficients()["Y"]
     w1, w2 = float(coefs["X1"][0]), float(coefs["X2"][0])
     assert w1 == pytest.approx(res.params["X1"], abs=0.05)
     assert w2 == pytest.approx(res.params["X2"], abs=0.05)
 
-    # per-row PMFs agree
     pmf_flow = flow.pmf(df.iloc[:500], node="Y")
     pmf_sm = res.model.predict(
         res.params, exog=df[["X1", "X2"]].values[:500], which="prob"
@@ -227,7 +222,6 @@ def test_affine_zero_theta_is_the_logistic_density():
     np.testing.assert_allclose(
         flow.log_prob(df).detach().numpy(), expected.numpy(), atol=1e-5
     )
-    # the transform ranges are the train 5%/95% quantiles
     q = df["x"].quantile([0.05, 0.95])
     assert (xmin, xmax) == pytest.approx((q.iloc[0], q.iloc[1]))
 

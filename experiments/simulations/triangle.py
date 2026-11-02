@@ -56,9 +56,8 @@ F_VARIANTS = {
     "sin": (lambda x: 2.0 * np.sin(3.0 * x) + x, "2*sin(3*x) + x"),
 }
 
-THETA_MIXED = np.array([-2.0, 0.42, 1.02])  # ordinal cutpoints (4 levels)
+THETA_MIXED = np.array([-2.0, 0.42, 1.02])
 
-# the variants actually used in the paper (frozen by the CLI)
 PAPER_VARIANTS = {"continuous": ("linear", "atan", "sin"), "mixed": ("linear", "exp")}
 
 
@@ -74,7 +73,6 @@ def _write_variant(cls, out_dir: Path, f: str, seed: int, n_obs: int) -> None:
     obs.to_csv(vdir / "obs.csv", index=False)
 
     truth = {
-        # verbatim in the frozen experiments/data truth.json, so not in the cite style
         "source": "arXiv:2503.16206 Sec. 6 (Sick & Duerr, CLeaR 2025)",
         "family": gen.family,
         "f": f,
@@ -153,9 +151,9 @@ class _TriangleBase(DatasetDraws):
         normal branches). x2 and x3 get their TRAM latents.
         """
         return {
-            "x1_mix": rng.uniform(size=n),  # component indicator
-            "x1_a": rng.normal(size=n),  # N(0.25, 0.1) branch
-            "x1_b": rng.normal(size=n),  # N(0.73, 0.05) branch
+            "x1_mix": rng.uniform(size=n),
+            "x1_a": rng.normal(size=n),
+            "x1_b": rng.normal(size=n),
             "x2": rng.logistic(size=n),
             "x3": rng.logistic(size=n),
         }
@@ -173,7 +171,7 @@ class _TriangleBase(DatasetDraws):
         if "x2" in do:
             x2 = clamp(do["x2"], n)
         else:
-            x2 = (latents["x2"] - 2.0 * x1) / 5.0  # h(x2|x1) = 5 x2 + 2 x1 = u2
+            x2 = (latents["x2"] - 2.0 * x1) / 5.0
         return x1, x2
 
     def simulate(
@@ -355,20 +353,16 @@ class TriangleMixed(_TriangleBase):
         level = observed["x3"].to_numpy(dtype=int)
 
         factual_cuts = self.theta[None, :] + (0.2 * x1 + self.f_callable(x2))[:, None]
-        # x2 is a *descendant* of x1, so intervening on x1 moves it too. Its
-        # latent is recoverable from the structural equation h(x2|x1) =
-        # 5 x2 + 2 x1, which gives x2_cf = x2 + 0.4 (x1 - a) under do(x1 = a).
         if "x1" in do:
             x1_cf = np.full_like(x1, float(do["x1"]))
             x2_cf = x2 + 0.4 * (x1 - x1_cf)
         else:
             x1_cf = x1
             x2_cf = x2
-        if "x2" in do:  # a direct intervention overrides the propagated value
+        if "x2" in do:
             x2_cf = np.full_like(x2, float(do["x2"]))
         cf_cuts = self.theta[None, :] + (0.2 * x1_cf + self.f_callable(x2_cf))[:, None]
 
-        # the observed level says the latent lies in [lo, hi)
         padded = np.concatenate(
             [
                 np.full((len(x1), 1), -np.inf),
@@ -379,9 +373,8 @@ class TriangleMixed(_TriangleBase):
         )
         lo = padded[np.arange(len(x1)), level]
         hi = padded[np.arange(len(x1)), level + 1]
-        mass = sigmoid(hi) - sigmoid(lo)  # logistic mass of the known interval
+        mass = sigmoid(hi) - sigmoid(lo)
 
-        # redistribute that interval over the intervened cutpoints
         cf_padded = np.concatenate(
             [
                 np.full((len(x1), 1), -np.inf),

@@ -25,40 +25,29 @@ import pytest
 from tramdag import CausalFlowDAG, ContinuousNode
 
 # %% global variables ------------------------------------------------------------------
-# Every conditional is an exact linear-shift flow, so the
-# outcome node is a proportional-odds model and the flow's MLE must equal
-# the classical one (statsmodels / R polr).
 LS_CHAIN_TRUTH = {
-    "h_scale_x1": 1.5,  # h(x1) = 1.5 * x1
-    "h_scale_x2": 2.0,  # h(x2) = 2.0 * x2
-    "beta_x2_x1": 1.2,  # x2 <- x1
-    "beta_t_x1": 0.5,  # t  <- x1
-    "beta_t_x2": 0.5,  # t  <- x2
-    "beta_y_x1": 0.4,  # y  <- x1
-    "beta_y_x2": 0.6,  # y  <- x2
-    "beta_y_t": -0.8,  # y  <- t  (w[1] - w[0] of the one-hot)
-    "cutpoints_y": (-1.5, 0.0, 1.5),  # 4 ordinal levels
+    "h_scale_x1": 1.5,
+    "h_scale_x2": 2.0,
+    "beta_x2_x1": 1.2,
+    "beta_t_x1": 0.5,
+    "beta_t_x2": 0.5,
+    "beta_y_x1": 0.4,
+    "beta_y_x2": 0.6,
+    "beta_y_t": -0.8,
+    "cutpoints_y": (-1.5, 0.0, 1.5),
 }
 
-# The outcome conditional is exactly a logistic-latent flow with a
-# treatment effect that varies with the covariates, so a VC term is
-# in-class and its read-out is scorable against beta(x). X2 is
-# deliberately both a confounder and an effect modifier — the case where
-# an unregularized CS reduced form fails hardest.
 VC_HETERO_TRUTH = {
-    "b0": -1.0,  # beta(x) = b0 + b2*X2 + b3*X3
+    "b0": -1.0,
     "b2": 0.8,
     "b3": -0.6,
-    "h_scale": 2.0,  # h(y) = 2 y
+    "h_scale": 2.0,
     "g": "0.5*X1^2 + X2 - 0.5*X3",
     "propensity": "sigmoid(0.4*X1 + 0.4*X2)",
 }
 
-# One covariate, strong confounding and a quadratic prognostic part. Fitted
-# with a linear prognostic term the misfit correlates with the propensity,
-# which is the configuration propensity centering exists for.
 CONFOUNDED_TRUTH = {
-    "tau": -1.0,  # constant effect on the latent scale
+    "tau": -1.0,
     "propensity": "sigmoid(2*X)",
     "g": "1.2*X^2",
     "h_scale": 2.0,
@@ -76,14 +65,17 @@ def _draw_ls_chain(n: int, seed: int) -> pd.DataFrame:
     ``x1`` and ``x2`` are continuous with affine transforms, ``t`` is a
     binary and ``y`` a 4-level ordinal node. Both ordinal conditionals
     follow the flow convention ``P(Y <= k) = sigmoid(theta_k - shift)``,
-    so a fit recovers the coefficients above with their signs.
+    so a fit recovers the coefficients above with their signs. Every
+    conditional is an exact linear-shift flow, so the outcome node is a
+    proportional-odds model and the flow's MLE equals the classical one
+    (statsmodels, R polr).
     """
     tr = LS_CHAIN_TRUTH
     rng = np.random.default_rng(seed)
     x1 = rng.logistic(size=n) / tr["h_scale_x1"]
     x2 = (rng.logistic(size=n) - tr["beta_x2_x1"] * x1) / tr["h_scale_x2"]
     shift_t = tr["beta_t_x1"] * x1 + tr["beta_t_x2"] * x2
-    t = (rng.logistic(size=n) > -shift_t).astype(int)  # P(t=1) = sigmoid(shift_t)
+    t = (rng.logistic(size=n) > -shift_t).astype(int)
     shift_y = tr["beta_y_x1"] * x1 + tr["beta_y_x2"] * x2 + tr["beta_y_t"] * t
     cdf = _sigmoid(np.asarray(tr["cutpoints_y"])[None, :] - shift_y[:, None])
     y = (rng.uniform(size=n)[:, None] > cdf).sum(axis=1)
@@ -91,7 +83,13 @@ def _draw_ls_chain(n: int, seed: int) -> pd.DataFrame:
 
 
 def _draw_vc_hetero(n: int, seed: int) -> pd.DataFrame:
-    """Draw the heterogeneous-effect DGP with a confounded treatment."""
+    """Draw the heterogeneous-effect DGP with a confounded treatment.
+
+    The outcome conditional is exactly a logistic-latent flow with a treatment
+    effect that varies with the covariates. A VC term is in-class and its
+    read-out is scorable against beta(x). X2 is both a confounder and an effect
+    modifier, the case where an unregularized CS reduced form fails hardest.
+    """
     tr = VC_HETERO_TRUTH
     rng = np.random.default_rng(seed)
     x1, x2, x3 = (rng.normal(size=n) for _ in range(3))
@@ -113,7 +111,12 @@ def _beta_vc_hetero(df) -> np.ndarray:
 
 
 def _draw_confounded(n: int, seed: int) -> pd.DataFrame:
-    """Draw the strongly-confounded DGP with a quadratic prognostic part."""
+    """Draw the strongly-confounded DGP with a quadratic prognostic part.
+
+    One covariate has strong confounding. A fit with a linear prognostic term
+    leaves a misfit that correlates with the propensity, the configuration
+    propensity centering exists for.
+    """
     tr = CONFOUNDED_TRUTH
     rng = np.random.default_rng(seed)
     x = rng.normal(size=n)

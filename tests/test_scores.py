@@ -91,7 +91,7 @@ def test_scores_match_finite_differences():
         "Y": ContinuousNode(LS("X1") + CS("X3") + VC("X2", "X3", t="T")),
     }
     flow = CausalFlowDAG(spec, seed=1)
-    flow.fit(df, epochs=5, seed=1)  # any point works; move off init
+    flow.fit(df, epochs=5, seed=1)
     flow.double()
     try:
         for node, targets in [
@@ -112,7 +112,7 @@ def test_scores_match_finite_differences():
             for col, param in targets.items():
                 h = 1e-6
                 flat = param.data.view(-1)
-                idx = 0  # first element of the parameter
+                idx = 0
                 with torch.no_grad():
                     flat[idx] += h
                     lp_plus = flow._node_log_prob(np_vals, nodes=[node])[node]
@@ -133,11 +133,10 @@ def test_effect_modifier_scan_flags_true_modifiers(mle_flow):
     """
     flow, df = mle_flow
     scan = flow.effect_modifier_scan(df, node="Y", t="T")
-    assert set(scan.index) == {"X1", "X2", "X3"}, scan.to_string()  # default cands
+    assert set(scan.index) == {"X1", "X2", "X3"}, scan.to_string()
     assert bool(scan.loc["X2", "flag"]), scan.to_string()
     assert bool(scan.loc["X3", "flag"]), scan.to_string()
     assert not bool(scan.loc["X1", "flag"]), scan.to_string()
-    # the modifiers clearly dominate the ranking
     assert scan.loc[["X2", "X3"], "stat"].min() > 2 * scan.loc["X1", "stat"]
 
 
@@ -173,7 +172,7 @@ def test_scores_on_vc_model_and_scan_column_resolution():
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=40, seed=0)
     psi = flow.scores(df, node="Y")
-    assert "T" in psi.columns  # beta0 score, not one-hot columns
+    assert "T" in psi.columns
     scan = flow.effect_modifier_scan(df, node="Y", t="T", candidates=["X2"])
     assert list(scan.index) == ["X2"]
 
@@ -185,7 +184,7 @@ def test_scores_error_paths(mle_flow):
     with pytest.raises(KeyError, match="lacks the column"):
         flow.scores(df.drop(columns=["Y"]), node="Y")
     with pytest.raises(ValueError, match="no LS or VC"):
-        flow.scores(df, node="T")  # T is a source: no shift terms
+        flow.scores(df, node="T")
     with pytest.raises(KeyError, match="no score column"):
         flow.effect_modifier_scan(df, node="Y", t="X9")
 

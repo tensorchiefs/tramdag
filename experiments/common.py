@@ -167,8 +167,6 @@ def write_report(
     )
     lines = [f"## {title}", "", summary, "", "### Metrics", "", about, ""]
     if truths:
-        # no pipes in cell text: cml strips the backslash escapes, which
-        # desyncs the header from the |---| separator row
         lines += ["| metric | value | DGP truth | abs. error |", "|---|---|---|---|"]
     else:
         lines += ["| metric | value |", "|---|---|"]

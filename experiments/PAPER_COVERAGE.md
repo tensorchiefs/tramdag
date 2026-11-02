@@ -1,4 +1,4 @@
-# Paper coverage: what of arXiv:2503.16206 is reproduced here
+# Paper coverage: what of arXiv:2503.16206 this repository reproduces
 
 Checked figure by figure against the paper (v1). "Schematic" means the figure
 is a drawing of a model or DAG, not a result: nothing to compute.
@@ -33,9 +33,9 @@ is a drawing of a model or DAG, not a result: nothing to compute.
 | 19 | Coefficient estimates, mixed case with linear shifts | `triangle_mixed.py linear-ls` → `plots/coefficients.png` |
 | 20 | Mixed case with an exponential shift function | `triangle_mixed.py exp-cs` → `plots/distributions.png` |
 
-Numerical results beyond the figures: the App. C.4 odds-ratio check is computed
-by `triangle_mixed.py` (predicted `exp(beta12)` against the odds ratio measured
-in the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
+Numerical results beyond the figures: `triangle_mixed.py` computes the App. C.4
+odds-ratio check (predicted `exp(beta12)` against the odds ratio from
+the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
 
 ## Gaps, and why
 
@@ -43,9 +43,9 @@ in the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
    Figure 12's Neural Spline Flow are baselines from other libraries
    (Causal Normalizing Flows, `zuko`'s NSF). This repository is the TRAM-DAG
    implementation. It reproduces the TRAM-DAG side of each comparison, and the
-   ground truth both sides are measured against. Reproducing the baselines
+   ground truth that both sides compare against. Reproducing the baselines
    means vendoring two more model families.
-2. **Figure 10's point is measured, not argued.** It illustrates why
+2. **Figure 10's point is a measurement, not an argument.** It illustrates why
    an individual counterfactual is not identified for a discretized variable.
    `triangle_mixed.py` turns that into a number. An observed ordinal level pins
    the latent to an interval. The generator can therefore state the exact

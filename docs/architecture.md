@@ -43,14 +43,14 @@ graph TD
     plots --> spec
 ```
 
-`modules.py` imports nothing from `spec.py` at run time: it reads the node's parent schema,
-`{parent: "continuous" | n_levels}`, and a term's `parents` and options. That
-is what lets each term class hold its module class directly
-(`LinearShift.module is LinearShiftModule`). `fitting.py` and `readouts.py`
-are mixins: `Node` composes `NodeFitMixin`, and `CausalFlowDAG` composes
-`FitMixin` and `ReadoutsMixin`. `fitting` imports `flow` and `nodes` under
-`TYPE_CHECKING` only. So the import graph is acyclic at module load,
-although the package UML draws both directions between `fitting` and `nodes`.
+`modules.py` imports nothing from `spec.py` at run time: it reads the node's
+parent schema, `{parent: "continuous" | n_levels}`, and a term's `parents` and
+options. That is what lets each term class hold its module class directly
+(`LinearShift.module is LinearShiftModule`). `fitting.py` and `readouts.py` are
+mixins: `Node` composes `NodeFitMixin`, and `CausalFlowDAG` composes `FitMixin`
+and `ReadoutsMixin`. `fitting` imports `flow` and `nodes` under `TYPE_CHECKING`
+only. So the import graph is acyclic at module load, although the package UML
+draws both directions between `fitting` and `nodes`.
 
 ## The term contract
 ```mermaid
@@ -104,9 +104,9 @@ classDiagram
     InterceptModule <|-- AdditiveInterceptModule
 ```
 
-Each module builds its layers in a fixed order under fixed attribute names, so
-the state-dict paths (`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream are
-stable; `tests/test_statedict_stability.py` pins them.
+Each module builds its layers in a fixed order under fixed attribute names.
+So the state-dict paths (`nodes.<n>.shifts.<key>.…`) and the seeded RNG stream
+are stable. `tests/test_statedict_stability.py` pins them.
 
 A custom term is two classes:
 
@@ -318,7 +318,7 @@ classDiagram
   VaryingCoefficientModule --o VaryingCoefficient : module
 ```
 
-### Call graph — flow construction (traced)
+### Call graph: flow construction (traced)
 
 ```mermaid
 flowchart LR
@@ -390,7 +390,7 @@ flowchart LR
     n16 -- "2x" --> n23
 ```
 
-### Call graph — one fit (traced)
+### Call graph: one fit (traced)
 
 ```mermaid
 flowchart LR

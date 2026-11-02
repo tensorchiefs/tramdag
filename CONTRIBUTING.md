@@ -19,9 +19,9 @@ uv run pytest tests/test_flow.py -q     # one file
 Run `pytest` with no path: `testpaths` in `pyproject.toml` then picks up both
 `tests/` and `experiments/tests/`.
 
-What the suite guarantees, what `slow` marks, how CI splits the runs, and
-where each reference number comes from is documented in
-[`tests/README.md`](tests/README.md). The policy:
+[`tests/README.md`](tests/README.md) documents what the suite guarantees, what
+`slow` marks, how CI splits the runs, and where each reference number comes
+from. The policy:
 
 - Validate a new causal feature against the known truth of an inline DGP in
   `tests/conftest.py`, never against "runs without error". If no DGP fits,
@@ -41,7 +41,7 @@ uvx ruff format --diff src tests experiments tools notebooks   # formatting
 ```
 
 `ruff format` also reformats fenced Python inside markdown, which the
-`ruff-format` hook deliberately does not do. Code in the guides is wrapped for
+`ruff-format` hook deliberately does not do. The guides wrap code for
 reading, not for the formatter, so point the command at the source trees.
 
 Rules live in `pyproject.toml`: ruff's default set plus the extras listed
@@ -51,8 +51,8 @@ and `tools/`. The limit is 10 for `experiments/`, `notebooks/` and `tests/`.
 Function docstrings are not required in `tests/`, `experiments/` or
 `notebooks/`.
 
-The hooks in `.pre-commit-config.yaml` are enforced by
-`.github/workflows/pre-commit.yaml` on every push and pull request. Install
+`.github/workflows/pre-commit.yaml` enforces the hooks in
+`.pre-commit-config.yaml` on every push and pull request. Install
 them locally so a push cannot fail on formatting:
 
 ```bash
@@ -84,7 +84,7 @@ instead.
 
 `notebooks/*.py` are [jupytext](https://github.com/mwouts/jupytext)
 percent-format files and are the source of truth. Edit those, never an
-`.ipynb`. One `.ipynb` is tracked on purpose. It is
+`.ipynb`. Git tracks one `.ipynb` on purpose. It is
 `demo_tram_dag_colab.ipynb`, because the README's Colab badge links to it.
 Regenerate it from the `.py`. See
 [`notebooks/README.md`](notebooks/README.md).
@@ -119,8 +119,8 @@ References page lists every entry by itself.
 - Do not use a bare `@key`, because it renders the whole entry inline.
 - The site and the PDF both format with [`docs/apa.csl`](docs/apa.csl), an
   author-year style. `uv run mkdocs build --strict` fails on an unknown key.
-- Code, notebooks and tests cite only where they implement the cited work,
-  as plain text in the same form, for example "Robinson (1988)" or
+- Code, notebooks and tests cite only where they implement the cited work.
+  They cite as plain text in the same form, for example "Robinson (1988)" or
   "(Dandl et al., 2024)". Configurations carry no citations.
 - Background belongs in the guides, not in docstrings.
 

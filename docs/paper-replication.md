@@ -12,8 +12,8 @@ figure and what it shows. The pinned ground truth is `experiments/ground_truth/*
 the frozen data and the check.
 
 Seeds are DGP 42, init 7 and shuffle 0. The triangle scripts of the reference
-run unseeded and the comparison scripts seed R's RNG, which torch cannot
-replay, so every seed here is a repository choice.
+run unseeded. The comparison scripts seed R's RNG, which torch cannot
+replay. So every seed here is a repository choice.
 
 ## What is common to all eight
 
@@ -138,13 +138,13 @@ is the bound.
 ## VACA / CNF benchmark (`vaca.py`): paper Sec. 5.1 and 5.2, App. C.1
 
 **DGP** [@sanchezmartin2022vaca, App. E.1]: x1 ~ 0.5 N(−2, 1.5) + 0.5
-N(1.5, 1), x2 = −x1 + N(0, 1), x3 = x1 + 0.25 x2 + N(0, 1). The noise is
+N(1.5, 1). x2 = −x1 + N(0, 1). x3 = x1 + 0.25 x2 + N(0, 1). The error term is
 Gaussian, outside the logistic-latent family, and the all-`CI` flow must fit
 it. The analytic target is E[x3 | do(x2 = a)] = −0.25 + 0.25 a. The paper's
 Sec. 5.2 text says a ∈ {−3, −2, 0}. Its Fig. 5 panels and the R code
 (`Figure_Triangle_Linear_Bimodal.R`) intervene at a ∈ {−3, −1, 0}, and this
-repository follows the code. do(x2 = −3) is off-manifold extrapolation and takes a looser
-tolerance.
+repository follows the code. do(x2 = −3) is off-manifold extrapolation and takes
+a looser tolerance.
 
 **Model**: `x1: SI`, `x2: CI(x1)`, `x3: CI(x1, x2)`, Bernstein
 `n_coeffs = 31` (reference M = 30, `len_theta = 31`), the `make_model` nets.
@@ -157,7 +157,7 @@ tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067 against the quantiles' 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342) against the quantiles' 0.080 / 0.068 / 0.092 (1.4347), so D1 is open for revision. CAREFL, same nets, uses `range_q: 0` |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. Min/max scores 0.072 / 0.001 / 0.049 (val NLL 1.4342). The quantiles score 0.080 / 0.068 / 0.092 (1.4347). So D1 is open for revision. CAREFL, same nets, uses `range_q: 0` |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -171,7 +171,7 @@ pinned flow value.
 | sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
 | val NLL x3 | (none) | 1.4347 |
 
-The do(x2) errors are seed-sensitive; D5 below gives the spread over four
+The do(x2) errors vary with the seed. D5 below gives the spread over four
 init draws. The paper shows one run's densities. The committed bounds are
 2.5× the seed-7 measurement.
 
@@ -218,10 +218,10 @@ the analytic truth curves and its own predictions on the grid
 Fig. 6 curves are comparable point by point and every metric is in the
 reference's standardized units.
 
-**DGP** [@khemakhem2021carefl]: x1, x2 ~ Laplace(0, 1/√2),
+**DGP** [@khemakhem2021carefl]: x1, x2 ~ Laplace(0, 1/√2).
 x3 = x1 + 0.5 x2³ + ε, x4 = −x2 + 0.5 x1² + ε with ε ~ Laplace(0, 1/√2),
-x3/x4 divided by their sample sds. Counterfactuals are analytic by noise
-abduction. The observation is `xObs.csv` = (2, 1.5, 0.8465, −0.2616); the
+x3/x4 divided by their sample sds. Counterfactuals are analytic by abduction
+of the error term. The observation is `xObs.csv` = (2, 1.5, 0.8465, −0.2616); the
 paper prints (2, 1.5, 0.81, −0.28), slightly off it. The queries are
 x3^cf | do(x2 = α) and x4^cf | do(x1 = α) on the committed grid.
 
@@ -255,7 +255,7 @@ for x4 and from 0.20 to 0.07 for x3.
 
 On fresh draws the parabola bottom sits below the truth near α = 0. The
 reason is neither protocol nor init. It is the finite-sample variance of the
-Laplace 12 % quantile at which the observed noise sits, in the sparse region
+Laplace 12 % quantile at which the observed error term sits, in the sparse region
 near x1 = 2. CAREFL's own committed draw is a mild one, which is one more
 reason to train on it.
 
@@ -289,13 +289,13 @@ The start is only an initialization. Where the optimizer reaches the same
 basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
-off. The triangle rows were measured before the per-node fit and its
-per-node shuffle seeds. The VACA endpoint was measured under the per-node
+off. The triangle rows predate the per-node fit and its
+per-node shuffle seeds. The measurement of the VACA endpoint used the per-node
 plateau.
 
-The pinned ground truth of the four variants that switched on is unchanged.
+The pinned ground truth of the four variants that switched on stays the same.
 Every metric stays within its tolerance. `check.py` prints advisory notes
-where a bound is far from the current measurement, and these notes are kept
+where a bound is far from the current measurement, and these notes stay
 for the next deliberate re-pin. They cover the `triangle-linear-cs` do(x1)
 bound and the `triangle-mixed-exp-cs` cs max err and do(x1) bounds.
 
@@ -304,10 +304,10 @@ bound and the `triangle-mixed-exp-cs` cs max err and do(x1) bounds.
 The reference reduces the learning rate of one optimizer when the summed
 validation NLL stops improving. Here every node fits on its own, so no summed
 NLL exists during a fit. Each node runs the same rule on its own validation
-NLL, with its own optimizer. The rule and its constants are unchanged.
+NLL, with its own optimizer. The rule and its constants stay the same.
 
-The table gives the VACA do(x2) errors at a = −3 / −1 / 0 and the x3
-validation NLL, one run per init seed on the same data.
+The table gives the VACA do(x2) errors at a = −3 / −1 / 0. It also gives the
+x3 validation NLL, with one run per init seed on the same data.
 
 | init seed | per node (here) | global (reference) |
 |---|---|---|
@@ -327,7 +327,7 @@ NLL, and all its bounds hold.
 
 The reference protocol's cost is the motivation for every deviation. The
 triangle runs 500 epochs × 1250 steps of batch 32. One epoch takes 3.2 s
-single-process at 2 to 4 torch threads and 5.5 s at 32 threads, because the
+single-process at 2 to 4 torch threads and 5.5 s at 32 threads. This is because the
 step is overhead-bound. So one variant takes 42 to 69 min on the 2-core CI
 runners. The triangle scripts therefore use batch 256 at lr 0.004, 8× fewer
 optimizer steps per epoch. This grid at the paper's 500 epochs with glorot
@@ -351,22 +351,23 @@ triangle job takes 7 to 11 min instead of 42 to 69.
 
 The epoch floors, measured at that batch and rate:
 
-- **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
-  do(x1) bound (0.235 > 0.200). `linear-cs` keeps 500, because at 300 its
-  fitted cs curve flattens past |x2| > 0.5 (max err 0.140 against the pinned
-  0.025 at 500). The DGP line spans only ±0.3, and the sigmoid net's slow
-  tail convergence is half of that. relu is out, because the 2-unit input
-  layer dies with it (atan: β13 +0.53, cs err 1.42).
-- **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
-  and the do(x1) mean. At 100 / 250 / 350 epochs the cs max err is
-  0.344 / 0.177 / 0.156 and the do err 0.033 / 0.060 / 0.022, against
-  0.107 / 0.016 at 500, so it trains 350. The coefficient trajectories are
-  flat from about epoch 50. `linear-ls` has no CS net to wait for and trains
-  200 epochs at lr 0.002. At 100 epochs, the weakly identified β13 sits 57 %
-  into its tolerance (−0.271 against the pinned −0.243). At 200 epochs it is
-  safe. The lower rate reads the weakly identified β13/β23 slightly closer to
-  the 500-epoch values than lr 0.004 does (β23 0.333 against 0.337, pin
-  0.306). relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
+- - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
+  do(x1) bound (0.235 > 0.200). `linear-cs` keeps 500, because at 300 its fitted
+  cs curve flattens past |x2| > 0.5. The max err there is 0.140 against the
+  pinned 0.025 at 500 epochs. The DGP line spans only ±0.3, and the sigmoid
+  net's slow tail convergence is half of that. relu is out, because the 2-unit
+  input layer dies (atan: β13 +0.53, cs err 1.42).
+- - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
+  and the do(x1) mean. The cs max err is 0.344 / 0.177 / 0.156 at 100 / 250 /
+  350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same epochs. At 500
+  epochs the errors are 0.107 / 0.016, so it trains 350. The coefficient
+  trajectories are flat from about epoch 50. `linear-ls` has no CS net to wait
+  for, and at lr 0.002 it trains 200 epochs. At 100 epochs, the weakly
+  identified β13 sits 57 % into its tolerance (−0.271 against the pinned
+  −0.243). At 200 epochs it is safe. The lower rate reads the weakly identified
+  β13/β23 slightly closer to the 500-epoch values. It does so more than lr 0.004
+  does. For β23 it is 0.333 against 0.337, and 0.306
+  is the pin. relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
 - **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
   the rejected shortcuts are in their sections.
 

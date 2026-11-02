@@ -154,7 +154,7 @@ instead.
 ## Where every training hyperparameter lives
 
 Everything that shapes a fit is either a keyword you pass or a documented
-default you can read at the call site. Nothing numeric is buried.
+default you can read at the call site. The code hides no number.
 
 | Knob | Where | Default |
 |----------------------|-------------------------------|----------------------------------------------------------|

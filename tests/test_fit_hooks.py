@@ -445,3 +445,50 @@ def test_the_epoch_nll_averages_over_the_rows_it_trained_on(ls_chain):
     a = sum(flow.history["train"][-1].values())
     b = sum(trimmed.history["train"][-1].values())
     assert a == pytest.approx(b, rel=0.05)
+
+
+def _replay(callback, vals):
+    class Stub:
+        def __init__(self):
+            self.w = 0
+            self.history = {"val": [], "train": [], "val_epoch": []}
+
+        def state_dict(self):
+            return {"w": self.w}
+
+        def load_state_dict(self, state):
+            self.w = state["w"]
+
+    node = Stub()
+    callback.on_fit_begin(node, None)
+    for epoch, v in enumerate(vals, 1):
+        node.history["val"].append(v)
+        node.history["train"].append(0.0)
+        node.history["val_epoch"].append(epoch)
+        node.w = epoch
+        if callback.on_epoch_end(node, epoch, None):
+            break
+    callback.on_fit_end(node, None)
+    return node
+
+
+def test_early_stopping_min_epochs_ignores_early_lows():
+    """A low point before ``min_epochs`` neither counts nor stops the fit."""
+    vals = [0.1, 5.0, 5.0, 5.0, 3.0, 3.0, 3.0, 3.0]
+    plain = _replay(EarlyStopping(patience=2), vals)
+    assert plain.w == 1
+    held = EarlyStopping(patience=2, min_epochs=4)
+    node = _replay(held, vals)
+    assert (held.best_epoch, node.w) == (5, 5)
+
+
+def test_early_stopping_smoothing_picks_the_smoothed_best():
+    """One noisy dip loses against a steady decline once the curve is smoothed."""
+    vals = [4.0, 3.9, 0.5, 4.0, 3.0, 2.5, 2.0, 1.9, 1.8, 1.7]
+    assert _replay(EarlyStopping(), vals).w == 3
+    smooth = EarlyStopping(smoothing=0.9)
+    node = _replay(smooth, vals)
+    assert node.w == 10
+    assert smooth.best_nll > 1.7
+    with pytest.raises(ValueError, match="smoothing"):
+        EarlyStopping(smoothing=1.0)

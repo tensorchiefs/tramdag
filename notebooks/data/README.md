@@ -45,9 +45,9 @@ of `x1`, `x2`, `x3` from the SCM stated in
 
 The notebook carries its generator in an `if False:` block, so a normal run
 reads this file and does not rewrite it. Run that block by hand to regenerate
-the sample, which is seeded and therefore reproducible. The file is tracked so
-that the R snippet in the same section reads the identical rows the flow was
-fitted on.
+the sample, which has a seed and is therefore reproducible. Git tracks the file
+so that the R snippet in the same section reads the identical rows that the flow
+used for its fit.
 
 The notebook pins R's reference coefficients for this file in its `R_COLR`
 constant, and `classical_fit_tram_dag.R` is the script that produces them.
@@ -58,7 +58,7 @@ A change to `n` or to the seed changes those numbers. Re-run
 `Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
 change either.
 
-Not to be confused with `experiments/data/vaca/`, the frozen 5000-row
+Do not confuse this file with `experiments/data/vaca/`, the frozen 5000-row
 benchmark of the paper replications under the data contract of
 [`experiments/README.md`](../../experiments/README.md). This file is neither
 frozen nor a contract.

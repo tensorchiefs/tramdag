@@ -20,7 +20,7 @@ itself.
 3. **Check that the answers cancel in every group.** At the fitted $\beta$
    the scores sum to about zero, because $\beta$ is the best compromise. If
    the effect is really constant, the scores of any group of rows also sum to
-   about zero, apart from noise.
+   about zero, apart from random variation.
 4. **Sort and add up.** Sort the rows by a candidate covariate, for example
    age. The sum of the first $j$ scores is the score sum of the group "age up
    to the $j$-th value". So the running sum checks all these groups at once.
@@ -133,8 +133,8 @@ Two cases make the p-value less reliable:
 `crit_5pct` and `flag`, sorted by `stat`.
 
 - `candidates=` lists the covariates to scan. By default it is every node
-  except `node`, `t` and the descendants of `t`: a modifier is fixed before
-  the treatment, and a descendant would pick up the effect itself. A
+  except `node`, `t` and the descendants of `t`. A modifier comes
+  before the treatment. A descendant would pick up the effect itself. A
   candidate does not have to be a parent.
 - For a binary ordinal `LS` treatment, `t` resolves to the identified
   contrast of level 1 against level 0. For a `VC` treatment it resolves to
@@ -147,15 +147,15 @@ of `df`, and one column per interpretable shift coefficient of the node.
 
 - A continuous `LS` parent gives one column, named after the parent.
 - An ordinal `LS` parent gives one column per level of its one-hot
-  encoding, named `"{parent}[0]"`, `"{parent}[1]"` and so on. A row's score goes to the
-  column of the level that the row has.
+  encoding, named `"{parent}[0]"`, `"{parent}[1]"` and so
+  on. A row's score goes to the column of the level that the row has.
 - A `VC` term gives one column for its $\beta_0$, named after the
   treatment.
 - A `CS` term is a network with no single coefficient, so it has no column.
 
 The scores also serve influence analyses and robust standard errors.
 
-## How the scores are computed
+## How the code computes the scores
 
 Every shift coefficient $\gamma$ adds $\gamma z$ to the node's total shift
 $s$. Here $z$ is the value of a parent, or one column of its one-hot

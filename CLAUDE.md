@@ -30,8 +30,8 @@ cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
   variant's YAML carries the whole model and recipe, the code has no
   defaults. `experiments/data/` is a contract: new seed or equations means a
   new folder.
-- `notebooks/*.py` are jupytext sources; only `demo_tram_dag_colab.ipynb` is
-  tracked and is regenerated from its `.py`.
+- `notebooks/*.py` are jupytext sources; git tracks only
+  `demo_tram_dag_colab.ipynb`, and you regenerate it from its `.py`.
 - `docs/` are the guides. Each subject has one home (`README.md` lists them);
   examples live in the notebooks only; docstrings document functionality and
   implementation, not background.

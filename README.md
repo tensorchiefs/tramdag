@@ -7,9 +7,9 @@
 
 **TRAM-DAGs** model each variable of a structural causal model with a
 monotone normalizing flow, the statistician's *transformation model*. The
-whole model is one triangular normalizing flow from
-iid standard-logistic latents to the observed variables, and its triangular
-structure is exactly your causal DAG. One fit on observational data answers
+whole model is one triangular normalizing flow from iid standard-logistic
+latents to the observed variables. Its triangular structure is exactly your
+causal DAG. One fit on observational data answers
 all three rungs of Pearl's causal hierarchy: observational, interventional
 (the do-operator) and counterfactual (abduction). The model keeps
 **interpretable effects**: every linear-shift coefficient is a log-odds ratio,
@@ -40,8 +40,8 @@ setup with tests and experiments.
 
 ## Documentation
 
-Guides, executed notebooks and the API reference are published at the
-[documentation site](https://tensorchiefs.github.io/tramdag/). Each subject has
+The [documentation site](https://tensorchiefs.github.io/tramdag/) publishes
+the guides, the executed notebooks and the API reference. Each subject has
 at most one guide and one example notebook.
 
 | Subject | Guide | Example |
@@ -60,8 +60,8 @@ at most one guide and one example notebook.
 | The cited literature | [`docs/references.md`](docs/references.md) | |
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, linting and
-releases; [`notebooks/README.md`](notebooks/README.md) how the notebooks are
-written and run.
+releases; [`notebooks/README.md`](notebooks/README.md) tells how to write and
+run the notebooks.
 
 ## Experiments
 
@@ -83,8 +83,8 @@ the hyperparameters and the numbers, experiment by experiment.
 
 ## Use of AI tools
 
-This project was developed with the help of LLM coding assistants. The authors
-reviewed and take responsibility for all content.
+LLM coding assistants helped to develop this project. The authors reviewed
+all content and take responsibility for it.
 
 ## Citation
 

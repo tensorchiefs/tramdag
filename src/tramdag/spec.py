@@ -888,8 +888,9 @@ class ContinuousNode:
         term. ``None`` (default) is a source node. The
         class of the monotone transform is chosen on the intercept term,
         ``I(..., transform="spline")``; the default is ``"bernstein"``. The
-        arguments go straight to the transform class. If they are wrong, that
-        class says so; this layer does not second-guess it.
+        arguments of the transform class go in
+        ``transform_kwargs={...}``. If they are wrong, that class says so; this
+        layer does not second-guess it.
 
     Raises
     ------

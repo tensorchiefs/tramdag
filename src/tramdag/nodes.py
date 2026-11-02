@@ -262,11 +262,11 @@ class Node(NodeFitMixin, nn.Module):
         r"""Take the data-dependent state from the training rows, once.
 
         Every term calibrates itself: the intercept term maps the node's
-        train ``range_q``/``1 - range_q`` quantiles (an intercept option,
-        default 5%/95%; ``0.0`` is the min/max) onto the transform's pre-scaled
-        domain, and every term with an ``input_transform=`` freezes its
-        statistics (minmax lo/hi, standardize mean/std, a callable's frozen
-        train columns).
+        train ``range_q``/``1 - range_q`` quantiles (a transform option, set in
+        ``transform_kwargs``, default 5%/95%; ``0.0`` is the min/max) onto the
+        transform's pre-scaled domain, and every term with an ``input_transform=``
+        freezes its statistics (minmax lo/hi, standardize mean/std, a
+        callable's frozen train columns).
 
         The first ``fit`` or ``fit_classical`` calls this when it has not run
         yet; a loaded node is already calibrated, and later fits on other rows

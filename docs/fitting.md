@@ -105,7 +105,8 @@ the final weights.
   the node's validation NLL after every epoch into `node.history["val"]`.
 - **History.** `node.history` and `flow.history` are in the
   [`fit`][tramdag.flow.CausalFlowDAG.fit] docstring. A node that stopped
-  earlier repeats its last entry in the flow view.
+  earlier repeats its last entry in the flow view. `flow.history_frame()` gives
+  one row per node and epoch, with no repeats.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
   node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
   and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an

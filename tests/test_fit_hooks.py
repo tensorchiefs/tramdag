@@ -492,3 +492,30 @@ def test_early_stopping_smoothing_picks_the_smoothed_best():
     assert smooth.best_nll > 1.7
     with pytest.raises(ValueError, match="smoothing"):
         EarlyStopping(smoothing=1.0)
+
+
+def test_history_frame_has_one_row_per_node_and_epoch(ls_chain):
+    """Epochs count from 1; val and a missing lr group are NaN, never shifted."""
+    df = ls_chain["draw"](300, 0)
+    spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    assert flow.history_frame().empty
+    flow.fit(df, epochs=3, batch_size=100)
+
+    def grouped(node):
+        groups = [g for g in node.parameter_groups().values() if g]
+        return torch.optim.Adam([{"params": g} for g in groups], lr=1e-3)
+
+    flow.fit(df, epochs=2, batch_size=100, validation_split=0.2, optimizer=grouped)
+    frame = flow.history_frame()
+    assert list(frame) == ["node", "epoch", "train", "val", "lr[0]", "lr[1]"]
+    for name, nd in flow.nodes.items():
+        rows = frame[frame["node"] == name]
+        assert rows["epoch"].tolist() == [1, 2, 3, 4, 5]
+        assert rows["train"].tolist() == nd.history["train"]
+        assert rows["val"].isna().tolist() == [True] * 3 + [False] * 2
+        assert rows["val"].tolist()[3:] == nd.history["val"]
+        assert rows["lr[0]"].tolist() == [1e-2] * 3 + [1e-3] * 2
+    lr1 = frame.groupby("node")["lr[1]"].apply(lambda s: s.notna().sum())
+    assert lr1.to_dict() == {"x1": 0, "x2": 2}

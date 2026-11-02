@@ -624,6 +624,34 @@ class FitMixin:
             )
         return out
 
+    def history_frame(self) -> pd.DataFrame:
+        """Give the nodes' histories as one row per node and train epoch.
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns ``node``, ``epoch`` (from 1), ``train``, ``val`` (NaN in an
+            epoch without validation) and one ``lr[k]`` per optimizer group
+            ``k`` (NaN in a node without that group). A node that no ``fit``
+            trained has no rows.
+        """
+        frames = []
+        for name, nd in self.nodes.items():
+            h = nd.history
+            epochs = range(1, len(h["train"]) + 1)
+            val = dict(zip(h.get("val_epoch", []), h.get("val", []), strict=True))
+            frame = pd.DataFrame(
+                {
+                    "node": name,
+                    "epoch": epochs,
+                    "train": h["train"],
+                    "val": [val.get(e, math.nan) for e in epochs],
+                }
+            )
+            lr = pd.DataFrame(h.get("lr", [])).rename(columns="lr[{}]".format)
+            frames.append(pd.concat([frame, lr], axis=1))
+        return pd.concat(frames, ignore_index=True)
+
     def fit(
         self,
         train_df: pd.DataFrame,

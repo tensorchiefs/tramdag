@@ -413,6 +413,36 @@ def _marginal_panel(panel, name: str, node, df, sample, colors) -> None:
         panel.set_ylabel("density")
 
 
+def _mark_stops(ax, flow) -> None:
+    """Mark each node's stop epoch with a line and its best epoch with a triangle."""
+    nodes = flow.nodes.items()
+    ends = {name: len(nd.history["train"]) for name, nd in nodes}
+    bests = [nd.history["best_epoch"] for _, nd in nodes if "best_epoch" in nd.history]
+    for name, epoch in sorted(ends.items(), key=lambda kv: kv[1]):
+        ax.axvline(epoch, ls="--", lw=1, color="gray")
+        ax.text(
+            epoch,
+            1.01,
+            name,
+            transform=ax.get_xaxis_transform(),
+            rotation=90,
+            ha="center",
+            va="bottom",
+            fontsize=8,
+            color="gray",
+        )
+    if bests:
+        ax.scatter(
+            bests,
+            [1.0] * len(bests),
+            marker="v",
+            color="gray",
+            transform=ax.get_xaxis_transform(),
+            clip_on=False,
+            label="best epoch",
+        )
+
+
 def _finish(fig, path, created: bool) -> None:
     if created:
         fig.tight_layout()
@@ -621,7 +651,7 @@ def plot_marginals(
     return axes
 
 
-def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
+def plot_training(flow, *, stops=False, ax=None, path=None, title=None):
     """Draw the summed train and validation NLL per epoch.
 
     ``flow.history`` accumulates across ``fit`` calls, so the curves cover
@@ -642,10 +672,10 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     ----------
     flow : CausalFlowDAG
         The fitted flow; ``flow.history`` is read.
-    stops : dict[str, int] | None, optional
-        ``{node: epoch}`` of the per-node stops, each a dashed mark; a
-        node's stop epoch is the length of its ``history["train"]``. By
-        default no marks.
+    stops : bool, optional
+        Mark each node's stop epoch, the length of its ``history["train"]``,
+        with a dashed line, and its ``history["best_epoch"]``, where a fit
+        recorded one, with a triangle at the top. By default no marks.
     ax : matplotlib.axes.Axes | None, optional
         Draw into this axes; by default a new figure.
     path : str | Path | None, optional
@@ -685,19 +715,8 @@ def plot_training(flow, *, stops=None, ax=None, path=None, title=None):
     )
     if hi > lo:
         ax.set_ylim(lo - 0.05 * (hi - lo), hi)
-    for name, epoch in sorted((stops or {}).items(), key=lambda kv: kv[1]):
-        ax.axvline(epoch, ls="--", lw=1, color="gray")
-        ax.text(
-            epoch,
-            1.01,
-            name,
-            transform=ax.get_xaxis_transform(),
-            rotation=90,
-            ha="center",
-            va="bottom",
-            fontsize=8,
-            color="gray",
-        )
+    if stops:
+        _mark_stops(ax, flow)
     ax.set_xlabel("epoch")
     ax.set_ylabel("NLL")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)

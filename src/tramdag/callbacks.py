@@ -94,7 +94,9 @@ class EarlyStopping(Callback):
     Attributes
     ----------
     best_nll, best_epoch
-        The best validation NLL seen this fit and its epoch.
+        The best validation NLL seen this fit and its epoch. The node's
+        ``history["best_epoch"]`` keeps that epoch, counted over every fit
+        of the node, after the callback resets.
 
     Raises
     ------
@@ -154,6 +156,7 @@ class EarlyStopping(Callback):
             return False
         if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
+            node.history["best_epoch"] = len(node.history["train"])
             if self.restore_best:
                 self._state = copy.deepcopy(node.state_dict())
         return self.patience is not None and epoch - self.best_epoch >= self.patience

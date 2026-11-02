@@ -308,7 +308,9 @@ class NodeFitMixin:
         ``node.history`` accumulates across fits: ``"train"`` and ``"val"``
         hold one mean NLL per epoch, ``"val_epoch"`` the train epoch each
         validation entry belongs to, ``"lr"`` the optimizer's rates per epoch
-        as ``{group index: lr}``.
+        as ``{group index: lr}``. ``"best_epoch"`` is the best epoch that an
+        ``EarlyStopping`` of the last fit found, counted like ``"val_epoch"``;
+        a fit without one removes it.
 
         Parameters
         ----------
@@ -408,6 +410,7 @@ class NodeFitMixin:
             optimizer = optimizer(self)
         opt = optimizer or torch.optim.Adam(self.parameters(), lr=learning_rate)
         penalized = [m for m in self.shifts.values() if m.regularizer() is not None]
+        self.history.pop("best_epoch", None)
         for cb in cbs:
             cb.on_fit_begin(self, opt)
         for epoch in range(1, epochs + 1):

@@ -192,7 +192,7 @@ assert max(stopped.values()) < 200, (
 )
 
 # %%
-plot_training(flow, stops=stopped)
+plot_training(flow, stops=True)
 plt.show()
 
 # %% [markdown]

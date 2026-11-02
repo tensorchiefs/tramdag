@@ -244,10 +244,11 @@ for name, spent in stopped.items():
 
 # %% [markdown]
 # `flow.history` repeats the last entry of a node that stopped earlier, so the
-# summed curve stays defined. `plot_training` marks the stop epochs.
+# summed curve stays defined. `plot_training` marks the stop epochs and the
+# best epochs.
 
 # %%
-plot_training(flow, stops=stopped)
+plot_training(flow, stops=True)
 plt.show()
 
 # %% [markdown]

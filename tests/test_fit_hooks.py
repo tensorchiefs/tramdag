@@ -519,3 +519,32 @@ def test_history_frame_has_one_row_per_node_and_epoch(ls_chain):
         assert rows["lr[0]"].tolist() == [1e-2] * 3 + [1e-3] * 2
     lr1 = frame.groupby("node")["lr[1]"].apply(lambda s: s.notna().sum())
     assert lr1.to_dict() == {"x1": 0, "x2": 2}
+
+
+def test_the_best_epoch_is_on_record_across_fits_and_checkpoints(ls_chain, tmp_path):
+    """The record names the epoch whose weights the node holds after a restore."""
+    df = ls_chain["draw"](800, 7)[["x1", "x2"]]
+    val = ls_chain["draw"](400, 8)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.fit(df, epochs=5)
+    assert not any("best_epoch" in nd.history for nd in flow.nodes.values())
+    stoppers = {}
+    flow.fit(
+        df,
+        epochs=4000,
+        validation_data=val,
+        callbacks=lambda name: stoppers.setdefault(name, EarlyStopping(patience=5)),
+    )
+    nll = flow.nll(val)
+    for name, nd in flow.nodes.items():
+        best = nd.history["best_epoch"]
+        assert best == 5 + stoppers[name].best_epoch == len(nd.history["train"]) - 5
+        held = nd.history["val"][nd.history["val_epoch"].index(best)]
+        assert held == min(nd.history["val"])
+        assert nll[name] == pytest.approx(held, rel=1e-6)
+    flow.save(tmp_path / "flow.pt")
+    loaded = CausalFlowDAG.load(tmp_path / "flow.pt")
+    for name, nd in loaded.nodes.items():
+        assert nd.history["best_epoch"] == flow.nodes[name].history["best_epoch"]
+    flow.fit(df, epochs=1)
+    assert not any("best_epoch" in nd.history for nd in flow.nodes.values())

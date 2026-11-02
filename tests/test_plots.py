@@ -84,8 +84,10 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     assert len(ax.lines) == 2
     assert (tmp_path / "t.png").exists()
     stops = {n: len(nd.history["train"]) for n, nd in flow.nodes.items()}
-    ax = plot_training(flow, stops=stops)
+    ax = plot_training(flow, stops=True)
     assert len(ax.lines) == 2 + len(stops)
+    bests = sorted(nd.history["best_epoch"] for nd in flow.nodes.values())
+    assert sorted(ax.collections[0].get_offsets()[:, 0]) == bests
     flow2 = CausalFlowDAG(spec, seed=0)
     flow2.fit(df, epochs=3, batch_size=100)
     assert len(plot_training(flow2).lines) == 1

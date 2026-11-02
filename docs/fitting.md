@@ -115,7 +115,9 @@ the final weights.
   function of the node name that gives that node its callbacks. So on the
   flow, a bare hook goes into a list. The shipped callback is
   `EarlyStopping`: it restores the node's best-validation weights and takes an
-  optional `patience` and `min_delta`. It reads `node.history["val"]`. `fit`
+  optional `patience` and `min_delta`. It reads `node.history["val"]`. It
+  writes its best epoch to `node.history["best_epoch"]`, which
+  `plot_training(flow, stops=True)` marks. `fit`
   refuses two callbacks that restore weights.
 - **Centered `VC` propensities** ride the training frame as the column that
   `VC(propensity=)` names, and split and minibatch with it. On the flow, the

@@ -16,7 +16,6 @@ Experiments run as modules, from this directory:
 cd experiments
 uv run python -m triangle atan-cs        # fit + figures + metrics
 uv run python -m check triangle-atan-cs  # vs ground truth
-uv run python -m check_data              # frozen data regenerates
 uv run pytest .                          # the checks on the checker, configs and generators
 ```
 

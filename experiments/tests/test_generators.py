@@ -94,8 +94,8 @@ def test_frozen_csv_regenerates(subdir):
     """Each committed CSV still comes out of its generator, to 1e-9.
 
     Not bit equality: numpy's transcendental functions move their last bits
-    between releases. ``worst_deviation`` is the function ``check_data``
-    runs from the command line, so the two cannot drift apart.
+    between releases. ``worst_deviation`` is the function of
+    ``check_data``.
     """
     assert worst_deviation(subdir) <= ATOL
 

@@ -84,10 +84,11 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 | all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4608 to 2.4632 |
 
 The pinned column gives the measurement of the pinned run, from its
-`metrics.json`. Each `value` entry in `experiments/ground_truth/*.json` is
-this measurement. Each `max` bound on an error measure sits at 1.5x to 4x of
-it. The `fit_seconds` bounds are 3x the time on the CI runner. No cell in this
-column is a bound.
+`metrics.json`. A `value` entry of a run metric in
+`experiments/ground_truth/*.json` is this measurement. The DGP, analytic and
+CAREFL entries are constants. Each `max` bound on an error measure sits at 1.5x
+to 4x of it. The `fit_seconds` bounds are 3x the time on the CI runner. No cell
+in this column is a bound.
 
 β13 measures −0.15 to −0.18 instead of −0.2 in the continuous triangle variants.
 β13 multiplies x1, whose two mixture components sit at 0.25 and 0.73. So x1 has
@@ -298,8 +299,6 @@ basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
 off.
-
-Every metric of the pinned run is within its tolerance.
 
 ## D5: the plateau rule per node
 

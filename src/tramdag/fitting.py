@@ -80,7 +80,7 @@ def _split_validation(
 
 
 def _normalize_callbacks(cbs) -> list[Callback]:
-    """Give ``callbacks=`` as a list of ``Callback``s, or fail loudly now.
+    """Give ``callbacks=`` as a list of ``Callback``s, or fail loudly.
 
     A [`Callback`][tramdag.callbacks.Callback] instance is trusted: the base
     class defines all three hooks. A bare callable is an ``on_epoch_end``
@@ -559,7 +559,7 @@ class NodeFitMixin:
         ill-conditioned NLL, for example a parent on a large raw scale next to a
         rare level, this happens short of the optimum. Newton steps on the exact
         Hessian then finish the fit. The coefficients are read while the node
-        is still float64. The cast back to float32 loses about 1e-7 relative.
+        is float64. The cast back to float32 loses about 1e-7 relative.
 
         float64 is a transient compute mode. The node is upcast for the fit,
         and ``self.double()`` converts the parameters and the range buffers of
@@ -582,7 +582,7 @@ class NodeFitMixin:
         does. A Bernstein NLL converges only linearly in its weakly curved
         tail coefficients, so this can take many steps. A spline NLL
         is only piecewise smooth: at a kink its Hessian is indefinite, no step
-        lowers the NLL, and the decrement stays above the bound.
+        lowers the NLL, and the decrement is above the bound.
 
         ``converged`` is ``stop_reason == "tolerance"``: a stall short of the
         optimum is not converged, because the Newton steps continue from it

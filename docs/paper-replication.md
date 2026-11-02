@@ -365,7 +365,7 @@ The epoch floors, measured at that batch and rate:
   epochs the errors are 0.107 / 0.016, so it trains 350. The coefficient
   trajectories are flat from about epoch 50 on. `linear-ls` has no CS net to wait
   for, and at lr 0.002 it trains 200 epochs. A study run at 100 epochs measured −0.271
-  for the weakly identified β13. That is 27 % of its tolerance away from the
+  for the weakly identified β13. That is 26 % of its tolerance away from the
   center of its ground-truth entry. The pinned run at 200 epochs reads −0.258
   for β13. In the same study, the lower lr 0.002 lands
   closer to the 500-epoch values. It reads β23 as 0.333, where lr 0.004 reads

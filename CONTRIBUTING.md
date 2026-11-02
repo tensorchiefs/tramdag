@@ -180,8 +180,9 @@ Workflows:
 - `ci.yml` does not pin Linux to the CPU-only torch index in `uv.lock`, because
   GPU machines share that lock file. The default Linux wheel bundles CUDA and is
   large, so the uv cache, keyed on `uv.lock`, keeps runs fast.
-- The CI jobs set a timeout. A torch hang would otherwise burn the platform
-  default per matrix job. The nightly slow suite needs the headroom.
+- The test, docs and experiments jobs set a timeout. A torch hang would
+  otherwise burn the platform default per matrix job. The nightly slow suite
+  needs the headroom.
 - The test job syncs with `--no-default-groups`. `dev` is a default group and
   pulls the editor and docs tooling too. `uv run` then needs the same flag, or
   it re-syncs `dev`.

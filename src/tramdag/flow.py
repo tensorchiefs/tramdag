@@ -18,8 +18,8 @@ import torch
 from torch import Tensor, nn
 
 from . import scores
-from .fitting import FitMixin
-from .modules import ShiftModule
+from .fitting import FitMixin, _node_seed
+from .modules import ComplexShiftModule, ShiftModule
 from .nodes import (
     Node,
     check_columns,
@@ -129,8 +129,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             torch.manual_seed(seed)
         if zero_shift_networks:
             for m in self.modules():
-                if isinstance(m, ShiftModule):
-                    m.zero_start()
+                if isinstance(m, ComplexShiftModule):
+                    nn.init.zeros_(m.net[-1].weight)
         self.device = torch.device(device)
         self.meta: dict = {}
         self.to(self.device)
@@ -165,8 +165,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Without a seed the node draws from torch's global stream.
         """
         if seed is not None:
-            key = [seed, zlib.crc32(name.encode())]
-            torch.manual_seed(int(np.random.SeedSequence(key).generate_state(1)[0]))
+            torch.manual_seed(_node_seed(seed, zlib.crc32(name.encode())))
         node = Node(name, self.spec[name], self._schema(name))
         if self.init != "torch":
             for m in node.modules():

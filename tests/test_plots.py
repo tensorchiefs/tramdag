@@ -4,6 +4,7 @@
 import sys
 
 import matplotlib as mpl
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -169,6 +170,22 @@ def test_plot_varying_coef_draws_the_vc_effect(ls_chain):
     line = ax.get_lines()[0]
     grid = pd.DataFrame({"x": line.get_xdata()})
     assert np.allclose(line.get_ydata(), flow.varying_coef(grid, "y"))
+
+
+@pytest.mark.parametrize("by", ["t", "zz"])
+def test_plot_varying_coef_refuses_a_non_modifier(by):
+    rng = np.random.default_rng(0)
+    x = rng.normal(size=100)
+    t = (rng.random(100) < 0.5).astype(float)
+    df = pd.DataFrame({"x": x, "t": t, "y": x + t + rng.logistic(size=100)})
+    spec = {
+        "x": ContinuousNode(),
+        "t": OrdinalNode(2),
+        "y": ContinuousNode(LS("x") + VC("x", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1)
+    with pytest.raises(ValueError, match="not a modifier"):
+        plot_varying_coef(flow, df, "y", by=by)
 
 
 def test_plot_training_survives_a_diverged_epoch(ls_chain):

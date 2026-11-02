@@ -74,6 +74,27 @@ class ReadoutsMixin:
         curve = nd.shifts[parent].shift_value(nd, {parent: x})
         return curve.cpu().numpy().ravel()
 
+    def _vc_term(self, node: str, t: str | None) -> tuple:
+        """Find the node, treatment name and modifiers of one VC term."""
+        nd = self._node(node)
+        vcs = {
+            m.key: m.mods
+            for m in nd.shifts.values()
+            if isinstance(m, VaryingCoefficientModule)
+        }
+        if not vcs:
+            raise ValueError(f"node {node!r} has no VC term")
+        if t is None:
+            if len(vcs) > 1:
+                raise ValueError(
+                    f"node {node!r} has several VC terms ({sorted(vcs)}); "
+                    "pass t=<treatment name>"
+                )
+            t = next(iter(vcs))
+        if t not in vcs:
+            raise KeyError(f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})")
+        return nd, t, vcs[t]
+
     @torch.no_grad()
     def varying_coef(
         self, df: pd.DataFrame, node: str, *, t: str | None = None
@@ -110,24 +131,7 @@ class ReadoutsMixin:
             If the node has no VC term, or if ``t`` is omitted while the
             node has several VC terms.
         """
-        nd = self._node(node)
-        vcs = {
-            m.key: m.mods
-            for m in nd.shifts.values()
-            if isinstance(m, VaryingCoefficientModule)
-        }
-        if not vcs:
-            raise ValueError(f"node {node!r} has no VC term")
-        if t is None:
-            if len(vcs) > 1:
-                raise ValueError(
-                    f"node {node!r} has several VC terms ({sorted(vcs)}); "
-                    "pass t=<treatment name>"
-                )
-            t = next(iter(vcs))
-        if t not in vcs:
-            raise KeyError(f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})")
-        mods = vcs[t]
+        nd, t, mods = self._vc_term(node, t)
         mod_feat = None
         if mods:
             feats = self._features(self._tensorize(df, mods))

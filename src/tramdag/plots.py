@@ -740,8 +740,19 @@ def plot_varying_coef(
     -------
     matplotlib.axes.Axes
         The axes drawn into.
+
+    Raises
+    ------
+    ValueError
+        If ``by`` is not a modifier of the node's VC term.
     """
     plt = _plt()
+    _, t_name, mods = flow._vc_term(node, t)
+    if by not in mods:
+        raise ValueError(
+            f"{by!r} is not a modifier of the VC term on {t_name!r} of node "
+            f"{node!r} (has {list(mods)})"
+        )
     if flow.nodes[by].kind == "ordinal":
         grid = np.unique(df[by])
     else:

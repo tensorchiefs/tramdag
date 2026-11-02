@@ -238,3 +238,14 @@ def test_log_prob_names_an_unknown_node_and_refuses_an_empty_list(ls_chain):
         flow.log_prob(df, nodes=["nope"])
     with pytest.raises(ValueError, match="sums nothing"):
         flow.log_prob(df, nodes=[])
+
+
+@pytest.mark.parametrize("bad", [np.nan, np.inf])
+def test_fit_refuses_a_non_finite_continuous_column(ls_chain, bad):
+    df = ls_chain["draw"](50, 0)[["x1", "x2"]]
+    df.loc[3, "x1"] = bad
+    flow = CausalFlowDAG(
+        {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
+    )
+    with pytest.raises(ValueError, match="column 'x1'"):
+        flow.fit(df, epochs=1)

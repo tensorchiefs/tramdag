@@ -92,7 +92,8 @@ def tensorize(
 ) -> dict[str, Tensor]:
     """DataFrame columns -> one ``(n,)`` tensor each, in ``dtype`` on ``device``.
 
-    A column named in ``levels`` is checked to hold level indices first.
+    A column named in ``levels`` is checked to hold level indices first,
+    any other column to hold finite values.
     """
     check_columns(df, cols)
     out = {}
@@ -100,6 +101,8 @@ def tensorize(
         values = df[c].to_numpy(dtype=float)
         if c in levels:
             check_level_values(c, values, levels[c])
+        elif not np.isfinite(values).all():
+            raise ValueError(f"column {c!r} holds nan or inf values")
         out[c] = torch.tensor(values, dtype=dtype, device=device)
     return out
 

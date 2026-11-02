@@ -62,7 +62,12 @@ class EarlyStopping(Callback):
     """Keep the best-validation weights; optionally stop once they are old.
 
     Tracks the node's validation NLL; an epoch improves when it beats the best
-    by more than ``min_delta``. With ``restore_best`` (the default)
+    by more than ``min_delta``. With ``smoothing`` the tracked value is the
+    exponential moving average of the validation NLL, so the best epoch is the
+    one with the best smoothed value, its weights are restored, and
+    ``best_nll`` is that smoothed value. The average starts at the first
+    validation NLL and also runs through the epochs before ``min_epochs``.
+    With ``restore_best`` (the default)
     the weights of the best epoch are snapshotted and loaded back at fit
     end, before the VC re-centering. With ``patience`` the fit also stops
     once the last improvement is that many epochs old; without it (the
@@ -79,6 +84,12 @@ class EarlyStopping(Callback):
         Load the best epoch's weights back at fit end, by default True.
     min_delta : float, optional
         Improvement at or below this is flat, by default 0.0.
+    min_epochs : int, optional
+        No improvement counts and no stop happens in an epoch below this
+        number, by default 0. Epochs count from 1.
+    smoothing : float, optional
+        Factor ``a`` of the moving average ``a * old + (1 - a) * nll``; 0, the
+        default, uses the raw validation NLL.
 
     Attributes
     ----------
@@ -88,7 +99,8 @@ class EarlyStopping(Callback):
     Raises
     ------
     ValueError
-        If ``patience`` is below 1, or ``patience=None`` comes with
+        If ``patience`` is below 1, ``min_epochs`` is negative, ``smoothing`` is
+        outside [0, 1), or ``patience=None`` comes with
         ``restore_best=False``.
     RuntimeError
         During the fit, if it has no validation data, or at fit end if no
@@ -101,7 +113,13 @@ class EarlyStopping(Callback):
         patience: int | None = None,
         restore_best: bool = True,
         min_delta: float = 0.0,
+        min_epochs: int = 0,
+        smoothing: float = 0.0,
     ):
+        if min_epochs < 0:
+            raise ValueError(f"min_epochs must be at least 0, got {min_epochs!r}")
+        if not 0 <= smoothing < 1:
+            raise ValueError(f"smoothing must be in [0, 1), got {smoothing!r}")
         if patience is not None and patience < 1:
             raise ValueError(f"patience must be at least 1, got {patience!r}")
         if patience is None and not restore_best:
@@ -112,12 +130,15 @@ class EarlyStopping(Callback):
         self.patience = patience
         self.restore_best = restore_best
         self.min_delta = min_delta
+        self.min_epochs = min_epochs
+        self.smoothing = smoothing
         self._reset()
 
     def _reset(self) -> None:
         self.best_nll = math.inf
         self.best_epoch = 0
         self._state = None
+        self._average = None
 
     def on_fit_begin(self, node, optimizer) -> None:
         """Start fresh: neither patience nor the snapshot carries over."""
@@ -126,6 +147,11 @@ class EarlyStopping(Callback):
     def on_epoch_end(self, node, epoch: int, optimizer) -> bool:
         """Snapshot on improvement; ``True`` once the best is ``patience`` old."""
         nll = _last_val(node, self)
+        if self.smoothing and self._average is not None:
+            nll = self.smoothing * self._average + (1 - self.smoothing) * nll
+        self._average = nll
+        if epoch < self.min_epochs:
+            return False
         if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
             if self.restore_best:

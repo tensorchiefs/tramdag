@@ -73,7 +73,7 @@ x3_cs: &x3_cs
   terms:
   - {term: I, parents: [], options: {}}
   - {term: LS, parents: [x1], options: {}}
-  - {term: CS, parents: [x2], options: {units: [2, 2], activation: sigmoid}}
+  - {term: CS, parents: [x2], options: {units: [2, 2], activation: sigmoid, batch_norm: false, input_transform: null}}
 
 variants:
   linear-ls:

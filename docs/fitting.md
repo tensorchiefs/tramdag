@@ -180,6 +180,7 @@ and need the best-validation weights to recover the causal effect.
 | multi-phase Adam, one `fit` call per rate | a tighter MLE without a scheduler |
 | `EarlyStopping()` | any `CI`, `CS` or `VC` model; register it, `fit` has no default |
 | `EarlyStopping(patience=)` | also stop each node once its best epoch is that old |
+| `EarlyStopping(min_epochs=, smoothing=)` | ignore epochs before `min_epochs`; judge the best epoch on a moving average of the validation NLL, for small validation sets |
 | a plateau `Callback` around torch's `ReduceLROnPlateau` | a decaying rate per node |
 
 Three details are easy to get wrong.

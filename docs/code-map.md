@@ -147,7 +147,7 @@ The signatures hold the defaults. This list keeps the reasons.
 - **`marginal_init=` is off.** Only the fit that calibrates a node applies
   it, so a node that `fit_classical` calibrated ignores it.
 - **`fit_classical` is one full-batch run with no chunks.** `converged` needs
-  the gradient bound as well as torch's tolerance
+  the Newton decrement bound as well as torch's tolerance
   ([fitting.md](fitting.md)).
 - **The transform domain** is `transforms.BOUND`, a constant. The order of the
   Bernstein coefficients is in [zuko-upstream.md](zuko-upstream.md).

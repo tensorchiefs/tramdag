@@ -87,6 +87,9 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         One [`Node`][tramdag.nodes.Node] per variable, in topological order.
     order : list[str]
         The node names in topological order.
+    outcome : str
+        The one node without children, see
+        [`outcome`][tramdag.flow.CausalFlowDAG.outcome].
     history : dict
         The nodes' fit histories, see
         [`history`][tramdag.flow.CausalFlowDAG.history].
@@ -118,6 +121,26 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.device = torch.device(device)
         self.meta: dict = {}
         self.to(self.device)
+
+    @property
+    def outcome(self) -> str:
+        """Give the one node that no other node reads.
+
+        Returns
+        -------
+        str
+            The name of the only node without children.
+
+        Raises
+        ------
+        ValueError
+            If the DAG has more than one such node; the message names them.
+        """
+        parents = {p for node in self.spec.values() for p in node_parents(node)}
+        sinks = sorted(set(self.order) - parents)
+        if len(sinks) != 1:
+            raise ValueError(f"outcome needs exactly one sink, the DAG has {sinks!r}")
+        return sinks[0]
 
     def _schema(self, name: str) -> dict[str, str | int]:
         """Give a node's parent schema, ``{parent: "continuous" | n_levels}``."""

@@ -16,7 +16,7 @@ tensors, so it serializes and compares without torch.
 | [`SI()`][tramdag.spec.SI] / [`CI()`][tramdag.spec.CI] / [`Intercept`][tramdag.spec.Intercept] | `Intercept` (`I`) is the one intercept class. `SI` and `CI` are its two spellings with the arity checked. |
 | [`LinearShift`][tramdag.spec.LinearShift] / [`ComplexShift`][tramdag.spec.ComplexShift] / [`VaryingCoefficient`][tramdag.spec.VaryingCoefficient] | The three shifts: an interpretable coefficient, a network, and the penalized treatment-effect head ([varying-coefficients.md](varying-coefficients.md)). |
 | [`ContinuousNode`][tramdag.spec.ContinuousNode] / [`OrdinalNode`][tramdag.spec.OrdinalNode] | The two node kinds. |
-| [`validate_and_sort()`][tramdag.spec.validate_and_sort] | Edge-ownership validation plus Kahn topological sort. The order makes the flow triangular. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic. |
+| [`validate_and_sort()`][tramdag.spec.validate_and_sort] | Edge-ownership validation plus Kahn topological sort. The order makes the flow triangular. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic. `CausalFlowDAG.outcome` gives the one node without children. |
 | [`spec_to_dict()`][tramdag.spec.spec_to_dict] / [`spec_from_dict()`][tramdag.spec.spec_from_dict] | Checkpoint (de)serialization. A custom term writes its import path, so a checkpoint loads without a registry. `strict=True` refuses a term that omits a shaping option (`Term.acting_options`). |
 
 ## `transforms.py`: the monotone map h and the ordinal transform

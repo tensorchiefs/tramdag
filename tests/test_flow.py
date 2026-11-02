@@ -303,3 +303,16 @@ def test_a_counterfactual_keeps_the_rows_of_its_latents():
     flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
     cf = flow.sample(u=flow.abduct(df), do={"x": 0.0})
     assert list(cf.index) == list(df.index)
+
+
+def test_outcome_is_the_single_sink():
+    """``outcome`` names the one childless node and refuses several."""
+    chain = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(LS("a")),
+        "c": OrdinalNode(3, [LS("b")]),
+    }
+    assert CausalFlowDAG(chain).outcome == "c"
+    fork = {**chain, "d": ContinuousNode(LS("a"))}
+    with pytest.raises(ValueError, match=r"\['c', 'd'\]"):
+        _ = CausalFlowDAG(fork).outcome

@@ -102,12 +102,9 @@ the final weights.
   frame first if its row order means anything. Only the head calibrates. The
   flow splits once, so all nodes see the same rows. With either, `fit` writes
   the node's validation NLL after every epoch into `node.history["val"]`.
-- **History.** `node.history` holds `"train"`, `"val"`, `"val_epoch"` and
-  `"lr"`, the optimizer's rates per epoch as `{group index: lr}`.
-  `flow.history` is a view with one `{node: value}` dict per epoch and key,
-  plus the `val_epoch` list. A node that stopped earlier repeats its last
-  entry. `verbose=N` prints every Nth epoch and the last one, per node; the
-  default 0 is silent.
+- **History.** `node.history` and `flow.history` are in the
+  [`fit`][tramdag.flow.CausalFlowDAG.fit] docstring. A node that stopped
+  earlier repeats its last entry in the flow view.
 - **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
   node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
   and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an
@@ -129,105 +126,46 @@ the final weights.
 
 The marginal start puts the optimizer near the data before the first step.
 It changes the parameters the optimizer starts from, not the model or the
-loss.
+loss. It sets the $\boldsymbol{\vartheta}$ of each Bernstein or ordinal simple
+intercept so that, at shift $s = 0$, the node's CDF equals the empirical
+marginal $\hat F$ of its training column. The match is exact for an ordinal
+node and a smooth approximation for a continuous node. An intercept with
+parents has no single $\boldsymbol{\vartheta}$ and keeps its seeded
+initialization.
 
-`marginal_init=True` sets the $\boldsymbol{\vartheta}$ of each Bernstein or
-ordinal simple intercept. At shift $s = 0$, the node's CDF then equals the
-empirical marginal $\hat F$ of its training column. The match is exact for
-an ordinal node and a smooth approximation for a continuous node. An
-intercept with parents (`I("x1")`) has no single $\boldsymbol{\vartheta}$.
-The flag leaves it at the seeded initialization of its network.
+The latent $U$ is standard logistic, so at $s = 0$ the model says
+$P(X \le x) = \sigma(h(x))$. The start therefore targets
+$h = \operatorname{logit} \hat F$.
 
-**Why logit.** The latent $U$ is standard logistic, so its CDF is the
-sigmoid $\sigma$ and its quantile function is $\operatorname{logit}$. At
-$s = 0$ the model says $P(X \le x) = \sigma(h(x))$. For this CDF to equal
-$\hat F$, the transform must be
+An ordinal node targets the cumulative class log-odds and inverts
+`ordinal_cutpoints`
+([`ordinal_marginal_init_theta`][tramdag.transforms.ordinal_marginal_init_theta]).
 
-$$
-h(x) = \operatorname{logit} \hat F(x) = \log \hat F(x) - \log\bigl(1 - \hat F(x)\bigr).
-$$
+A continuous node sets the Bernstein control points to $\operatorname{logit}
+\hat F$ at equally spaced points of the calibrated range. Then it inverts the
+parameterization of zuko ([zuko-upstream.md](zuko-upstream.md#3-public-inverse-of-_constrain_theta);
+[`BernsteinUT.marginal_init_theta`][tramdag.transforms.BernsteinUT.marginal_init_theta]).
+The polynomial smooths $\hat F$, and a sharp feature such as the dip between
+two modes smooths most.
 
-The code evaluates $\log(1 - p)$ as `log1p(-p)`, which stays accurate for
-$p$ near 0.
-
-**Ordinal node.** `ordinal_marginal_init_theta` takes the counts of the $K$
-classes $0, \dots, K-1$. The model is $P(X \le k) = \sigma(\vartheta_k - s)$,
-so the targets are the cumulative class log-odds
-$c_k = \operatorname{logit} \hat F(k)$ for $k = 0, \dots, K-2$.
-`ordinal_cutpoints` builds increasing cutpoints from unconstrained
-parameters: $\vartheta_0 = \tilde\vartheta_0$ and
-$\vartheta_k = \vartheta_{k-1} + e^{\tilde\vartheta_k}$. The start inverts
-this map. It sets $\tilde\vartheta_0 = c_0$ and
-$\tilde\vartheta_k = \log(c_k - c_{k-1})$. At $s = 0$ the class
-probabilities are then the empirical frequencies. For counts
-`[50, 30, 15, 5]` the start gives the PMF `[0.50, 0.30, 0.15, 0.05]`.
-
-**Continuous node.** `BernsteinUT.marginal_init_theta` takes the column.
-Take a Bernstein polynomial of order $M$ with control points $\vartheta_k$.
-It is close to the function whose values at $k/M$ are $\vartheta_k$. The transform
-pre-scales the calibrated range onto the domain of the polynomial
-([model.md](model.md#the-three-knobs-on-a-term)). The point $k/M$ of the
-domain then belongs to a data value $x_k$. zuko turns `n_coeffs` parameters
-into $M + 1$ control points, with $M$ = `n_coeffs + 1`. Step 3 explains the
-two extra points. The start uses the closeness property in three steps:
-
-1. It places $M + 1$ equally spaced points $x_k$ on the calibrated range,
-   from the `range_q` quantile to the `1 - range_q` quantile of the column.
-   With `n_coeffs = 20`, $M = 21$ and there are 22 points.
-2. It sets each control point to $\operatorname{logit} \hat F(x_k)$, with
-   $\hat F(x_k)$ the fraction of rows at or below $x_k$.
-3. It inverts zuko's parameterization. zuko builds the control points as a
-   cumulative sum of softplus steps. It ties the first two and the last two
-   steps. The start averages each tied pair and inverts the softplus with
-   $\log(e^d - 1)$. It adds zuko's centering offset $n \log 2 / 2$, with
-   $n$ = `n_coeffs`, to the first parameter.
-   [zuko-upstream.md](zuko-upstream.md#3-public-inverse-of-_constrain_theta)
-   lists the zuko internals this relies on.
-
-The polynomial then starts as the Bernstein approximation of
-$\operatorname{logit} \hat F$. The approximation smooths $\hat F$, and a
-sharp feature such as the dip between two modes smooths most.
-
-The ends of the range carry the empirical quantiles `range_q` and
-`1 - range_q`. The end control points are therefore close to
-$\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$, with $q$ =
-`range_q`. At the default $q = 0.05$ these are $-2.944$ and $2.944$. With
-fewer than 3 coefficients, the tied steps use all the parameters and leave
-only a straight line. The start then takes the line between these two end
-values.
-
-**Guards.** Two limits keep the start finite and increasing:
-
-- The start clips $\hat F$ to $[10^{-3}, 1 - 10^{-3}]$. A control point or
-  a cutpoint then stays within about $\pm 6.9$.
-- Each step between adjacent control points or cutpoints is at least
-  $10^{-3}$, because the softplus and log inverses need strictly increasing
-  points. An empty class or a gap in the data therefore gets a small but
-  nonzero probability. An empty middle class starts at $2.5 \cdot 10^{-4}$
-  or less.
-
-**Where it does not apply.** The spline and affine transforms have no
-marginal start, and the flag skips them. A `range_q=0` Bernstein transform
-maps the data minimum and maximum onto the range ends. The start ties the
-range ends to $\operatorname{logit} q$ and $\operatorname{logit}(1 - q)$,
-which are infinite for $q = 0$. So `fit` raises before it reads the column.
-It raises for such a transform also in an intercept with parents, which does
-not use the start. Fit such a model with `marginal_init=False`.
-
-**What it changes.** At `n_coeffs = 20` the zero start is close to a
-straight line too. Its control points span a wider range than the line from
-$-2.944$ to $2.944$. A steeper $h$ gives a narrower distribution than
-the data, so the zero start has the higher NLL at shift zero.
-
-The likelihood of an all-`LS` model has one optimum, and the fit reaches it
-with or without the start. So the start only shortens the way, and
-`fit_classical` takes no such flag.
-
-A model with a network shift or a learning-rate anneal can reach a
-different local optimum. For such a model the start can improve or worsen
-the causal estimate. D4 in
-[paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
-measures this per variant.
+- **Guards.** The start clips $\hat F$ away from 0 and 1 and keeps a minimum
+  step between adjacent points. The logit and the inverses stay finite and
+  increasing. An empty class or a gap in the data therefore gets a small but
+  nonzero probability.
+- **Where it does not apply.** The spline and affine transforms have no
+  marginal start, and the flag skips them. A `range_q=0` Bernstein transform
+  puts the range ends at the data extremes, where the logit is infinite. So
+  `fit` raises before it reads the column, also for an intercept with parents.
+  Fit such a model with `marginal_init=False`.
+- **What it changes.** The zero start is close to a straight line with a
+  steeper $h$ than the data. It gives a narrower distribution and the higher
+  NLL at shift zero. The likelihood of an all-`LS` model has one optimum, so
+  the start only shortens the way, and `fit_classical` takes no such flag. A
+  model with a network shift or a learning-rate anneal can reach a different
+  local optimum. For such a model the start can improve or worsen the causal
+  estimate. D4 in
+  [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
+  measures this per variant.
 
 ### Which recipe
 
@@ -260,34 +198,22 @@ Three details are easy to get wrong.
 
 `fit_classical` is the optimizer for all-`LS` models, where every
 node-conditional is an ordered logit or a transformation model with linear
-shifts. It raises on any `CS`, `CI` or `VC` term.
+shifts. It raises on any `CS`, `CI` or `VC` term. The options and the report
+are in the [`fit_classical`][tramdag.flow.CausalFlowDAG.fit_classical]
+docstring.
 
-- **Full-batch, float64, L-BFGS** with a strong-Wolfe line search; no
-  minibatches, schedule or early stopping, so the same init gives
-  bit-identical results. A converged fit matches `statsmodels` and R to about
-  four decimals, where a converged Adam `fit` gets to about 1e-3.
-- **Budget.** `max_iter=5000` per node is a default, not a promise. Torch ends
-  the run when the NLL or the parameters move by less than 1e-9. A node with
-  many parameters can need thousands of iterations to stop on that rule. A
-  report that is not `converged` issues a `UserWarning`.
-- **Per node.** The flow's `fit_classical` runs `Node.fit_classical` for each
-  node. Its report holds `converged` (every node converged), the summed
-  `final_nll` and `seconds`. It also holds the `coefficients` as
-  `{node: {parent: array}}` and `nodes`, the per-node reports.
-- **The report.** Per node, `stop_reason` is `"tolerance"`, `"max_iter"` or
-  `"max_eval"` (torch's budget of closure calls, `max_iter * 5 // 4`).
-  `converged` needs both: the run stopped on its own AND `grad_norm` is at
-  most `tramdag.fitting.GRAD_TOL` (1e-2). Both conditions are necessary, because
-  the same tolerance fires when the line search stalls far from the optimum.
-  Such a run stops on "tolerance" with a large gradient norm and is not
-  converged.
-- **float64 is transient.** The fit restores float32 afterwards, and
-  checkpoints stay float32.
+- **Full batch, float64, L-BFGS.** There are no minibatches, schedule or early
+  stopping, so the same initialization gives bit-identical results. The fit
+  restores float32 afterwards, and checkpoints stay float32.
+- **`converged` needs two conditions.** The run must stop on its own, and
+  `grad_norm` must be at most `tramdag.fitting.GRAD_TOL`. The tolerance rule
+  also fires when the line search stalls far from the optimum. Such a run
+  stops on `"tolerance"` with a large gradient norm and is not converged.
 - **Weakly identified directions never settle.** A Bernstein intercept, rare
   one-hot levels or a flat treatment-effect ridge drift along zero-curvature
   valleys after the likelihood is at its optimum. This is why `tolerance_grad`
-  is 0 and the gradient bound is loose. Correctness comes from the comparison with
-  classical software in
+  is off and the gradient bound is loose. Correctness comes from the
+  comparison with classical software in
   [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py).
 
 A converged `fit_classical` leaves the model at the MLE, ready for any

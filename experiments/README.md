@@ -97,28 +97,12 @@ does the experiments workflow's matrix.
 
 ## Ground truth
 
-`ground_truth/<result-dir>.json` holds one entry per checked metric, in one
-of two forms:
-
-```json
-{"beta12": {"value": 1.9825, "atol": 0.05},
- "cs_curve_max_abs_err": {"max": 0.23}}
-```
-
-`{value, atol}` is two-sided, for a quantity that must stay where it is.
-`{max}` is an upper bound for an error measure, where a smaller number is a
-better fit and must not fail the run. Tolerances are per metric, because torch
-results differ slightly across operating systems and CPUs.
-
-`check.py` fails on a metric outside its tolerance, on a metric above its
-bound, and on a ground-truth entry that the run no longer produces. It reports
-two conditions as notes, not failures. One is a `{max}` bound outside the band
-from 1.5x to 4x its measurement. The other is a `{value, atol}` measurement
-more than half-way to its tolerance. Below 1.5x a bound fails on another
-machine for no reason. Above 4x it cannot catch a regression. A drifting
-center keeps passing while it describes an older run. A bound that is meant to
-be wide says so in a `"why"` string, which `check.py` prints instead of the
-note. The string excuses width only.
+`ground_truth/<result-dir>.json` holds one entry per checked metric, with a
+tolerance per metric, because torch results differ slightly across operating
+systems and CPUs. [`check.py`](check.py) compares a run against it in CI.
+Its module docstring defines the two entry forms (`{value, atol}` and `{max}`).
+It also defines the band that a bound must stay in. A bound that is meant to
+be wide carries a `"why"` string.
 
 Ground-truth regeneration is a deliberate act. Run the experiment and review
 the figures. Then write the new values with a commit message that says what
@@ -131,7 +115,7 @@ regenerates every dataset from the seed in its `truth.json` and compares to
 1e-9. It does not compare to bit equality, because numpy's transcendental
 functions move their last bits between releases.
 `experiments/tests/test_generators.py` runs the same comparison.
-/carefl-cf` is the one folder with no generator here: it is CAREFL's own
+`data/carefl-cf` is the one folder with no generator here: it is CAREFL's own
 committed data, external frozen input.
 
 ## Notes on the reference protocols

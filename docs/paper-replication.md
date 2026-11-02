@@ -355,20 +355,20 @@ The epoch floors, measured at that batch and rate:
 - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
   do(x1) bound (0.235 > 0.200). `linear-cs` trains 500, because at 300 its fitted
   cs curve flattens past |x2| > 0.5. The max err there is 0.140 at 300 epochs,
-  and it is 0.031 at 500 epochs in the pinned run. The DGP line spans only ±0.3,
-  and the sigmoid net's slow tail convergence is half of that. relu is out,
-  because the 2-unit input layer dies (atan: β13 +0.53, cs err 1.42).
-- **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net
-  and the do(x1) mean. The cs max err is 0.344 / 0.177 / 0.156 at 100 / 250 /
-  350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same epochs. At 500
-  epochs the errors are 0.107 / 0.016, so it trains 350. The coefficient
-  trajectories are flat from about epoch 50 on. `linear-ls` has no CS net to wait
-  for, and at lr 0.002 it trains 200 epochs. A study run at 100 epochs measured −0.271
-  for the weakly identified β13. That is 26 % of its tolerance away from the
-  center of its ground-truth entry. The pinned run at 200 epochs reads −0.258
-  for β13. In the same study, the lower lr 0.002 lands
+  and it is 0.031 at 500 epochs in the pinned run. The DGP line spans only ±0.3.
+  relu is out: with relu, a study run gives β13 +0.53 and cs err 1.42 on atan.
+- **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net and
+  the do(x1) mean. In a study run, the cs max err is 0.344 / 0.177 / 0.156 at
+  100 / 250 / 350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same
+  epochs. At 500 epochs the errors are 0.107 / 0.016, so it trains 350. The
+  coefficient trajectories are flat from about epoch 50 on. `linear-ls` has no
+  CS net to wait for, and at lr 0.002 it trains 200 epochs. A study run at 100
+  epochs measured −0.271 for the weakly identified β13. That is 26 % of its
+  tolerance away from the center of its ground-truth entry. The pinned run at
+  200 epochs reads −0.258 for β13. In the same study, the lower lr 0.002 lands
   closer to the 500-epoch values. It reads β23 as 0.333, where lr 0.004 reads
-  0.337 instead. relu dies at the sd-0.05 normal init (cs err 0.859, β13 −0.055).
+  0.337 instead. With relu at the sd-0.05 normal init, a study run gives cs err
+  0.859 and β13 −0.055 in this setup.
 - **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
   the rejected shortcuts are in their sections.
 

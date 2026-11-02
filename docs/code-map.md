@@ -143,10 +143,9 @@ The signatures hold the defaults. This list keeps the reasons.
   default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. `zero_shift_networks=True` starts every `CS` shift
   at 0.
-- **Network widths and `activation=`** follow the default classes of the
-  PyTorch reference, for parity. The `VC` head has no counterpart there, so
-  its width comes from the recovery measurement. `"sigmoid"` and `"tanh"` are
-  the paper's activations.
+- **Network widths and `activation=`** follow the default classes of the PyTorch
+  reference, for parity. The `VC` head has no counterpart there. `"sigmoid"` and
+  `"tanh"` are the paper's activations.
 - **`batch_norm=` is off**, because neither reference uses it. When on, it
   needs more than one row per batch, and inference needs `eval()` mode. `fit`
   and `load` leave the flow there.

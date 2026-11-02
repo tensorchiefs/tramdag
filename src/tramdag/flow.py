@@ -190,6 +190,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             raise KeyError(f"unknown node {name!r}")
         return self.nodes[name]
 
+    def _check_do(self, do: dict[str, float]) -> None:
+        """Refuse an unknown ``do`` node or an ordinal value off the levels."""
+        for name, value in do.items():
+            if self._node(name).kind == "ordinal":
+                check_level_values(name, [value], self.spec[name].levels)
+
     def _features(self, values: dict[str, Tensor]) -> dict[str, Tensor]:
         return {
             name: self.nodes[name].encode(v)
@@ -260,6 +266,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         its transform parameters, its shift and the row count.
         """
         nd = self._node(node)
+        self._check_do(do or {})
         df = df.assign(**(do or {}))
         n = len(df)
         values = self._tensorize(df, list(nd.parents) + self._query_side_columns(nd))
@@ -410,9 +417,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         the index of ``u``, so a counterfactual lines up with its factual row.
         """
         do = do or {}
-        for name, value in do.items():
-            if self._node(name).kind == "ordinal":
-                check_level_values(name, [value], self.spec[name].levels)
+        self._check_do(do)
         if u is not None:
             n = len(u)
             u_vals = self._tensorize(u, levels=False)

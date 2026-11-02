@@ -249,3 +249,14 @@ def test_fit_refuses_a_non_finite_continuous_column(ls_chain, bad):
     )
     with pytest.raises(ValueError, match="column 'x1'"):
         flow.fit(df, epochs=1)
+
+
+def test_pmf_and_density_name_an_unknown_do_node(ls_chain):
+    df = ls_chain["draw"](50, 0)[["x1", "x2"]]
+    df["y"] = np.arange(50) % 3
+    flow = CausalFlowDAG(_spec(), seed=0)
+    flow._calibrate(df)
+    with pytest.raises(KeyError, match="unknown node 'zz'"):
+        flow.pmf(df, "y", do={"zz": 0.0})
+    with pytest.raises(KeyError, match="unknown node 'zz'"):
+        flow.density(df, "x2", np.linspace(-1, 1, 5), do={"zz": 0.0})

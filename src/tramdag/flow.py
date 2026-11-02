@@ -9,6 +9,7 @@ that only read fitted weights live in ``readouts.py``.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -69,8 +70,11 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     device : str, optional
         Torch device, by default ``"cpu"``.
     seed : int | None, optional
-        If given, seeds the weight initialization deterministically
-        (``torch.manual_seed`` runs before the nodes are built). Weight
+        If given, seeds the weight initialization deterministically. Each
+        node draws its weights from a stream keyed on this seed and the node's
+        name, so a node starts from the same weights in every spec that
+        contains it. Construction ends with ``torch.manual_seed(seed)``, which
+        seeds the unseeded minibatch shuffling of ``fit``. Weight
         initialization happens at construction, so this is the one knob
         for a reproducible model. ``fit(seed=...)`` only seeds the
         minibatch shuffling.
@@ -115,15 +119,14 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
             raise ValueError(
                 f"init must be 'torch', 'glorot' or 'normal', got {init!r}"
             )
-        if seed is not None:
-            torch.manual_seed(seed)
         self.spec = spec
         self.order = validate_and_sort(spec)
         self.init = init
         self.nodes = nn.ModuleDict(
-            {name: Node(name, spec[name], self._schema(name)) for name in self.order}
+            {name: self._build_node(name, seed) for name in self.order}
         )
-        self._apply_init(init)
+        if seed is not None:
+            torch.manual_seed(seed)
         if zero_shift_networks:
             for m in self.modules():
                 if isinstance(m, ShiftModule):
@@ -156,16 +159,23 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         """Give a node's parent schema, ``{parent: "continuous" | n_levels}``."""
         return {p: schema_entry(self.spec[p]) for p in node_parents(self.spec[name])}
 
-    def _apply_init(self, init: str) -> None:
-        """Re-initialize every linear layer, if asked; VC heads re-zero their output."""
-        if init == "torch":
-            return
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                _init_linear(m, init)
-        for m in self.modules():
-            if isinstance(m, ShiftModule):
-                m.post_init()
+    def _build_node(self, name: str, seed: int | None) -> Node:
+        """Build and initialize one node from ``(seed, name)``.
+
+        Without a seed the node draws from torch's global stream.
+        """
+        if seed is not None:
+            key = [seed, zlib.crc32(name.encode())]
+            torch.manual_seed(int(np.random.SeedSequence(key).generate_state(1)[0]))
+        node = Node(name, self.spec[name], self._schema(name))
+        if self.init != "torch":
+            for m in node.modules():
+                if isinstance(m, nn.Linear):
+                    _init_linear(m, self.init)
+            for m in node.modules():
+                if isinstance(m, ShiftModule):
+                    m.post_init()
+        return node
 
     @property
     def _dtype(self) -> torch.dtype:

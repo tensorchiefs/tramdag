@@ -171,7 +171,7 @@ class Node(NodeFitMixin, nn.Module):
     or display values.
 
     The node builds one module per shift term in formula order, because the
-    seeded RNG stream is pinned to it. Each shift names its own key: the
+    draws of one seeded stream are pinned to it. Each shift names its own key: the
     parent, ``"a+b"`` for a joint CS, the treatment for a VC. The
     ``intercept_module`` of the first term picks the intercept slot: the free
     theta_0, one joint net, or one net per parent summed in coefficient space.

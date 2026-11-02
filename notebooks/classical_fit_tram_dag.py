@@ -358,10 +358,13 @@ print(
 #
 # $$\operatorname{leak}(c) = \max_{k\,:\ \lambda_k \le \tau} \left| c^{\top} e_k \right| .$$
 #
-# Only interpret rows whose leak is close to zero. The choice of $\tau$ is not
-# critical. The spectrum splits into a flat block and a curved block, with
-# orders of magnitude between them. Any threshold inside that gap gives the
-# same answer. The cell below measures the gap. The Hessian code runs in
+# Only interpret rows whose leak is close to zero. The spectrum has three
+# parts. A flat block of directions is near zero. One weakly curved direction,
+# a Bernstein gap, has a small eigenvalue that is below $\tau$. The remaining
+# directions are curved. The threshold drops the weak direction together with
+# the flat block. The standard errors need that choice to be harmless. The
+# cell below computes them a second time with a threshold between the flat
+# block and the weak direction, and compares. The Hessian code runs in
 # float64, because second derivatives need it, and restores the stored
 # precision afterwards.
 
@@ -399,26 +402,27 @@ def observed_information(flow, node, data):
 
 
 def spectrum_split(evals, tau):
-    """Describe the curvature spectrum either side of ``tau``.
+    """Split the eigenvalues at or below ``tau`` into a flat and a weak block.
 
-    A wide gap between the flat block and the curved block is what makes the
-    threshold uncritical, so this reports both edges of the gap and lets the
-    caller check it instead of describing it in prose.
+    The flat block is the directions near zero. The weak block is the
+    directions above the widest log-gap among the eigenvalues at or below
+    ``tau``. They are still dropped by ``tau``. The result gives the size of
+    the flat block and its largest eigenvalue, and the smallest weak
+    eigenvalue, so that a caller can place a second threshold between them.
     """
-    absolute = np.abs(evals)
-    flat, curved = absolute[absolute <= tau], absolute[absolute > tau]
+    low = np.sort(np.maximum(np.abs(evals[np.abs(evals) <= tau]), 1e-300))
+    cut = int(np.argmax(np.diff(np.log(low)))) + 1 if low.size > 1 else low.size
     return {
-        "n_flat": int(flat.size),
-        "flat_max": float(flat.max()) if flat.size else 0.0,
-        "curved_min": float(curved.min()) if curved.size else 0.0,
+        "n_flat": cut,
+        "flat_max": float(low[cut - 1]) if cut else 0.0,
+        "weak_min": float(low[cut]) if cut < low.size else 0.0,
     }
 
 
-def ls_conf_int(flow, node, data, level=0.95):
+def ls_conf_int(flow, node, data, level=0.95, rcond=1e-7):
     """Give Wald intervals for the linear-shift coefficients of one node."""
     hess, grad_norm, offsets = observed_information(flow, node, data)
     evals, evecs = np.linalg.eigh(hess)
-    rcond = 1e-7
     tau = rcond * np.abs(evals).max()
     flat = evecs[:, np.abs(evals) <= tau]
     cov = np.linalg.pinv(hess, rcond=rcond)
@@ -447,6 +451,7 @@ def ls_conf_int(flow, node, data, level=0.95):
     diagnostics = {
         "n_params": hess.shape[0],
         "grad_norm": grad_norm,
+        "lambda_max": float(np.abs(evals).max()),
         **spectrum_split(evals, tau),
     }
     return pd.DataFrame(rows).set_index("term"), diagnostics
@@ -469,10 +474,17 @@ print(
 R_COLR_BWT_SE = {"age": 0.025305, "lwt": 0.004116, "smoke": 0.260131}
 
 print()
+print(
+    f"{diag['n_flat']} flat directions, largest eigenvalue {diag['flat_max']:.1e}"
+    f"   weak direction {diag['weak_min']:.1e}"
+    f"   tau = {1e-7 * diag['lambda_max']:.1e}"
+)
+tau2 = np.sqrt(diag["flat_max"] * diag["weak_min"])
+table2, _ = ls_conf_int(flow_bwt, "bwt", bw, rcond=tau2 / diag["lambda_max"])
 claim(
-    "flat_max / curved_min, so smaller is a wider gap",
-    diag["flat_max"] / diag["curved_min"],
-    1e-4,
+    "max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction",
+    float((table["se"] - table2["se"]).abs().max()),
+    1e-3,
 )
 rows_se = [("age", "age"), ("lwt", "lwt"), ("smoke (1 vs 0)", "smoke")]
 se_gap = max(abs(float(table.loc[t, "se"]) - R_COLR_BWT_SE[r]) for t, r in rows_se)

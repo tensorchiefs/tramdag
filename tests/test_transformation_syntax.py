@@ -81,7 +81,7 @@ def test_multi_parent_i_stays_joint_by_default():
 
 
 def test_i_transform_hoists_to_the_node():
-    node = ContinuousNode([I("x1", transform="spline", bins=6)])
+    node = ContinuousNode([I("x1", transform="spline", transform_kwargs={"bins": 6})])
     assert node.transform == "spline"
     assert node.transform_kwargs == {"bins": 6}
 
@@ -89,7 +89,9 @@ def test_i_transform_hoists_to_the_node():
 def test_i_dispatches_to_si_and_ci():
     """I is the fallback: no parents -> SI, parents -> CI."""
     assert I() == SI()
-    assert I(transform="spline", bins=6) == SI(transform="spline", bins=6)
+    assert I(transform="spline", transform_kwargs={"bins": 6}) == SI(
+        transform="spline", transform_kwargs={"bins": 6}
+    )
     assert I("a", "b", units=[4]) == CI("a", "b", units=[4])
     with pytest.raises(ValueError, match="at least one parent"):
         CI()
@@ -180,7 +182,7 @@ def test_saved_checkpoint_of_new_syntax_loads(tmp_path):
 def test_every_option_survives_the_roundtrip():
     """One spec exercising every Term option, through the serializer."""
     spec = {
-        "a": ContinuousNode([SI(transform="spline", bins=6)]),
+        "a": ContinuousNode([SI(transform="spline", transform_kwargs={"bins": 6})]),
         "b": ContinuousNode(),
         "t": OrdinalNode(2, [LS("a")]),
         "y": ContinuousNode(
@@ -253,12 +255,12 @@ def test_units_reach_the_networks():
 
 
 def test_transform_arguments_apply_without_naming_the_transform():
-    """SI(n_coeffs=40) must configure the default transform, not be ignored.
+    """SI(transform_kwargs=...) must configure the default transform.
 
     Transform arguments on their own configure the default transform; they
     are not dropped for want of a `transform=` on the same term.
     """
-    node = ContinuousNode([SI(n_coeffs=40)])
+    node = ContinuousNode([SI(transform_kwargs={"n_coeffs": 40})])
     assert node.transform == "bernstein"
     assert node.transform_kwargs == {"n_coeffs": 40}
     flow = CausalFlowDAG({"x": node}, seed=0)
@@ -277,7 +279,7 @@ def test_a_source_node_is_canonical_too():
 def test_spec_survives_a_json_roundtrip():
     """Tuples come back as lists from json; spec_from_dict restores them."""
     spec = {
-        "x": ContinuousNode([SI(transform="spline", bins=6)]),
+        "x": ContinuousNode([SI(transform="spline", transform_kwargs={"bins": 6})]),
         "t": OrdinalNode(2, [LS("x")]),
         "y": ContinuousNode([CI("x", units=[8, 8]), VC("x", t="t", units=[4])]),
     }

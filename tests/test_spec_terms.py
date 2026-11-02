@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CI, CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
 from tramdag.spec import spec_from_dict, spec_to_dict
 
 
@@ -141,4 +141,9 @@ def test_ordinal_node_refuses_a_transform():
     with pytest.raises(ValueError, match="cutpoint vector"):
         OrdinalNode(3, I(transform="spline"))
     with pytest.raises(ValueError, match="cutpoint vector"):
-        OrdinalNode(3, I(n_coeffs=5))
+        OrdinalNode(3, I(transform_kwargs={"n_coeffs": 5}))
+
+
+def test_a_misspelt_intercept_option_is_a_type_error():
+    with pytest.raises(TypeError, match="activaton"):
+        CI("a", activaton="tanh")

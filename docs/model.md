@@ -134,10 +134,11 @@ continuous node:
 - `"affine"`: location and scale only, so the node-conditional is a logistic
   GLM.
 
-Extra keyword arguments of `I` pass straight to the transform class,
-`I(transform="spline", bins=16)`. Each transform pre-scales the data from the
-training `range_q` and $1 - $`range_q` quantiles onto a fixed domain.
-`range_q` is an intercept option with default 0.05, and `range_q=0` uses the
+The keyword arguments of the transform class go in `transform_kwargs`,
+`I(transform="spline", transform_kwargs={"bins": 16})`. Each transform
+pre-scales the data from the training `range_q` and $1 - $`range_q` quantiles
+onto a fixed domain.
+`range_q` is a transform option with default 0.05, and `range_q=0` uses the
 minimum and maximum. Ordinal nodes have no transform to pick.
 
 **`input_transform=` on `I`, `CS`, `VC`** transforms that term's continuous

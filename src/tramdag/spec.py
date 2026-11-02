@@ -538,9 +538,9 @@ class Intercept(Term):
         picks ``"bernstein"``; an ordinal node's intercept is the cutpoint
         vector and refuses a transform.
     transform_kwargs : dict | None, optional
-        The transform's keyword arguments as one mapping. This is the
-        serialized form, which is how a spec YAML and a checkpoint carry
-        them; write them out instead when calling by hand.
+        The transform's keyword arguments as one mapping, for example
+        ``I(transform="spline", transform_kwargs={"bins": 16})``. This is
+        also how a spec YAML and a checkpoint carry them.
     allow_interaction : bool, optional
         ``False`` makes a multi-parent term **additive**: one network per
         parent, their parameter vectors summed in coefficient space. A node
@@ -563,18 +563,12 @@ class Intercept(Term):
         applied per continuous parent column (``train`` is that column's
         raw training data, frozen at calibration). Parents only.
         ``None``, the default, applies no transform.
-    **transform_options
-        Any keyword that is not an option above goes straight to the
-        transform class, for example ``I(transform="spline", bins=16)`` or
-        ``I(n_coeffs=40)``. A keyword written out here wins over the same
-        key inside ``transform_kwargs``.
 
     Notes
     -----
-    Python's argument binding is the pass-through boundary: what binds to an
-    option above is an option of the term, and what is left over is a keyword
-    of the transform class. ``module`` is a function, so ``staticmethod`` stops
-    it from binding as a method.
+    The transform class takes its keywords only through ``transform_kwargs``,
+    so a misspelt option is a ``TypeError`` at once. ``module`` is a function,
+    so ``staticmethod`` stops it from binding as a method.
 
     Raises
     ------
@@ -597,11 +591,10 @@ class Intercept(Term):
         activation: str = "relu",
         batch_norm: bool = False,
         input_transform: object = None,
-        **transform_options,
     ):
         super().__init__(*parents)
         self.transform = transform
-        self.transform_kwargs = {**(transform_kwargs or {}), **transform_options}
+        self.transform_kwargs = dict(transform_kwargs or {})
         self.allow_interaction = allow_interaction
         self.units = tuple(units)
         self.activation = activation

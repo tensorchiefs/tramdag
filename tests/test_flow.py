@@ -232,14 +232,16 @@ def test_range_q_option_sets_the_domain():
     survives a save/load round-trip through the spec.
     """
     df = pd.DataFrame({"x": np.linspace(-4.0, 6.0, 400)})
-    flow = CausalFlowDAG({"x": ContinuousNode(I(range_q=0.0))}, seed=0)
+    flow = CausalFlowDAG(
+        {"x": ContinuousNode(I(transform_kwargs={"range_q": 0.0}))}, seed=0
+    )
     flow._calibrate(df)
     ut = flow.nodes["x"].ut
     assert (float(ut.xmin), float(ut.xmax)) == pytest.approx((-4.0, 6.0))
     d = spec_from_dict(spec_to_dict(flow.spec))
     assert d["x"].terms[0] == flow.spec["x"].terms[0]
     with pytest.raises(ValueError, match="range_q"):
-        CausalFlowDAG({"x": ContinuousNode(I(range_q=0.6))})
+        CausalFlowDAG({"x": ContinuousNode(I(transform_kwargs={"range_q": 0.6}))})
 
 
 def test_shift_curve_matches_the_manual_composition(ls_chain):

@@ -281,7 +281,9 @@ spec_bwt = {
     "age": ContinuousNode(SI(transform="affine")),
     "lwt": ContinuousNode(SI(transform="affine")),
     "smoke": OrdinalNode(2),
-    "bwt": ContinuousNode(SI(n_coeffs=20) + LS("age") + LS("lwt") + LS("smoke")),
+    "bwt": ContinuousNode(
+        SI(transform_kwargs={"n_coeffs": 20}) + LS("age") + LS("lwt") + LS("smoke")
+    ),
 }
 
 flow_bwt = CausalFlowDAG(spec_bwt, seed=0)
@@ -560,9 +562,11 @@ df = pd.read_csv(NB_DATA / "vaca.csv")
 N_COEFFS = 20
 
 spec_vaca = {
-    "x1": ContinuousNode(SI(n_coeffs=N_COEFFS)),
-    "x2": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1")),
-    "x3": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1") + LS("x2")),
+    "x1": ContinuousNode(SI(transform_kwargs={"n_coeffs": N_COEFFS})),
+    "x2": ContinuousNode(SI(transform_kwargs={"n_coeffs": N_COEFFS}) + LS("x1")),
+    "x3": ContinuousNode(
+        SI(transform_kwargs={"n_coeffs": N_COEFFS}) + LS("x1") + LS("x2")
+    ),
 }
 
 flow_c = CausalFlowDAG(spec_vaca, seed=0)

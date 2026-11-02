@@ -74,7 +74,7 @@ def test_custom_regularizer_joins_the_loss(ls_chain):
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node(PEN("x1")), seed=0)
     flow.fit(df, epochs=2, batch_size=150)
-    assert flow.nodes["x2"].shifts["x1"].calls >= 4  # every minibatch
+    assert flow.nodes["x2"].shifts["x1"].calls >= 4
 
 
 # %% private classes -------------------------------------------------------------------

@@ -31,7 +31,7 @@ def _additive_ci_flow():
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),
         "x3": ContinuousNode(I("x1", "x2", allow_interaction=False)),
-    }  # additive CI
+    }
     return CausalFlowDAG(spec, seed=1)
 
 
@@ -39,13 +39,11 @@ def _additive_ci_flow():
 def test_baseline_plus_contributions_reproduces_theta():
     flow = _additive_ci_flow()
     df = _data()
-    flow._calibrate(df)  # not needed for theta, but exercises the realistic path
+    flow._calibrate(df)
 
     res = flow.intercept_contributions(df, "x3")
-    # reconstruct theta from the centered components + baseline
     recon = res["baseline"][None, :] + sum(res["contributions"].values())
 
-    # ground-truth theta straight from the model's intercept nets
     nd = flow.nodes["x3"]
     feats = flow._features(flow._tensorize(df))
     with torch.no_grad():
@@ -62,7 +60,6 @@ def test_contributions_are_mean_centered():
     res = flow.intercept_contributions(df, "x3")
     assert set(res["contributions"]) == {"x1", "x2"}
     for contrib in res["contributions"].values():
-        # each column (transform parameter) averages to ~0 over the rows
         np.testing.assert_allclose(contrib.mean(axis=0), 0.0, atol=1e-6)
 
 
@@ -87,7 +84,7 @@ def test_ordinal_additive_ci():
     df = _data()
     df["y"] = np.random.default_rng(3).integers(0, 4, len(df)).astype(float)
     res = flow.intercept_contributions(df, "y")
-    assert res["baseline"].shape == (3,)  # levels - 1 cutpoint params
+    assert res["baseline"].shape == (3,)
     for contrib in res["contributions"].values():
         np.testing.assert_allclose(contrib.mean(axis=0), 0.0, atol=1e-6)
 
@@ -108,7 +105,6 @@ def test_works_for_any_continuous_transform(transform, P):
     res = flow.intercept_contributions(df, "x3")
     if P is not None:
         assert res["baseline"].shape == (P,)
-    # exactness + sum-to-zero hold in unconstrained theta-space regardless of transform
     recon = res["baseline"][None, :] + sum(res["contributions"].values())
     nd = flow.nodes["x3"]
     feats = flow._features(flow._tensorize(df))
@@ -126,12 +122,11 @@ def test_raises_on_node_without_complex_intercept():
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(LS("x1")),
-    }  # shift only, no I-term
+    }
     flow = CausalFlowDAG(spec, seed=0)
     df = _data()
     with pytest.raises(ValueError, match="no complex-intercept"):
         flow.intercept_contributions(df, "x2")
-    # source node (unconditional simple intercept) also has nothing to decompose
     with pytest.raises(ValueError, match="no complex-intercept"):
         flow.intercept_contributions(df, "x1")
 
@@ -150,7 +145,6 @@ def test_raises_on_missing_parent_column():
 
 
 def test_joint_complex_intercept_single_component():
-    # I("x1","x2") is one pooled network -> one centered component over both
     spec = {
         "x1": ContinuousNode(),
         "x2": ContinuousNode(),

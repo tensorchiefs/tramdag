@@ -18,7 +18,6 @@ import torch
 
 from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode, fitting
 
-# Most tests cut max_iter short on purpose.
 pytestmark = pytest.mark.filterwarnings("ignore:fit_classical did not converge")
 
 
@@ -97,7 +96,7 @@ def test_max_iter_and_history_size_reach_the_solver(ls_chain):
         obs, max_iter=10, history_size=7
     )
     assert 0 < rep["nodes"]["y"]["n_iter"] <= 10
-    assert rep["converged"] is False  # ten iterations cannot settle this fit
+    assert rep["converged"] is False
     with pytest.raises(TypeError):
         CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, not_a_kwarg=1)
 
@@ -114,7 +113,7 @@ def test_a_stalled_line_search_does_not_count_as_converged(ls_chain):
     rep = rep["nodes"]["y"]
     assert rep["stop_reason"] in ("tolerance", "max_iter", "max_eval")
     assert rep["converged"] is False
-    assert rep["grad_norm"] > 1e-2  # nowhere near a settled fit
+    assert rep["grad_norm"] > 1e-2
 
 
 def test_a_converged_fit_does_not_warn():
@@ -187,7 +186,6 @@ def test_matches_statsmodels_mle(ls_chain):
     assert float(coefs["x2"][0]) == pytest.approx(res.params["x2"], abs=0.01)
     w_t = np.asarray(coefs["t"]).ravel()
     assert (w_t[1] - w_t[0]) == pytest.approx(res.params["t[1]"], abs=0.03)
-    # and the classical MLE is near the DGP truth at this sample size
     tr = ls_chain["truth"]
     assert res.params["x1"] == pytest.approx(tr["beta_y_x1"], abs=0.15)
     assert res.params["t[1]"] == pytest.approx(tr["beta_y_t"], abs=0.20)

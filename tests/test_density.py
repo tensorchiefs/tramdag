@@ -41,7 +41,7 @@ def test_do_overrides_the_parent_column(ls_chain):
     with_do = flow.density(df.iloc[:3], "x2", grid, do={"x1": 0.7})
     by_hand = flow.density(df.iloc[:3].assign(x1=0.7), "x2", grid)
     np.testing.assert_allclose(with_do, by_hand)
-    assert np.allclose(with_do[0], with_do[1])  # the only parent is clamped
+    assert np.allclose(with_do[0], with_do[1])
 
 
 def test_density_rejects_an_ordinal_node():

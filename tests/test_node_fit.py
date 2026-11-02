@@ -15,7 +15,6 @@ from tramdag.callbacks import Callback
 from tramdag.fitting import _node_seed
 
 # %% global variables ------------------------------------------------------------------
-# n_jobs forks: Windows has no fork, and macOS torch refuses autograd after one
 _LINUX = pytest.mark.skipif(sys.platform != "linux", reason="n_jobs forks: Linux only")
 
 
@@ -131,7 +130,7 @@ def test_a_bad_callback_of_a_later_node_fails_before_any_node_fits(ls_chain):
 def test_a_node_that_refuses_calibration_leaves_no_node_fitted():
     rng = np.random.default_rng(0)
     x1 = rng.normal(size=400)
-    x2 = np.where(rng.random(400) < 0.97, 1.0, 2.0)  # 5%/95% quantiles coincide
+    x2 = np.where(rng.random(400) < 0.97, 1.0, 2.0)
     df = pd.DataFrame({"x1": x1, "x2": x2})
     flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
     with pytest.raises(ValueError, match="quantiles coincide"):

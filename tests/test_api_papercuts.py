@@ -39,8 +39,6 @@ def test_constructor_seed_differs_across_seeds():
 
 
 def test_no_seed_still_works():
-    # default (no seed) constructs fine, and is deliberately not pinned:
-    # two unseeded models differ, which is what makes seed= the only knob
     a, b = CausalFlowDAG(_spec()), CausalFlowDAG(_spec())
     assert any(
         not torch.equal(pa, pb)
@@ -63,8 +61,8 @@ def test_save_load_round_trips_history(tmp_path):
     p = tmp_path / "flow.pt"
     flow.save(p)
     loaded = CausalFlowDAG.load(p)
-    assert set(loaded.history) == {"train", "lr"}  # no val: an unvalidated fit
-    assert loaded.nodes["y"].history["lr"] == [{0: 0.01}] * 12  # one Adam group
+    assert set(loaded.history) == {"train", "lr"}
+    assert loaded.nodes["y"].history["lr"] == [{0: 0.01}] * 12
     assert loaded.nodes["y"].history == flow.nodes["y"].history
     assert len(loaded.history["train"]) == 12
 
@@ -80,8 +78,6 @@ def test_save_carries_version_metadata(tmp_path):
 
 
 def test_load_requires_a_complete_checkpoint(tmp_path):
-    # save() always writes spec, weights, history and meta; a dict missing
-    # any of them is not a tramdag checkpoint and must fail loudly
     flow = CausalFlowDAG(_spec(), seed=0)
     from tramdag.spec import spec_to_dict
 
@@ -106,7 +102,7 @@ def test_ls_coefficients_skips_network_shifts():
         "x3": ContinuousNode(LS("x1") + CS("x2") + VC("x2", t="t")),
     }
     coefficients = CausalFlowDAG(spec, seed=0).ls_coefficients()
-    assert set(coefficients["x3"]) == {"x1"}  # CS and VC carry no weight
+    assert set(coefficients["x3"]) == {"x1"}
     assert set(coefficients["x2"]) == {"x1"}
     assert coefficients["x3"]["x1"].shape == (1,)
 
@@ -153,7 +149,7 @@ def test_glorot_init_is_keras_dense_default(tmp_path):
     weights = torch.cat(
         [m.weight.flatten() for m in normal.modules() if isinstance(m, torch.nn.Linear)]
     )
-    assert 0.03 < float(weights.std()) < 0.07  # Keras RandomNormal, sd 0.05
+    assert 0.03 < float(weights.std()) < 0.07
     biases = torch.cat(
         [
             m.bias.flatten()
@@ -162,7 +158,7 @@ def test_glorot_init_is_keras_dense_default(tmp_path):
         ]
     )
     assert biases.numel() > 0
-    assert float(biases.abs().max()) < 0.3  # drawn, not zeroed (sd 0.05)
+    assert float(biases.abs().max()) < 0.3
     assert float(biases.abs().max()) > 0.0
     a = td.CausalFlowDAG(spec, seed=0).state_dict()
     b = td.CausalFlowDAG(spec, seed=0, init="torch").state_dict()
@@ -191,7 +187,7 @@ def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
     }
     flow = CausalFlowDAG(spec, seed=0)
     norms = [m for m in flow.nodes["y"].modules() if isinstance(m, nn.BatchNorm1d)]
-    assert len(norms) == 3  # one hidden layer each, in CI, CS and VC
+    assert len(norms) == 3
     assert spec_from_dict(spec_to_dict(spec)) == spec
 
     plain = CausalFlowDAG({**spec, "y": ContinuousNode(CS("x2", units=[4]))}, seed=0)
@@ -213,7 +209,6 @@ def test_log_prob_takes_a_node_subset(ls_chain):
     flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2)
     parts = [flow.log_prob(df, nodes=[name]) for name in ("x1", "x2")]
     torch.testing.assert_close(parts[0] + parts[1], flow.log_prob(df))
-    # the conditional NLL of one node matches its mean over the same rows
     assert float(-parts[1].mean()) == pytest.approx(flow.nll(df)["x2"], abs=1e-5)
 
 

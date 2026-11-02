@@ -267,3 +267,28 @@ def test_vc_continuous_treatment():
     u0 = flow.abduct(df.assign(D=0.0), seed=0)["Y"].values
     np.testing.assert_allclose(2.0 * beta, u2 - u0, rtol=0, atol=1e-4)
     assert flow.sample(50, do={"D": 1.0}, seed=0).shape == (50, 3)
+
+
+def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
+    """Both treatment kinds start at the all-LS MLE, which recovers the truth."""
+    df = ls_chain["draw"](4000, 3)
+    truth = ls_chain["truth"]
+    spec = {
+        "x1": ContinuousNode(I(transform="affine")),
+        "x2": ContinuousNode(I(transform="affine") + LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, VC("x1", t="t") + VC(t="x2")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    report = flow.nodes["y"].warm_start(df)
+    assert report["converged"]
+    ls_spec = {**spec, "y": OrdinalNode(4, LS("x1") + LS("t") + LS("x2"))}
+    ref = CausalFlowDAG(ls_spec, seed=1)
+    w = ref.fit_classical(df)["coefficients"]["y"]
+    shifts = flow.nodes["y"].shifts
+    assert shifts["t"].beta0.item() == pytest.approx(w["t"][1] - w["t"][0], abs=1e-4)
+    assert shifts["x2"].beta0.item() == pytest.approx(w["x2"][0], abs=1e-4)
+    assert shifts["t"].beta0.item() == pytest.approx(truth["beta_y_t"], abs=0.3)
+    assert shifts["x2"].beta0.item() == pytest.approx(truth["beta_y_x2"], abs=0.1)
+    with pytest.raises(ValueError, match="node 'x2' has no VC term"):
+        flow.nodes["x2"].warm_start(df)

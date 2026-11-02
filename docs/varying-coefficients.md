@@ -46,8 +46,9 @@ ingredient into the TRAM framework.
   mean zero over the training data, which preserves the function. $\beta_0$
   is therefore the main effect in the training population, the Colr reading
   when $\beta$ is constant.
-- **Warm start.** Fit the all-`LS` version classically and copy the treatment
-  weight into `beta0` before `fit`. Training then starts at the classical
+- **Warm start.** `flow.nodes[name].warm_start(train_df)` fits the all-`LS`
+  version of the node classically and copies the treatment weight into
+  `beta0`. Call it before `fit`. Training then starts at the classical
   answer and learns only deviations.
 - **Treatments.** Continuous or binary ordinal, entering as its 0/1 level so
   that $\beta$ is the identified level-1-against-0 contrast. The term is

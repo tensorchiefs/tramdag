@@ -220,8 +220,8 @@ docstring.
 
 A converged `fit_classical` leaves the model at the MLE, ready for any
 operation. A `fit` call from there stays put. This checks that the classical
-solution is the optimum, and it is a warm start. The `VC` guide uses it for
-`beta0`.
+solution is the optimum, and it is a warm start. `Node.warm_start` uses it
+for `beta0` of a `VC` ([varying-coefficients.md](varying-coefficients.md)).
 
 ## Memory and disk
 

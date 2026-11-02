@@ -10,6 +10,7 @@ read-outs and the tests read ``kind``, ``parents``, ``shifts``, ``intercept``,
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import copy
 import pickle
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,8 +21,10 @@ import torch
 from torch import Tensor, nn
 
 from .fitting import NodeFitMixin
-from .modules import LinearShiftModule
+from .modules import LinearShiftModule, VaryingCoefficientModule
 from .spec import (
+    Intercept,
+    LinearShift,
     NodeSpec,
     node_parents,
     spec_from_dict,
@@ -419,6 +422,47 @@ class Node(NodeFitMixin, nn.Module):
             for role, params in m.parameter_groups().items():
                 groups[role] += params
         return groups
+
+    def warm_start(self, train_df: pd.DataFrame) -> dict:
+        r"""Start each ``VC`` $\beta_0$ at the classical linear treatment effect.
+
+        An all-``LS`` twin of the node, a simple intercept plus one ``LS``
+        term per parent, fits classically on ``train_df``. Each ``VC``
+        $\beta_0$ takes the twin's coefficient of its treatment. A binary
+        ordinal treatment takes the level-1-against-0 contrast ``w[1] - w[0]``,
+        a continuous one its weight ``w[0]``. Call it before ``fit``; the twin
+        ignores a centering column.
+
+        Parameters
+        ----------
+        train_df : pd.DataFrame
+            Training rows: the node's column and its parents' columns.
+
+        Returns
+        -------
+        dict
+            The twin's [`fit_classical`][tramdag.nodes.Node.fit_classical]
+            report.
+
+        Raises
+        ------
+        ValueError
+            If the node has no ``VC`` term.
+        """
+        vcs = [
+            m for m in self.shifts.values() if isinstance(m, VaryingCoefficientModule)
+        ]
+        if not vcs:
+            raise ValueError(f"node {self.name!r} has no VC term to warm-start")
+        spec = copy.copy(self.node_spec)
+        spec.terms = [Intercept(), *(LinearShift(p) for p in self.parents)]
+        twin = Node(self.name, spec, self.schema).to(next(self.parameters()).device)
+        report = twin.fit_classical(train_df)
+        with torch.no_grad():
+            for m in vcs:
+                w = report["coefficients"][m.key]
+                m.beta0.fill_(float(w[1] - w[0] if m.t_is_ord else w[0]))
+        return report
 
     def save(self, path: str | Path) -> None:
         """Write the node, its history and its provenance to a checkpoint.

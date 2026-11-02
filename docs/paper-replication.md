@@ -7,7 +7,8 @@ model, every hyperparameter with its source, what deviates from the paper and
 why, and the numbers. The paper states five training numbers: n = 40000,
 500 epochs, Adam, lr 0.001 and Bernstein `len_theta` 20 (order 19). It shows
 its results as figures. Where it gives no number, the "paper" column names the
-figure and what it shows. The pinned ground truth is `experiments/ground_truth/*.json`;
+figure and what it shows. `experiments/ground_truth/*.json` holds the bounds and
+centers. The tables show the measurements of the pinned run.
 [experiments/README.md](../experiments/README.md) explains the YAML variants,
 the frozen data and the check. The tables of D4, D5 and of the runtime section
 are study runs of their own. They are not the pinned run.
@@ -73,7 +74,7 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 
 **Results**
 
-| variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, the pinned ground truth |
+| variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, pinned run (measured) |
 |---|---|---|---|---|
 | linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.986 / −0.153 / 0.261 |
 | linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.176; 0.031 |
@@ -169,7 +170,7 @@ a looser tolerance.
 **Results**: the check is the flow's error against the analytic mean, not a
 pinned flow value.
 
-| metric | paper | here, the pinned ground truth |
+| metric | paper | here, pinned run (measured) |
 |---|---|---|
 | \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.097 |
 | \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.078 |
@@ -245,7 +246,7 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 
 **Results**, in standardized units.
 
-| metric | paper / CAREFL | here, the pinned ground truth |
+| metric | paper / CAREFL | here, pinned run (measured) |
 |---|---|---|
 | Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.050 |
 | Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.157, at α = 0; 0.149 at the α = −3 grid edge |

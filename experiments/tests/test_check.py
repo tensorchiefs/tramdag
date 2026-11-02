@@ -54,11 +54,11 @@ def test_max_entry_only_fails_upward(results):
     truth = {"err": {"max": 0.2}}
     name = results({"err": 0.11}, truth)
     failures, _, _, _ = check_module.compare(name)
-    assert not failures  # 0.11 is well under the bound
+    assert not failures
 
     name = results({"err": 0.0001}, truth, "tiny")
     failures, _, _, _ = check_module.compare(name)
-    assert not failures  # far better than the bound is still a pass
+    assert not failures
 
     name = results({"err": 0.3}, truth, "over")
     failures, _, _, _ = check_module.compare(name)
@@ -67,14 +67,14 @@ def test_max_entry_only_fails_upward(results):
 
 
 def test_a_bound_far_above_its_measurement_is_reported(results):
-    name = results({"err": 0.01}, {"err": {"max": 0.2}})  # 20x
+    name = results({"err": 0.01}, {"err": {"max": 0.2}})
     _, _, _, notes = check_module.compare(name)
     assert len(notes) == 1
     assert "too loose" in notes[0]
 
 
 def test_a_bound_hugging_its_measurement_is_reported(results):
-    name = results({"err": 0.19}, {"err": {"max": 0.2}})  # 1.05x
+    name = results({"err": 0.19}, {"err": {"max": 0.2}})
     _, _, _, notes = check_module.compare(name)
     assert len(notes) == 1
     assert "another machine" in notes[0]

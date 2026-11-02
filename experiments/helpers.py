@@ -14,7 +14,7 @@ from pathlib import Path
 
 import matplotlib as mpl
 
-mpl.use("Agg")  # headless: the scripts only write files
+mpl.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +41,7 @@ def framework_figures(flow: CausalFlowDAG, df, out: Path, figs: dict, seed) -> l
         flow,
         df,
         seed=seed,
-        colors=("C0", "C3"),  # the experiments' figures draw the flow in red
+        colors=("C0", "C3"),
         path=out / "plots" / names[2],
         title=figs[names[2]]["title"],
     )
@@ -91,7 +91,6 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 opt,
                 factor=config["plateau_factor"],
-                # torch reduces at `bad > patience`, the reference at `bad == patience`
                 patience=config["plateau_patience"] - 1,
                 threshold=config["min_delta"],
                 threshold_mode="abs",
@@ -110,8 +109,6 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
     t0 = time.perf_counter()
     flow.fit(
         train,
-        # per-epoch validation only where the protocol consumes it (the
-        # plateau rule); the triangle scripts never computed it per epoch
         validation_data=val if plateau else None,
         learning_rate=config["learning_rate"],
         callbacks=callbacks,
@@ -235,7 +232,6 @@ def continuous_hist(ax, dgp, flow, bins: int = 50) -> None:
     """
     low, high = np.quantile(dgp, [0.001, 0.999])
     if high - low < 1e-9:
-        # a do-clamped column is constant: give the panel a width
         low, high = low - 1.0, high + 1.0
     edges = np.linspace(low, high, bins)
     ax.hist(dgp, bins=edges, density=True, alpha=0.45, label="DGP")

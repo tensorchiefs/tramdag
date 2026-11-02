@@ -114,7 +114,7 @@ def run(variant: str) -> dict:
     out = make_output_dir(__file__, f"vaca-{variant}")
 
     generator = VacaTriangle(seed=config["dgp_seed"])
-    truth = generator.true_moments(mc_n=0)  # analytic only, no Monte-Carlo draw
+    truth = generator.true_moments(mc_n=0)
 
     print(
         f"fitting the flexible flow on the VACA triangle, n={config['n_train']}: "
@@ -150,7 +150,6 @@ def run(variant: str) -> dict:
         )
     )
     figures.append("interventional.png")
-    # L1: does the flow reproduce the bimodal source marginal?
     metrics["std_x1_flow"] = float(sampled["x1"].std())
     metrics["std_x1_abs_err"] = abs(metrics["std_x1_flow"] - truth["std_x1_analytic"])
     metrics["fit_seconds"] = fit_seconds

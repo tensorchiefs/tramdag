@@ -38,7 +38,6 @@ from simulations.vaca import VacaTriangle
 DATA = Path(__file__).resolve().parent / "data"
 ATOL = 1e-9
 
-# dataset directory -> generator factory (called with seed=)
 DATASETS = {
     "carefl": Carefl4,
     "vaca": VacaTriangle,

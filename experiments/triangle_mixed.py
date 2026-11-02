@@ -126,14 +126,10 @@ def score_counterfactuals(
     rows = np.arange(len(factual))
     true_level = realised["x3"].to_numpy().astype(int)
     metrics = {
-        # half the L1 distance between the two distributions, averaged
         "cf_pmf_tv_vs_analytic": float(
             0.5 * np.abs(flow_pmf - analytic).sum(axis=1).mean()
         ),
-        # probability each assigns to the level that actually happened
         "cf_prob_true_level_flow": float(flow_pmf[rows, true_level].mean()),
-        # what predicting the identifiable law itself scores, and the most
-        # any prediction can score (by always naming the modal level)
         "cf_prob_true_level_analytic": float(analytic[rows, true_level].mean()),
         "cf_prob_true_level_mode_bound": float(analytic.max(axis=1).mean()),
     }
@@ -224,7 +220,6 @@ def run(variant: str) -> dict:
     )
     figures.append("distributions.png")
 
-    # App. C.4: the interventional odds ratio, predicted vs measured
     threshold = config["odds_ratio_threshold"]
     predicted = float(np.exp(metrics["beta12"]))
     measured = dgp_odds_ratio(
@@ -261,10 +256,8 @@ def run(variant: str) -> dict:
         truths={
             **truths,
             "mean_x3_flow_do_x1": metrics["mean_x3_dgp_do_x1"],
-            # C.4: both odds-ratio readings answer to the theory value e^2
             "odds_ratio_predicted": float(np.exp(2.0)),
             "odds_ratio_dgp": float(np.exp(2.0)),
-            # what a model knowing the analytic law exactly would score
             "cf_prob_true_level_flow": metrics["cf_prob_true_level_analytic"],
         },
     )

@@ -38,8 +38,9 @@ uvx ruff format --diff src tests experiments tools notebooks   # formatting
 `ruff-format` hook deliberately does not do. The guides wrap code for
 reading, not for the formatter, so point the command at the source trees.
 
-The rules live in `pyproject.toml`. The complexipy hooks and the ruff `C90`
-rule gate complexity. Function docstrings are not required in `tests/`,
+The ruff rules live in `pyproject.toml`, the complexipy limits in
+`.pre-commit-config.yaml`. The complexipy hooks and the ruff `C90` rule gate
+complexity. Function docstrings are not required in `tests/`,
 `experiments/` or `notebooks/`.
 
 `.github/workflows/pre-commit.yaml` enforces the hooks in

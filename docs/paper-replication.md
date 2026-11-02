@@ -279,7 +279,8 @@ Rejected alternatives:
 `marginal_init` starts every simple intercept at its column's empirical
 marginal ([fitting.md](fitting.md#the-marginal-start)). The reference starts
 `bernp$beta` at zero. Measured on this machine at the CI protocol, one
-run per variant with the start off and on, seeds unchanged:
+run per variant with the start off and on, seeds unchanged. This table is
+its own study run. It is not the pinned run:
 
 | variant | epochs to within 0.01 of the final train NLL, off → on | endpoint, off → on | verdict |
 |---|---|---|---|
@@ -296,9 +297,7 @@ The start is only an initialization. Where the optimizer reaches the same
 basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
 changes. Of the five such cases, two switch the start on and three leave it
-off. The triangle rows predate the per-node fit and its
-per-node shuffle seeds. The measurement of the VACA endpoint used the per-node
-plateau.
+off.
 
 The pinned ground truth of the four variants that switched on stays the same.
 Every metric stays within its tolerance. `check.py` prints advisory notes
@@ -314,7 +313,8 @@ NLL exists during a fit. Each node runs the same rule on its own validation
 NLL, with its own optimizer. The rule and its constants stay the same.
 
 The table gives the VACA do(x2) errors at a = −3 / −1 / 0. It also gives the
-x3 validation NLL, with one run per init seed on the same data.
+x3 validation NLL, with one run per init seed on the same data. This table
+is its own study run. It is not the pinned run.
 
 | init seed | per node (here) | global (reference) |
 |---|---|---|

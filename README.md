@@ -32,9 +32,8 @@ or locally.
 ## Install
 
 `uv add tramdag` or `pip install tramdag` installs the package from PyPI. The
-`plots` extra (`tramdag[plots]`) adds matplotlib for the figures. The release
-lags `main`; install from git for the current state. A clone with `uv sync`
-gives the development setup ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
+`plots` extra (`tramdag[plots]`) adds matplotlib for the figures. A clone with
+`uv sync` gives the development setup ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
 
 ## Documentation
 

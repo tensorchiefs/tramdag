@@ -75,12 +75,12 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 
 | variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, the pinned ground truth |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.981 / −0.161 / 0.281 |
-| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.181; 0.025 |
-| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.168; 0.104 |
-| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.168; 0.240 on the paper's [−1, 0] window |
-| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | CS variants 0.075 to 0.100; linear-ls bound 0.267 |
-| all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4606 to 2.4614 |
+| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.986 / −0.153 / 0.261 |
+| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.176; 0.025 |
+| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.156; 0.053 |
+| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.165; 0.240 on the paper's [−1, 0] window |
+| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | CS variants 0.031 to 0.080; linear-ls bound 0.267 |
+| all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4608 to 2.4632 |
 
 The pinned column gives the `value` of each entry in
 `experiments/ground_truth/*.json`. An error entry has only a `max` bound. Where
@@ -89,7 +89,7 @@ gives the bound divided by 2.5. Otherwise it gives the bound, labeled as one.
 The triangle pins predate the marginal start (D4) and the per-node shuffle
 seeds. A CI run at the current config does not reproduce them exactly.
 
-β13 measures −0.16 to −0.18 instead of −0.2. β13 multiplies x1, whose two
+β13 measures −0.15 to −0.18 instead of −0.2. β13 multiplies x1, whose two
 mixture components sit at 0.25 and 0.73. So x1 has sd 0.254 against 0.375 for
 x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n = 40000. The value stays within
 about one SE. At n = 5000, β13 is too weakly identified for the frozen
@@ -133,11 +133,11 @@ odds-ratio check). It is the only mixed variant with a true β23.
 
 | variant | metric | paper | paper protocol, `init: normal` (500 epochs) | CI config, pinned |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.978 / −0.258 / 0.333 |
+| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.979 / −0.258 / 0.318 |
 | linear-ls | odds ratio predicted / DGP | e² ≈ 7.39; C.4 text: 7.74, CI [7.16, 8.38] | 7.29 / 7.19 | 7.23 / 7.19 |
-| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV bound 0.124; 0.716 / 0.728 / 0.806 |
-| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.205; 0.143 |
-| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.023; 0.923 / 0.921 |
+| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV bound 0.124; 0.715 / 0.728 / 0.806 |
+| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.209; 0.064 |
+| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.023; 0.920 / 0.921 |
 
 The pinned column follows the rule of the continuous table. The
 `triangle-mixed-linear-ls` note does not state the 2.5x rule, so its TV entry
@@ -177,7 +177,7 @@ pinned flow value.
 | \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.068 |
 | \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.092 |
 | sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
-| val NLL x3 | (none) | 1.4347 |
+| val NLL x3 | (none) | 1.4353 |
 
 The do(x2) errors vary with the seed. D5 below gives the spread over four
 init draws. The paper shows one run's densities. The committed bounds are
@@ -249,10 +249,10 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 
 | metric | paper / CAREFL | here, the pinned ground truth |
 |---|---|---|
-| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.063 |
-| Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.204, at the α = −3 grid edge; 0.074 at α = 0 |
-| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | (none) | 0.014 / 0.008 / 0.013 |
-| held-out CF MAE x4, α = −1.5 / 0 / 1.5 | (none) | 0.080 / 0.027 / 0.048 |
+| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.050 |
+| Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.157, at the α = −3 grid edge; 0.074 at α = 0 |
+| held-out CF MAE x3, α = −1.5 / 0 / 1.5 | (none) | 0.014 / 0.009 / 0.013 |
+| held-out CF MAE x4, α = −1.5 / 0 / 1.5 | (none) | 0.059 / 0.025 / 0.052 |
 
 Three ingredients carry the agreement. Training on the committed rows
 instead of a fresh 2500-row draw lowers the Fig. 6 x4 error. The reference

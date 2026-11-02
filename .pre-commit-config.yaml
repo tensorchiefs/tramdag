@@ -105,3 +105,19 @@ repos:
     language: python
     additional_dependencies: [vale==3.26.0.1]
     stages: [commit-msg]
+  - id: tests-do-not-import-experiments
+    name: tests never import experiments
+    entry: ^\s*(from|import)\s+experiments\b
+    language: pygrep
+    files: ^tests/.*\.py$
+  - id: frozen-experiment-data
+    name: experiments/data takes new folders only, no edits
+    entry: git diff --cached --quiet --diff-filter=MDR -- experiments/data/
+    language: system
+    files: ^experiments/data/
+    pass_filenames: false
+  - id: section-markers
+    name: module sections use the eight names of CONTRIBUTING.md
+    entry: ^# %%(?! (imports|global variables|private functions|public functions|private classes|public classes|alias|main) -+$)
+    language: pygrep
+    files: ^(src|tools|tests|experiments)/.*\.py$

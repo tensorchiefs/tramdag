@@ -61,7 +61,7 @@ x3_cs: &x3_cs
   terms:
   - {term: I, parents: [], options: {transform: bernstein, transform_kwargs: {n_coeffs: 20}}}
   - {term: LS, parents: [x1], options: {}}
-  - {term: CS, parents: [x2], options: {units: [25, 25], activation: sigmoid}}
+  - {term: CS, parents: [x2], options: {units: [25, 25], activation: sigmoid, batch_norm: false, input_transform: null}}
 
 variants:
   linear-ls:

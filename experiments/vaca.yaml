@@ -46,8 +46,8 @@ variants:
       x2:
         kind: continuous
         terms:
-        - {term: I, parents: [x1], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.05}, units: [10, 100], activation: tanh, input_transform: minmax}}
+        - {term: I, parents: [x1], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.05}, units: [10, 100], activation: tanh, input_transform: minmax, batch_norm: false}}
       x3:
         kind: continuous
         terms:
-        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.05}, units: [10, 100], activation: tanh, input_transform: minmax}}
+        - {term: I, parents: [x1, x2], options: {transform: bernstein, transform_kwargs: {n_coeffs: 31, range_q: 0.05}, units: [10, 100], activation: tanh, input_transform: minmax, batch_norm: false, allow_interaction: true}}

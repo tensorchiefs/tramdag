@@ -86,8 +86,7 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 The pinned column gives the measurement of the pinned run, from its
 `metrics.json`. Each `value` entry in `experiments/ground_truth/*.json` is
 this measurement. Each `max` bound sits at 1.5x to 4x of it. No cell in this
-column is a bound. The triangle pins come from one run at the current config.
-
+column is a bound.
 β13 measures −0.15 to −0.18 instead of −0.2 in the continuous triangle variants.
 β13 multiplies x1, whose two mixture components sit at 0.25 and 0.73. So x1 has
 sd 0.254 against 0.375 for x2 and 2.918 for x3, and SE(β13) ≈ 0.036 at n =

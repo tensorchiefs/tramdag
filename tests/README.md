@@ -12,14 +12,8 @@ The commands are in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
   bias reduction) trains one flow deliberately in the fast subset. Every run
   therefore measures that number.
 - **CI** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) runs the
-  fast subset on every pull request. It also runs the fast subset on pushes to
-  `main` and `dev-*`. A feature-branch push with no open PR runs `pre-commit`
-  and `experiments`, not `ci`. CI runs the **full** suite nightly and on demand
-  (Actions → CI → *Run workflow*). The split exists because the full suite is
-  ~25 to 40 min on the 2-core runners.
-
-  This file gives no test count; `pytest --collect-only -q | tail -1` is
-  always right.
+  fast subset on every pull request and the **full** suite nightly and on
+  demand. The split exists because the full suite is long.
 - **Determinism**: tests seed `torch` before they construct the flow, so the
   fits are reproducible.
 
@@ -51,10 +45,9 @@ Four kinds of test, in rough order of how much trust they carry:
    - the true linear-shift coefficients of the all-`ls` chain
      (`test_continuous_only_all_ls_recovers_the_true_shift`,
      `test_matches_statsmodels_mle`).
-   - the pointwise effect function `beta(x)` of the heterogeneous-effect DGP
-     (`test_recovery_bar_on_hetero_dgp`).
-   - the bias reduction from propensity centering
-     (`test_dandl_centering_reduces_bias`).
+   - the pointwise effect function `beta(x)` and the bias reduction from
+     propensity centering. The bars are in
+     [varying-coefficients.md](../docs/varying-coefficients.md#validation).
 
    The **research** DGPs (the paper replications and their frozen CSVs) are not
    tested here. They live in [`experiments/`](../experiments/). The experiments
@@ -85,7 +78,7 @@ The reference values that the tests compare against come from two sources:
   equality claim against software that other people wrote. It is not a tuned
   similarity.
 
-## The test files
+## Layout
 
 `conftest.py` holds the **inline DGPs** (all-`ls` chain, heterogeneous effect,
 confounded-with-misfit). It also holds the helpers that are provably
@@ -93,29 +86,8 @@ identical across modules. Specs stay per-module. Each module pins the one
 syntax variant that its property needs. A shared spec can couple unrelated
 acceptance bars.
 
-| file | what it covers |
-|---|---|
-| [`test_flow.py`](test_flow.py) | core unit tests: transforms, ordinal log-prob, DAG validation, abduction/counterfactual mechanics, `save`/`load`, the proportional-odds identity |
-| [`test_fit_hooks.py`](test_fit_hooks.py) | `fit(optimizer=, callbacks=)`: the Keras-shaped validation/verbose options; the shipped `tramdag.callbacks` (the hooks on the node, stop, lists, per-node factories, `EarlyStopping` and its per-node restore); an optimizer factory with two groups; a torch scheduler; the guard that it still lands on the MLE |
-| [`test_node_fit.py`](test_node_fit.py) | a node fits on its own: alone equals in a flow, forked equals serial, a frame with only its columns, the node checkpoint, the padded flow history, the checks that fail before any node fits, a forked callable transform, a generator of callbacks |
-| [`test_density.py`](test_density.py) | `density()` integrates to one and matches sampling |
-| [`test_input_transform.py`](test_input_transform.py) | per-term `input_transform=`: minmax/standardize statistics frozen at calibration, the callable's train column on a fresh batch, lambda save rejection, checkpoint round-trip |
-| [`test_fit_classical.py`](test_fit_classical.py) | `fit_classical`: guard on non-`ls` specs, determinism, float64 round-trip, agreement with `statsmodels` and Adam |
-| [`test_spec_terms.py`](test_spec_terms.py) | term constructors, edge ownership, the meta-adjacency view |
-| [`test_transformation_syntax.py`](test_transformation_syntax.py) | the formula syntax: every spelling normalizes identically, the constructor aliases, `units=`, round-trips, and rejection of a malformed serialized spec |
-| [`test_joint_terms.py`](test_joint_terms.py) | joint multi-parent CS/I terms |
-| [`test_additive_ci.py`](test_additive_ci.py) | the additive intercept (`allow_interaction=False`) |
-| [`test_intercept_contributions.py`](test_intercept_contributions.py) | the post-hoc GAM decomposition of complex intercepts |
-| [`test_vc_term.py`](test_vc_term.py) | the VC effect head: spec, penalty, recovery of `beta(x)` |
-| [`test_vc_centered.py`](test_vc_centered.py) | propensity-centered VC: out-of-fold structure, zero-gradient freeze, bias reduction |
-| [`test_scores.py`](test_scores.py) | analytic scores vs finite differences, the effect-modifier scan |
-| [`test_marginal_init.py`](test_marginal_init.py) | the marginal start: pure-init property of an all-`LS` model |
-| [`test_ordinal_encoding.py`](test_ordinal_encoding.py) | the one-hot parent encoding: level-index validation at every entry point, and the one flat direction it costs per ordinal `LS` parent |
-| [`test_api_papercuts.py`](test_api_papercuts.py) | error messages, `save`/`load` meta, small API contracts |
-| [`test_custom_terms.py`](test_custom_terms.py) | the two-class term contract: a `Term` plus `ShiftModule` subclass, a custom `regularizer`, and the refusals for an unknown or orphan term |
-| [`test_flow_columns.py`](test_flow_columns.py) | the frame a query needs: a missing column is named before any tensor operation sees it |
-| [`test_plots.py`](test_plots.py) | `plot_dag`, `plot_marginals` and `plot_training` draw every node, edge and stop mark |
-| [`test_statedict_stability.py`](test_statedict_stability.py) | the bit-exact tripwire: four seeded flows compared against a recorded baseline, so a reordered construction fails here and not in a replication |
+Each test file opens with a docstring that says what it covers.
+`tests/tools/` holds the state-dict smoke script and its baseline.
 
 Note: the additive-CI and joint-CS *known-truth* acceptance tests carry the
 slow marker. The fast lane (`-m "not slow"`) therefore covers those features

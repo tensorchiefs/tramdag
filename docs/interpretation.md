@@ -5,8 +5,7 @@ readable. This page collects the read-outs and says what each number means.
 For the model itself see [model.md](model.md), and for the symbols see
 [notation.md](notation.md).
 
-Code that runs checks every claim on this page. The links say where,
-so nothing here is a number typed into prose.
+Code that runs checks the claims on this page. The links say where.
 
 ## Which term owns which edge
 
@@ -114,15 +113,7 @@ Worked through in the [intercept notebook](../notebooks/additive_vs_joint_ci.py)
 
 ## An effect that varies with a covariate
 
-`VC(*modifiers, t=...)` fits $\beta(\text{modifiers}) \cdot x_t$, and
-`flow.varying_coef(df, node)` reads the fitted $\beta$ back in closed form.
-
-`flow.scores(df, node)` and `flow.effect_modifier_scan(df, node, t=...)` come
-before that decision rather than after it. They rank candidate modifiers by
-how much the treatment coefficient's per-observation scores drift when the
-you order the rows by each candidate. A cheap all-`LS` fit is enough, so you
-measure the shortlist instead of guessing it.
-
-See [varying-coefficients.md](varying-coefficients.md) and
-[scores.md](scores.md), and
-[`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py).
+`VC(*modifiers, t=...)` fits an effect that varies with the modifiers.
+[varying-coefficients.md](varying-coefficients.md) is the guide. Before you
+declare a `VC` term, `flow.effect_modifier_scan` shortlists the modifiers on a
+cheap all-`LS` fit ([scores.md](scores.md)).

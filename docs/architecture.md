@@ -121,49 +121,23 @@ A custom term is two classes:
 ## Node kinds
 
 The two node kinds are continuous and ordinal. The maths that differs by
-kind is an if/else in three places:
+kind is an if/else in three places.
 
-- the five `Node` methods `log_prob`, `sample`, `abduct`, `marginal_theta`
-  and `encode`, plus the transform choice in `Node.__init__`;
-- the column encoding `nodes.encode`;
-- the score derivative `scores._dl_ds`.
+- The five `Node` methods `log_prob`, `sample`, `abduct`, `marginal_theta` and
+  `encode`, plus the transform choice in `Node.__init__`.
+- The column encoding `nodes.encode`.
+- The score derivative `scores._dl_ds`.
 
-Other code reads the kind only to check, convert or display values.
-`flow.py` checks ordinal levels, sets the output dtype and limits `pmf` and
-`density` to their kind. `readouts.py` refuses an ordinal parent in
-`shift_curve` and keeps a continuous parent raw in `design_matrix`.
-`effect_modifier_scan` finds the score column of a binary ordinal
-treatment. `spec.py` validates and serializes the kind, and `plots.py`
-styles the node.
-The term modules read a node's schema entry (`nodes.schema_entry`):
-`"continuous"` or a level count.
+Other code reads a node's schema entry (`nodes.schema_entry`):
+`"continuous"` or a level count. `CLAUDE.md` at the repository root states the conventions
+that tests pin.
 
 ## Guards that pin all of this
 
-- `tests/tools/statedict_smoke.py` records seeded per-DGP state dicts;
-  `tests/test_statedict_stability.py` compares them bit for bit.
-- The inline DGP truths (`tests/conftest.py`) and 45+ regex-pinned refusals.
-- `experiments/ground_truth/*.json`: eight CI-checked replications with
+- `tests/tools/statedict_smoke.py`: seeded per-DGP state dicts, bit-compared.
+- The inline DGP truths (`tests/conftest.py`) and the regex-pinned refusals.
+- `experiments/ground_truth/*.json`: the CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.
-
-## Docs build
-
-`mkdocs.yml` carries no comments. The reasons for its settings follow.
-
-- `strict: true` fails the build on a warning. A docstring that documents a
-  parameter the signature lacks, or a link to a moved page, would otherwise
-  print only a log line.
-- `scoped_crossrefs` and `relative_crossrefs` let a docstring name a sibling as
-  `` [`pmf`][] ``. A cross-reference then carries no dotted path that goes stale
-  on a rename.
-- `docs/hooks.py` is not a notebook, so mkdocs-jupyter ignores it. The hook sets
-  `execute` to true when `DOCS_EXECUTE=true`, as in CI.
-- mkdocs-bibtex links each citation to its entry as a footnote.
-- mkdocs-bibtex formats through the ASCII markdown of pandoc, so a page range
-  arrives as `488--508`. The `smarty` extension turns the dashes back into
-  typographic dashes and leaves quotes and ellipses alone.
-- The `mermaid` fence class renders the diagrams on this page. Material ships
-  the mermaid.js integration for that class.
 
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
 ## Generated views

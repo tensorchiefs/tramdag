@@ -10,7 +10,7 @@ built on zuko. `README.md` says what it is; this file says how to work in it.
 uv sync                                        # install from the pinned uv.lock
 uv run pytest -q -m "not slow"                 # fast suite (PR CI)
 uv run pytest -q                               # full suite (nightly)
-uvx ruff check . && pre-commit run --all-files # the 18 hooks CI enforces
+uvx ruff check . && pre-commit run --all-files # the hooks CI enforces
 uv run mkdocs build --strict                   # docs; README.md becomes index.md
 MPLBACKEND=Agg uv run python notebooks/<name>.py   # a notebook, headless
 cd experiments && uv run python -m triangle atan-cs   # one replication

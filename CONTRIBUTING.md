@@ -21,17 +21,11 @@ Run `pytest` with no path: `testpaths` in `pyproject.toml` then picks up both
 
 [`tests/README.md`](tests/README.md) documents what the suite guarantees, what
 `slow` marks, how CI splits the runs, and where each reference number comes
-from. The policy:
-
-- Validate a new causal feature against the known truth of an inline DGP in
-  `tests/conftest.py`, never against "runs without error". If no DGP fits,
-  add one.
-- Mark a long fit `@pytest.mark.slow` so PR CI stays fast, but never the fit
-  that *is* a feature's acceptance measurement.
-- A framework test never imports `experiments/`. The research generators and
-  their frozen CSVs live there, and the experiments workflow checks them.
-- `experiments/data/` is a contract. A new seed or changed equations
-  means a new folder, never an edit in place.
+from. Two rules apply to a new test. Validate a causal feature against known
+truth, and keep `experiments/` out of framework tests. `CLAUDE.md` states both
+in its hard rules, together with the `experiments/data/` contract. Mark a
+long fit `@pytest.mark.slow` so PR CI stays fast, but never the fit that *is*
+a feature's acceptance measurement.
 
 ## Linting
 
@@ -44,12 +38,9 @@ uvx ruff format --diff src tests experiments tools notebooks   # formatting
 `ruff-format` hook deliberately does not do. The guides wrap code for
 reading, not for the formatter, so point the command at the source trees.
 
-Rules live in `pyproject.toml`: ruff's default set plus the extras listed
-under `extend-select`, at 88 columns with the numpy docstring convention.
-The complexipy hooks gate cognitive complexity. The limit is 15 for `src/`
-and `tools/`. The limit is 10 for `experiments/`, `notebooks/` and `tests/`.
-Function docstrings are not required in `tests/`, `experiments/` or
-`notebooks/`.
+The rules live in `pyproject.toml`. The complexipy hooks and the ruff `C90`
+rule gate complexity. Function docstrings are not required in `tests/`,
+`experiments/` or `notebooks/`.
 
 `.github/workflows/pre-commit.yaml` enforces the hooks in
 `.pre-commit-config.yaml` on every push and pull request. Install
@@ -82,12 +73,11 @@ instead.
 
 ## Notebooks
 
-`notebooks/*.py` are [jupytext](https://github.com/mwouts/jupytext)
-percent-format files and are the source of truth. Edit those, never an
-`.ipynb`. Git tracks one `.ipynb` on purpose. It is
-`demo_tram_dag_colab.ipynb`, because the README's Colab badge links to it.
-Regenerate it from the `.py`. See
+`notebooks/*.py` are jupytext sources. The rules for them are in
 [`notebooks/README.md`](notebooks/README.md).
+
+Read [`docs/architecture.md`](docs/architecture.md) before you change
+anything in `src/tramdag/`.
 
 ## Conventions worth knowing
 
@@ -131,35 +121,19 @@ Config files carry no comments. The hooks `no-config-comments` and
 
 `pyproject.toml`:
 
-- `dev` is the default `uv sync` group. It holds everything a working checkout
-  needs. It pins `ruff` to the rev of the ruff-pre-commit hook. Otherwise `ruff`
-  is only a transitive dependency of `python-lsp-ruff`, and `uv run ruff` and
-  the hook can disagree about formatting.
+- `dev` is the default `uv sync` group. It pins `ruff` to the rev of the
+  ruff-pre-commit hook. Otherwise `ruff` is only a transitive dependency of
+  `python-lsp-ruff`, and `uv run ruff` and the hook can disagree about
+  formatting.
 - `dev` also holds `shellcheck-py`. actionlint lints the shell of a workflow
   only when shellcheck is on `PATH`. Without it, a local hook run checks less
   than CI does.
-- The dependency groups serve one purpose each. `docs` builds the site and the
-  PDF. `experiments` runs the replications. `notebooks` runs the jupytext
-  sources. `test` runs the suite, with `pytest-cov` for the coverage gate.
 - `testpaths` covers `experiments/` too. The `test` group must therefore import
-  what those tests import: the generators (scipy), matplotlib through the
-  experiment modules, and pyyaml for `experiments/tests/test_configs.py`.
-- `pythonpath = ["experiments"]` makes `simulations` and `common` import as they
-  do under `python -m triangle` from `experiments/`.
-- The experiment tests are cheap numpy-only generator checks. The training runs
-  live in the experiments workflow.
+  what those tests import: the generators, matplotlib through the experiment
+  modules, and pyyaml.
 - CI passes `-n auto`. It is not in `addopts`, so a bare `pytest` stays serial.
-  With 16 workers the full suite takes about 12 minutes against about 24 minutes
-  serial on a 32-core machine.
-- The coverage gate is 95. The fast suite alone measures 97. The margin absorbs
+- The coverage gate has a margin below the measured value. The margin absorbs
   run-to-run variation and still fails on an untested new code path.
-- The sdist excludes `experiments/` (about 2 MB of frozen CSVs) and `tests/`.
-  hatch-vcs uses `no-local-version`, so the version suits PyPI.
-- `cz bump` derives the next version from the conventional commits since the
-  last tag and creates the tag that the release workflow publishes.
-- ruff keeps its default set, which in 0.16 includes S110, BLE001 and TRY004.
-  `extend-select` adds to it. The rules from `A` on are clean and bind new code
-  only.
 - ruff ignores `RUF001` to `RUF003`, because em dashes and Greek letters in
   prose are deliberate (`docs/notation.md`). It ignores `C408`, because the
   experiments' plotting code uses `dict(arrowstyle=...)` as a matplotlib idiom.
@@ -188,78 +162,68 @@ Config files carry no comments. The hooks `no-config-comments` and
   Examples and tests must stay simple enough to read as prose. `tools/` is
   developer code, so it belongs to the framework tier. The examples tier skips
   `.ipynb`, which the `.py` sources generate.
-- The `commitizen-branch` pre-push hook is not wired up. pre-commit exports
-  `PRE_COMMIT_FROM_REF` and `PRE_COMMIT_TO_REF` only when both refs exist. The
-  first push of a new branch would hand commitizen the literal
-  `$PRE_COMMIT_FROM_REF..$PRE_COMMIT_TO_REF` and abort. The commit-msg hook
-  already checks every message.
+
+Docs build (`mkdocs.yml`):
+
+- `strict: true` fails the build on a warning. A docstring that documents a
+  parameter the signature lacks, or a link to a moved page, would otherwise
+  print only a log line.
+- `scoped_crossrefs` and `relative_crossrefs` let a docstring name a sibling as
+  `` [`pmf`][] ``. A cross-reference then carries no dotted path that goes stale
+  on a rename.
+- `docs/hooks.py` is not a notebook, so mkdocs-jupyter ignores it. The hook sets
+  `execute` to true when `DOCS_EXECUTE=true`, as in CI.
+- mkdocs-bibtex formats through the ASCII markdown of pandoc, so a page range
+  arrives as `488--508`. The `smarty` extension turns the dashes back into
+  typographic dashes and leaves quotes and ellipses alone.
 
 Workflows:
 
 - `ci.yml` does not pin Linux to the CPU-only torch index in `uv.lock`, because
   GPU machines share that lock file. The default Linux wheel bundles CUDA and is
   large, so the uv cache, keyed on `uv.lock`, keeps runs fast.
-- The test matrix runs the oldest and the newest supported Python. CI calls
-  `pytest` with no path, so `testpaths` runs `tests/` and the experiment checks.
-  `--cov` takes `source` and `fail_under` from `[tool.coverage]`.
-- The CI jobs set a timeout. A torch hang would otherwise burn the 6-hour
+- The CI jobs set a timeout. A torch hang would otherwise burn the platform
   default per matrix job. The nightly slow suite needs the headroom.
 - The test job syncs with `--no-default-groups`. `dev` is a default group and
-  pulls the editor and docs tooling too (144 packages against 45 for `test`
-  alone). `uv run` then needs the same flag, or it re-syncs `dev`.
+  pulls the editor and docs tooling too. `uv run` then needs the same flag, or
+  it re-syncs `dev`.
 - Torch opens as many intra-op threads as the machine reports, and `-n auto`
-  already runs one worker per vCPU. Uncapped, one worker ran 41 minutes CPU in 9
-  minutes wall without finishing. With the cap, the whole not-slow suite runs in
-  under a minute with `-n auto`.
-- The diagrams job regenerates the views in `docs/architecture.md` and fails on
-  a diff. A hand-run command produced them, so nothing caught drift: the
-  committed copy named `_check_levels` after that method became
-  `_check_level_values`. Core dependencies suffice, because the script imports
-  tramdag, numpy and pandas and fetches pyreverse through `uvx`.
+  already runs one worker per vCPU. Uncapped, the workers oversubscribe the
+  CPUs and a run can stall. The jobs therefore cap the torch threads.
+- The diagrams job regenerates the views in `docs/architecture.md` and fails
+  when they are stale.
 - `docs.yaml` publishes the site per ref with mike: `main` at the site root as
-  `latest`, every `dev-*` branch under its own version. It also builds one PDF
-  of the README, the guides and the executed notebooks with pandoc and XeLaTeX.
-  The PDF is a convenience. Its step is `continue-on-error`, and the workflow
-  republishes the previous copy when it fails. A warning marks that case, so a
-  permanently broken PDF build cannot hide behind a green job.
-- The PDF staging rewrites every input twice. It drops badges, because a remote
-  `.svg` badge makes pandoc emit `\includesvg`, which needs inkscape. It also
-  drops the `[x][ref]` cross-references of mkdocstrings. Pandoc prints them raw,
-  and the long token overflows its table column.
-- `architecture.md` stays out of the PDF. It is mostly mermaid fences, which
-  pandoc prints as raw code.
+  `latest`, every `dev-*` branch under its own version. The PDF is a
+  convenience. Its step is `continue-on-error`, and the workflow republishes
+  the previous copy when it fails. A warning marks that case, so a permanently
+  broken PDF build cannot hide behind a green job.
+- The PDF staging drops badges, because a remote `.svg` badge makes pandoc emit
+  `\includesvg`, which needs inkscape. It also drops the `[x][ref]`
+  cross-references of mkdocstrings, because pandoc prints them raw and the
+  long token overflows its table column. `architecture.md` stays out of the
+  PDF, because it is mostly mermaid fences, which pandoc prints as raw code.
 - pandoc uses its `markdown` reader, not `gfm`, because only it derives table
   column widths from the separator row. A wide table then wraps inside `p{}`
-  columns. citeproc resolves the `[@key]` citations with the site's `.bib` and
-  CSL. The pandoc is the one that `pypandoc-binary` bundles, which the site
+  columns. The pandoc is the one that `pypandoc-binary` bundles, which the site
   formats with.
-- The republish step reads the PDF from `gh-pages` at the ref, not the `latest`
-  alias, because that alias is a symlink that `git show` cannot traverse.
-- `docs.yaml` has `contents: write` and a full checkout because mike reads and
-  writes the `gh-pages` branch. The mike `latest` alias is a symlink, so the
-  republish step uses the ref directory.
-- `experiments.yaml` runs every experiment as one matrix job and posts the
-  report as a commit comment. It trains real models on the protocol of
-  `docs/paper-replication.md`, which lists the CI deviations. The matrix comes
-  from the YAML configs, so a new variant joins automatically. A
-  `workflow_dispatch` may narrow it to one script and variant. Every push runs
-  it. Concurrency cancels superseded runs, one run per ref. `fail-fast` is off,
-  so one drifting experiment does not hide the rest. The CML action uploads the
-  figures to its asset server, so no branch holds generated images.
-- The experiments jobs set `UV_NO_DEFAULT_GROUPS` because `dev` drags in editor
-  tooling, so the job names the group. They set `OMP_NUM_THREADS` to 2 because
-  the runners have 2 cores. The 60-minute timeout fits a slowest job of 11
-  minutes, and a hang is a hang.
+- The mike `latest` alias is a symlink that `git show` cannot traverse, so the
+  republish step reads the PDF from `gh-pages` at the ref directory.
+  `docs.yaml` has `contents: write` and a full checkout because mike reads and
+  writes the `gh-pages` branch.
+- `experiments.yaml` runs every experiment as one matrix job, from the YAML
+  configs, and posts the report as a commit comment. Concurrency cancels
+  superseded runs. `fail-fast` is off, so one drifting experiment does not hide
+  the rest. The CML action uploads the figures to its asset server, so no
+  branch holds generated images. It trains real models on the protocol of
+  `docs/paper-replication.md`, which lists the CI deviations.
+- The experiments jobs set `UV_NO_DEFAULT_GROUPS` for the same reason as the
+  test job, and cap the torch threads to the cores of the runner.
 - The report step runs after a drifted run too, because the figures matter most
   then. It needs the run to have written its report. Earlier failures show as
   the job's own error.
-- The output directory of a run is `<script-with-dashes>-<variant>`.
-  `make_output_dir` dashes the script name and keeps the variant verbatim.
 - `release.yaml` adapts `MArpogaus/minimal_python_project_skeleton`, which uses
   setuptools_scm where this repository uses hatch-vcs. It has no TestPyPI job.
-  Tags publish straight to PyPI through trusted publishing, with no token secret
-  (`id-token: write`). The checkout fetches full history so hatch-vcs can read
-  the tag.
+  The checkout fetches full history so hatch-vcs can read the tag.
 
 ## Releasing
 

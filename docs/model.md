@@ -125,11 +125,10 @@ Three rules follow from the model.
 **`transform=` on `I`** picks the class of $h_{\boldsymbol{\vartheta}}$ for a
 continuous node:
 
-- `"bernstein"`, the default: a Bernstein polynomial with `n_coeffs=20`
-  unconstrained coefficients whose tails extrapolate along the boundary
-  slope;
-- `"spline"`: a monotone rational-quadratic spline with `bins=8`, whose tail
-  slope has a fixed value ([zuko-upstream.md](zuko-upstream.md) explains the
+- `"bernstein"`, the default: a Bernstein polynomial whose tails extrapolate
+  along the boundary slope;
+- `"spline"`: a monotone rational-quadratic spline, whose tail slope has a
+  fixed value ([zuko-upstream.md](zuko-upstream.md) explains the
   consequence);
 - `"affine"`: location and scale only, so the node-conditional is a logistic
   GLM.
@@ -147,7 +146,7 @@ network inputs, with statistics frozen at the first fit: `"minmax"`,
 stay raw, so their coefficients keep their units.
 
 **`units=`, `activation=`, `batch_norm=` on `I`, `CS`, `VC`** size the
-term's network. [code-map.md](code-map.md) lists every default.
+term's network. The defaults are in the API pages of the terms.
 
 ## Ordinal nodes
 

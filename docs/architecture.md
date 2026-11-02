@@ -131,8 +131,7 @@ kind is an if/else in three places.
 - The score derivative in `scores.py` ([scores.md](scores.md)).
 
 Other code reads a node's schema entry (`nodes.schema_entry`):
-`"continuous"` or a level count. `CLAUDE.md` at the repository root states the conventions
-that tests pin.
+`"continuous"` or a level count.
 
 ## Guards that pin all of this
 

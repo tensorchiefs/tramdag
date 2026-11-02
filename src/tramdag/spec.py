@@ -231,7 +231,7 @@ def SI(**options) -> Intercept:
     Parameters
     ----------
     **options
-        As for [`Intercept`][]: ``transform`` and its keyword arguments.
+        As for [`Intercept`][]; transform keywords go in ``transform_kwargs``.
 
     Returns
     -------

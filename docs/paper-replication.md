@@ -32,7 +32,6 @@ replay. So every seed here is a repository choice.
 The deviations have these labels:
 
 - **D1** is the Bernstein domain. VACA keeps the quantiles (see VACA).
-- **D2**: no deviation carries this label.
 - **D3** is the bias-free intercept output layer (the table above).
 - **D4** is the marginal start (the section D4 below).
 - **D5** is the plateau rule per node (the section D5 below).
@@ -164,7 +163,7 @@ a looser tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. The replication keeps the quantiles. The two plateau rules rank the domains in opposite order, so the measurements do not favor one domain. CAREFL, same nets, uses `range_q: 0` |
+| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. Under D5 min/max errs less at every do point, at equal val NLL. The replication keeps the quantiles (D1). CAREFL, same nets, uses `range_q: 0` |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a

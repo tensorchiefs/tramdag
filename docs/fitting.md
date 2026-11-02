@@ -206,8 +206,11 @@ docstring.
   schedules, so the same initialization gives bit-identical results. L-BFGS
   stops short of the optimum on an ill-conditioned NLL. One cause is a
   parent on a large raw scale next to a rare level. Newton steps on the exact
-  Hessian then finish the fit. The fit restores float32 afterwards, and
-  checkpoints stay float32.
+  Hessian then finish the fit.
+- **The model stays float32.** The fit restores float32 afterwards, and
+  checkpoints stay float32. `ls_coefficients`, `pmf` and `log_prob` thus use
+  the fitted values rounded by about 1e-7 relative. The report's
+  `coefficients` are the float64 values; compare those with other software.
 - **`converged` needs two conditions.** The run must stop on its own, and the
   report's `decrement` must be at most `tramdag.fitting.DECREMENT_TOL`. The
   decrement is the decrease of the mean NLL that a Newton step still expects.

@@ -883,6 +883,13 @@ class FitMixin:
             as ``{node: {parent: array}}`` (a node without ``LS`` terms is
             absent), and ``nodes``, the per-node reports.
 
+        Notes
+        -----
+        The report holds the float64 values of the fit. The flow keeps float32
+        parameters, so ``ls_coefficients``, ``pmf`` and ``log_prob`` use these
+        values rounded to float32, about 1e-7 relative. Compare the report with
+        other software.
+
         Warns
         -----
         UserWarning

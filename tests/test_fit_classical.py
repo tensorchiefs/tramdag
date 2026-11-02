@@ -106,6 +106,18 @@ def test_dtype_round_trip_and_usable(ls_chain):
     assert flow.sample(10, seed=0).shape == (10, 4)
 
 
+def test_the_flow_holds_the_reported_coefficients_rounded_to_float32(ls_chain):
+    """The report keeps the float64 fit; the float32 model holds it rounded."""
+    obs = ls_chain["draw"](800, 3)
+    flow = CausalFlowDAG(_ls_spec(), seed=0)
+    rep = flow.fit_classical(obs)
+    for node, coefs in rep["coefficients"].items():
+        for parent, value in coefs.items():
+            assert value.dtype == np.float64
+            held = flow.ls_coefficients()[node][parent]
+            np.testing.assert_array_equal(held, value.astype(np.float32))
+
+
 def test_continuous_only_all_ls_recovers_the_true_shift(ls_chain):
     """An all-continuous all-ls spec fits and lands on the DGP coefficient."""
     df = ls_chain["draw"](4000, 2)[["x1", "x2"]]

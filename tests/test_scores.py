@@ -225,3 +225,16 @@ def test_the_default_scan_leaves_out_descendants_of_the_treatment(ls_chain):
     flow.fit_classical(df)
     scan = flow.effect_modifier_scan(df.assign(row_id=range(len(df))), "y", t="t")
     assert set(scan.index) == {"x1", "x2"}
+
+
+def test_scan_without_candidates_gives_an_empty_frame():
+    """A treatment with no other parent leaves nothing to scan."""
+    rng = np.random.default_rng(3)
+    t = (rng.uniform(size=400) < 0.5).astype(float)
+    df = pd.DataFrame({"T": t, "Y": rng.logistic(size=400) + 0.9 * t})
+    spec = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(LS("T"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    scan = flow.effect_modifier_scan(df, node="Y", t="T")
+    assert scan.empty
+    assert list(scan.columns) == ["stat", "p_value", "crit_5pct", "flag"]

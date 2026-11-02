@@ -598,7 +598,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
                 f"density() requires a continuous node, {node!r} is ordinal; use pmf()"
             )
         nd, theta, shift, n = self._conditional(df, node, do)
-        y = torch.tensor(np.asarray(grid), dtype=self._dtype, device=self.device)
+        y = torch.tensor(np.array(grid), dtype=self._dtype, device=self.device)
         m = y.numel()
         u0, ladj = nd.ut.forward(theta.repeat_interleave(m, 0), y.repeat(n))
         log_p = StandardLogistic.log_prob(u0 + shift.repeat_interleave(m)) + ladj

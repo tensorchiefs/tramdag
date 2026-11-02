@@ -273,5 +273,7 @@ def effect_modifier_scan(
             "crit_5pct": CRIT_5PCT,
             "flag": stat > CRIT_5PCT,
         }
-    out = pd.DataFrame.from_dict(rows, orient="index")
+    out = pd.DataFrame.from_dict(
+        rows, orient="index", columns=["stat", "p_value", "crit_5pct", "flag"]
+    )
     return out.sort_values("stat", ascending=False)

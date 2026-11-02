@@ -49,3 +49,13 @@ def test_density_rejects_an_ordinal_node():
     flow = CausalFlowDAG(spec, seed=0)
     with pytest.raises(ValueError, match="requires a continuous node"):
         flow.density(pd.DataFrame({"x": [0.0]}), "y", [0, 1, 2])
+
+
+def test_density_takes_a_reversed_grid(ls_chain):
+    """A reversed grid gives the reversed densities of the forward grid."""
+    flow, df = _flow(ls_chain)
+    grid = np.linspace(-3, 3, 7)
+    forward = flow.density(df.iloc[:2], "x2", grid)
+    np.testing.assert_allclose(
+        flow.density(df.iloc[:2], "x2", grid[::-1]), forward[:, ::-1]
+    )

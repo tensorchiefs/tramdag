@@ -44,7 +44,6 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import EarlyStopping
 
-# repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
 REPO = next(p for p in HERE if (p / "pyproject.toml").exists())
 DATA = REPO / "experiments" / "data"
@@ -112,10 +111,11 @@ def claim(text, value, bound, fmt="{:.2e}"):
 # ```
 #
 # (R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as `R_GLM`, so
-# the notebook shows the three-way comparison without an R installation.
+# the notebook shows the three-way comparison without an R installation. They
+# are `coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))`.
 
 # %%
-R_GLM = {  # coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))
+R_GLM = {
     "intercept": 1.3682252685,
     "age": -0.0389945827,
     "lwt": -0.0121385423,
@@ -168,22 +168,24 @@ flow_bw.fit_classical(bw)
 # $$\operatorname{logit} P(\texttt{low} = 1) \;=\; (-\theta_0 + w_0) \;+\; w_{\text{age}}\,\texttt{age} \;+\; w_{\text{lwt}}\,\texttt{lwt} \;+\; (w_1 - w_0)\,s .$$
 #
 # The first bracket is the `(Intercept)` of R, which is $-\theta_0 + w_0$ and
-# not $-\theta_0$. The last term is the `smoke` of R.
+# not $-\theta_0$. The last term is the `smoke` of R. The cutpoints are
+# $[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The one-hot
+# level-0 column of `smoke` is part of the intercept, hence the $+ w_0$. The
+# `statsmodels` formula is the same as the R call above, with the same names in
+# the output.
 
 # %%
 import statsmodels.formula.api as smf  # noqa: E402
 
 from tramdag.transforms import ordinal_cutpoints  # noqa: E402
 
-# the same formula as the R call above, and the same names in the output
 res_bw = smf.logit("low ~ age + lwt + smoke", data=bw).fit(disp=False)
 
 w = flow_bw.ls_coefficients()["low"]
-with torch.no_grad():  # cutpoints are [-inf, theta_0, +inf]; take the finite one
+with torch.no_grad():
     theta_0 = float(ordinal_cutpoints(flow_bw.nodes["low"].intercept(1))[0, 1])
 
 rows_bw = [
-    # -theta_0 + w_smoke[0]: the one-hot level-0 column is part of the intercept
     (
         "intercept",
         -theta_0 + float(w["smoke"][0]),
@@ -213,10 +215,11 @@ claim("max coefficient spread of the three fits", max(spreads), 6e-5)
 # Three optimizers land on the same maximum likelihood, because there is only
 # one. They are L-BFGS on the flow, the Newton solver of `statsmodels` and the
 # IRLS of R. The log-likelihood of the `low` node agrees with `logLik(m)` of R
-# too. `flow.pmf` gives the fitted probabilities of `glm` row by row.
+# too. `flow.pmf` gives the fitted probabilities of `glm` row by row. The `nll()`
+# method returns the *mean* NLL per node. Times $n$ and negated, it is the
+# log-likelihood.
 
 # %%
-# nll() is the *mean* NLL per node; times n and negated it is the log-likelihood
 ll_flow = -flow_bw.nll(bw)["low"] * len(bw)
 p_flow = flow_bw.pmf(bw, node="low")[:, 1]
 p_classical = res_bw.predict(bw).values
@@ -263,10 +266,11 @@ assert abs(ll_low - R_LOGLIK) < 1e-4, "the lone node misses the glm likelihood"
 # ```
 #
 # `glm` cannot fit this model. `glm(family = gaussian)` is `lm`, with a linear
-# transform and a normal latent.
+# transform and a normal latent. The R reference values below come from
+# `Colr(bwt ~ age + lwt + smoke, order = 21)` (R 4.2.3, tram 1.0.4).
 
 # %%
-R_COLR_BWT = {  # Colr(bwt ~ age + lwt + smoke, order = 21); R 4.2.3 / tram 1.0.4
+R_COLR_BWT = {
     "age": -0.021971,
     "lwt": -0.010233,
     "smoke": 0.668698,
@@ -274,12 +278,10 @@ R_COLR_BWT = {  # Colr(bwt ~ age + lwt + smoke, order = 21); R 4.2.3 / tram 1.0.
 }
 
 spec_bwt = {
-    "age": ContinuousNode(SI(transform="affine")),  # nuisance marginals
+    "age": ContinuousNode(SI(transform="affine")),
     "lwt": ContinuousNode(SI(transform="affine")),
     "smoke": OrdinalNode(2),
-    "bwt": ContinuousNode(
-        SI(n_coeffs=20) + LS("age") + LS("lwt") + LS("smoke")  # degree 21
-    ),
+    "bwt": ContinuousNode(SI(n_coeffs=20) + LS("age") + LS("lwt") + LS("smoke")),
 }
 
 flow_bwt = CausalFlowDAG(spec_bwt, seed=0)
@@ -289,7 +291,7 @@ w = flow_bwt.ls_coefficients()["bwt"]
 fitted = {
     "age": w["age"][0],
     "lwt": w["lwt"][0],
-    "smoke": w["smoke"][1] - w["smoke"][0],  # one-hot: read the difference
+    "smoke": w["smoke"][1] - w["smoke"][0],
     "loglik": -flow_bwt.nll(bw)["bwt"] * len(bw),
 }
 
@@ -357,7 +359,9 @@ print(
 # Only interpret rows whose leak is close to zero. The choice of $\tau$ is not
 # critical. The spectrum splits into a flat block and a curved block, with
 # orders of magnitude between them. Any threshold inside that gap gives the
-# same answer. The cell below measures the gap.
+# same answer. The cell below measures the gap. The Hessian code runs in
+# float64, because second derivatives need it, and restores the stored
+# precision afterwards.
 
 # %%
 from scipy.stats import norm  # noqa: E402
@@ -365,7 +369,7 @@ from scipy.stats import norm  # noqa: E402
 
 def observed_information(flow, node, data):
     """Give one node's NLL Hessian, the gradient norm, and parameter offsets."""
-    flow.double()  # second derivatives need float64
+    flow.double()
     names, params = zip(*flow.nodes[node].named_parameters(), strict=True)
     nd = flow.nodes[node]
     nll = -nd.row_log_prob(nd.tensorize(data)).sum()
@@ -388,7 +392,7 @@ def observed_information(flow, node, data):
         offsets[name] = at
         at += p.numel()
     result = hess.detach().numpy(), float(grad.detach().norm()), offsets
-    flow.float()  # back to the stored precision
+    flow.float()
     return result
 
 
@@ -413,18 +417,18 @@ def ls_conf_int(flow, node, data, level=0.95):
     hess, grad_norm, offsets = observed_information(flow, node, data)
     evals, evecs = np.linalg.eigh(hess)
     rcond = 1e-7
-    tau = rcond * np.abs(evals).max()  # one threshold, used for both
-    flat = evecs[:, np.abs(evals) <= tau]  # the directions without curvature
-    cov = np.linalg.pinv(hess, rcond=rcond)  # invert only the rest
+    tau = rcond * np.abs(evals).max()
+    flat = evecs[:, np.abs(evals) <= tau]
+    cov = np.linalg.pinv(hess, rcond=rcond)
     z = norm.ppf(0.5 + level / 2)
 
     rows = []
     for parent, w in flow.ls_coefficients()[node].items():
         c = np.zeros(hess.shape[0])
         key = next(n for n in offsets if n.startswith(f"shifts.{parent}"))
-        if len(w) == 1:  # continuous parent: one weight
+        if len(w) == 1:
             c[offsets[key]], estimate, term = 1.0, w[0], parent
-        else:  # ordinal parent: the contrast w[1] - w[0]
+        else:
             c[offsets[key]], c[offsets[key] + 1] = -1.0, 1.0
             estimate, term = w[1] - w[0], f"{parent} (1 vs 0)"
         se = float(np.sqrt(c @ cov @ c))
@@ -435,7 +439,6 @@ def ls_conf_int(flow, node, data, level=0.95):
                 "se": se,
                 "lower": estimate - z * se,
                 "upper": estimate + z * se,
-                # 0 = the contrast avoids the flat subspace, so the SE is real
                 "leak": float(np.abs(c @ flat).max()) if flat.size else 0.0,
             }
         )
@@ -454,8 +457,13 @@ print(
     f"\n{diag['n_params']} parameters, {diag['n_flat']} of them without curvature"
     f"   |grad| = {diag['grad_norm']:.1e}"
 )
-# Colr(bwt ~ age + lwt + smoke, order = 21) on birthwt; R 4.2.3 / tram 1.0.4,
-# produced by classical_fit_tram_dag.R. This is the oracle, not the claim.
+
+# %% [markdown]
+# The next values come from `Colr(bwt ~ age + lwt + smoke, order = 21)` on
+# `birthwt` (R 4.2.3, tram 1.0.4), produced by `classical_fit_tram_dag.R`. They
+# are the oracle, not the claim.
+
+# %%
 R_COLR_BWT_SE = {"age": 0.025305, "lwt": 0.004116, "smoke": 0.260131}
 
 print()
@@ -536,16 +544,20 @@ if False:
 # side as the flow.
 
 # %%
-R_COLR = {  # Colr(..., order = 21) on vaca.csv; R 4.2.3 / tram 1.0.4
+R_COLR = {
     "x2": {"coef": {"x1": 1.800042}, "loglik": -1401.213542},
     "x3": {"coef": {"x1": -1.777289, "x2": -0.455282}, "loglik": -1411.901958},
 }
 
+# %% [markdown]
+# The reference values below come from `Colr(..., order = 21)` on `vaca.csv`
+# (R 4.2.3, tram 1.0.4). The code states `N_COEFFS` instead of using the
+# default, for the reason given above the R block. `N_COEFFS = 20` gives
+# Bernstein degree 21.
+
 # %%
 df = pd.read_csv(NB_DATA / "vaca.csv")
-# stated rather than left to the default, for the reason the markdown cell
-# above the R block gives
-N_COEFFS = 20  # -> Bernstein degree 21, which is tram's `order = 21`
+N_COEFFS = 20
 
 spec_vaca = {
     "x1": ContinuousNode(SI(n_coeffs=N_COEFFS)),
@@ -556,7 +568,7 @@ spec_vaca = {
 flow_c = CausalFlowDAG(spec_vaca, seed=0)
 rep = flow_c.fit_classical(df)
 print(f"\n{'':<12}{'fit_classical':>14}{'R Colr':>12}{'|diff|':>10}")
-loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}  # nll() is a mean
+loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}
 for node, parents in flow_c.ls_coefficients().items():
     for p, w in parents.items():
         c, r = w[0], R_COLR[node]["coef"][p]
@@ -596,12 +608,16 @@ claim("max relative coefficient gap", max(g / r for g, r in gaps), 0.02)
 # %%
 grid = np.linspace(df["x3"].min() - 2, df["x3"].max() + 2, 601)
 rows = df.iloc[:200]
-dens = flow_c.density(rows, "x3", grid)  # (200, 601)
+dens = flow_c.density(rows, "x3", grid)
 mass = np.trapezoid(dens, grid, axis=1)
 claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e-3)
 
-# the mode should move with the parents in the direction the shifts say: a
-# continuous node adds the shift to h(x), so a positive weight lowers the value
+# %% [markdown]
+# The mode should move with the parents in the direction the shifts say. A
+# continuous node adds the shift to $h(x)$, so a positive weight lowers the
+# value.
+
+# %%
 modes = grid[dens.argmax(axis=1)]
 shift = -(
     float(flow_c.ls_coefficients()["x3"]["x1"][0]) * rows["x1"]
@@ -736,7 +752,6 @@ for term in ("x1", "x2"):
 # %%
 before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-# continue training from the classical solution with a gentle Adam phase
 flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
 after = flow_o.ls_coefficients()["x3"]
 

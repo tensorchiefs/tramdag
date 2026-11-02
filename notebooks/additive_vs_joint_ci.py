@@ -86,11 +86,14 @@ for f in (flow_joint, flow_add):
         epochs=1200,
         learning_rate=1e-2,
         validation_data=val,
-        callbacks=EarlyStopping(),  # keep the best-validation weights
+        callbacks=EarlyStopping(),
     )
 
+# %% [markdown]
 # The validation NLL is per row. The joint model can represent the interaction,
 # so it has the lower validation NLL.
+
+# %%
 nll_joint = sum(flow_joint.nll(val).values())
 nll_add = sum(flow_add.nll(val).values())
 print(f"val NLL  joint   : {nll_joint:.4f}")
@@ -105,16 +108,16 @@ assert nll_joint < nll_add, "the joint model should fit the interaction better"
 #
 # It returns the mean-centered (sum-to-zero) contribution of each parent's
 # network to the transform parameters `theta`. The removed means collect in
-# `baseline`. The centering is over the rows of the `df` that you pass.
+# `baseline`. The centering is over the rows of the `df` that you pass. The last
+# check below shows the centering: every column mean is about 0.
 
 # %%
 res_add = flow_add.intercept_contributions(train, "x3")
 res_joint = flow_joint.intercept_contributions(train, "x3")
 
-print("additive terms :", list(res_add["contributions"]))  # 'x1', 'x2': separable
-print("joint terms    :", list(res_joint["contributions"]))  # 'x1+x2': inseparable
+print("additive terms :", list(res_add["contributions"]))
+print("joint terms    :", list(res_joint["contributions"]))
 
-# the centering: every column mean is about 0
 col_means = {
     k: float(np.abs(v.mean(0)).max()) for k, v in res_add["contributions"].items()
 }
@@ -141,8 +144,8 @@ assert max(col_means.values()) < 1e-5
 c1 = res_add["contributions"]["x1"]
 c2 = res_add["contributions"]["x2"]
 cj = res_joint["contributions"]["x1+x2"]
-k = int((c1.var(0) + c2.var(0)).argmax())  # most-varying coefficient, additive
-kj = int(cj.var(0).argmax())  # most-varying coefficient, joint
+k = int((c1.var(0) + c2.var(0)).argmax())
+kj = int(cj.var(0).argmax())
 x1v, x2v = train["x1"].values, train["x2"].values
 
 fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))

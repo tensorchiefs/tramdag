@@ -36,6 +36,10 @@
 # fitted model is in [`docs/interpretation.md`](../docs/interpretation.md).
 #
 # The notebook runs on CPU in well under five minutes.
+#
+# The first code cell installs `tramdag` from PyPI when the package is missing,
+# as on Colab. To track active development instead of the latest release,
+# install with `pip install "git+https://github.com/tensorchiefs/tramdag.git@main"`.
 
 # %%
 import importlib.util
@@ -43,12 +47,10 @@ import subprocess
 import sys
 import time
 
-if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
+if importlib.util.find_spec("tramdag") is None:
     subprocess.check_call(
         [sys.executable, "-m", "pip", "install", "-q", "tramdag[plots]"]
     )
-    # to track active development instead of the latest release, use:
-    #   pip install "git+https://github.com/tensorchiefs/tramdag.git@main"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -83,20 +85,20 @@ print(f"torch {torch.__version__}  device: {DEVICE}")
 # bimodal, which is the part that a location-scale model cannot fit; the
 # monotone transform of each node is what fits it
 # ([`docs/model.md`](../docs/model.md)).
+#
+# The code writes the process out, so the notebook needs nothing but `tramdag`.
+# `draw_latents` and `simulate` stay separate on purpose. Keeping the noise
+# lets section 5 intervene on the same individuals, which makes an individual
+# counterfactual checkable.
+
 
 # %%
-# The process is written out here, so the notebook needs nothing but tramdag.
-# draw_latents and simulate stay separate on purpose. Keeping the noise lets
-# section 5 intervene on the same individuals, which is what makes an
-# individual counterfactual checkable.
-
-
 def draw_latents(n, rng):
     """Draw every noise variable of the process, n rows each."""
     return {
-        "x1_mix": rng.uniform(size=n),  # which mixture component
-        "x1_a": rng.normal(size=n),  # the N(-2, 1.5) branch
-        "x1_b": rng.normal(size=n),  # the N(1.5, 1) branch
+        "x1_mix": rng.uniform(size=n),
+        "x1_a": rng.normal(size=n),
+        "x1_b": rng.normal(size=n),
         "x2": rng.normal(size=n),
         "x3": rng.normal(size=n),
     }
@@ -159,7 +161,7 @@ plt.show()
 
 # %%
 spec = {
-    "x1": ContinuousNode(),  # the source has no parents
+    "x1": ContinuousNode(),
     "x2": ContinuousNode(I("x1")),
     "x3": ContinuousNode(I("x1", "x2")),
 }
@@ -184,8 +186,6 @@ stopped = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
 print(f"\nfitted on {DEVICE} in {t_fit:.1f}s")
 print(f"each node stopped at epoch: {stopped}")
 
-# The ceiling must not bind. If it does, a node never stopped and the
-# numbers below describe an unconverged fit.
 assert max(stopped.values()) < 200, (
     "a node used all 200 epochs, so its early stop never triggered; raise the "
     "ceiling before trusting anything below"
@@ -247,7 +247,10 @@ axes[0].legend()
 fig.tight_layout()
 plt.show()
 
+# %% [markdown]
 # The bound leaves room for another machine and another draw.
+
+# %%
 assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %% [markdown]
@@ -265,14 +268,18 @@ assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %%
 lat = draw_latents(1_000, np.random.default_rng(7))
-factual = simulate(lat)  # the same noise on both sides,
-cf_true = simulate(lat, do={"x1": 0.0})  # so these are true counterfactuals
+factual = simulate(lat)
+cf_true = simulate(lat, do={"x1": 0.0})
 
 u = flow.abduct(factual)
 recon_err = float(np.abs(flow.sample(u=u).to_numpy() - factual.to_numpy()).max())
 print(f"abduction then reconstruction: max |error| = {recon_err:.2e}")
-# This inverts a monotone transform in float32, so the bound is a precision
-# bound rather than a statistical one.
+
+# %% [markdown]
+# Abduction inverts a monotone transform in float32. The bound is a precision
+# bound, not a statistical one.
+
+# %%
 assert recon_err < 1e-4, f"abduction did not round-trip: {recon_err:.2e}"
 
 cf_flow = flow.sample(do={"x1": 0.0}, u=u)

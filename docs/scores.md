@@ -167,8 +167,32 @@ $$
 $$
 
 so one derivative $r_i$ per row serves every coefficient. The derivative has
-a closed form for both node kinds, and the computation uses no autograd. The
-forms are in the docstring of `tramdag.scores._dl_ds`. The function only reads
+a closed form for both node kinds, and the computation uses no autograd.
+
+Here $h$ is the fitted monotone transformation and $\sigma$ the logistic
+function.
+
+For a continuous node with value $y$, the latent value is $u = h(y) + s$
+and $\ell = \log f(u) + \log h'(y)$, with $f$ the standard-logistic
+density. Then
+
+$$
+\frac{\partial \ell}{\partial s} = 1 - 2\sigma(u).
+$$
+
+For an ordinal node, $P(Y = y) = \sigma(b) - \sigma(a)$ with the shifted
+cutpoints $a = \vartheta_{y-1} - s$ and $b = \vartheta_y - s$. Then
+
+$$
+\frac{\partial \ell}{\partial s} =
+\frac{\sigma'(a) - \sigma'(b)}{\sigma(b) - \sigma(a)},
+\qquad \sigma' = \sigma(1 - \sigma).
+$$
+
+For the first and last class, the outer cutpoint is $\mp\infty$ and its
+$\sigma'$ is zero.
+
+The function only reads
 the fitted model. It changes neither fitting nor sampling. The tests check that
 each column sums to about zero at a fitted optimum, and that the scores agree
 with float64 finite differences.

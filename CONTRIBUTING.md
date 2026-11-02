@@ -133,8 +133,8 @@ Config files carry no comments. The hooks `no-config-comments` and
 - The coverage gate has a margin below the measured value. The margin absorbs
   run-to-run variation and still fails on an untested new code path.
 - ruff ignores `RUF001` to `RUF003`, because em dashes and Greek letters in
-  prose are deliberate (`docs/notation.md`). It ignores `C408`, because the
-  experiments' plotting code uses `dict(arrowstyle=...)` as a matplotlib idiom.
+  prose are deliberate (`docs/notation.md`). It ignores `C408`, because a
+  `dict(key=value)` call is deliberate where it reads as keyword arguments.
   It ignores `SIM108`, because a ternary is not always clearer.
 - Notebook prose lives in `# %% [markdown]` cells, where a line is a paragraph,
   so `E501` and the numpydoc summary rules do not apply. The glob

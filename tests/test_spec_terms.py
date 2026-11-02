@@ -165,3 +165,11 @@ def test_strict_spec_loading_skips_options_that_cannot_act():
     del d["A"]["terms"][0]["options"]["units"]
     del d["Y"]["terms"][0]["options"]["transform"]
     spec_from_dict(d, strict=True)
+
+
+def test_strict_spec_loading_requires_the_switches():
+    """An off-by-default switch that acts on the term must be written too."""
+    d = spec_to_dict(_terms_spec())
+    del d["X3"]["terms"][1]["options"]["batch_norm"]
+    with pytest.raises(ValueError, match=r"'CS'.*'batch_norm'"):
+        spec_from_dict(d, strict=True)

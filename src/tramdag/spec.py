@@ -464,15 +464,13 @@ class Term:
         return dict(vars(self))
 
     def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
-        """Give the options that shape this term and that a strict spec writes.
+        """Give the options that act on this term, the parents excluded.
 
-        These are the architecture and the penalty: ``units``, ``activation``
-        and ``penalty``, where the term has them. The off-by-default switches
-        (``batch_norm``, ``input_transform``, ``propensity``) stay out, so
-        does an option that cannot act on this term. ``ordinal`` says whether
-        the node is ordinal. A subclass overrides this to say otherwise.
+        An option acts when setting it changes the model. ``ordinal`` says
+        whether the node is ordinal. A subclass overrides this to drop the
+        options that cannot act on it.
         """
-        return tuple(k for k in ("units", "activation", "penalty") if k in vars(self))
+        return tuple(k for k in self.options() if k != "parents")
 
     @classmethod
     def from_serialized(cls, parents: tuple[str, ...], options: dict) -> Term:
@@ -638,13 +636,18 @@ class Intercept(Term):
             )
 
     def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
-        """Give the transform options of a continuous node and the network's.
+        """Give the options that act on this intercept.
 
-        A parentless term has no network, and an ordinal node's intercept is
-        the cutpoint vector, which takes no transform.
+        An ordinal intercept is the cutpoint vector and takes no transform. A
+        parentless intercept has no network. ``allow_interaction`` acts
+        with two parents or more.
         """
-        transform = () if ordinal else ("transform", "transform_kwargs")
-        return transform + (("units", "activation") if self.parents else ())
+        names = [] if ordinal else ["transform", "transform_kwargs"]
+        if self.parents:
+            names += ["units", "activation", "batch_norm", "input_transform"]
+        if len(self.parents) > 1:
+            names.append("allow_interaction")
+        return tuple(names)
 
     @property
     def classical(self) -> bool:

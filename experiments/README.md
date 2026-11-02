@@ -79,6 +79,18 @@ verbose, so one variant reads top to bottom:
 - everything else is data and scoring configuration, for example `n_train`,
   `dgp_seed` and the grids.
 
+The data and scoring keys follow the paper. `do_x1` is the paper's L2 query,
+do(x1 = −1). `grid_low`, `grid_high` and `grid_points` set the x2 grid of the
+complex-shift overlay (Fig. 7 right). `n_compare` is the number of rows per
+distribution panel (Fig. 16/17 and 9/20 for the triangles, Fig. 5 for VACA), and
+`n_scatter` is the number of points per scatter (Fig. 4). `levels` is the number
+of ordinal levels of x3, stored as 0 to 3. `odds_ratio_*` set the odds(x2 ≤ −1)
+check of App. C.4. `cf_n` and `cf_draws` set the rows and the abduction draws of
+the ordinal counterfactuals (App. B). `n_heldout` is the number of held-out rows
+that CAREFL scores next to the single observation. An empty `schedule` means
+that the reference has no schedule. In a full-batch variant, the shuffle `seed`
+has no effect.
+
 To change what a run does, edit the YAML file. To add a variant, add a
 section; `argparse` finds it, because its choices come from the file, and so
 does the experiments workflow's matrix.

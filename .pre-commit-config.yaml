@@ -91,3 +91,17 @@ repos:
     # first push of a new branch hands commitizen the literal
     # "$PRE_COMMIT_FROM_REF..$PRE_COMMIT_TO_REF" and it aborts. The commit-msg
     # hook above already checks every message as it is written.
+
+- repo: local
+  hooks:
+  - id: no-agent-attribution
+    name: no agent attribution in the commit message
+    entry: (?i)^(co-authored-by|assisted-by|generated-by|claude-session):|generated with
+    language: pygrep
+    stages: [commit-msg]
+  - id: vale-commit-msg
+    name: vale (commit message)
+    entry: vale
+    language: python
+    additional_dependencies: [vale==3.26.0.1]
+    stages: [commit-msg]

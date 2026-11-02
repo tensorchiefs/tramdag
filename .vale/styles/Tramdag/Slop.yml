@@ -1,0 +1,13 @@
+extends: existence
+message: Drop '%s'.
+level: error
+ignorecase: true
+tokens:
+- simply
+- just
+- basically
+- obviously
+- leverage
+- utilize
+- note that
+- it is worth noting

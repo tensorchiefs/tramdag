@@ -272,3 +272,12 @@ def test_pmf_and_density_refuse_a_do_key_that_is_not_a_parent(ls_chain):
     with pytest.raises(ValueError, match="do key 'x2' is not a parent of node 'x1'"):
         flow.density(df, "x1", np.linspace(-1, 1, 5), do={"x2": 0.0})
     assert len(flow.pmf(df, "y", do={"x1": 0.0})) == 50
+
+
+def test_public_names_import_from_package():
+    from tramdag import (  # noqa: F401
+        EarlyStopping,
+        plot_marginals,
+        plot_training,
+        plot_varying_coef,
+    )

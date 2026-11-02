@@ -3,9 +3,10 @@
 # %% imports ---------------------------------------------------------------------------
 from importlib.metadata import version as _version
 
+from .callbacks import EarlyStopping
 from .flow import CausalFlowDAG
 from .nodes import Node
-from .plots import plot_dag
+from .plots import plot_dag, plot_marginals, plot_training, plot_varying_coef
 from .spec import (
     CI,
     CS,
@@ -36,6 +37,7 @@ __all__ = [
     "CausalFlowDAG",
     "ComplexShift",
     "ContinuousNode",
+    "EarlyStopping",
     "I",
     "Intercept",
     "LinearShift",
@@ -45,6 +47,9 @@ __all__ = [
     "VaryingCoefficient",
     "node_parents",
     "plot_dag",
+    "plot_marginals",
+    "plot_training",
+    "plot_varying_coef",
     "spec_from_dict",
     "spec_to_dict",
     "validate_and_sort",

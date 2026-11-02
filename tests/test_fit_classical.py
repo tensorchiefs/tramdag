@@ -196,11 +196,43 @@ def test_a_spent_evaluation_budget_is_not_a_tolerance_stop():
     assert rep["converged"] is False
 
 
-def test_an_unreachable_gradient_bound_is_never_converged(ls_chain, monkeypatch):
-    monkeypatch.setattr(fitting, "DECREMENT_TOL", -1.0)
-    obs = ls_chain["draw"](800, 3)
-    rep = CausalFlowDAG(_ls_spec(), seed=0).fit_classical(obs, max_iter=2000)
+def test_a_spline_intercept_at_a_kink_is_converged():
+    """A spline NLL is only piecewise smooth, so its Hessian can be indefinite.
+
+    At the fitted point the NLL rises along every eigenvector of the Hessian,
+    also along those with negative eigenvalues, so the point is a minimum
+    with a kink and not a saddle. No Newton step lowers the NLL there.
+    """
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame({"x": rng.normal(size=1500)})
+    flow = CausalFlowDAG({"x": ContinuousNode(I(transform="spline"))}, seed=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        rep = flow.nodes["x"].fit_classical(df)
+    assert rep["converged"] is True
+    assert rep["stop_reason"] == "tolerance"
+
+
+def test_the_newton_steps_share_the_iteration_budget():
+    """Newton steps after L-BFGS count against ``max_iter``.
+
+    Six collinear parents, one on a scale of about 200, make the Bernstein
+    NLL converge only linearly under Newton steps. L-BFGS stops on its own
+    after 191 iterations, so a budget of 200 runs out in the Newton steps.
+    """
+    rng = np.random.default_rng(0)
+    x = rng.normal(size=(2000, 1)) + 0.3 * rng.normal(size=(2000, 6))
+    x[:, 0] *= 200
+    df = pd.DataFrame(x, columns=[f"x{i}" for i in range(6)])
+    df["c"] = 0.3 * x[:, :3].sum(axis=1) + rng.logistic(size=2000)
+    spec = {f"x{i}": ContinuousNode() for i in range(6)}
+    spec["c"] = ContinuousNode(sum((LS(f"x{i}") for i in range(1, 6)), LS("x0")))
+    with pytest.warns(UserWarning, match="did not converge"):
+        rep = CausalFlowDAG(spec, seed=0).nodes["c"].fit_classical(df, max_iter=200)
+    assert rep["stop_reason"] == "max_iter"
+    assert rep["n_iter"] == 200
     assert rep["converged"] is False
+    assert rep["decrement"] > fitting.DECREMENT_TOL
 
 
 def test_an_ill_conditioned_ordinal_fit_reaches_the_r_optimum():

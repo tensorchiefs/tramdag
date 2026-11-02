@@ -216,10 +216,11 @@ docstring.
   checkpoints stay float32. `ls_coefficients`, `pmf` and `log_prob` thus use
   the fitted values rounded by about 1e-7 relative. The report's
   `coefficients` are the float64 values; compare those with other software.
-- **`converged` needs two conditions.** The run must stop on its own, and the
-  report's `decrement` must be at most `tramdag.fitting.DECREMENT_TOL`. The
-  decrement is the decrease of the mean NLL that a Newton step still expects.
-  Thus a run that stalls short of the optimum is not converged.
+- **`converged` means that the run stopped on its own.** The Newton steps
+  continue from a stall until the report's `decrement` is at most
+  `tramdag.fitting.DECREMENT_TOL` or no step lowers the NLL. The decrement is
+  the decrease of the mean NLL that a Newton step still expects. `max_iter`
+  limits the L-BFGS iterations and the Newton steps together.
 - **Unidentified directions do not move.** The one-hot of an ordinal parent
   and the cutpoints share one direction with zero curvature. The Newton step
   skips it, so compare the contrasts `w[k] - w[0]` with other software.

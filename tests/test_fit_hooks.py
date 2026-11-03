@@ -128,6 +128,14 @@ def test_an_epochs_dict_without_a_node_fails_before_any_node_fits(ls_chain):
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
 
 
+def test_a_dict_key_that_names_no_node_fails_before_any_node_fits(ls_chain):
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(KeyError, match="callbacks= names no node"):
+        flow.fit(df, epochs=2, callbacks={"X2": EarlyStopping()})
+    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
+
+
 def test_an_optimizer_dict_keeps_each_instance_across_fits(ls_chain):
     df = ls_chain["draw"](400, 1)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)

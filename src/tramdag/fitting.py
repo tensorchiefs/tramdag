@@ -330,8 +330,13 @@ def _node_jobs(order: list, per_node: dict, shared: dict) -> dict[str, dict]:
     """Give each node its ``Node.fit`` keyword arguments, checked.
 
     ``per_node`` holds the arguments that take a value or a dict, ``shared``
-    the others. The check runs before any node fits.
+    the others. The checks run before any node fits: a dict key that names
+    no node raises, so a misspelt name never falls back to the default.
     """
+    for arg, value in per_node.items():
+        unknown = sorted(set(value) - set(order)) if isinstance(value, dict) else []
+        if unknown:
+            raise KeyError(f"{arg}= names no node of the flow: {unknown!r}")
     jobs = {}
     for name in order:
         kwargs = {k: _per_node(k, v, name) for k, v in per_node.items()}
@@ -883,8 +888,8 @@ class FitMixin:
         take one value for every node or a dict keyed by node name. The node
         gets ``value[name]``. A missing key gives the argument's default
         (None), so a ``collections.defaultdict`` gives its own fallback.
-        ``epochs`` has no default, so a missing key raises. Keys that name no
-        node are ignored.
+        ``epochs`` has no default, so a missing key raises. A key that names
+        no node raises too.
 
         Parameters
         ----------
@@ -960,7 +965,8 @@ class FitMixin:
             If ``optimizer`` is one optimizer instance instead of a factory
             or a dict.
         KeyError
-            If a frame lacks a node column, or a dict ``epochs`` lacks a node.
+            If a frame lacks a node column, a dict ``epochs`` lacks a node, or
+            a dict key names no node.
         ValueError
             See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every
             node's callbacks are checked before the first node fits. Also if

@@ -187,13 +187,13 @@ Each built-in term module holds its network and takes its contract from
 {classes.strip()}
 ```
 
-### Call graph — flow construction (traced)
+### Call graph: flow construction (traced)
 
 ```mermaid
 {flowchart(construct)}
 ```
 
-### Call graph — one fit (traced)
+### Call graph: one fit (traced)
 
 ```mermaid
 {flowchart(fit)}

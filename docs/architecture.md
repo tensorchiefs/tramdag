@@ -177,6 +177,7 @@ classDiagram
   }
   class transforms {
   }
+  tramdag --> callbacks
   tramdag --> flow
   tramdag --> nodes
   tramdag --> plots
@@ -298,72 +299,76 @@ classDiagram
 
 ```mermaid
 flowchart LR
+  subgraph fitting
+    n3["_node_seed"]
+  end
   subgraph flow
     n0["CausalFlowDAG.__init__"]
-    n1["CausalFlowDAG._apply_init"]
-    n2["CausalFlowDAG._schema"]
+    n1["CausalFlowDAG._build_node"]
+    n4["CausalFlowDAG._schema"]
   end
   subgraph modules
-    n7["ComplexShiftModule.__init__"]
-    n11["LinearShiftModule.__init__"]
-    n14["SimpleInterceptModule.__init__"]
-    n12["VaryingCoefficientModule.__init__"]
-    n8["_attach_input_transform"]
-    n9["_nn"]
-    n10["feat_width"]
-    n13["intercept_module"]
+    n8["ComplexShiftModule.__init__"]
+    n12["LinearShiftModule.__init__"]
+    n15["SimpleInterceptModule.__init__"]
+    n13["VaryingCoefficientModule.__init__"]
+    n9["_attach_input_transform"]
+    n10["_nn"]
+    n11["feat_width"]
+    n14["intercept_module"]
   end
   subgraph nodes
-    n3["Node.__init__"]
-    n5["schema_entry"]
+    n5["Node.__init__"]
+    n6["schema_entry"]
   end
   subgraph spec
-    n18["Term.check"]
-    n19["Term.edge_parents"]
-    n20["VaryingCoefficient.check"]
-    n21["VaryingCoefficient.edge_parents"]
-    n17["_check_node"]
-    n22["_kahn_sort"]
-    n6["node_parents"]
-    n4["validate_and_sort"]
+    n19["Term.check"]
+    n20["Term.edge_parents"]
+    n21["VaryingCoefficient.check"]
+    n22["VaryingCoefficient.edge_parents"]
+    n18["_check_node"]
+    n23["_kahn_sort"]
+    n7["node_parents"]
+    n2["validate_and_sort"]
   end
   subgraph transforms
-    n23["BernsteinUT.__init__"]
-    n15["BernsteinUT.n_params"]
-    n24["_ScaledUT.__init__"]
-    n16["make_univariate_transform"]
+    n24["BernsteinUT.__init__"]
+    n16["BernsteinUT.n_params"]
+    n25["_ScaledUT.__init__"]
+    n17["make_univariate_transform"]
   end
-    n0 --> n1
-    n0 -- "3x" --> n2
-    n0 -- "3x" --> n3
-    n0 --> n4
-    n2 -- "3x" --> n5
-    n2 -- "3x" --> n6
-    n7 --> n8
-    n7 --> n9
-    n7 --> n10
-    n11 --> n10
-    n12 --> n8
-    n12 --> n9
-    n12 --> n10
-    n13 -- "3x" --> n14
-    n3 --> n7
-    n3 --> n11
-    n3 --> n12
-    n3 -- "3x" --> n13
-    n3 -- "3x" --> n5
-    n3 -- "3x" --> n6
-    n3 -- "2x" --> n15
-    n3 -- "2x" --> n16
-    n17 -- "5x" --> n18
-    n17 -- "5x" --> n19
-    n17 --> n20
-    n17 --> n21
-    n22 -- "3x" --> n6
-    n4 -- "3x" --> n17
-    n4 --> n22
-    n23 -- "2x" --> n24
-    n16 -- "2x" --> n23
+    n0 -- "3x" --> n1
+    n0 --> n2
+    n1 -- "3x" --> n3
+    n1 -- "3x" --> n4
+    n1 -- "3x" --> n5
+    n4 -- "3x" --> n6
+    n4 -- "3x" --> n7
+    n8 --> n9
+    n8 --> n10
+    n8 --> n11
+    n12 --> n11
+    n13 --> n9
+    n13 --> n10
+    n13 --> n11
+    n14 -- "3x" --> n15
+    n5 --> n8
+    n5 --> n12
+    n5 --> n13
+    n5 -- "3x" --> n14
+    n5 -- "3x" --> n6
+    n5 -- "3x" --> n7
+    n5 -- "2x" --> n16
+    n5 -- "2x" --> n17
+    n18 -- "5x" --> n19
+    n18 -- "5x" --> n20
+    n18 --> n21
+    n18 --> n22
+    n23 -- "3x" --> n7
+    n2 -- "3x" --> n18
+    n2 --> n23
+    n24 -- "2x" --> n25
+    n17 -- "2x" --> n24
 ```
 
 ### Call graph: one fit (traced)

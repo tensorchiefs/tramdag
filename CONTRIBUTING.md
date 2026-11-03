@@ -189,8 +189,6 @@ Workflows:
 - Torch opens as many intra-op threads as the machine reports, and `-n auto`
   already runs one worker per vCPU. Uncapped, the workers oversubscribe the
   CPUs and a run can stall. The jobs therefore cap the torch threads.
-- The diagrams job regenerates the views in `docs/architecture.md` and fails
-  when they are stale.
 - `docs.yaml` publishes the site per ref with mike: `main` at the site root as
   `latest`, every `dev-*` branch under its own version. The PDF is a
   convenience. Its step is `continue-on-error`, and the workflow republishes

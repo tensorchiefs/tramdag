@@ -1601,8 +1601,8 @@ the final weights unless a callback restores others. The
   records each node's validation NLL after every epoch. <code>validation_split</code>
   takes the last rows unshuffled, so shuffle the frame first if its row order
   means anything.</li>
-<li><strong>Callbacks.</strong> A callback gets the node at
-  fit begin, after every epoch and at fit end. A <code>True</code> return after an epoch
+<li><strong>Callbacks.</strong> A callback gets the node (under <code>fit_jointly</code>, the flow)
+  at fit begin, after every epoch and at fit end. A <code>True</code> return after an epoch
   stops that node. The shipped callback is
   <a class="autorefs autorefs-internal" title="EarlyStopping" href="../api/callbacks/#tramdag.callbacks.EarlyStopping"><code>EarlyStopping</code></a>, which restores the
   best-validation weights. A learning-rate scheduler is a few lines of

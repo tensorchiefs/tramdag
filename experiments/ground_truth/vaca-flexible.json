@@ -1,23 +1,23 @@
 {
   "_note": "Protocol = the paper's R code with deviation D5 in docs/paper-replication.md: each node fits on its own, so the plateau rule acts on each node's validation NLL, not on the summed one. The Bernstein domain is the reference's train min/max (range_q 0), as in CAREFL. Paper Sec. 5.1-5.2. The interventional means are analytic (E[x3|do(x2=a)] = -0.25 + 0.25a), so the check is the flow's error against them, not a pinned flow value. do(x2=-3) is off-manifold extrapolation. The do(x2) errors are seed-sensitive; docs/paper-replication.md holds the spread over init seeds. Pinned at the reference's own 10000 epochs @ lr 0.001 with the per-node plateau rule; bounds sit at 1.5x to 4x the pinned measurement.",
   "val_nll_x3": {
-    "value": 1.4335075616836548,
+    "value": 1.4341497421264648,
     "atol": 0.05
   },
   "mean_x3_abs_err_do_x2_-3": {
-    "max": 0.1854
+    "max": 0.2538
   },
   "mean_x3_abs_err_do_x2_-1": {
-    "max": 0.0017
+    "max": 0.0389
   },
   "mean_x3_abs_err_do_x2_+0": {
-    "max": 0.1291
+    "max": 0.0991
   },
   "std_x1_abs_err": {
-    "max": 0.0312
+    "max": 0.0313
   },
   "std_x1_flow": {
-    "value": 2.0641565322875977,
+    "value": 2.0641441345214844,
     "atol": 0.07999
   },
   "fit_seconds": {

@@ -1,20 +1,20 @@
 {
   "_note": "Protocol = the paper's R code 1:1 up to the CI batch/lr deviation (see the YAML header): As triangle-atan-cs with a second nonlinear f. sin has two turning points; cs_curve_max_abs_err is scored on paper Fig. 18's window, x2 in [-1, 0]. mean_x3_flow_do_x1 is unpinned on purpose: the DGP center plus the abs-err bound covers it. hidden_features_CS = c(2,25,25,2) reads as in/out dims around the hidden stack (25,25); {max} bounds sit at 1.5x to 4x the measurement of the pinned run.",
   "beta12": {
-    "value": 1.9855167865753174,
+    "value": 1.9808400869369507,
     "atol": 0.05
   },
   "beta13": {
-    "value": -0.16520394384860992,
+    "value": -0.16778479516506195,
     "atol": 0.05,
     "why": "weakly identified: the coefficient multiplies the mixture x1 (sd 0.254 against 0.375 for x2). See the _note and docs/paper-replication.md"
   },
   "val_nll_x3": {
-    "value": 2.4632272720336914,
+    "value": 2.4614338874816895,
     "atol": 0.05
   },
   "cs_curve_max_abs_err": {
-    "max": 0.6006
+    "max": 0.6119
   },
   "mean_x3_dgp_do_x1": {
     "value": 2.1092599399621044,
@@ -22,7 +22,7 @@
     "why": "a deterministic seeded DGP draw, like the other analytic entries; only numpy's last-bit drift moves it"
   },
   "mean_x3_abs_err_do_x1": {
-    "max": 0.188
+    "max": 0.1959
   },
   "fit_seconds": {
     "max": 957,

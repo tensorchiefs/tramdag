@@ -1279,6 +1279,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tramdag.flow.CausalFlowDAG.warm_start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        warm_start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tramdag.flow.CausalFlowDAG.fit" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1803,6 +1814,17 @@
     <span class="md-ellipsis">
       
         design_matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tramdag.flow.CausalFlowDAG.warm_start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        warm_start
       
     </span>
   </a>
@@ -2741,7 +2763,15 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
 <span class="normal">680</span>
 <span class="normal">681</span>
 <span class="normal">682</span>
-<span class="normal">683</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CausalFlowDAG</span><span class="p">(</span><span class="n">FitMixin</span><span class="p">,</span> <span class="n">ReadoutsMixin</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A causal normalizing flow defined by a DAG specification.</span>
 
 <span class="sd">    Parameters</span>
@@ -3204,7 +3234,7 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">pmf</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">do</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Give the analytic class probabilities of an ordinal node.</span>
+<span class="w">        </span><span class="sd">"""Give the class probabilities of an ordinal node in closed form.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -3213,7 +3243,8 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
 <span class="sd">        node : str</span>
 <span class="sd">            Name of the ordinal node.</span>
 <span class="sd">        do : dict[str, float] | None, optional</span>
-<span class="sd">            Column overrides, applied to ``df`` before the evaluation.</span>
+<span class="sd">            Parent values ``{parent: value}``, set in ``df`` before the node</span>
+<span class="sd">            reads its parents. A key that is not a parent raises.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -3223,7 +3254,10 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        ValueError</span>
-<span class="sd">            If ``node`` is continuous.</span>
+<span class="sd">            If ``node`` is continuous, or a ``do`` key is a node that is not</span>
+<span class="sd">            a parent.</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``node`` or a ``do`` key is not a node.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"ordinal"</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -3257,7 +3291,8 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
 <span class="sd">        grid : array-like</span>
 <span class="sd">            Values of ``node`` at which to evaluate the density, shape ``(m,)``.</span>
 <span class="sd">        do : dict[str, float] | None, optional</span>
-<span class="sd">            Column overrides, applied to ``df`` before the evaluation.</span>
+<span class="sd">            Parent values ``{parent: value}``, set in ``df`` before the node</span>
+<span class="sd">            reads its parents. A key that is not a parent raises.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -3267,7 +3302,10 @@ starts at zero anyway. Not stored: a checkpoint holds the weights.</p>
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        ValueError</span>
-<span class="sd">            If ``node`` is ordinal; use ``pmf`` for it.</span>
+<span class="sd">            If ``node`` is ordinal (use ``pmf``), or a ``do`` key is a node</span>
+<span class="sd">            that is not a parent.</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``node`` or a ``do`` key is not a node.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"continuous"</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -4293,7 +4331,7 @@ level's interval.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Give the analytic class probabilities of an ordinal node.</p>
+        <p>Give the class probabilities of an ordinal node in closed form.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4348,7 +4386,8 @@ level's interval.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Column overrides, applied to <code>df</code> before the evaluation.</p>
+                <p>Parent values <code>{parent: value}</code>, set in <code>df</code> before the node
+reads its parents. A key that is not a parent raises.</p>
               </div>
             </td>
             <td>
@@ -4397,7 +4436,18 @@ level's interval.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>node</code> is continuous.</p>
+                <p>If <code>node</code> is continuous, or a <code>do</code> key is a node that is not
+a parent.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="KeyError">KeyError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>node</code> or a <code>do</code> key is not a node.</p>
               </div>
             </td>
           </tr>
@@ -4437,11 +4487,15 @@ level's interval.</p>
 <span class="normal">549</span>
 <span class="normal">550</span>
 <span class="normal">551</span>
-<span class="normal">552</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">pmf</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">do</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Give the analytic class probabilities of an ordinal node.</span>
+<span class="w">    </span><span class="sd">"""Give the class probabilities of an ordinal node in closed form.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -4450,7 +4504,8 @@ level's interval.</p>
 <span class="sd">    node : str</span>
 <span class="sd">        Name of the ordinal node.</span>
 <span class="sd">    do : dict[str, float] | None, optional</span>
-<span class="sd">        Column overrides, applied to ``df`` before the evaluation.</span>
+<span class="sd">        Parent values ``{parent: value}``, set in ``df`` before the node</span>
+<span class="sd">        reads its parents. A key that is not a parent raises.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -4460,7 +4515,10 @@ level's interval.</p>
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If ``node`` is continuous.</span>
+<span class="sd">        If ``node`` is continuous, or a ``do`` key is a node that is not</span>
+<span class="sd">        a parent.</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If ``node`` or a ``do`` key is not a node.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"ordinal"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -4562,7 +4620,8 @@ closed form from the transform, with no sampling. The evaluation takes one
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Column overrides, applied to <code>df</code> before the evaluation.</p>
+                <p>Parent values <code>{parent: value}</code>, set in <code>df</code> before the node
+reads its parents. A key that is not a parent raises.</p>
               </div>
             </td>
             <td>
@@ -4611,7 +4670,18 @@ closed form from the transform, with no sampling. The evaluation takes one
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>node</code> is ordinal; use <code>pmf</code> for it.</p>
+                <p>If <code>node</code> is ordinal (use <code>pmf</code>), or a <code>do</code> key is a node
+that is not a parent.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="KeyError">KeyError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>node</code> or a <code>do</code> key is not a node.</p>
               </div>
             </td>
           </tr>
@@ -4621,11 +4691,7 @@ closed form from the transform, with no sampling. The evaluation takes one
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">558</span>
 <span class="normal">559</span>
 <span class="normal">560</span>
 <span class="normal">561</span>
@@ -4667,7 +4733,15 @@ closed form from the transform, with no sampling. The evaluation takes one
 <span class="normal">597</span>
 <span class="normal">598</span>
 <span class="normal">599</span>
-<span class="normal">600</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">density</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4692,7 +4766,8 @@ closed form from the transform, with no sampling. The evaluation takes one
 <span class="sd">    grid : array-like</span>
 <span class="sd">        Values of ``node`` at which to evaluate the density, shape ``(m,)``.</span>
 <span class="sd">    do : dict[str, float] | None, optional</span>
-<span class="sd">        Column overrides, applied to ``df`` before the evaluation.</span>
+<span class="sd">        Parent values ``{parent: value}``, set in ``df`` before the node</span>
+<span class="sd">        reads its parents. A key that is not a parent raises.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -4702,7 +4777,10 @@ closed form from the transform, with no sampling. The evaluation takes one
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If ``node`` is ordinal; use ``pmf`` for it.</span>
+<span class="sd">        If ``node`` is ordinal (use ``pmf``), or a ``do`` key is a node</span>
+<span class="sd">        that is not a parent.</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If ``node`` or a ``do`` key is not a node.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"continuous"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -4740,14 +4818,14 @@ documents the arguments and the column naming.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Give the scores $\psi_i = \partial \ell_i / \partial \beta$.</span>
 
@@ -4784,15 +4862,7 @@ documents the method, the arguments and the result columns.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span>
-<span class="normal">614</span>
-<span class="normal">615</span>
-<span class="normal">616</span>
-<span class="normal">617</span>
-<span class="normal">618</span>
-<span class="normal">619</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">619</span>
 <span class="normal">620</span>
 <span class="normal">621</span>
 <span class="normal">622</span>
@@ -4802,7 +4872,15 @@ documents the method, the arguments and the result columns.</p>
 <span class="normal">626</span>
 <span class="normal">627</span>
 <span class="normal">628</span>
-<span class="normal">629</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -4879,15 +4957,7 @@ time and the device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">631</span>
-<span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">639</span>
 <span class="normal">640</span>
 <span class="normal">641</span>
 <span class="normal">642</span>
@@ -4900,7 +4970,15 @@ time and the device.</p>
 <span class="normal">649</span>
 <span class="normal">650</span>
 <span class="normal">651</span>
-<span class="normal">652</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write the model, its history and its provenance to a checkpoint.</span>
 
 <span class="sd">    The file holds the spec and the weights, the nodes' training</span>
@@ -5021,15 +5099,7 @@ time and the device.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/flow.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">654</span>
-<span class="normal">655</span>
-<span class="normal">656</span>
-<span class="normal">657</span>
-<span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
-<span class="normal">661</span>
-<span class="normal">662</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">662</span>
 <span class="normal">663</span>
 <span class="normal">664</span>
 <span class="normal">665</span>
@@ -5050,7 +5120,15 @@ time and the device.</p>
 <span class="normal">680</span>
 <span class="normal">681</span>
 <span class="normal">682</span>
-<span class="normal">683</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cpu"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Restore a model from a checkpoint.</span>
 
@@ -6283,6 +6361,130 @@ match <code>w[k] - w[0]</code> on the flow side.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="tramdag.flow.CausalFlowDAG.warm_start" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">warm_start</span>
+
+
+<a href="#tramdag.flow.CausalFlowDAG.warm_start" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">warm_start</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Warm-start every node that has a <code>VC</code> term.</p>
+<p>Each such node runs <a class="autorefs autorefs-internal" title="warm_start" href="../nodes/#tramdag.nodes.Node.warm_start"><code>Node.warm_start</code></a>.
+Call it before <code>fit</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>train_df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Training rows with every node's column.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The reports of the nodes with a <code>VC</code> term, keyed by node name.
+The dict is empty when no node has one.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">837</span>
+<span class="normal">838</span>
+<span class="normal">839</span>
+<span class="normal">840</span>
+<span class="normal">841</span>
+<span class="normal">842</span>
+<span class="normal">843</span>
+<span class="normal">844</span>
+<span class="normal">845</span>
+<span class="normal">846</span>
+<span class="normal">847</span>
+<span class="normal">848</span>
+<span class="normal">849</span>
+<span class="normal">850</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span>
+<span class="normal">855</span>
+<span class="normal">856</span>
+<span class="normal">857</span>
+<span class="normal">858</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Warm-start every node that has a ``VC`` term.</span>
+
+<span class="sd">    Each such node runs [`Node.warm_start`][tramdag.nodes.Node.warm_start].</span>
+<span class="sd">    Call it before ``fit``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    train_df : pd.DataFrame</span>
+<span class="sd">        Training rows with every node's column.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict[str, dict]</span>
+<span class="sd">        The reports of the nodes with a ``VC`` term, keyed by node name.</span>
+<span class="sd">        The dict is empty when no node has one.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">warm_start</span><span class="p">(</span><span class="n">train_df</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">node_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">VaryingCoefficient</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">node_spec</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
+    <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="tramdag.flow.CausalFlowDAG.fit" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">fit</span>
 
@@ -6316,6 +6518,12 @@ happens once here, so all nodes see the same rows. The nodes fit in
 topological order; with validation data, the nodes with a centered
 <code>VC</code> fit last, so their validation NLL uses the fitted treatment
 node.</p>
+<p><code>epochs</code>, <code>learning_rate</code>, <code>optimizer</code> and <code>callbacks</code> each
+take one value for every node or a dict keyed by node name. The node
+gets <code>value[name]</code>. A missing key gives the argument's default
+(None), so a <code>collections.defaultdict</code> gives its own fallback.
+<code>epochs</code> has no default, so a missing key raises. A key that names
+no node raises too.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6350,11 +6558,12 @@ node.</p>
                 <code>epochs</code>
             </td>
             <td>
-                  <code><span title="int">int</span> | <span title="callable">callable</span></code>
+                  <code><span title="int">int</span> | <span title="dict">dict</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Passes over the data, or <code>f(name) -&gt; int</code> per node.</p>
+                <p>Passes over the data, one value or one per node. Required; there
+is no default.</p>
               </div>
             </td>
             <td>
@@ -6366,12 +6575,13 @@ node.</p>
                 <code>learning_rate</code>
             </td>
             <td>
-                  <code><span title="float">float</span> | <span title="callable">callable</span></code>
+                  <code><span title="float">float</span> | <span title="dict">dict</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Adam step size of the default optimizer, or <code>f(name) -&gt; float</code>.
-The default (None) is 1e-2. Exclusive with <code>optimizer</code>.</p>
+                <p>Adam step size of the default optimizer, one value or one per
+node. The default (None) is 1e-2. A node cannot get both a
+<code>learning_rate</code> and an <code>optimizer</code>.</p>
               </div>
             </td>
             <td>
@@ -6421,7 +6631,9 @@ default None.</p>
             <td>
               <div class="doc-md-description">
                 <p>Keras' rule: the LAST fraction of <code>train_df</code> becomes the
-validation set. Mutually exclusive with <code>validation_data</code>.</p>
+validation set, without shuffling, and only the remaining rows
+train and calibrate. Shuffle the frame first if its row order
+means anything. Mutually exclusive with <code>validation_data</code>.</p>
               </div>
             </td>
             <td>
@@ -6453,11 +6665,12 @@ validation set. Mutually exclusive with <code>validation_data</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Seeds the minibatch shuffling, by default None. Each node gets its
-own seed derived from <code>(seed, node index)</code>, so a seeded result
-does not depend on whether the nodes run serially or in
-processes. Unseeded with <code>n_jobs &gt; 1</code>, a base seed is drawn
-from torch's global RNG; see <code>n_jobs</code>.</p>
+                <p>Seeds the minibatch shuffling, by default None. Every node fits
+with this <code>seed</code>, so a node shuffles as
+<a class="autorefs autorefs-internal" title="fit" href="../nodes/#tramdag.nodes.Node.fit"><code>Node.fit</code></a> with the same <code>seed</code>. The
+result does not depend on the other nodes or on <code>n_jobs</code>.
+Unseeded with <code>n_jobs &gt; 1</code>, one seed is drawn from torch's
+global RNG; see the Notes.</p>
               </div>
             </td>
             <td>
@@ -6474,7 +6687,8 @@ from torch's global RNG; see <code>n_jobs</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>Start every simple intercept at its column's marginal, by default
-<code>False</code>. Applied only by the fit that calibrates a node.</p>
+<code>False</code>. Applied only by the fit that calibrates a node. See
+<a class="autorefs autorefs-internal" title="fit" href="../nodes/#tramdag.nodes.Node.fit"><code>Node.fit</code></a>.</p>
               </div>
             </td>
             <td>
@@ -6486,13 +6700,15 @@ from torch's global RNG; see <code>n_jobs</code>.</p>
                 <code>optimizer</code>
             </td>
             <td>
-                  <code><span title="callable">callable</span> | None</code>
+                  <code><span title="callable">callable</span> | <span title="dict">dict</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
                 <p>A factory <code>f(node) -&gt; Optimizer</code>, called once per node fit, for
-example <code>lambda node: torch.optim.AdamW(node.parameters())</code>. The
-default (None) is <code>Adam(lr=1e-2)</code>.</p>
+example <code>lambda node: torch.optim.AdamW(node.parameters())</code>, or
+a dict of factories or optimizer instances by node name. The
+default (None) is <code>Adam(lr=1e-2)</code>. One optimizer instance
+cannot serve every node, so the dict holds the instances.</p>
               </div>
             </td>
             <td>
@@ -6504,14 +6720,15 @@ default (None) is <code>Adam(lr=1e-2)</code>.</p>
                 <code>callbacks</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Callback (tramdag.callbacks.Callback)" href="../callbacks/#tramdag.callbacks.Callback">Callback</a> | <span title="list">list</span> | <span title="callable">callable</span> | None</code>
+                  <code><a class="autorefs autorefs-internal" title="Callback (tramdag.callbacks.Callback)" href="../callbacks/#tramdag.callbacks.Callback">Callback</a> | <span title="list">list</span> | <span title="callable">callable</span> | <span title="dict">dict</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The callbacks of every node, or a function of the node name that
-gives them per node, by default None. A shared shipped callback
+                <p>The callbacks of every node, or a dict of them by node name, by
+default None. A bare callable is an <code>on_epoch_end</code> hook, as in
+<a class="autorefs autorefs-internal" title="fit" href="../nodes/#tramdag.nodes.Node.fit"><code>Node.fit</code></a>. A shared shipped callback
 resets at every node's fit begin, so its attributes describe the
-last node only.</p>
+last node only; a dict keeps one instance per node.</p>
               </div>
             </td>
             <td>
@@ -6569,7 +6786,8 @@ read <code>node.history</code> instead.</p>
 <details class="note" open>
   <summary>Notes</summary>
   <p>Without a <code>seed</code>, <code>n_jobs &gt; 1</code> draws one from torch's RNG, because
-forked workers would otherwise replay one RNG state. A centered VC
+forked workers would otherwise replay one RNG state. Every worker
+gets this one seed. A centered VC
 validates against the live propensity of its fitted treatment node, as
 every query does. Those nodes therefore fit second. The callbacks
 normalize once here, so an iterator of callbacks survives a single pass.</p>
@@ -6590,7 +6808,8 @@ normalize once here, so an iterator of callbacks survives a single pass.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>optimizer</code> is an optimizer instance instead of a factory.</p>
+                <p>If <code>optimizer</code> is one optimizer instance instead of a factory
+or a dict.</p>
               </div>
             </td>
           </tr>
@@ -6600,7 +6819,8 @@ normalize once here, so an iterator of callbacks survives a single pass.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If a frame lacks a node column.</p>
+                <p>If a frame lacks a node column, a dict <code>epochs</code> lacks a node, or
+a dict key names no node.</p>
               </div>
             </td>
           </tr>
@@ -6612,7 +6832,7 @@ normalize once here, so an iterator of callbacks survives a single pass.</p>
               <div class="doc-md-description">
                 <p>See <a class="autorefs autorefs-internal" title="fit" href="../nodes/#tramdag.nodes.Node.fit"><code>Node.fit</code></a>. Every frame and every
 node's callbacks are checked before the first node fits. Also if
-<code>learning_rate</code> and <code>optimizer</code> are both given.</p>
+a node gets both a <code>learning_rate</code> and an <code>optimizer</code>.</p>
               </div>
             </td>
           </tr>
@@ -6622,153 +6842,172 @@ node's callbacks are checked before the first node fits. Also if
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">785</span>
-<span class="normal">786</span>
-<span class="normal">787</span>
-<span class="normal">788</span>
-<span class="normal">789</span>
-<span class="normal">790</span>
-<span class="normal">791</span>
-<span class="normal">792</span>
-<span class="normal">793</span>
-<span class="normal">794</span>
-<span class="normal">795</span>
-<span class="normal">796</span>
-<span class="normal">797</span>
-<span class="normal">798</span>
-<span class="normal">799</span>
-<span class="normal">800</span>
-<span class="normal">801</span>
-<span class="normal">802</span>
-<span class="normal">803</span>
-<span class="normal">804</span>
-<span class="normal">805</span>
-<span class="normal">806</span>
-<span class="normal">807</span>
-<span class="normal">808</span>
-<span class="normal">809</span>
-<span class="normal">810</span>
-<span class="normal">811</span>
-<span class="normal">812</span>
-<span class="normal">813</span>
-<span class="normal">814</span>
-<span class="normal">815</span>
-<span class="normal">816</span>
-<span class="normal">817</span>
-<span class="normal">818</span>
-<span class="normal">819</span>
-<span class="normal">820</span>
-<span class="normal">821</span>
-<span class="normal">822</span>
-<span class="normal">823</span>
-<span class="normal">824</span>
-<span class="normal">825</span>
-<span class="normal">826</span>
-<span class="normal">827</span>
-<span class="normal">828</span>
-<span class="normal">829</span>
-<span class="normal">830</span>
-<span class="normal">831</span>
-<span class="normal">832</span>
-<span class="normal">833</span>
-<span class="normal">834</span>
-<span class="normal">835</span>
-<span class="normal">836</span>
-<span class="normal">837</span>
-<span class="normal">838</span>
-<span class="normal">839</span>
-<span class="normal">840</span>
-<span class="normal">841</span>
-<span class="normal">842</span>
-<span class="normal">843</span>
-<span class="normal">844</span>
-<span class="normal">845</span>
-<span class="normal">846</span>
-<span class="normal">847</span>
-<span class="normal">848</span>
-<span class="normal">849</span>
-<span class="normal">850</span>
-<span class="normal">851</span>
-<span class="normal">852</span>
-<span class="normal">853</span>
-<span class="normal">854</span>
-<span class="normal">855</span>
-<span class="normal">856</span>
-<span class="normal">857</span>
-<span class="normal">858</span>
-<span class="normal">859</span>
-<span class="normal">860</span>
-<span class="normal">861</span>
-<span class="normal">862</span>
-<span class="normal">863</span>
-<span class="normal">864</span>
-<span class="normal">865</span>
-<span class="normal">866</span>
-<span class="normal">867</span>
-<span class="normal">868</span>
-<span class="normal">869</span>
-<span class="normal">870</span>
-<span class="normal">871</span>
-<span class="normal">872</span>
-<span class="normal">873</span>
-<span class="normal">874</span>
-<span class="normal">875</span>
-<span class="normal">876</span>
-<span class="normal">877</span>
-<span class="normal">878</span>
-<span class="normal">879</span>
-<span class="normal">880</span>
-<span class="normal">881</span>
-<span class="normal">882</span>
-<span class="normal">883</span>
-<span class="normal">884</span>
-<span class="normal">885</span>
-<span class="normal">886</span>
-<span class="normal">887</span>
-<span class="normal">888</span>
-<span class="normal">889</span>
-<span class="normal">890</span>
-<span class="normal">891</span>
-<span class="normal">892</span>
-<span class="normal">893</span>
-<span class="normal">894</span>
-<span class="normal">895</span>
-<span class="normal">896</span>
-<span class="normal">897</span>
-<span class="normal">898</span>
-<span class="normal">899</span>
-<span class="normal">900</span>
-<span class="normal">901</span>
-<span class="normal">902</span>
-<span class="normal">903</span>
-<span class="normal">904</span>
-<span class="normal">905</span>
-<span class="normal">906</span>
-<span class="normal">907</span>
-<span class="normal">908</span>
-<span class="normal">909</span>
-<span class="normal">910</span>
-<span class="normal">911</span>
-<span class="normal">912</span>
-<span class="normal">913</span>
-<span class="normal">914</span>
-<span class="normal">915</span>
-<span class="normal">916</span>
-<span class="normal">917</span>
-<span class="normal">918</span>
-<span class="normal">919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 860</span>
+<span class="normal"> 861</span>
+<span class="normal"> 862</span>
+<span class="normal"> 863</span>
+<span class="normal"> 864</span>
+<span class="normal"> 865</span>
+<span class="normal"> 866</span>
+<span class="normal"> 867</span>
+<span class="normal"> 868</span>
+<span class="normal"> 869</span>
+<span class="normal"> 870</span>
+<span class="normal"> 871</span>
+<span class="normal"> 872</span>
+<span class="normal"> 873</span>
+<span class="normal"> 874</span>
+<span class="normal"> 875</span>
+<span class="normal"> 876</span>
+<span class="normal"> 877</span>
+<span class="normal"> 878</span>
+<span class="normal"> 879</span>
+<span class="normal"> 880</span>
+<span class="normal"> 881</span>
+<span class="normal"> 882</span>
+<span class="normal"> 883</span>
+<span class="normal"> 884</span>
+<span class="normal"> 885</span>
+<span class="normal"> 886</span>
+<span class="normal"> 887</span>
+<span class="normal"> 888</span>
+<span class="normal"> 889</span>
+<span class="normal"> 890</span>
+<span class="normal"> 891</span>
+<span class="normal"> 892</span>
+<span class="normal"> 893</span>
+<span class="normal"> 894</span>
+<span class="normal"> 895</span>
+<span class="normal"> 896</span>
+<span class="normal"> 897</span>
+<span class="normal"> 898</span>
+<span class="normal"> 899</span>
+<span class="normal"> 900</span>
+<span class="normal"> 901</span>
+<span class="normal"> 902</span>
+<span class="normal"> 903</span>
+<span class="normal"> 904</span>
+<span class="normal"> 905</span>
+<span class="normal"> 906</span>
+<span class="normal"> 907</span>
+<span class="normal"> 908</span>
+<span class="normal"> 909</span>
+<span class="normal"> 910</span>
+<span class="normal"> 911</span>
+<span class="normal"> 912</span>
+<span class="normal"> 913</span>
+<span class="normal"> 914</span>
+<span class="normal"> 915</span>
+<span class="normal"> 916</span>
+<span class="normal"> 917</span>
+<span class="normal"> 918</span>
+<span class="normal"> 919</span>
+<span class="normal"> 920</span>
+<span class="normal"> 921</span>
+<span class="normal"> 922</span>
+<span class="normal"> 923</span>
+<span class="normal"> 924</span>
+<span class="normal"> 925</span>
+<span class="normal"> 926</span>
+<span class="normal"> 927</span>
+<span class="normal"> 928</span>
+<span class="normal"> 929</span>
+<span class="normal"> 930</span>
+<span class="normal"> 931</span>
+<span class="normal"> 932</span>
+<span class="normal"> 933</span>
+<span class="normal"> 934</span>
+<span class="normal"> 935</span>
+<span class="normal"> 936</span>
+<span class="normal"> 937</span>
+<span class="normal"> 938</span>
+<span class="normal"> 939</span>
+<span class="normal"> 940</span>
+<span class="normal"> 941</span>
+<span class="normal"> 942</span>
+<span class="normal"> 943</span>
+<span class="normal"> 944</span>
+<span class="normal"> 945</span>
+<span class="normal"> 946</span>
+<span class="normal"> 947</span>
+<span class="normal"> 948</span>
+<span class="normal"> 949</span>
+<span class="normal"> 950</span>
+<span class="normal"> 951</span>
+<span class="normal"> 952</span>
+<span class="normal"> 953</span>
+<span class="normal"> 954</span>
+<span class="normal"> 955</span>
+<span class="normal"> 956</span>
+<span class="normal"> 957</span>
+<span class="normal"> 958</span>
+<span class="normal"> 959</span>
+<span class="normal"> 960</span>
+<span class="normal"> 961</span>
+<span class="normal"> 962</span>
+<span class="normal"> 963</span>
+<span class="normal"> 964</span>
+<span class="normal"> 965</span>
+<span class="normal"> 966</span>
+<span class="normal"> 967</span>
+<span class="normal"> 968</span>
+<span class="normal"> 969</span>
+<span class="normal"> 970</span>
+<span class="normal"> 971</span>
+<span class="normal"> 972</span>
+<span class="normal"> 973</span>
+<span class="normal"> 974</span>
+<span class="normal"> 975</span>
+<span class="normal"> 976</span>
+<span class="normal"> 977</span>
+<span class="normal"> 978</span>
+<span class="normal"> 979</span>
+<span class="normal"> 980</span>
+<span class="normal"> 981</span>
+<span class="normal"> 982</span>
+<span class="normal"> 983</span>
+<span class="normal"> 984</span>
+<span class="normal"> 985</span>
+<span class="normal"> 986</span>
+<span class="normal"> 987</span>
+<span class="normal"> 988</span>
+<span class="normal"> 989</span>
+<span class="normal"> 990</span>
+<span class="normal"> 991</span>
+<span class="normal"> 992</span>
+<span class="normal"> 993</span>
+<span class="normal"> 994</span>
+<span class="normal"> 995</span>
+<span class="normal"> 996</span>
+<span class="normal"> 997</span>
+<span class="normal"> 998</span>
+<span class="normal"> 999</span>
+<span class="normal">1000</span>
+<span class="normal">1001</span>
+<span class="normal">1002</span>
+<span class="normal">1003</span>
+<span class="normal">1004</span>
+<span class="normal">1005</span>
+<span class="normal">1006</span>
+<span class="normal">1007</span>
+<span class="normal">1008</span>
+<span class="normal">1009</span>
+<span class="normal">1010</span>
+<span class="normal">1011</span>
+<span class="normal">1012</span>
+<span class="normal">1013</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
-    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="n">validation_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">marginal_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Node</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Node</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CausalFlowDAG</span><span class="p">:</span>
@@ -6783,15 +7022,24 @@ node's callbacks are checked before the first node fits. Also if
 <span class="sd">    ``VC`` fit last, so their validation NLL uses the fitted treatment</span>
 <span class="sd">    node.</span>
 
+<span class="sd">    ``epochs``, ``learning_rate``, ``optimizer`` and ``callbacks`` each</span>
+<span class="sd">    take one value for every node or a dict keyed by node name. The node</span>
+<span class="sd">    gets ``value[name]``. A missing key gives the argument's default</span>
+<span class="sd">    (None), so a ``collections.defaultdict`` gives its own fallback.</span>
+<span class="sd">    ``epochs`` has no default, so a missing key raises. A key that names</span>
+<span class="sd">    no node raises too.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    train_df : pd.DataFrame</span>
 <span class="sd">        Training data, one column per node, plus the side columns.</span>
-<span class="sd">    epochs : int | callable</span>
-<span class="sd">        Passes over the data, or ``f(name) -&gt; int`` per node.</span>
-<span class="sd">    learning_rate : float | callable, optional</span>
-<span class="sd">        Adam step size of the default optimizer, or ``f(name) -&gt; float``.</span>
-<span class="sd">        The default (None) is 1e-2. Exclusive with ``optimizer``.</span>
+<span class="sd">    epochs : int | dict</span>
+<span class="sd">        Passes over the data, one value or one per node. Required; there</span>
+<span class="sd">        is no default.</span>
+<span class="sd">    learning_rate : float | dict, optional</span>
+<span class="sd">        Adam step size of the default optimizer, one value or one per</span>
+<span class="sd">        node. The default (None) is 1e-2. A node cannot get both a</span>
+<span class="sd">        ``learning_rate`` and an ``optimizer``.</span>
 <span class="sd">    batch_size : int, optional</span>
 <span class="sd">        Rows per gradient step, by default 512.</span>
 <span class="sd">    validation_data : pd.DataFrame | None, optional</span>
@@ -6799,27 +7047,34 @@ node's callbacks are checked before the first node fits. Also if
 <span class="sd">        default None.</span>
 <span class="sd">    validation_split : float | None, optional</span>
 <span class="sd">        Keras' rule: the LAST fraction of ``train_df`` becomes the</span>
-<span class="sd">        validation set. Mutually exclusive with ``validation_data``.</span>
+<span class="sd">        validation set, without shuffling, and only the remaining rows</span>
+<span class="sd">        train and calibrate. Shuffle the frame first if its row order</span>
+<span class="sd">        means anything. Mutually exclusive with ``validation_data``.</span>
 <span class="sd">    verbose : int, optional</span>
 <span class="sd">        0 (default) is silent; ``N &gt;= 1`` prints every ``N`` epochs.</span>
 <span class="sd">    seed : int | None, optional</span>
-<span class="sd">        Seeds the minibatch shuffling, by default None. Each node gets its</span>
-<span class="sd">        own seed derived from ``(seed, node index)``, so a seeded result</span>
-<span class="sd">        does not depend on whether the nodes run serially or in</span>
-<span class="sd">        processes. Unseeded with ``n_jobs &gt; 1``, a base seed is drawn</span>
-<span class="sd">        from torch's global RNG; see ``n_jobs``.</span>
+<span class="sd">        Seeds the minibatch shuffling, by default None. Every node fits</span>
+<span class="sd">        with this ``seed``, so a node shuffles as</span>
+<span class="sd">        [`Node.fit`][tramdag.nodes.Node.fit] with the same ``seed``. The</span>
+<span class="sd">        result does not depend on the other nodes or on ``n_jobs``.</span>
+<span class="sd">        Unseeded with ``n_jobs &gt; 1``, one seed is drawn from torch's</span>
+<span class="sd">        global RNG; see the Notes.</span>
 <span class="sd">    marginal_init : bool, optional</span>
 <span class="sd">        Start every simple intercept at its column's marginal, by default</span>
-<span class="sd">        ``False``. Applied only by the fit that calibrates a node.</span>
-<span class="sd">    optimizer : callable | None, optional</span>
+<span class="sd">        ``False``. Applied only by the fit that calibrates a node. See</span>
+<span class="sd">        [`Node.fit`][tramdag.nodes.Node.fit].</span>
+<span class="sd">    optimizer : callable | dict | None, optional</span>
 <span class="sd">        A factory ``f(node) -&gt; Optimizer``, called once per node fit, for</span>
-<span class="sd">        example ``lambda node: torch.optim.AdamW(node.parameters())``. The</span>
-<span class="sd">        default (None) is ``Adam(lr=1e-2)``.</span>
-<span class="sd">    callbacks : Callback | list | callable | None, optional</span>
-<span class="sd">        The callbacks of every node, or a function of the node name that</span>
-<span class="sd">        gives them per node, by default None. A shared shipped callback</span>
+<span class="sd">        example ``lambda node: torch.optim.AdamW(node.parameters())``, or</span>
+<span class="sd">        a dict of factories or optimizer instances by node name. The</span>
+<span class="sd">        default (None) is ``Adam(lr=1e-2)``. One optimizer instance</span>
+<span class="sd">        cannot serve every node, so the dict holds the instances.</span>
+<span class="sd">    callbacks : Callback | list | callable | dict | None, optional</span>
+<span class="sd">        The callbacks of every node, or a dict of them by node name, by</span>
+<span class="sd">        default None. A bare callable is an ``on_epoch_end`` hook, as in</span>
+<span class="sd">        [`Node.fit`][tramdag.nodes.Node.fit]. A shared shipped callback</span>
 <span class="sd">        resets at every node's fit begin, so its attributes describe the</span>
-<span class="sd">        last node only.</span>
+<span class="sd">        last node only; a dict keeps one instance per node.</span>
 <span class="sd">    n_jobs : int, optional</span>
 <span class="sd">        Number of processes, by default 1 (serial, topological order).</span>
 <span class="sd">        ``n_jobs &gt; 1`` forks ``n_jobs`` workers, one task per node (Linux</span>
@@ -6836,7 +7091,8 @@ node's callbacks are checked before the first node fits. Also if
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    Without a ``seed``, ``n_jobs &gt; 1`` draws one from torch's RNG, because</span>
-<span class="sd">    forked workers would otherwise replay one RNG state. A centered VC</span>
+<span class="sd">    forked workers would otherwise replay one RNG state. Every worker</span>
+<span class="sd">    gets this one seed. A centered VC</span>
 <span class="sd">    validates against the live propensity of its fitted treatment node, as</span>
 <span class="sd">    every query does. Those nodes therefore fit second. The callbacks</span>
 <span class="sd">    normalize once here, so an iterator of callbacks survives a single pass.</span>
@@ -6844,44 +7100,46 @@ node's callbacks are checked before the first node fits. Also if
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    TypeError</span>
-<span class="sd">        If ``optimizer`` is an optimizer instance instead of a factory.</span>
+<span class="sd">        If ``optimizer`` is one optimizer instance instead of a factory</span>
+<span class="sd">        or a dict.</span>
 <span class="sd">    KeyError</span>
-<span class="sd">        If a frame lacks a node column.</span>
+<span class="sd">        If a frame lacks a node column, a dict ``epochs`` lacks a node, or</span>
+<span class="sd">        a dict key names no node.</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every</span>
 <span class="sd">        node's callbacks are checked before the first node fits. Also if</span>
-<span class="sd">        ``learning_rate`` and ``optimizer`` are both given.</span>
+<span class="sd">        a node gets both a ``learning_rate`` and an ``optimizer``.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="s2">"optimizer= of CausalFlowDAG.fit is a factory f(node) -&gt; "</span>
-            <span class="s2">"Optimizer, called once per node; got an optimizer instance"</span>
+            <span class="s2">"Optimizer or a dict of optimizers by node name; got one "</span>
+            <span class="s2">"optimizer instance for every node"</span>
         <span class="p">)</span>
-    <span class="n">_check_learning_rate</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
     <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span> <span class="o">=</span> <span class="n">_split_validation</span><span class="p">(</span>
         <span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">validation_split</span>
     <span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_check_frames</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">n_jobs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">62</span><span class="p">,</span> <span class="p">()))</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">callbacks</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callbacks</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">callbacks</span> <span class="o">=</span> <span class="n">_normalize_callbacks</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
-    <span class="n">jobs</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">epochs</span><span class="o">=</span><span class="n">_per_node</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
-            <span class="n">learning_rate</span><span class="o">=</span><span class="n">_per_node</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+    <span class="n">jobs</span> <span class="o">=</span> <span class="n">_node_jobs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span>
+        <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+            <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="nb">dict</span><span class="p">(</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">validation_data</span><span class="o">=</span><span class="n">validation_data</span><span class="p">,</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-            <span class="n">seed</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_node_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
             <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">,</span>
-            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
-            <span class="n">callbacks</span><span class="o">=</span><span class="n">_per_node</span><span class="p">(</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
-    <span class="p">}</span>
-    <span class="k">for</span> <span class="n">kwargs</span> <span class="ow">in</span> <span class="n">jobs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"callbacks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_normalize_callbacks</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"callbacks"</span><span class="p">])</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_calibrate</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="n">marginal_init</span><span class="o">=</span><span class="n">marginal_init</span><span class="p">)</span>
     <span class="n">later</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">side_columns</span><span class="p">()]</span>
     <span class="k">if</span> <span class="n">validation_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -6969,7 +7227,7 @@ NLL per epoch, so <code>flow.history</code>, <code>history_frame</code> and
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Passes over the data.</p>
+                <p>Passes over the data. Required; there is no default.</p>
               </div>
             </td>
             <td>
@@ -7054,7 +7312,7 @@ node.</p>
             <td>
               <div class="doc-md-description">
                 <p>0 (default) is silent; <code>N &gt;= 1</code> prints the summed NLLs every
-<code>N</code> epochs.</p>
+<code>N</code> epochs and on the final epoch.</p>
               </div>
             </td>
             <td>
@@ -7070,7 +7328,8 @@ node.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Seeds the minibatch shuffling, by default None.</p>
+                <p>Seeds the minibatch shuffling, by default None. The row order of
+every epoch is that of <code>fit</code> with the same <code>seed</code>.</p>
               </div>
             </td>
             <td>
@@ -7087,7 +7346,8 @@ node.</p>
             <td>
               <div class="doc-md-description">
                 <p>Start every simple intercept at its column's marginal, by default
-<code>False</code>. Applied only by the fit that calibrates a node.</p>
+<code>False</code>. Applied only by the fit that calibrates a node. See
+<a class="autorefs autorefs-internal" title="fit" href="../nodes/#tramdag.nodes.Node.fit"><code>Node.fit</code></a>.</p>
               </div>
             </td>
             <td>
@@ -7192,101 +7452,7 @@ summed validation NLL and restores the whole flow.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 960</span>
-<span class="normal"> 961</span>
-<span class="normal"> 962</span>
-<span class="normal"> 963</span>
-<span class="normal"> 964</span>
-<span class="normal"> 965</span>
-<span class="normal"> 966</span>
-<span class="normal"> 967</span>
-<span class="normal"> 968</span>
-<span class="normal"> 969</span>
-<span class="normal"> 970</span>
-<span class="normal"> 971</span>
-<span class="normal"> 972</span>
-<span class="normal"> 973</span>
-<span class="normal"> 974</span>
-<span class="normal"> 975</span>
-<span class="normal"> 976</span>
-<span class="normal"> 977</span>
-<span class="normal"> 978</span>
-<span class="normal"> 979</span>
-<span class="normal"> 980</span>
-<span class="normal"> 981</span>
-<span class="normal"> 982</span>
-<span class="normal"> 983</span>
-<span class="normal"> 984</span>
-<span class="normal"> 985</span>
-<span class="normal"> 986</span>
-<span class="normal"> 987</span>
-<span class="normal"> 988</span>
-<span class="normal"> 989</span>
-<span class="normal"> 990</span>
-<span class="normal"> 991</span>
-<span class="normal"> 992</span>
-<span class="normal"> 993</span>
-<span class="normal"> 994</span>
-<span class="normal"> 995</span>
-<span class="normal"> 996</span>
-<span class="normal"> 997</span>
-<span class="normal"> 998</span>
-<span class="normal"> 999</span>
-<span class="normal">1000</span>
-<span class="normal">1001</span>
-<span class="normal">1002</span>
-<span class="normal">1003</span>
-<span class="normal">1004</span>
-<span class="normal">1005</span>
-<span class="normal">1006</span>
-<span class="normal">1007</span>
-<span class="normal">1008</span>
-<span class="normal">1009</span>
-<span class="normal">1010</span>
-<span class="normal">1011</span>
-<span class="normal">1012</span>
-<span class="normal">1013</span>
-<span class="normal">1014</span>
-<span class="normal">1015</span>
-<span class="normal">1016</span>
-<span class="normal">1017</span>
-<span class="normal">1018</span>
-<span class="normal">1019</span>
-<span class="normal">1020</span>
-<span class="normal">1021</span>
-<span class="normal">1022</span>
-<span class="normal">1023</span>
-<span class="normal">1024</span>
-<span class="normal">1025</span>
-<span class="normal">1026</span>
-<span class="normal">1027</span>
-<span class="normal">1028</span>
-<span class="normal">1029</span>
-<span class="normal">1030</span>
-<span class="normal">1031</span>
-<span class="normal">1032</span>
-<span class="normal">1033</span>
-<span class="normal">1034</span>
-<span class="normal">1035</span>
-<span class="normal">1036</span>
-<span class="normal">1037</span>
-<span class="normal">1038</span>
-<span class="normal">1039</span>
-<span class="normal">1040</span>
-<span class="normal">1041</span>
-<span class="normal">1042</span>
-<span class="normal">1043</span>
-<span class="normal">1044</span>
-<span class="normal">1045</span>
-<span class="normal">1046</span>
-<span class="normal">1047</span>
-<span class="normal">1048</span>
-<span class="normal">1049</span>
-<span class="normal">1050</span>
-<span class="normal">1051</span>
-<span class="normal">1052</span>
-<span class="normal">1053</span>
-<span class="normal">1054</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1054</span>
 <span class="normal">1055</span>
 <span class="normal">1056</span>
 <span class="normal">1057</span>
@@ -7295,7 +7461,99 @@ summed validation NLL and restores the whole flow.</p>
 <span class="normal">1060</span>
 <span class="normal">1061</span>
 <span class="normal">1062</span>
-<span class="normal">1063</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_jointly</span><span class="p">(</span>
+<span class="normal">1063</span>
+<span class="normal">1064</span>
+<span class="normal">1065</span>
+<span class="normal">1066</span>
+<span class="normal">1067</span>
+<span class="normal">1068</span>
+<span class="normal">1069</span>
+<span class="normal">1070</span>
+<span class="normal">1071</span>
+<span class="normal">1072</span>
+<span class="normal">1073</span>
+<span class="normal">1074</span>
+<span class="normal">1075</span>
+<span class="normal">1076</span>
+<span class="normal">1077</span>
+<span class="normal">1078</span>
+<span class="normal">1079</span>
+<span class="normal">1080</span>
+<span class="normal">1081</span>
+<span class="normal">1082</span>
+<span class="normal">1083</span>
+<span class="normal">1084</span>
+<span class="normal">1085</span>
+<span class="normal">1086</span>
+<span class="normal">1087</span>
+<span class="normal">1088</span>
+<span class="normal">1089</span>
+<span class="normal">1090</span>
+<span class="normal">1091</span>
+<span class="normal">1092</span>
+<span class="normal">1093</span>
+<span class="normal">1094</span>
+<span class="normal">1095</span>
+<span class="normal">1096</span>
+<span class="normal">1097</span>
+<span class="normal">1098</span>
+<span class="normal">1099</span>
+<span class="normal">1100</span>
+<span class="normal">1101</span>
+<span class="normal">1102</span>
+<span class="normal">1103</span>
+<span class="normal">1104</span>
+<span class="normal">1105</span>
+<span class="normal">1106</span>
+<span class="normal">1107</span>
+<span class="normal">1108</span>
+<span class="normal">1109</span>
+<span class="normal">1110</span>
+<span class="normal">1111</span>
+<span class="normal">1112</span>
+<span class="normal">1113</span>
+<span class="normal">1114</span>
+<span class="normal">1115</span>
+<span class="normal">1116</span>
+<span class="normal">1117</span>
+<span class="normal">1118</span>
+<span class="normal">1119</span>
+<span class="normal">1120</span>
+<span class="normal">1121</span>
+<span class="normal">1122</span>
+<span class="normal">1123</span>
+<span class="normal">1124</span>
+<span class="normal">1125</span>
+<span class="normal">1126</span>
+<span class="normal">1127</span>
+<span class="normal">1128</span>
+<span class="normal">1129</span>
+<span class="normal">1130</span>
+<span class="normal">1131</span>
+<span class="normal">1132</span>
+<span class="normal">1133</span>
+<span class="normal">1134</span>
+<span class="normal">1135</span>
+<span class="normal">1136</span>
+<span class="normal">1137</span>
+<span class="normal">1138</span>
+<span class="normal">1139</span>
+<span class="normal">1140</span>
+<span class="normal">1141</span>
+<span class="normal">1142</span>
+<span class="normal">1143</span>
+<span class="normal">1144</span>
+<span class="normal">1145</span>
+<span class="normal">1146</span>
+<span class="normal">1147</span>
+<span class="normal">1148</span>
+<span class="normal">1149</span>
+<span class="normal">1150</span>
+<span class="normal">1151</span>
+<span class="normal">1152</span>
+<span class="normal">1153</span>
+<span class="normal">1154</span>
+<span class="normal">1155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_jointly</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -7327,7 +7585,7 @@ summed validation NLL and restores the whole flow.</p>
 <span class="sd">    train_df : pd.DataFrame</span>
 <span class="sd">        Training data, one column per node, plus the side columns.</span>
 <span class="sd">    epochs : int</span>
-<span class="sd">        Passes over the data.</span>
+<span class="sd">        Passes over the data. Required; there is no default.</span>
 <span class="sd">    learning_rate : float, optional</span>
 <span class="sd">        Adam step size of the default optimizer. The default (None) is</span>
 <span class="sd">        1e-2. Exclusive with ``optimizer``.</span>
@@ -7342,12 +7600,14 @@ summed validation NLL and restores the whole flow.</p>
 <span class="sd">        ``validation_data``.</span>
 <span class="sd">    verbose : int, optional</span>
 <span class="sd">        0 (default) is silent; ``N &gt;= 1`` prints the summed NLLs every</span>
-<span class="sd">        ``N`` epochs.</span>
+<span class="sd">        ``N`` epochs and on the final epoch.</span>
 <span class="sd">    seed : int | None, optional</span>
-<span class="sd">        Seeds the minibatch shuffling, by default None.</span>
+<span class="sd">        Seeds the minibatch shuffling, by default None. The row order of</span>
+<span class="sd">        every epoch is that of ``fit`` with the same ``seed``.</span>
 <span class="sd">    marginal_init : bool, optional</span>
 <span class="sd">        Start every simple intercept at its column's marginal, by default</span>
-<span class="sd">        ``False``. Applied only by the fit that calibrates a node.</span>
+<span class="sd">        ``False``. Applied only by the fit that calibrates a node. See</span>
+<span class="sd">        [`Node.fit`][tramdag.nodes.Node.fit].</span>
 <span class="sd">    optimizer : torch.optim.Optimizer | callable | None, optional</span>
 <span class="sd">        A torch optimizer over ``flow.parameters()``, or a factory</span>
 <span class="sd">        ``f(flow) -&gt; Optimizer``. The default (None) is</span>
@@ -7380,11 +7640,7 @@ summed validation NLL and restores the whole flow.</p>
     <span class="n">side</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">nd</span><span class="o">.</span><span class="n">side_columns</span><span class="p">()]</span>
     <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">train_df</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">,</span> <span class="o">*</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">side</span><span class="p">)])</span>
     <span class="n">generator</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">optimizer</span><span class="p">):</span>
-        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-2</span> <span class="k">if</span> <span class="n">learning_rate</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">learning_rate</span>
-    <span class="p">)</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">_make_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">)</span>
     <span class="n">_train_loop</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="s2">"flow"</span><span class="p">,</span>
@@ -7583,78 +7839,78 @@ or a node's calibration refuses the frame.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/fitting.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1065</span>
-<span class="normal">1066</span>
-<span class="normal">1067</span>
-<span class="normal">1068</span>
-<span class="normal">1069</span>
-<span class="normal">1070</span>
-<span class="normal">1071</span>
-<span class="normal">1072</span>
-<span class="normal">1073</span>
-<span class="normal">1074</span>
-<span class="normal">1075</span>
-<span class="normal">1076</span>
-<span class="normal">1077</span>
-<span class="normal">1078</span>
-<span class="normal">1079</span>
-<span class="normal">1080</span>
-<span class="normal">1081</span>
-<span class="normal">1082</span>
-<span class="normal">1083</span>
-<span class="normal">1084</span>
-<span class="normal">1085</span>
-<span class="normal">1086</span>
-<span class="normal">1087</span>
-<span class="normal">1088</span>
-<span class="normal">1089</span>
-<span class="normal">1090</span>
-<span class="normal">1091</span>
-<span class="normal">1092</span>
-<span class="normal">1093</span>
-<span class="normal">1094</span>
-<span class="normal">1095</span>
-<span class="normal">1096</span>
-<span class="normal">1097</span>
-<span class="normal">1098</span>
-<span class="normal">1099</span>
-<span class="normal">1100</span>
-<span class="normal">1101</span>
-<span class="normal">1102</span>
-<span class="normal">1103</span>
-<span class="normal">1104</span>
-<span class="normal">1105</span>
-<span class="normal">1106</span>
-<span class="normal">1107</span>
-<span class="normal">1108</span>
-<span class="normal">1109</span>
-<span class="normal">1110</span>
-<span class="normal">1111</span>
-<span class="normal">1112</span>
-<span class="normal">1113</span>
-<span class="normal">1114</span>
-<span class="normal">1115</span>
-<span class="normal">1116</span>
-<span class="normal">1117</span>
-<span class="normal">1118</span>
-<span class="normal">1119</span>
-<span class="normal">1120</span>
-<span class="normal">1121</span>
-<span class="normal">1122</span>
-<span class="normal">1123</span>
-<span class="normal">1124</span>
-<span class="normal">1125</span>
-<span class="normal">1126</span>
-<span class="normal">1127</span>
-<span class="normal">1128</span>
-<span class="normal">1129</span>
-<span class="normal">1130</span>
-<span class="normal">1131</span>
-<span class="normal">1132</span>
-<span class="normal">1133</span>
-<span class="normal">1134</span>
-<span class="normal">1135</span>
-<span class="normal">1136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1157</span>
+<span class="normal">1158</span>
+<span class="normal">1159</span>
+<span class="normal">1160</span>
+<span class="normal">1161</span>
+<span class="normal">1162</span>
+<span class="normal">1163</span>
+<span class="normal">1164</span>
+<span class="normal">1165</span>
+<span class="normal">1166</span>
+<span class="normal">1167</span>
+<span class="normal">1168</span>
+<span class="normal">1169</span>
+<span class="normal">1170</span>
+<span class="normal">1171</span>
+<span class="normal">1172</span>
+<span class="normal">1173</span>
+<span class="normal">1174</span>
+<span class="normal">1175</span>
+<span class="normal">1176</span>
+<span class="normal">1177</span>
+<span class="normal">1178</span>
+<span class="normal">1179</span>
+<span class="normal">1180</span>
+<span class="normal">1181</span>
+<span class="normal">1182</span>
+<span class="normal">1183</span>
+<span class="normal">1184</span>
+<span class="normal">1185</span>
+<span class="normal">1186</span>
+<span class="normal">1187</span>
+<span class="normal">1188</span>
+<span class="normal">1189</span>
+<span class="normal">1190</span>
+<span class="normal">1191</span>
+<span class="normal">1192</span>
+<span class="normal">1193</span>
+<span class="normal">1194</span>
+<span class="normal">1195</span>
+<span class="normal">1196</span>
+<span class="normal">1197</span>
+<span class="normal">1198</span>
+<span class="normal">1199</span>
+<span class="normal">1200</span>
+<span class="normal">1201</span>
+<span class="normal">1202</span>
+<span class="normal">1203</span>
+<span class="normal">1204</span>
+<span class="normal">1205</span>
+<span class="normal">1206</span>
+<span class="normal">1207</span>
+<span class="normal">1208</span>
+<span class="normal">1209</span>
+<span class="normal">1210</span>
+<span class="normal">1211</span>
+<span class="normal">1212</span>
+<span class="normal">1213</span>
+<span class="normal">1214</span>
+<span class="normal">1215</span>
+<span class="normal">1216</span>
+<span class="normal">1217</span>
+<span class="normal">1218</span>
+<span class="normal">1219</span>
+<span class="normal">1220</span>
+<span class="normal">1221</span>
+<span class="normal">1222</span>
+<span class="normal">1223</span>
+<span class="normal">1224</span>
+<span class="normal">1225</span>
+<span class="normal">1226</span>
+<span class="normal">1227</span>
+<span class="normal">1228</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fit_classical</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">train_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>

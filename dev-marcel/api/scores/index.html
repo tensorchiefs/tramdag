@@ -1587,10 +1587,12 @@ propensity inputs of centered VC terms.</p>
                 <p>One column per coefficient, shape <code>(n, k)</code>, indexed like <code>df</code>.
 A continuous <code>LS</code> parent gives one column, named after the
 parent. An ordinal <code>LS</code> parent gives one column per one-hot
-level, named <code>"{parent}[{k}]"</code>. A <code>VC</code> term gives one column
-named after its treatment, which holds the <code>beta0</code> score. For a
-binary ordinal treatment that score belongs to the identified
-contrast of level 1 against level 0.</p>
+level, named <code>"{parent}[{k}]"</code>; a row's score sits in the column
+of its level and the other columns are 0. A <code>VC</code> term gives one
+column named after its treatment, which holds the <code>beta0</code> score.
+For a binary ordinal treatment that score belongs to the identified
+contrast of level 1 against level 0. <code>CS</code> and <code>CI</code> terms give no
+column.</p>
               </div>
             </td>
           </tr>
@@ -1701,7 +1703,9 @@ centered terms.</p>
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
-<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">node_scores</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute the per-observation scores of the interpretable coefficients.</span>
 
@@ -1725,10 +1729,12 @@ centered terms.</p>
 <span class="sd">        One column per coefficient, shape ``(n, k)``, indexed like ``df``.</span>
 <span class="sd">        A continuous ``LS`` parent gives one column, named after the</span>
 <span class="sd">        parent. An ordinal ``LS`` parent gives one column per one-hot</span>
-<span class="sd">        level, named ``"{parent}[{k}]"``. A ``VC`` term gives one column</span>
-<span class="sd">        named after its treatment, which holds the ``beta0`` score. For a</span>
-<span class="sd">        binary ordinal treatment that score belongs to the identified</span>
-<span class="sd">        contrast of level 1 against level 0.</span>
+<span class="sd">        level, named ``"{parent}[{k}]"``; a row's score sits in the column</span>
+<span class="sd">        of its level and the other columns are 0. A ``VC`` term gives one</span>
+<span class="sd">        column named after its treatment, which holds the ``beta0`` score.</span>
+<span class="sd">        For a binary ordinal treatment that score belongs to the identified</span>
+<span class="sd">        contrast of level 1 against level 0. ``CS`` and ``CI`` terms give no</span>
+<span class="sd">        column.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -1852,9 +1858,7 @@ terms.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/scores.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span>
 <span class="normal">128</span>
@@ -1882,7 +1886,9 @@ terms.</p>
 <span class="normal">150</span>
 <span class="normal">151</span>
 <span class="normal">152</span>
-<span class="normal">153</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sup_bb_pvalue</span><span class="p">(</span><span class="n">stat</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sup_bb_pvalue</span><span class="p">(</span><span class="n">stat</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Give ``P(sup |Brownian bridge| &gt; stat)``, the Kolmogorov series.</span>
 
 <span class="sd">    Parameters</span>
@@ -2012,7 +2018,8 @@ scores by it, forms the scaled cumulative sum
             <td>
               <div class="doc-md-description">
                 <p>Name of the treatment. Its scores column is <code>t</code> itself for a
-continuous parent or a VC term, and the identified level-1 column
+continuous <code>LS</code> parent or a VC term (the <code>beta0</code> score), and the
+identified level-1 column
 <code>"{t}[1]"</code> for a binary ordinal LS parent.</p>
               </div>
             </td>
@@ -2121,9 +2128,7 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/scores.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
 <span class="normal">159</span>
 <span class="normal">160</span>
 <span class="normal">161</span>
@@ -2221,7 +2226,10 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
-<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -2250,7 +2258,8 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="sd">        Name of the outcome node.</span>
 <span class="sd">    t : str</span>
 <span class="sd">        Name of the treatment. Its scores column is ``t`` itself for a</span>
-<span class="sd">        continuous parent or a VC term, and the identified level-1 column</span>
+<span class="sd">        continuous ``LS`` parent or a VC term (the ``beta0`` score), and the</span>
+<span class="sd">        identified level-1 column</span>
 <span class="sd">        ``"{t}[1]"`` for a binary ordinal LS parent.</span>
 <span class="sd">    candidates : list[str] | None, optional</span>
 <span class="sd">        Candidate covariates. Defaults to every node that is not ``t``,</span>

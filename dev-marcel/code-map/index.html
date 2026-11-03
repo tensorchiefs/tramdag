@@ -1681,9 +1681,10 @@ tensors, so it serializes and compares without torch.</p>
 seeds each node's weights from the constructor seed and the node's name. A node
 starts from the same weights in every spec that contains it. <code>Node(seed=)</code> uses
 the same stream, so a lone node starts from the weights it has in the flow.
-<code>nodes.seeded</code> holds this seeding. It runs in <code>torch.random.fork_rng</code>, so
-construction does not change torch's global RNG state. Each random act takes
-its own seed: the constructor for the weights, <code>fit(seed=)</code> for the shuffle,
+Without a seed, the weights come from torch's global RNG. <code>nodes.seeded</code> holds
+this seeding. It runs in <code>torch.random.fork_rng</code>, so construction does not
+change torch's global RNG state. Each random act takes its own seed: the
+constructor for the weights, <code>fit(seed=)</code> for the shuffle of every node,
 <code>sample(seed=)</code> and <code>abduct(seed=)</code> for the latent draws. The class composes
 <code>FitMixin</code> and <code>ReadoutsMixin</code>. The modules below list their methods.</p>
 <ul>
@@ -1765,7 +1766,8 @@ callback. Anything else is torch's <code>lr_scheduler</code> and a few lines of 
 (<a href="../fitting/">fitting.md</a>).</p>
 <h2 id="plotspy-the-figures"><code>plots.py</code>: the figures<a class="headerlink" href="#plotspy-the-figures" title="Permanent link">&para;</a></h2>
 <p>matplotlib is optional (<code>tramdag[plots]</code>) and the first plot
-call imports it, never the package import. <a class="autorefs autorefs-internal" title="plot_dag" href="../api/plots/#tramdag.plots.plot_dag"><code>plot_dag()</code></a>,
+call imports it, never the package import.
+<a class="autorefs autorefs-internal" title="plot_dag" href="../api/plots/#tramdag.plots.plot_dag"><code>plot_dag()</code></a>,
 <a class="autorefs autorefs-internal" title="plot_marginals" href="../api/plots/#tramdag.plots.plot_marginals"><code>plot_marginals()</code></a>,
 <a class="autorefs autorefs-internal" title="plot_training" href="../api/plots/#tramdag.plots.plot_training"><code>plot_training()</code></a> and
 <a class="autorefs autorefs-internal" title="plot_varying_coef" href="../api/plots/#tramdag.plots.plot_varying_coef"><code>plot_varying_coef()</code></a> each take <code>ax=</code> to
@@ -1785,31 +1787,20 @@ instead.</p>
 <h2 id="decisions-behind-the-training-defaults">Decisions behind the training defaults<a class="headerlink" href="#decisions-behind-the-training-defaults" title="Permanent link">&para;</a></h2>
 <p>The signatures hold the defaults. This list keeps the reasons.</p>
 <ul>
-<li><strong><code>fit(epochs=)</code> has no default.</strong> No default epoch count fits both an <code>LS</code>
-  and a flexible model (<a href="../fitting/">fitting.md</a>).</li>
 <li><strong>Weight initialization is <code>CausalFlowDAG(init=)</code>.</strong> Initialization happens
   at construction, so the constructor seed makes the initial weights
-  reproducible. Each node draws from a stream keyed on the seed and the
-  node's name.
-  <code>"torch"</code> is the <code>nn.Linear</code> default. <code>"glorot"</code> is the Keras <code>Dense</code>
-  default, the paper's reference, and it is decisive under the paper's
+  reproducible. <code>"torch"</code> is the <code>nn.Linear</code> default. <code>"glorot"</code> is the Keras
+  <code>Dense</code> default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. <code>zero_shift_networks=True</code> starts every <code>CS</code> shift
   at 0.</li>
-<li><strong>Network widths and <code>activation=</code></strong> follow the default classes of the PyTorch
-  reference, for parity. The <code>VC</code> head has no counterpart there. <code>"sigmoid"</code> and
-  <code>"tanh"</code> are the paper's activations.</li>
+<li><strong>Network widths and <code>activation=</code></strong> follow the default classes of the
+  PyTorch reference, for parity. The <code>VC</code> head has no counterpart there.
+  <code>"sigmoid"</code> and <code>"tanh"</code> are the paper's activations.</li>
 <li><strong><code>batch_norm=</code> is off</strong>, because neither reference uses it. When on, it
   needs more than one row per batch, and inference needs <code>eval()</code> mode. <code>fit</code>
   and <code>load</code> leave the flow there.</li>
-<li><strong><code>marginal_init=</code> is off.</strong> Only the fit that calibrates a node applies
-  it, so a node that <code>fit_classical</code> calibrated ignores it.</li>
-<li><strong><code>fit_classical</code> is one full-batch run with no chunks.</strong> <code>converged</code> means
-  that L-BFGS and the Newton steps stopped on their own
-  (<a href="../fitting/">fitting.md</a>).</li>
 <li><strong>The transform domain</strong> is <code>transforms.BOUND</code>, a constant. The order of the
   Bernstein coefficients is in <a href="../zuko-upstream/">zuko-upstream.md</a>.</li>
-<li><strong>A centered <code>VC</code> term needs a propensity column</strong> in the training frame
-  (<a href="../varying-coefficients/">varying-coefficients.md</a>).</li>
 </ul>
 
 

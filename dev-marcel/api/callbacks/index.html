@@ -1957,7 +1957,9 @@ default, uses the raw validation NLL.</p>
               <div class="doc-md-description">
                 <p>The best validation NLL seen this fit and its epoch. Each hooked
 node's <code>history["best_epoch"]</code> holds that epoch on the history axis,
-which counts the epochs of every fit.</p>
+which counts the epochs of every fit;
+<a class="autorefs autorefs-internal" title="plot_training" href="../plots/#tramdag.plots.plot_training"><code>plot_training</code></a> with <code>stops=True</code>
+marks it.</p>
               </div>
             </td>
           </tr>
@@ -2130,7 +2132,9 @@ epoch gave a finite validation NLL to restore.</p>
 <span class="normal">191</span>
 <span class="normal">192</span>
 <span class="normal">193</span>
-<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Keep the best-validation weights; optionally stop once they are old.</span>
 
 <span class="sd">    Tracks the node's validation NLL, or under ``fit_jointly`` the sum over</span>
@@ -2169,7 +2173,9 @@ epoch gave a finite validation NLL to restore.</p>
 <span class="sd">    best_nll, best_epoch</span>
 <span class="sd">        The best validation NLL seen this fit and its epoch. Each hooked</span>
 <span class="sd">        node's ``history["best_epoch"]`` holds that epoch on the history axis,</span>
-<span class="sd">        which counts the epochs of every fit.</span>
+<span class="sd">        which counts the epochs of every fit;</span>
+<span class="sd">        [`plot_training`][tramdag.plots.plot_training] with ``stops=True``</span>
+<span class="sd">        marks it.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -2286,9 +2292,9 @@ epoch gave a finite validation NLL to restore.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh: neither patience nor the snapshot carries over."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
@@ -2315,9 +2321,7 @@ epoch gave a finite validation NLL to restore.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
@@ -2329,7 +2333,9 @@ epoch gave a finite validation NLL to restore.</p>
 <span class="normal">173</span>
 <span class="normal">174</span>
 <span class="normal">175</span>
-<span class="normal">176</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
     <span class="n">nll</span> <span class="o">=</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoothing</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_average</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -2370,9 +2376,7 @@ reached a finite validation NLL.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
 <span class="normal">183</span>
@@ -2386,7 +2390,9 @@ reached a finite validation NLL.</p>
 <span class="normal">191</span>
 <span class="normal">192</span>
 <span class="normal">193</span>
-<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load the best weights back into the node (``restore_best`` only).</span>
 
 <span class="sd">    A first finite NLL always beats inf, so no snapshot means that no epoch</span>

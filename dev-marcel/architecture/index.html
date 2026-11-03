@@ -1477,8 +1477,7 @@ options. That is what lets each term class hold its module class directly
 (<code>LinearShift.module is LinearShiftModule</code>). <code>fitting.py</code> and <code>readouts.py</code> are
 mixins: <code>Node</code> composes <code>NodeFitMixin</code>, and <code>CausalFlowDAG</code> composes <code>FitMixin</code>
 and <code>ReadoutsMixin</code>. <code>fitting</code> imports <code>flow</code> and <code>nodes</code> under <code>TYPE_CHECKING</code>
-only. So the import graph is acyclic at module load, although the package UML
-draws both directions between <code>fitting</code> and <code>nodes</code>.</p>
+only, so the import graph is acyclic at module load.</p>
 <h2 id="the-term-contract">The term contract<a class="headerlink" href="#the-term-contract" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>classDiagram
     class Term {
@@ -1535,7 +1534,8 @@ are stable. <code>tests/test_statedict_stability.py</code> pins them.</p>
 <p>A custom term is two classes:</p>
 <ul>
 <li>a <code>ShiftModule</code> subclass with <code>__init__(term, schema)</code>, which builds the
-  network from the parent schema and sets <code>key</code> and <code>parents</code>, and <code>shift_value</code>;</li>
+  network from the parent schema and sets <code>key</code>, <code>parents</code> and
+  <code>shift_value</code>;</li>
 <li>a <code>tramdag.Term</code> subclass with <code>name</code> and <code>module</code> as class attributes
   (<code>__init_subclass__</code> refuses one without). Its options are the keyword
   arguments of its <code>__init__</code>, assigned to <code>self</code> after

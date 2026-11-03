@@ -20,21 +20,21 @@
 # optimum. They differ in the path to it: the batches, the step sizes, and
 # what a schedule or a stop rule reads.
 #
-# This notebook runs both on one synthetic process with a known truth. It
-# compares six arms: per node in series, per node in processes (`n_jobs`),
-# and jointly, each with a constant learning rate and with a plateau
-# schedule. The per-node plateau reads the node's own validation NLL; the
-# joint plateau reads the summed one, as the reference implementation does
-# (deviation D5 in [`docs/paper-replication.md`](../docs/paper-replication.md)).
-# The plateau waits 10 epochs instead of the reference's 49, to fit the short
-# budget.
+# This notebook runs both on one process with a known truth, in six arms:
+# per node in series, per node in processes (`n_jobs`), and jointly, each
+# with a constant learning rate and with a plateau schedule. The per-node
+# plateau reads the node's own validation NLL. The joint plateau reads the
+# summed one, as the reference implementation does (deviation D5 in
+# [`docs/paper-replication.md`](../docs/paper-replication.md)). The plateau
+# has patience 10 instead of 49, for the short budget.
 #
-# Each arm reports wall-clock seconds, the epoch at which the summed
+# Each arm reports the wall-clock seconds, the epoch at which the summed
 # validation NLL first comes within `EPS` of its best, the best summed
 # validation NLL, and the error of one intervention against the truth.
 
 # %%
 import time
+from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -96,13 +96,12 @@ SPEC = {
 # %% [markdown]
 # ## 2. The arms
 #
-# Every arm gets the same budget: `EPOCHS` passes, batch size 512, Adam at
-# 1e-2, and `EarlyStopping()` without patience, so each fit runs its full
-# budget and keeps its best weights. Torch runs on one thread, so the serial
-# arms and each `n_jobs` worker use one core each. The plateau arms add torch's
-# `ReduceLROnPlateau` through a callback. The callback reads the validation
-# NLL of whatever it hooks: one node under `fit`, the flow under
-# `fit_jointly`, where the value is the sum over the nodes.
+# Every arm gets the same budget and `EarlyStopping()` without patience, so
+# each fit runs all epochs and keeps its best weights. Torch runs on one
+# thread, so each serial arm and each `n_jobs` worker uses one core. The
+# plateau arms add torch's `ReduceLROnPlateau` through a callback. The
+# callback reads the validation NLL of what it hooks: one node under `fit`,
+# the summed NLL of the flow under `fit_jointly`.
 
 # %%
 EPOCHS = 100
@@ -133,10 +132,10 @@ def callbacks(plateau):
 
 ARMS = {
     "per node": lambda f, p, s: f.fit(
-        train, seed=s, callbacks=lambda name: callbacks(p), **KW
+        train, seed=s, callbacks=defaultdict(lambda: callbacks(p)), **KW
     ),
     "per node, n_jobs=3": lambda f, p, s: f.fit(
-        train, seed=s, n_jobs=3, callbacks=lambda name: callbacks(p), **KW
+        train, seed=s, n_jobs=3, callbacks=defaultdict(lambda: callbacks(p)), **KW
     ),
     "joint": lambda f, p, s: f.fit_jointly(train, seed=s, callbacks=callbacks(p), **KW),
 }
@@ -145,8 +144,8 @@ ARMS = {
 # ## 3. The runs
 #
 # Each arm runs once per seed. The seed sets the initial weights and the
-# minibatch order. The summed validation curve sums the per-node curves at
-# each epoch; every node runs the full budget, so the epochs line up.
+# minibatch order. Every node runs all epochs, so the per-node curves sum
+# epoch by epoch.
 
 # %%
 rows, curves = [], {}
@@ -160,7 +159,7 @@ for name, run in ARMS.items():
             seconds = time.perf_counter() - start
             curve = np.array([sum(v.values()) for v in flow.history["val"]])
             sample = flow.sample(len(truth), do=DO, seed=seed)["x3"].to_numpy()
-            final_lr = min(lr[0] for lr in flow.history["lr"][-1].values())
+            final_lr = max(lr[0] for lr in flow.history["lr"][-1].values())
             rows.append(
                 {
                     "arm": arm,
@@ -203,16 +202,15 @@ plt.show()
 # %% [markdown]
 # ## 5. What the numbers say
 #
-# The checks below hold on any machine; the seconds do not, so the notebook
-# prints them but does not assert them. The serial per-node arm and the joint
-# arm run one process each; the `n_jobs` arm runs three.
+# The checks hold on any machine. The seconds change with the machine, so
+# the notebook prints them and does not assert them. The `n_jobs` arm runs
+# three processes, the other arms one.
 #
-# All arms reach the same best validation NLL within a small gap. The
-# optimum is the same, so this is the expected result; a large gap would
-# point to a bug in one path. The gap in intervention error between the arms
-# stays within two seed standard deviations. All arms come within `EPS` of
-# their best after a similar number of epochs, and the plateau arms end with
-# a learning rate cut by orders of magnitude, so the schedule acts.
+# The optimum is the same, so all arms reach the same best validation NLL.
+# The gap in intervention error
+# between the arms stays within two seed standard deviations. All arms come
+# within `EPS` of their best after a similar number of epochs. Every plateau
+# arm ends with the rate of each node cut, so the schedule acts.
 
 # %%
 means = runs.groupby("arm", sort=False).mean()
@@ -241,7 +239,7 @@ claim(
 
 # %% [markdown]
 # Serial and forked per-node fits with the same seed train the same nodes on
-# the same batches. On one thread their curves agree to the last bits.
+# the same batches. On one thread their curves agree to 1e-6.
 
 # %%
 claim(

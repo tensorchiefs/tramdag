@@ -35,8 +35,9 @@ tensors, so it serializes and compares without torch.
 seeds each node's weights from the constructor seed and the node's name. A node
 starts from the same weights in every spec that contains it. `Node(seed=)` uses
 the same stream, so a lone node starts from the weights it has in the flow.
-`nodes.seeded` holds this seeding. It runs in `torch.random.fork_rng`, so
-construction does not change torch's global RNG state. Each random act takes
+Without a seed, the weights come from torch's global RNG. `nodes.seeded` holds
+this seeding. It runs in `torch.random.fork_rng`, so construction does not
+change torch's global RNG state. Each random act takes
 its own seed: the constructor for the weights, `fit(seed=)` for the shuffle,
 `sample(seed=)` and `abduct(seed=)` for the latent draws. The class composes
 `FitMixin` and `ReadoutsMixin`. The modules below list their methods.
@@ -138,28 +139,17 @@ instead.
 
 The signatures hold the defaults. This list keeps the reasons.
 
-- **`fit(epochs=)` has no default.** No default epoch count fits both an `LS`
-  and a flexible model ([fitting.md](fitting.md)).
 - **Weight initialization is `CausalFlowDAG(init=)`.** Initialization happens
   at construction, so the constructor seed makes the initial weights
-  reproducible. Each node draws from a stream keyed on the seed and the
-  node's name.
-  `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras `Dense`
-  default, the paper's reference, and it is decisive under the paper's
+  reproducible. `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras
+  `Dense` default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. `zero_shift_networks=True` starts every `CS` shift
   at 0.
-- **Network widths and `activation=`** follow the default classes of the PyTorch
-  reference, for parity. The `VC` head has no counterpart there. `"sigmoid"` and
-  `"tanh"` are the paper's activations.
+- **Network widths and `activation=`** follow the default classes of the
+  PyTorch reference, for parity. The `VC` head has no counterpart there.
+  `"sigmoid"` and `"tanh"` are the paper's activations.
 - **`batch_norm=` is off**, because neither reference uses it. When on, it
   needs more than one row per batch, and inference needs `eval()` mode. `fit`
   and `load` leave the flow there.
-- **`marginal_init=` is off.** Only the fit that calibrates a node applies
-  it, so a node that `fit_classical` calibrated ignores it.
-- **`fit_classical` is one full-batch run with no chunks.** `converged` means
-  that L-BFGS and the Newton steps stopped on their own
-  ([fitting.md](fitting.md)).
 - **The transform domain** is `transforms.BOUND`, a constant. The order of the
   Bernstein coefficients is in [zuko-upstream.md](zuko-upstream.md).
-- **A centered `VC` term needs a propensity column** in the training frame
-  ([varying-coefficients.md](varying-coefficients.md)).

@@ -1,4 +1,4 @@
-# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=, propensity=)`
+# Varying-coefficient treatment effects
 
 A `VC` term gives a node a treatment-effect head with its own bias-variance
 budget. It contributes $\beta(x)\, x_t$ with

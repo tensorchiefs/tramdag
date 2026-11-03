@@ -1,27 +1,23 @@
 # Fitting a TRAM-DAG
 
-This page is the reference for training a
-[`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes. It covers the
+This page explains how to train a
+[`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] and its nodes. It covers the
 likelihood, the Adam paths `fit` and `fit_jointly`, the classical path
-`fit_classical`, and the hooks of the Adam paths.
+`fit_classical`, and which recipe to use. The API pages hold the signatures
+and defaults.
 [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
-runs the Adam recipes end to end. It closes with a runtime comparison of the
-recipes on one workload.
+runs the Adam recipes end to end and compares their runtime.
 [`notebooks/fit_strategies_benchmark.py`](../notebooks/fit_strategies_benchmark.py)
-compares `fit`, `fit` with `n_jobs` and `fit_jointly`. `marginal_init`,
-`validation_split` and per-node `epochs` or `learning_rate` functions have no
-notebook example.
+compares `fit`, `fit` with `n_jobs` and `fit_jointly`.
 
 ## One module, one sub-model per node
 
 A `CausalFlowDAG` is a single `torch.nn.Module` with one independent
 sub-model per variable. A sub-model has an intercept that produces the
-transform parameters $\theta$ and one shift module per shift term. It also
-has the monotone transform $h$, which holds range buffers but no weights.
-The nodes share no parameters. The
-DAG lives entirely in which parents each node reads. There is no edge weight
-matrix and no shared trunk. [code-map.md](code-map.md) says which class
-implements which term.
+transform parameters $\theta$ and one shift module per shift term. It also has
+the monotone transform $h$, which holds range buffers but no weights. The nodes
+share no parameters. The DAG lives entirely in which parents each node reads:
+there is no edge weight matrix and no shared trunk.
 
 ## The likelihood
 
@@ -29,165 +25,100 @@ The flow maps iid standard-logistic latents $U$ to the observed $X$ in causal
 order, and node $i$ reads its parents as data. The Jacobian is therefore
 triangular, and the joint log-likelihood decomposes per node,
 $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
-`Node.row_log_prob` computes one term and `CausalFlowDAG.log_prob` sums them.
 
 - **Continuous node.** Change of variables through the monotone transform:
   $u = h(x;\theta) + s$ and
   $\log p(x \mid \mathrm{pa}) = \log f_{\text{logistic}}(u) + \log |h'(x)|$.
-  The transform returns the log-derivative alongside $u$.
-- **Ordinal node.** The ordered-logit head of [model.md](model.md#ordinal-nodes),
-  evaluated as the log of the cutpoint-interval probability in log space.
+- **Ordinal node.** The ordered-logit head of
+  [model.md](model.md#ordinal-nodes), the log of the cutpoint-interval
+  probability.
 
 Because parents enter as data, the per-node terms have disjoint parameters,
-and maximizing each term maximizes the sum. So every node can fit on
-its own: [`Node.fit`](../src/tramdag/fitting.py) minimizes the node's mean
-negative log-likelihood over the batch, plus the node's `VC` penalty.
-`CausalFlowDAG.fit` runs `Node.fit` for each node. `fit_jointly` minimizes
-the sum of these losses in one loop. `log_prob` returns the
-per-row joint.
+and maximizing each term maximizes the sum. So every node can fit on its own:
+`fit` minimizes each node's mean negative log-likelihood, plus the node's `VC`
+penalty, one node after the other. `fit_jointly` minimizes the sum of the
+same losses in one loop.
 
 ## One node alone
 
-A [`Node`](../src/tramdag/nodes.py) is a TRAM regression of one variable on its
-parents, and it needs no DAG. It takes its name, its node spec and a parent
-schema, `{parent: "continuous" | n_levels}`.
-[`notebooks/training_strategies.py`](../notebooks/training_strategies.py) fits
-one with Adam, and
+A [`Node`][tramdag.nodes.Node] is a TRAM regression of one variable on its
+parents, and it needs no DAG. It fits, scores and saves like the flow, for
+one node. [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
+fits one with Adam, and
 [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
-fits one classically against R `glm`. The frame needs the node's column, its
-parents' columns and its side columns; the fit ignores other columns. `fit`,
-`fit_classical`, `nll`, `save` and `load` work as on the flow, for one node.
-`nll` gives one float, and the `fit_classical` report is the per-node report.
-`fit` takes an optimizer instance or a factory `f(node)`, but no `n_jobs`. A
-centered `VC` needs its propensity column in every frame, because only the flow
-can compute it live from the treatment node. A flow derives each node's
-shuffling seed from `fit(seed=)` and the node's index. So `Node.fit(seed=)`
-alone does not repeat a node of a seeded flow fit. `Node(seed=)` seeds the
-initial weights. They are the weights of the same node in
-`CausalFlowDAG(spec, seed=)`. Without a seed, the weights come from torch's
-global RNG. A lone node always uses torch's default init; `init=` exists on
-`CausalFlowDAG` only.
+fits one classically against R `glm`. A lone node starts from the weights it
+has in a seeded flow ([code-map.md](code-map.md#flowpy-the-model)).
 
 ## Path A: stochastic optimization with `fit`
 
 `fit` is the general-purpose trainer, and the only one for a model with a
 `CS`, `CI` or `VC` term. Per node, it is one minibatch Adam loop that keeps
-the final weights.
+the final weights unless a callback restores others. The
+[`fit`][tramdag.flow.CausalFlowDAG.fit] docstring lists every option.
 
-- **Nodes.** `CausalFlowDAG.fit` fits the nodes in topological order. With
-  validation data, the nodes with a centered `VC` fit last.
-  `n_jobs=N` forks `N` worker processes (Linux only), one task per node.
-  A worker runs torch on one thread. With the same `seed=`, it gives the
-  weights of a serial fit on one thread. Without `seed=`, `n_jobs > 1` draws
-  a base seed from torch's global RNG.
-  `epochs=`, `learning_rate=` and `callbacks=` take one value for all
-  nodes or a function of the node name.
-- **Joint fit.** `fit_jointly` trains all nodes with one optimizer and one
-  minibatch loop. Each step minimizes the sum of the nodes' mean NLLs. The
-  optimum is that of `fit`. One schedule and one stop rule then act on the
-  summed NLL, as in the reference implementation. The hooks get the flow, so
-  `EarlyStopping` tracks the summed validation NLL and restores the whole
-  flow. `fit_jointly` takes an optimizer instance or a factory `f(flow)`, and
-  no `n_jobs`.
-  [`notebooks/fit_strategies_benchmark.py`](../notebooks/fit_strategies_benchmark.py)
-  compares it with `fit`.
-- **Optimizer.** One optimizer per node, `Adam(lr=1e-2)` by default.
-  `learning_rate=` sets the Adam step size. It excludes `optimizer=`: giving
-  both raises `ValueError`. `optimizer=` takes a factory `f(node)`, for
-  example to give the networks weight decay in their own parameter group.
-  `Node.fit` also takes an optimizer instance. `node.parameter_groups()`
-  gives the parameters by kind: `"intercept"`, `"linear"` and `"networks"`.
-- **Minibatches.** A fresh shuffle each epoch. `seed=` seeds the shuffle
-  only, not the weight init; each node gets its own seed derived from
-  `(seed, node index)`. Without `seed=`, the shuffle draws from torch's
-  global RNG. The constructor seed does not seed the shuffle.
-- **Epochs.** `epochs` has no default: a fixed budget under-spends on one
+- **Nodes.** The nodes fit in topological order, or in parallel worker
+  processes with `n_jobs`.
+- **Joint fit.** `fit_jointly` trains all nodes with one optimizer on the sum
+  of the nodes' mean NLLs. Its optimum is that of `fit`. One schedule and one
+  stop rule then act on the summed NLL, as in the reference implementation.
+  The callbacks get the flow instead of a node.
+- **Epochs.** `epochs` has no default. A fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
-- **Calibration.** The first `fit` or `fit_classical` calibrates each node on
-  `train_df`. Every term freezes its data-dependent state there, the
-  intercept its `range_q` quantiles and each `input_transform=` its
-  statistics. A loaded checkpoint is never recalibrated.
-- **Marginal start.** Off by default: every simple intercept starts with all
-  its parameters at zero, the zero start. `fit(marginal_init=True)` starts
-  each Bernstein or ordinal simple intercept at the empirical distribution of
-  its column instead. At shift zero the untrained model then already fits
-  each marginal, and the fit needs fewer epochs. Only the fit that
-  calibrates the node applies it, so a node that `fit_classical` calibrated
-  ignores the flag. [The marginal start](#the-marginal-start) says how, and
-  when the endpoint changes.
-- **Validation.** `validation_data=` takes a frame. `validation_split=` takes
-  a float and uses the last fraction of `train_df` unshuffled. So shuffle the
-  frame first if its row order means anything. Only the head calibrates. The
-  flow splits once, so all nodes see the same rows. With either, `fit` writes
-  the node's validation NLL after every epoch into `node.history["val"]`.
-- **History.** `node.history` and `flow.history` are in the
-  [`fit`][tramdag.flow.CausalFlowDAG.fit] docstring. A node that stopped
-  earlier repeats its last entry in the flow view. `flow.history_frame()` gives
-  one row per node and epoch, with no repeats.
-- **Callbacks.** `callbacks=` takes one `Callback` or a list. Under `fit`
-  the hooks get the node (under `fit_jointly`, the flow):
-  `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
-  and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an
-  `on_epoch_end` hook; any `True` return stops that node's fit. `on_fit_end`
-  runs before the `VC` re-centering. On the flow, a bare callable is a
-  function of the node name that gives that node its callbacks. So on the
-  flow, a bare hook goes into a list. The shipped callback is
-  `EarlyStopping`: it restores the node's best-validation weights and takes an
-  optional `patience` and `min_delta`. It reads `node.history["val"]`. It
-  writes its best epoch to `node.history["best_epoch"]`, which
-  `plot_training(flow, stops=True)` marks. `fit`
-  refuses two callbacks that restore weights.
-- **Centered `VC` propensities** ride the training frame as the column that
-  `VC(propensity=)` names, and split and minibatch with it. On the flow, the
-  validation NLL uses the live propensity of the fitted treatment node, as
-  every query does. `Node.fit` alone reads the column from the validation
-  frame.
-  [varying-coefficients.md](varying-coefficients.md) is the guide.
+- **Calibration.** The first fit calibrates each node on the training frame.
+  Every term freezes its data-dependent state there: the intercept its
+  `range_q` quantiles and each `input_transform=` its statistics. A loaded
+  checkpoint is never recalibrated.
+- **Validation.** With `validation_data=` or `validation_split=`, `fit`
+  records each node's validation NLL after every epoch. `validation_split`
+  takes the last rows unshuffled, so shuffle the frame first if its row order
+  means anything.
+- **Callbacks.** A callback gets the node (under `fit_jointly`, the flow) at
+  fit begin, after every epoch and at fit end. A `True` return after an epoch
+  stops that node. The shipped callback is
+  [`EarlyStopping`][tramdag.callbacks.EarlyStopping], which restores the
+  best-validation weights. A learning-rate scheduler is a few lines of
+  callback around torch's `lr_scheduler`.
+- **Centered `VC` propensities** ride the training frame as a column
+  ([varying-coefficients.md](varying-coefficients.md)).
 
 ### The marginal start
 
-The marginal start puts the optimizer near the data before the first step.
-It changes the parameters the optimizer starts from, not the model or the
-loss. It sets the $\boldsymbol{\vartheta}$ of each Bernstein or ordinal simple
-intercept so that, at shift $s = 0$, the node's CDF equals the empirical
-marginal $\hat F$ of its training column. The match is exact for an ordinal
-node and a smooth approximation for a continuous node. An intercept with
-parents has no single $\boldsymbol{\vartheta}$ and keeps its seeded
-initialization.
+`fit(marginal_init=True)` puts the optimizer near the data before the first
+step. It changes the parameters the optimizer starts from, not the model or
+the loss. It sets the $\boldsymbol{\vartheta}$ of each Bernstein or ordinal
+simple intercept so that, at shift $s = 0$, the node's CDF equals the
+empirical marginal $\hat F$ of its training column. The match is exact for an
+ordinal node and a smooth approximation for a continuous node. An intercept
+with parents has no single $\boldsymbol{\vartheta}$ and keeps its seeded
+initialization. Without the flag, every simple intercept starts with all its
+parameters at zero.
 
 The latent $U$ is standard logistic, so at $s = 0$ the model says
 $P(X \le x) = \sigma(h(x))$. The start therefore targets
 $h = \operatorname{logit} \hat F$.
 
-An ordinal node targets the cumulative class log-odds and inverts
-`ordinal_cutpoints`
-([`ordinal_marginal_init_theta`][tramdag.transforms.ordinal_marginal_init_theta]).
+- An ordinal node targets the cumulative class log-odds and inverts
+  `ordinal_cutpoints`
+  ([`ordinal_marginal_init_theta`][tramdag.transforms.ordinal_marginal_init_theta]).
+- A continuous node sets the Bernstein control points to
+  $\operatorname{logit} \hat F$ at equally spaced points of the calibrated
+  range. Then it inverts the zuko parameterization
+  ([`BernsteinUT.marginal_init_theta`][tramdag.transforms.BernsteinUT.marginal_init_theta]).
+  The polynomial smooths $\hat F$, and a sharp feature such as the dip between
+  two modes smooths most.
 
-A continuous node sets the Bernstein control points to $\operatorname{logit}
-\hat F$ at equally spaced points of the calibrated range. Then it inverts the
-parameterization of zuko ([zuko-upstream.md](zuko-upstream.md#3-public-inverse-of-_constrain_theta);
-[`BernsteinUT.marginal_init_theta`][tramdag.transforms.BernsteinUT.marginal_init_theta]).
-The polynomial smooths $\hat F$, and a sharp feature such as the dip between
-two modes smooths most.
+The spline and affine transforms have no marginal start, and the flag skips
+them. A `range_q=0` Bernstein transform puts the range ends at the data
+extremes, where the logit is infinite, so `fit` refuses the flag there.
 
-- **Guards.** The start clips $\hat F$ away from 0 and 1 and keeps a minimum
-  step between adjacent points. The logit and the inverses stay finite and
-  increasing. An empty class or a gap in the data therefore gets a small but
-  nonzero probability.
-- **Where it does not apply.** The spline and affine transforms have no
-  marginal start, and the flag skips them. A `range_q=0` Bernstein transform
-  puts the range ends at the data extremes, where the logit is infinite. So
-  `fit` raises before it reads the column, also for an intercept with parents.
-  Fit such a model with `marginal_init=False`.
-- **What it changes.** The zero start is close to a straight line with a
-  steeper $h$ than the data. It gives a narrower distribution and the higher
-  NLL at shift zero. The likelihood of an all-`LS` model has one optimum, so
-  the start only shortens the way, and `fit_classical` takes no such flag. A
-  model with a network shift or a learning-rate anneal can reach a different
-  local optimum. For such a model the start can improve or worsen the causal
-  estimate. D4 in
-  [paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
-  measures this per variant.
+The zero start is close to a straight line with a steeper $h$ than the data.
+It gives a narrower distribution and a higher NLL at shift zero. The
+likelihood of an all-`LS` model has one optimum, so the start only shortens
+the way. A model with a network shift or a learning-rate anneal can reach a
+different local optimum. There the start can improve or worsen the causal
+estimate. D4 in
+[paper-replication.md](paper-replication.md#d4-the-marginal-start-measured-per-variant)
+measures this per variant.
 
 ### Which recipe
 
@@ -210,11 +141,10 @@ Three details are easy to get wrong.
 
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
-- A callback instance passed to the flow's `fit` serves every node in turn.
-  A shipped callback resets at each node's fit begin, so its attributes
-  describe the last node only. Use a function of the node name to keep one
-  instance per node. Under `n_jobs` the state of every callback stays in the
-  workers; read `node.history` instead.
+- A callback instance passed to the flow's `fit` serves every node in turn,
+  so its attributes describe the last node only. Use a function of the node
+  name to keep one instance per node. Under `n_jobs` the callbacks stay in
+  the workers; read `node.history` instead.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 
@@ -222,38 +152,30 @@ Three details are easy to get wrong.
 
 `fit_classical` is the optimizer for all-`LS` models, where every
 node-conditional is an ordered logit or a transformation model with linear
-shifts. It raises on any `CS`, `CI` or `VC` term. The options and the report
-are in the [`fit_classical`][tramdag.flow.CausalFlowDAG.fit_classical]
-docstring.
+shifts. The [`fit_classical`][tramdag.flow.CausalFlowDAG.fit_classical]
+docstring holds the options and the report.
 
-- **Full batch, float64, L-BFGS, Newton.** There are no minibatches or
+- **Full batch, float64, L-BFGS, then Newton.** There are no minibatches or
   schedules, so the same initialization gives bit-identical results. L-BFGS
-  stops short of the optimum on an ill-conditioned NLL. One cause is a
-  parent on a large raw scale next to a rare level. Newton steps on the exact
+  stops short of the optimum on an ill-conditioned NLL. One cause is a parent
+  on a large raw scale next to a rare level. Newton steps on the exact
   Hessian then finish the fit.
-- **The model is float32.** The fit restores float32 afterwards, and
-  checkpoints are float32. `ls_coefficients`, `pmf` and `log_prob` thus use
-  the fitted values rounded by about 1e-7 relative. The report's
-  `coefficients` are the float64 values; compare those with other software.
-- **`converged` means that the run stopped on its own.** The Newton steps
-  continue from a stall until the report's `decrement` is at most
-  `tramdag.fitting.DECREMENT_TOL` or no step lowers the NLL. The decrement is
-  the decrease of the mean NLL that a Newton step still expects. `max_iter`
-  limits the L-BFGS iterations and the Newton steps together.
+- **The model stays float32.** Read-outs use the fitted values rounded by
+  about 1e-7 relative. Compare the report's float64 `coefficients` with other
+  software.
 - **Unidentified directions do not move.** The one-hot of an ordinal parent
-  and the cutpoints share one direction with zero curvature. The Newton step
-  skips it, so compare the contrasts `w[k] - w[0]` with other software.
-  Correctness comes from the comparison with classical software in
-  [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py).
+  and the cutpoints share one direction with zero curvature. Compare the
+  contrasts `w[k] - w[0]` with other software.
+  [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
+  compares the fit with classical software.
 
-A converged `fit_classical` leaves the model at the MLE, ready for any
-operation. A `fit` call from there stays put. This checks that the classical
-solution is the optimum, and it is a warm start. `Node.warm_start` uses it
-for `beta0` of a `VC` ([varying-coefficients.md](varying-coefficients.md)).
+A converged `fit_classical` leaves the model at the MLE. A `fit` call from
+there stays put, which makes it a warm start. `Node.warm_start` uses it for
+the `beta0` of a `VC` ([varying-coefficients.md](varying-coefficients.md)).
 
 ## Memory and disk
 
 Neither path writes to disk. The parameters, the optimizer state and the
-`history` dicts live in RAM, and whatever a callback records is yours. The
-only disk access is the explicit `save()` and `load()`. `fit(n_jobs=N)` forks
-`N` copy-on-write copies of the flow and the training frame.
+`history` dicts live in RAM. The only disk access is the explicit `save()`
+and `load()`. `fit(n_jobs=N)` forks `N` copy-on-write copies of the flow and
+the training frame.

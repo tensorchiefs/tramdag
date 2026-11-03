@@ -50,8 +50,7 @@ options. That is what lets each term class hold its module class directly
 (`LinearShift.module is LinearShiftModule`). `fitting.py` and `readouts.py` are
 mixins: `Node` composes `NodeFitMixin`, and `CausalFlowDAG` composes `FitMixin`
 and `ReadoutsMixin`. `fitting` imports `flow` and `nodes` under `TYPE_CHECKING`
-only. So the import graph is acyclic at module load, although the package UML
-draws both directions between `fitting` and `nodes`.
+only, so the import graph is acyclic at module load.
 
 ## The term contract
 ```mermaid

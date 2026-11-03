@@ -68,17 +68,16 @@ padded with dashes to column 88:
 ```
 
 A module carries only the sections it has. These eight are the only section
-names. There are no sub-section banners of any other kind. Notebooks are
-jupytext `py:percent` files, and they keep their narrative cell structure
-instead.
+names. There are no sub-section banners of any other kind. Notebooks keep
+their narrative cell structure instead.
+
+Read [`docs/architecture.md`](docs/architecture.md) before you change
+anything in `src/tramdag/`.
 
 ## Notebooks
 
 `notebooks/*.py` are jupytext sources. The rules for them are in
 [`notebooks/README.md`](notebooks/README.md).
-
-Read [`docs/architecture.md`](docs/architecture.md) before you change
-anything in `src/tramdag/`.
 
 ## Conventions worth knowing
 

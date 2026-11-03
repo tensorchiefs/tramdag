@@ -26,7 +26,7 @@ replay. So every seed here is a repository choice.
 | networks | triangle scripts `create_param_net` with `hidden_features = c(2, 25, 25, 2)` continuous and `c(2, 2, 2, 2)` mixed, sigmoid (the ReLU line is commented out); the vector reads as in/out dims around the hidden stack, so the hidden layers are (25, 25) and (2, 2). Comparison scripts `make_model`: `dense(10, tanh) → dense(100, tanh) → dense(len_theta)`, one net per node | `units` and `activation` set per variant to exactly those stacks. The package defaults in [code-map.md](code-map.md) replicate the PyTorch reference `buehlpa/TramDag` instead and are not the paper's nets |
 | init | triangle scripts: `LinearMasked` layers with Keras `random_normal` (N(0, 0.05²)) on weights and biases, the LS `beta` layer included; comparison scripts: `layer_dense` default, glorot-uniform weights and zero biases | `init: normal` (triangle) and `init: glorot` (VACA/CAREFL) through `CausalFlowDAG(init=)`; torch's default init is the framework default, and under the full-batch protocol the init decides the fit (see VACA) |
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
-| calibrated start | none | `marginal_init: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`, VACA) and impossible for CAREFL's `range_q: 0` domain. Calibration without the flag never touches the weights |
+| calibrated start | none | `marginal_init: true` for the two triangle LS models, `atan-cs` and `exp-cs`, deviation D4 below; off where it moves the endpoint (`linear-cs`, `sin-cs`) and impossible for the `range_q: 0` domain of VACA and CAREFL. Calibration without the flag never touches the weights |
 | intercept output layer | Keras dense with bias | bias-free, deviation D3: the same function class, because the bias adds a constant to all unconstrained coefficients |
 | plateau rule (VACA/CAREFL) | `update_learning_rate`: one optimizer, reduce when the summed validation NLL has not improved for 50 epochs (strict `<`), factor 0.1, min 1e-7 | torch `ReduceLROnPlateau(patience=49, threshold=0, threshold_mode="abs", factor=0.1, min_lr=1e-7)`, the same rule verified against torch's source, but per node on the node's own validation NLL, deviation D5 below; `experiments/helpers.py::fit_paper` drives it |
 
@@ -164,7 +164,7 @@ a looser tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | train min/max (`range_q: 0`), as in CAREFL. Earlier study runs: under the global plateau, at seed 7, min/max scored 0.289 / 0.040 / 0.067 and the 5 %/95 % quantiles 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turned. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. Under D5 min/max errs less at every do point, at equal val NLL, so the replication uses min/max |
+| Bernstein domain | train min/max (`scale_df`) | train min/max (`range_q: 0`), as in CAREFL |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -257,11 +257,8 @@ Two ingredients carry the agreement. One study run per ingredient changes
 only that ingredient. Training on a fresh 2500-row draw instead of the
 committed rows raises the Fig. 6 error. It is 0.21 for x4 and 0.11 for x3.
 The 5 %/95 % domain instead of min-max raises it too, to 0.27 for x4 and 0.29
-for x3. The reference protocol gives 0.16 for x4 and 0.05 for x3.
-
-The 5 %/95 % default misweights the tails here. At the α = −3 grid edge its
-error is 0.29 for x3 and 0.27 for x4. The min-max domain gives 0.04 for x3 and
-0.15 for x4 there.
+for x3. Both maxima sit at the α = −3 grid edge, where min-max gives 0.15 and
+0.04. The reference protocol gives 0.16 for x4 and 0.05 for x3.
 
 The largest x4 error of the reference run sits at α = 0, the bottom of the
 parabola, where the flow lies above the truth. The fresh-draw run lies above
@@ -279,8 +276,8 @@ Rejected alternatives:
 
 `marginal_init` starts every simple intercept at its column's empirical
 marginal ([fitting.md](fitting.md#the-marginal-start)). The reference starts
-`bernp$beta` at zero. Measured on this machine at the CI protocol, one
-run per variant with the start off and on, seeds unchanged:
+`bernp$beta` at zero. Measured at the CI protocol, one run per variant with
+the start off and on, seeds unchanged:
 
 | variant | epochs to within 0.01 of the final train NLL, off → on | endpoint, off → on | verdict |
 |---|---|---|---|
@@ -296,8 +293,8 @@ run per variant with the start off and on, seeds unchanged:
 The start is only an initialization. Where the optimizer reaches the same
 basin, the endpoint is identical. Only the epoch count changes. Where the
 model has a network shift or the anneal decides the endpoint, the basin
-changes. Of the five such cases, two switch the start on and three leave it
-off.
+changes. Of the four such cases with a marginal start, two switch it on and
+two leave it off.
 
 ## D5: the plateau rule per node
 
@@ -326,14 +323,14 @@ NLL, and all its bounds hold.
 
 ## Runtime and the CI deviations
 
-The reference protocol's cost is the motivation for every deviation. The
-triangle runs 500 epochs × 1250 steps of batch 32. One epoch takes 3.2 s
-single-process at 2 to 4 torch threads and 5.5 s at 32 threads. This is because the
-step is overhead-bound. So one variant takes 42 to 69 min on the 2-core CI
-runners. The triangle scripts therefore use batch 256 at lr 0.004, 8× fewer
-optimizer steps per epoch. This grid at the paper's 500 epochs with glorot
-init chose them. Every entry is the cs max err unless the column says
-otherwise.
+The cost of the reference protocol is the reason for the CI deviations. The
+triangle runs 500 epochs × 1250 steps of batch 32. The step is
+overhead-bound. One epoch takes 3.2 s single-process at 2 to 4 torch threads
+and 5.5 s at 32 threads. So one variant takes 42 to 69 min on the 2-core CI
+runners. The triangle scripts therefore use batch 256 at lr 0.004, with 8×
+fewer optimizer steps per epoch. The grid below, at the paper's 500 epochs with
+glorot init, selects them. Every entry is the cs max err unless the column
+says otherwise.
 
 | batch / lr / epochs | linear-ls β13 | linear-cs | atan-cs | mixed exp-cs (TV) | steps vs paper |
 |---|---|---|---|---|---|

@@ -492,6 +492,14 @@ def test_fit_jointly_early_stopping_reads_each_node_after_a_warm_start(ls_chain)
     assert stop.best_epoch >= 1
 
 
+def test_early_stopping_without_validation_names_no_single_fit_method(ls_chain):
+    """The refusal reads right under fit_jointly too, not only under fit."""
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(RuntimeError, match="to the fit call"):
+        flow.fit_jointly(df, epochs=2, callbacks=EarlyStopping(), seed=0)
+
+
 def test_history_accumulates_across_fit_calls(ls_chain):
     """A second fit continues the record instead of replacing it."""
     df = ls_chain["draw"](200, 5)[["x1", "x2"]]

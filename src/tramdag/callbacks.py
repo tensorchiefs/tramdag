@@ -37,7 +37,7 @@ def _last_val(target, cb: Callback) -> float:
         if not val_epoch or val_epoch[-1] != len(nd.history["train"]):
             raise RuntimeError(
                 f"{type(cb).__name__} reads node.history['val']; pass "
-                "validation_data= or validation_split= to fit()"
+                "validation_data= or validation_split= to the fit call"
             )
         total += nd.history["val"][-1]
     return total

@@ -207,11 +207,11 @@ Three details are easy to get wrong.
 
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
-- A callback instance passed to the flow's `fit` serves every node in turn. A shipped
-  callback resets at each node's fit begin, so its attributes describe the
-  last node only. Use a function of the node name to keep one instance per
-  node. Under `n_jobs` the state of every callback stays in the workers; read
-  `node.history` instead.
+- A callback instance passed to the flow's `fit` serves every node in turn.
+  A shipped callback resets at each node's fit begin, so its attributes
+  describe the last node only. Use a function of the node name to keep one
+  instance per node. Under `n_jobs` the state of every callback stays in the
+  workers; read `node.history` instead.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 

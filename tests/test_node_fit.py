@@ -104,7 +104,9 @@ def test_a_forked_fit_loads_a_callable_transform_and_leaves_eval_mode(ls_chain):
         "x1": ContinuousNode(),
         "x2": ContinuousNode(CI("x1", units=[4], input_transform=_scale)),
     }
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, batch_size=128, n_jobs=2)
+    flow = CausalFlowDAG(spec, seed=0).fit(
+        df, epochs=2, batch_size=128, n_jobs=2, seed=0
+    )
     assert not any(nd.training for nd in flow.nodes.values())
     assert bool(flow.nodes["x2"].calibrated)
 
@@ -137,7 +139,9 @@ def test_a_generator_of_callbacks_reaches_every_node(ls_chain):
     df = ls_chain["draw"](300, 8)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     for callbacks in (lambda name: (c for c in [StopAt2()]), (c for c in [StopAt2()])):
-        flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=50, callbacks=callbacks)
+        flow = CausalFlowDAG(spec, seed=0).fit(
+            df, epochs=50, callbacks=callbacks, seed=0
+        )
         assert [len(nd.history["train"]) for nd in flow.nodes.values()] == [2, 2]
 
 

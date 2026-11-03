@@ -9,7 +9,6 @@ that only read fitted weights live in ``readouts.py``.
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
-import zlib
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +17,7 @@ import torch
 from torch import Tensor, nn
 
 from . import scores
-from .fitting import FitMixin, _node_seed
+from .fitting import FitMixin
 from .modules import ComplexShiftModule, ShiftModule
 from .nodes import (
     Node,
@@ -26,6 +25,7 @@ from .nodes import (
     check_level_values,
     load_weights,
     schema_entry,
+    seeded,
     tensorize,
     write_checkpoint,
 )
@@ -70,14 +70,12 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     device : str, optional
         Torch device, by default ``"cpu"``.
     seed : int | None, optional
-        If given, seeds the weight initialization deterministically. Each
-        node draws its weights from a stream keyed on this seed and the node's
-        name, so a node starts from the same weights in every spec that
-        contains it. Construction ends with ``torch.manual_seed(seed)``, which
-        seeds the unseeded minibatch shuffling of ``fit``. Weight
-        initialization happens at construction, so this is the one knob
-        for a reproducible model. ``fit(seed=...)`` only seeds the
-        minibatch shuffling.
+        If given, seeds the weight initialization. Each node draws its
+        weights from a stream keyed on this seed and the node's name, so a
+        node starts from the same weights in every spec that contains it.
+        Construction does not change torch's global RNG state. Without a
+        seed, the weights come from torch's global RNG. ``fit``,
+        ``fit_jointly``, ``sample`` and ``abduct`` take their own ``seed=``.
     init : str, optional
         Weight initialization of every linear layer (the LS weights and the
         CI/CS/VC networks): ``"torch"`` (default, ``nn.Linear``'s
@@ -122,8 +120,6 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         self.nodes = nn.ModuleDict(
             {name: self._build_node(name, seed) for name in self.order}
         )
-        if seed is not None:
-            torch.manual_seed(seed)
         if zero_shift_networks:
             for m in self.modules():
                 if isinstance(m, ComplexShiftModule):
@@ -160,16 +156,15 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
 
         Without a seed the node draws from torch's global stream.
         """
-        if seed is not None:
-            torch.manual_seed(_node_seed(seed, zlib.crc32(name.encode())))
-        node = Node(name, self.spec[name], self._schema(name))
-        if self.init != "torch":
-            for m in node.modules():
-                if isinstance(m, nn.Linear):
-                    _init_linear(m, self.init)
-            for m in node.modules():
-                if isinstance(m, ShiftModule):
-                    m.post_init()
+        with seeded(seed, name):
+            node = Node(name, self.spec[name], self._schema(name))
+            if self.init != "torch":
+                for m in node.modules():
+                    if isinstance(m, nn.Linear):
+                        _init_linear(m, self.init)
+                for m in node.modules():
+                    if isinstance(m, ShiftModule):
+                        m.post_init()
         return node
 
     @property

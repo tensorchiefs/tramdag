@@ -62,9 +62,10 @@ parents' columns and its side columns; the fit ignores other columns. `fit`,
 centered `VC` needs its propensity column in every frame, because only the flow
 can compute it live from the treatment node. A flow derives each node's
 shuffling seed from `fit(seed=)` and the node's index. So `Node.fit(seed=)`
-alone does not repeat a node of a seeded flow fit. A node built alone draws its
-initial weights from torch's global RNG; call `torch.manual_seed` first for a
-reproducible start. It always uses torch's default init; `init=` exists on
+alone does not repeat a node of a seeded flow fit. `Node(seed=)` seeds the
+initial weights. They are the weights of the same node in
+`CausalFlowDAG(spec, seed=)`. Without a seed, the weights come from torch's
+global RNG. A lone node always uses torch's default init; `init=` exists on
 `CausalFlowDAG` only.
 
 ## Path A: stochastic optimization with `fit`
@@ -98,7 +99,8 @@ the final weights.
   gives the parameters by kind: `"intercept"`, `"linear"` and `"networks"`.
 - **Minibatches.** A fresh shuffle each epoch. `seed=` seeds the shuffle
   only, not the weight init; each node gets its own seed derived from
-  `(seed, node index)`.
+  `(seed, node index)`. Without `seed=`, the shuffle draws from torch's
+  global RNG. The constructor seed does not seed the shuffle.
 - **Epochs.** `epochs` has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
 - **Calibration.** The first `fit` or `fit_classical` calibrates each node on

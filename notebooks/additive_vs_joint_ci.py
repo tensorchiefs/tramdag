@@ -87,6 +87,7 @@ for f in (flow_joint, flow_add):
         learning_rate=1e-2,
         validation_data=val,
         callbacks=EarlyStopping(),
+        seed=0,
     )
 
 # %% [markdown]

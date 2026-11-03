@@ -661,6 +661,7 @@ flow_a.fit(
     learning_rate=1e-1,
     validation_data=df,
     callbacks=EarlyStopping(patience=60),
+    seed=0,
 )
 t_adam = time.perf_counter() - t0
 
@@ -768,7 +769,7 @@ for term in ("x1", "x2"):
 # %%
 before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
+flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256, seed=0)
 after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")

@@ -60,14 +60,14 @@ def test_simple_intercept_rejects_the_option():
 def test_net_inputs_span_unit_interval_after_first_fit():
     df = _frame()
     flow = CausalFlowDAG(SPEC, seed=0)
-    flow.fit(df, epochs=1, batch_size=100)
+    flow.fit(df, epochs=1, batch_size=100, seed=0)
     feats = flow._features(_tensors(df))
     for name, key in (("x2", "@I"), ("x3", "x1")):
         node = flow.nodes[name]
         scaled = node.net_input(feats, ("x1",), key)
         assert torch.allclose(scaled.min(0).values, torch.zeros(scaled.shape[1]))
         assert torch.allclose(scaled.max(0).values, torch.ones(scaled.shape[1]))
-    flow.fit(df + 10.0, epochs=1, batch_size=100)
+    flow.fit(df + 10.0, epochs=1, batch_size=100, seed=0)
     lo = float(flow.nodes["x2"].intercept.input_transform.lo[0])
     assert lo == pytest.approx(df["x1"].min())
 
@@ -79,7 +79,7 @@ def test_standardize_freezes_train_mean_and_std():
         "x2": ContinuousNode(CI("x1", units=[4], input_transform="standardize")),
     }
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100)
+    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100, seed=0)
     feats = flow._features(_tensors(df[["x1", "x2"]]))
     z = flow.nodes["x2"].net_input(feats, ("x1",), "@I")
     x = torch.tensor(df["x1"].to_numpy(), dtype=torch.float32)
@@ -96,7 +96,7 @@ def test_callable_gets_the_frozen_train_column():
         ),
     }
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100)
+    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100, seed=0)
     nd = flow.nodes["x2"]
     batch = {"x1": torch.tensor([[1.0], [2.0], [3.0]])}
     got = nd.net_input(batch, ("x1",), "@I")
@@ -111,7 +111,7 @@ def test_save_rejects_a_lambda_and_accepts_a_module_function(tmp_path):
         "x2": ContinuousNode(CI("x1", units=[4], input_transform=lambda x, t: x)),
     }
     flow = CausalFlowDAG(lam, seed=0)
-    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100)
+    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100, seed=0)
     with pytest.raises(ValueError, match="picklable"):
         flow.save(tmp_path / "no.pt")
 
@@ -120,7 +120,7 @@ def test_save_rejects_a_lambda_and_accepts_a_module_function(tmp_path):
         "x2": ContinuousNode(CI("x1", units=[4], input_transform=_halve)),
     }
     flow = CausalFlowDAG(ok, seed=0)
-    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100)
+    flow.fit(df[["x1", "x2"]], epochs=1, batch_size=100, seed=0)
     flow.save(tmp_path / "ok.pt")
     loaded = CausalFlowDAG.load(tmp_path / "ok.pt")
     u = pd.DataFrame(
@@ -134,7 +134,7 @@ def test_save_rejects_a_lambda_and_accepts_a_module_function(tmp_path):
 def test_save_load_keeps_option_and_calibration(tmp_path):
     df = _frame()
     flow = CausalFlowDAG(SPEC, seed=0)
-    flow.fit(df, epochs=1, batch_size=100)
+    flow.fit(df, epochs=1, batch_size=100, seed=0)
     flow.save(tmp_path / "flow.pt")
     loaded = CausalFlowDAG.load(tmp_path / "flow.pt")
     assert loaded.nodes["x2"].intercept.input_transform.method == "minmax"
@@ -148,7 +148,7 @@ def test_mixed_node_transforms_only_its_own_term():
     """``CS("x1", input_transform=...) + LS("x2")``: net scaled, LS raw."""
     df = _frame()
     flow = CausalFlowDAG(SPEC, seed=0)
-    flow.fit(df, epochs=1, batch_size=100)
+    flow.fit(df, epochs=1, batch_size=100, seed=0)
     nd = flow.nodes["x3"]
     feats = flow._features(_tensors(df))
     grid = df["x1"].to_numpy()
@@ -184,7 +184,7 @@ def test_read_outs_use_the_transformed_inputs():
         ),
     }
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=1, batch_size=100)
+    flow.fit(df, epochs=1, batch_size=100, seed=0)
     nd = flow.nodes["y"]
     feats = flow._features(_tensors(df))
     with torch.no_grad():
@@ -205,7 +205,7 @@ def test_ordinal_parent_passes_through_one_hot():
     }
     df = pd.DataFrame({"k": [0, 1, 2, 1], "y": [0.1, 0.5, -0.3, 0.2]})
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=1, batch_size=4)
+    flow.fit(df, epochs=1, batch_size=4, seed=0)
     feats = flow._features(_tensors(df))
     assert torch.equal(flow.nodes["y"].net_input(feats, ("k",), "k"), feats["k"])
 

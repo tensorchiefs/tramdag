@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, I, Node, OrdinalNode
 from tramdag.spec import spec_from_dict, spec_to_dict, validate_and_sort
 from tramdag.transforms import (
     BOUND,
@@ -255,7 +255,7 @@ def test_shift_curve_matches_the_manual_composition(ls_chain):
     df = ls_chain["draw"](400, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=5, batch_size=200)
+    flow.fit(df, epochs=5, batch_size=200, seed=0)
     grid = np.linspace(-2, 2, 41)
     x = torch.as_tensor(grid, dtype=torch.float32).view(-1, 1)
     nd = flow.nodes["x2"]
@@ -283,7 +283,7 @@ def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain)
     }
     df = df.assign(y=df["x2"] - 0.8 * df["t"])
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=2, batch_size=100)
+    flow.fit(df, epochs=2, batch_size=100, seed=0)
     with pytest.raises(ValueError, match="ordinal parent"):
         flow.shift_curve("y", "t", np.linspace(0, 1, 5))
 
@@ -302,7 +302,7 @@ def test_a_counterfactual_keeps_the_rows_of_its_latents():
     df = pd.DataFrame({"x": rng.normal(size=50)}, index=range(100, 150))
     df["y"] = df["x"] + rng.logistic(size=50)
     spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, seed=0)
     cf = flow.sample(u=flow.abduct(df), do={"x": 0.0})
     assert list(cf.index) == list(df.index)
 
@@ -313,7 +313,7 @@ def test_a_reversed_frame_gives_the_same_nll():
     df = pd.DataFrame({"x": rng.normal(size=60)})
     df["y"] = df["x"] + rng.logistic(size=60)
     spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1, seed=0)
     forward = flow.nll(df)
     reverse = flow.nll(df.iloc[::-1])
     assert reverse == pytest.approx(forward, rel=1e-5)
@@ -367,11 +367,23 @@ def test_node_start_ignores_other_nodes(init):
     assert not all(torch.equal(s1[k], s3[k]) for k in s1)
 
 
-def test_seed_ends_with_the_global_stream_seeded():
-    CausalFlowDAG({"x": ContinuousNode()}, seed=5)
-    got = torch.rand(3)
-    torch.manual_seed(5)
-    assert torch.equal(got, torch.rand(3))
+def test_seeded_construction_leaves_the_global_stream_alone():
+    before = torch.get_rng_state()
+    CausalFlowDAG({"x": ContinuousNode(), "y": ContinuousNode(CS("x"))}, seed=5)
+    assert torch.equal(torch.get_rng_state(), before)
+
+
+def test_a_seeded_node_starts_as_in_its_seeded_flow():
+    spec = {
+        "x": ContinuousNode(),
+        "t": OrdinalNode(2, LS("x")),
+        "z": ContinuousNode(),
+        "y": OrdinalNode(3, CI("x") + CS("z") + VC("x", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=5)
+    node = Node("y", spec["y"], flow._schema("y"), seed=5)
+    want = flow.nodes["y"].state_dict()
+    assert all(torch.equal(v, want[k]) for k, v in node.state_dict().items())
 
 
 def test_hasattr_outcome_does_not_raise_on_two_sinks():

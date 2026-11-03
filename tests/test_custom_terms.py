@@ -37,7 +37,7 @@ def test_custom_term_builds_fits_and_round_trips(ls_chain, tmp_path):
     with pytest.raises(TypeError, match="unexpected keyword argument 'scael'"):
         SLS("x1", scael=3.0)
     flow = CausalFlowDAG(_two_node(term), seed=0)
-    flow.fit(df, epochs=10, batch_size=200, learning_rate=1e-1)
+    flow.fit(df, epochs=10, batch_size=200, learning_rate=1e-1, seed=0)
     assert float(flow.nodes["x2"].shifts["x1"].w) != 0.0
     flow.save(tmp_path / "m.pt")
     loaded = CausalFlowDAG.load(tmp_path / "m.pt")
@@ -73,7 +73,7 @@ def test_custom_regularizer_joins_the_loss(ls_chain):
     """Fit adds regularizer()/n — the hook, not VC's internals."""
     df = ls_chain["draw"](300, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node(PEN("x1")), seed=0)
-    flow.fit(df, epochs=2, batch_size=150)
+    flow.fit(df, epochs=2, batch_size=150, seed=0)
     assert flow.nodes["x2"].shifts["x1"].calls >= 4
 
 

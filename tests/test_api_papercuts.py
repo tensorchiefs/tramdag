@@ -56,7 +56,7 @@ def test_save_load_round_trips_history(tmp_path):
         }
     )
     flow = CausalFlowDAG(_spec(), seed=0)
-    flow.fit(df, epochs=12)
+    flow.fit(df, epochs=12, seed=0)
     assert len(flow.history["train"]) == 12
     p = tmp_path / "flow.pt"
     flow.save(p)
@@ -189,7 +189,7 @@ def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     df["t"] = (df["x1"] > 0).astype(int)
     df["y"] = df["x1"] * 0.5 + df["x2"]
-    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2)
+    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2, seed=0)
     assert bool(torch.isfinite(flow.log_prob(df)).all())
 
 
@@ -199,7 +199,7 @@ def test_log_prob_takes_a_node_subset(ls_chain):
     flow = CausalFlowDAG(
         {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
     )
-    flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2)
+    flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2, seed=0)
     parts = [flow.log_prob(df, nodes=[name]) for name in ("x1", "x2")]
     torch.testing.assert_close(parts[0] + parts[1], flow.log_prob(df))
     assert float(-parts[1].mean()) == pytest.approx(flow.nll(df)["x2"], abs=1e-5)
@@ -217,7 +217,7 @@ def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
         },
         seed=0,
     )
-    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2)
+    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2, seed=0)
     assert bool(torch.isfinite(flow.log_prob(df)).all())
 
 

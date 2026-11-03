@@ -458,9 +458,8 @@ class NodeFitMixin:
             validation NLL when validation is configured.
         seed : int | None, optional
             Seeds the minibatch shuffling with a private generator, by
-            default None (torch's global RNG). Weight
-            initialization draws from torch's global RNG at construction;
-            ``CausalFlowDAG(seed=)`` seeds it for a flow.
+            default None (torch's global RNG). ``Node(seed=)`` and
+            ``CausalFlowDAG(seed=)`` seed the weight initialization.
         marginal_init : bool, optional
             Start a simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates the node.

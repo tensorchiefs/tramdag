@@ -768,6 +768,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1564,11 +1592,12 @@
     <div class="doc doc-contents first">
 
         <p>Predefined <code>fit</code> callbacks: <code>EarlyStopping</code>.</p>
-<p>Every node fits on its own, so a callback hooks one node's fit. <code>fit</code> owns
-validation and progress printing; <code>EarlyStopping</code> reads the validation NLL that
-<code>fit</code> appends to <code>node.history["val"]</code> after every epoch. One <code>callbacks=</code>
-list is the whole registration; anything not covered here is a
-<a class="autorefs autorefs-internal" title="Callback" href="#tramdag.callbacks.Callback"><code>Callback</code></a> subclass of your own (docs/fitting.md).</p>
+<p>A callback hooks one node's fit, or the whole flow's under <code>fit_jointly</code>.
+<code>fit</code> owns validation and progress printing; <code>EarlyStopping</code> reads the
+validation NLL that <code>fit</code> appends to <code>node.history["val"]</code> after every
+epoch. One <code>callbacks=</code> list is the whole registration; anything not
+covered here is a <a class="autorefs autorefs-internal" title="Callback" href="#tramdag.callbacks.Callback"><code>Callback</code></a> subclass of your
+own (docs/fitting.md).</p>
 
 
 
@@ -1612,7 +1641,10 @@ optimizer)</code> runs after every epoch, once the epoch's train NLL is in
 <code>node.history["train"]</code>; the fit stops after an epoch in which any
 callback returned <code>True</code>. <code>on_fit_end(node, optimizer)</code> runs once
 after the loop and <strong>before</strong> the VC re-centering, so a hook that swaps
-the weights hands them to the re-centering.</p>
+the weights hands them to the re-centering. Under
+<a class="autorefs autorefs-internal" title="fit_jointly" href="../flow/#tramdag.flow.CausalFlowDAG.fit_jointly"><code>fit_jointly</code></a> each hook gets the
+flow in place of the node; <code>flow.history["val"][-1]</code> is then a dict
+<code>{node: NLL}</code>, not a float.</p>
 
 
 
@@ -1623,16 +1655,7 @@ the weights hands them to the re-centering.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">47</span>
 <span class="normal">48</span>
 <span class="normal">49</span>
 <span class="normal">50</span>
@@ -1643,7 +1666,19 @@ the weights hands them to the re-centering.</p>
 <span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Callback</span><span class="p">:</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Callback</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Base class of ``fit(callbacks=)`` entries; override any of the hooks.</span>
 
 <span class="sd">    ``on_fit_begin(node, optimizer)`` runs once after calibration, before the</span>
@@ -1653,7 +1688,10 @@ the weights hands them to the re-centering.</p>
 <span class="sd">    ``node.history["train"]``; the fit stops after an epoch in which any</span>
 <span class="sd">    callback returned ``True``. ``on_fit_end(node, optimizer)`` runs once</span>
 <span class="sd">    after the loop and **before** the VC re-centering, so a hook that swaps</span>
-<span class="sd">    the weights hands them to the re-centering.</span>
+<span class="sd">    the weights hands them to the re-centering. Under</span>
+<span class="sd">    [`fit_jointly`][tramdag.flow.CausalFlowDAG.fit_jointly] each hook gets the</span>
+<span class="sd">    flow in place of the node; ``flow.history["val"][-1]`` is then a dict</span>
+<span class="sd">    ``{node: NLL}``, not a float.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1698,8 +1736,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+<span class="normal">64</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run once before the first epoch."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1725,8 +1763,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
-<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">66</span>
+<span class="normal">67</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Run after every epoch; return ``True`` to stop the fit."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1752,8 +1790,8 @@ the weights hands them to the re-centering.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">69</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run once after the loop, before the VC re-centering."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1787,7 +1825,8 @@ the weights hands them to the re-centering.</p>
 
 
         <p>Keep the best-validation weights; optionally stop once they are old.</p>
-<p>Tracks the node's validation NLL; an epoch improves when it beats the best
+<p>Tracks the node's validation NLL, or under <code>fit_jointly</code> the sum over
+the flow's nodes; an epoch improves when it beats the best
 by more than <code>min_delta</code>. With <code>smoothing</code> the tracked value is the
 exponential moving average of the validation NLL, so the best epoch is the
 one with the best smoothed value, its weights are restored, and
@@ -1916,9 +1955,11 @@ default, uses the raw validation NLL.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The best validation NLL seen this fit and its epoch. The node's
-<code>history["best_epoch"]</code> holds that epoch on the history axis,
-which counts the epochs of every fit.</p>
+                <p>The best validation NLL seen this fit and its epoch. Each hooked
+node's <code>history["best_epoch"]</code> holds that epoch on the history axis,
+which counts the epochs of every fit;
+<a class="autorefs autorefs-internal" title="plot_training" href="../plots/#tramdag.plots.plot_training"><code>plot_training</code></a> with <code>stops=True</code>
+marks it.</p>
               </div>
             </td>
           </tr>
@@ -1970,19 +2011,7 @@ epoch gave a finite validation NLL to restore.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 73</span>
 <span class="normal"> 74</span>
 <span class="normal"> 75</span>
 <span class="normal"> 76</span>
@@ -2089,10 +2118,27 @@ epoch gave a finite validation NLL to restore.</p>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
-<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EarlyStopping</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Keep the best-validation weights; optionally stop once they are old.</span>
 
-<span class="sd">    Tracks the node's validation NLL; an epoch improves when it beats the best</span>
+<span class="sd">    Tracks the node's validation NLL, or under ``fit_jointly`` the sum over</span>
+<span class="sd">    the flow's nodes; an epoch improves when it beats the best</span>
 <span class="sd">    by more than ``min_delta``. With ``smoothing`` the tracked value is the</span>
 <span class="sd">    exponential moving average of the validation NLL, so the best epoch is the</span>
 <span class="sd">    one with the best smoothed value, its weights are restored, and</span>
@@ -2125,9 +2171,11 @@ epoch gave a finite validation NLL to restore.</p>
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    best_nll, best_epoch</span>
-<span class="sd">        The best validation NLL seen this fit and its epoch. The node's</span>
-<span class="sd">        ``history["best_epoch"]`` holds that epoch on the history axis,</span>
-<span class="sd">        which counts the epochs of every fit.</span>
+<span class="sd">        The best validation NLL seen this fit and its epoch. Each hooked</span>
+<span class="sd">        node's ``history["best_epoch"]`` holds that epoch on the history axis,</span>
+<span class="sd">        which counts the epochs of every fit;</span>
+<span class="sd">        [`plot_training`][tramdag.plots.plot_training] with ``stops=True``</span>
+<span class="sd">        marks it.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -2187,7 +2235,8 @@ epoch gave a finite validation NLL to restore.</p>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"best_epoch"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="n">_nodes</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="n">nd</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"best_epoch"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
@@ -2243,9 +2292,9 @@ epoch gave a finite validation NLL to restore.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Start fresh: neither patience nor the snapshot carries over."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
@@ -2272,20 +2321,21 @@ epoch gave a finite validation NLL to restore.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Snapshot on improvement; ``True`` once the best is ``patience`` old."""</span>
     <span class="n">nll</span> <span class="o">=</span> <span class="n">_last_val</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoothing</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_average</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -2295,7 +2345,8 @@ epoch gave a finite validation NLL to restore.</p>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">nll</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_delta</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_nll</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">=</span> <span class="n">nll</span><span class="p">,</span> <span class="n">epoch</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"best_epoch"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="n">_nodes</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">nd</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"best_epoch"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restore_best</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
@@ -2325,23 +2376,23 @@ reached a finite validation NLL.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/callbacks.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_fit_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Load the best weights back into the node (``restore_best`` only).</span>
 
 <span class="sd">    A first finite NLL always beats inf, so no snapshot means that no epoch</span>

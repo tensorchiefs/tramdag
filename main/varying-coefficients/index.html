@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity" class="md-skip">
+        <a href="#varying-coefficient-treatment-effects" class="md-skip">
           Skip to content
         </a>
       
@@ -861,6 +861,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1402,7 +1430,7 @@
   
 
 
-<h1 id="varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity">Varying-coefficient treatment effects: <code>VC(*modifiers, t=, penalty=, propensity=)</code><a class="headerlink" href="#varying-coefficient-treatment-effects-vcmodifiers-t-penalty-propensity" title="Permanent link">&para;</a></h1>
+<h1 id="varying-coefficient-treatment-effects">Varying-coefficient treatment effects<a class="headerlink" href="#varying-coefficient-treatment-effects" title="Permanent link">&para;</a></h1>
 <p>A <code>VC</code> term gives a node a treatment-effect head with its own bias-variance
 budget. It contributes <span class="arithmatex">\(\beta(x)\, x_t\)</span> with
 <span class="arithmatex">\(\beta(x) = \beta_0 + b_\Theta(x)\)</span> to the node's shift, where <span class="arithmatex">\(b_\Theta\)</span> is a
@@ -1413,18 +1441,20 @@ care, not as a by-product. Every claim here runs in
 which is the one place for the code, or in the tests that the text names.</p>
 <p>Modifiers may appear twice in a node, as prognostic parents through <code>CS</code> or
 <code>LS</code> and as effect modifiers through <code>VC</code>. The design intends this pattern.
-Only the treatment named by <code>t=</code> owns its edge, and a second term that declares it
-raises an error.</p>
+Only the treatment named by <code>t=</code> owns its edge, and a second term that
+declares it raises an error.</p>
 <h2 id="why-not-a-joint-cs-over-treatment-and-modifiers">Why not a joint <code>CS</code> over treatment and modifiers<a class="headerlink" href="#why-not-a-joint-cs-over-treatment-and-modifiers" title="Permanent link">&para;</a></h2>
 <p>For a binary treatment the multi-parent <code>CS</code> is equivalent in expressiveness.
 Any shift decomposes as <span class="arithmatex">\(s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t\)</span>. But the
 <code>CS</code> form has no effect-specific regularization. The likelihood rewards a
 good average fit of <span class="arithmatex">\(s(x,t)\)</span>, and nothing rewards a smooth difference between
 the arms. So the read-out is the difference of two jointly fitted,
-unregularized networks. It amplifies random variation. On the <code>vc_hetero</code> process
-the <code>VC</code> term clears the recovery bar of the tests (see <a href="#validation">Validation</a>).
-The <code>CS</code> reduced form reaches a clearly lower correlation on the same
-protocol, although the model is in-class. Causal forests and R-learners
+unregularized networks. It amplifies random variation. On the <code>vc_hetero</code>
+process the <code>VC</code> term clears the recovery bar of the tests (see
+<a href="#validation">Validation</a>).
+The <code>CS</code> reduced form stays below a correlation of 0.8 on the same
+protocol, although the model is in-class
+(<code>test_cs_reduced_form_falls_short_of_the_bar</code>). Causal forests and R-learners
 do not work because they target the effect. They work because they
 regularize it (Athey et al., 2019; Nie &amp; Wager, 2021)<sup id="fnref:athey2019grf"><a class="footnote-ref" href="#fn:athey2019grf">1</a></sup> <sup id="fnref:nie2021quasioracle"><a class="footnote-ref" href="#fn:nie2021quasioracle">2</a></sup>. <code>VC</code> brings that
 ingredient into the TRAM framework.</p>
@@ -1448,7 +1478,8 @@ ingredient into the TRAM framework.</p>
 <li><strong>Warm start.</strong> <code>flow.nodes[name].warm_start(train_df)</code> fits the all-<code>LS</code>
   version of the node classically and copies the treatment weight into
   <code>beta0</code>. Call it before <code>fit</code>. Training then starts at the classical
-  answer and learns only deviations.</li>
+  answer and learns only deviations. <code>flow.warm_start(train_df)</code> does this
+  for every node with a <code>VC</code> term and returns the reports by node name.</li>
 <li><strong>Treatments.</strong> Continuous or binary ordinal, entering as its 0/1 level so
   that <span class="arithmatex">\(\beta\)</span> is the identified level-1-against-0 contrast. The term is
   linear in the treatment.</li>

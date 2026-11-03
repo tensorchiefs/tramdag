@@ -883,6 +883,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1562,31 +1590,19 @@ misspecification, and both are worth knowing.</p>
 </ul>
 <h2 id="using-it">Using it<a class="headerlink" href="#using-it" title="Permanent link">&para;</a></h2>
 <p><code>flow.effect_modifier_scan(df, node, t=)</code> runs the scan for the treatment
-<code>t</code> of <code>node</code>. It returns one row per candidate with <code>stat</code>, <code>p_value</code>,
-<code>crit_5pct</code> and <code>flag</code>, sorted by <code>stat</code>.</p>
-<ul>
-<li><code>candidates=</code> lists the covariates to scan. By default it is every node
-  except <code>node</code>, <code>t</code> and the descendants of <code>t</code>. A modifier comes
-  before the treatment. A descendant would pick up the effect itself. A
-  candidate does not have to be a parent.</li>
-<li>For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
-  contrast of level 1 against level 0. For a <code>VC</code> treatment it resolves to
-  <span class="arithmatex">\(\beta_0\)</span>, the constant part of <span class="arithmatex">\(\beta(x)\)</span>.</li>
-<li><code>column=</code> picks one score column by name, for example one level contrast
-  <code>"t[2]"</code> of a treatment with more than two levels.</li>
-</ul>
-<p><code>flow.scores(df, node)</code> returns the scores themselves: one row for each row
-of <code>df</code>, and one column per interpretable shift coefficient of the node.</p>
-<ul>
-<li>A continuous <code>LS</code> parent gives one column, named after the parent.</li>
-<li>An ordinal <code>LS</code> parent gives one column per level of its one-hot
-  encoding, named <code>"{parent}[0]"</code>, <code>"{parent}[1]"</code> and so
-  on. A row's score goes to the column of the level that the row has.</li>
-<li>A <code>VC</code> term gives one column for its <span class="arithmatex">\(\beta_0\)</span>, named after the
-  treatment.</li>
-<li>A <code>CS</code> term is a network with no single coefficient, so it has no column.</li>
-</ul>
-<p>The scores also serve influence analyses and robust standard errors.</p>
+<code>t</code> of <code>node</code> and returns one row per candidate, sorted by <code>stat</code>. By default
+it scans every node except <code>node</code>, <code>t</code> and the descendants of <code>t</code>. A modifier
+comes before the treatment, and a descendant would pick up the effect itself.
+A candidate does not have to be a parent. For a binary ordinal treatment the
+scan tests the level-1-against-0 contrast, and for a <code>VC</code> treatment its
+<span class="arithmatex">\(\beta_0\)</span>.</p>
+<p><code>flow.scores(df, node)</code> returns the scores themselves, one row per row of
+<code>df</code> and one column per interpretable shift coefficient of the node. A <code>CS</code>
+term has no single coefficient and so no column. The scores also serve
+influence analyses and robust standard errors. The
+<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../api/scores/#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan</code></a> and
+<a class="autorefs autorefs-internal" title="node_scores" href="../api/scores/#tramdag.scores.node_scores"><code>node_scores</code></a> docstrings give the options and
+the column names.</p>
 <h2 id="how-the-code-computes-the-scores">How the code computes the scores<a class="headerlink" href="#how-the-code-computes-the-scores" title="Permanent link">&para;</a></h2>
 <p>Every shift coefficient <span class="arithmatex">\(\gamma\)</span> adds <span class="arithmatex">\(\gamma z\)</span> to the node's total shift
 <span class="arithmatex">\(s\)</span>. Here <span class="arithmatex">\(z\)</span> is the value of a parent, or one column of its one-hot

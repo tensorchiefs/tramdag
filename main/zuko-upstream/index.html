@@ -883,6 +883,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1463,24 +1491,20 @@ suggested order of attack is 4 → 1 → 3 → 2 → 5.</p>
 <p><code>BernsteinTransform</code> inherits <code>MonotonicTransform.call_and_ladj</code>. That method
 gets the Jacobian by <code>torch.autograd.grad</code> in the forward pass. It therefore
 roughly doubles the training graph.</p>
-<p>It also makes the per-node loss un-<code>torch.compile</code>-able. Autograd in the
-forward pass gives a double backward, and <code>aot_autograd</code> does not support one.
-Therefore the op-count axis stays closed in eager mode.</p>
+<p>It also keeps the per-node loss out of <code>torch.compile</code>: autograd in the
+forward pass gives a double backward, which <code>aot_autograd</code> does not support.</p>
 <p>The derivative has a closed form: <code>f'(x) = order·Δθ</code> against the order−1 basis.
 zuko already computes it in <code>_offset_and_slope</code> for the tail slopes. An
 override is therefore small and needs no API change.
-<code>MonotonicRQSTransform</code> already has such an override. tramdag gets a free
-speedup and the <code>torch.compile</code> axis back.</p>
+<code>MonotonicRQSTransform</code> already has such an override. The override removes
+the autograd call from the forward pass and makes the loss compilable.</p>
 <h2 id="2-learnablelinear-tails-for-monotonicrqstransform">2. Learnable/linear tails for <code>MonotonicRQSTransform</code><a class="headerlink" href="#2-learnablelinear-tails-for-monotonicrqstransform" title="Permanent link">&para;</a></h2>
 <p>zuko pads the knot derivatives with <code>exp(0)=1</code>. It extrapolates as the
 identity outside <code>[-B, B]</code>. Therefore the tail slope stays fixed at 1 for
-every θ. This is the structural reason why <code>spline</code> consistently trails
-<code>bernstein</code> here, because ~10% of the data sits beyond the 5%/95% pre-scaling
-range.</p>
+every θ, while the 5 % tails of the data sit beyond the pre-scaling range.</p>
 <p>Upstream, zuko can accept boundary derivatives of shape <code>(*, K+1)</code>, or it can
 take an opt-in <code>tails="linear"</code>. Identity tails are deliberate in the NSF
-design. The framing must therefore stay back-compatible. This change will
-delete the caveats and make <code>spline</code> a first-class transform choice.</p>
+design, so the change must stay backward-compatible.</p>
 <h2 id="3-public-inverse-of-_constrain_theta">3. Public inverse of <code>_constrain_theta</code><a class="headerlink" href="#3-public-inverse-of-_constrain_theta" title="Permanent link">&para;</a></h2>
 <p><code>BernsteinUT.marginal_init_theta</code> inverts zuko's <em>private</em> <code>_constrain_theta</code>
 (cumsum-of-softplus) in closed form. It hard-codes two internal details of
@@ -1496,9 +1520,8 @@ framing is "identity/linear initialization support", a standard flow trick.</p>
 <h2 id="4-docstring-fix-the-bernstein-shape-off-by-one">4. Docstring fix: the Bernstein θ-shape off-by-one<a class="headerlink" href="#4-docstring-fix-the-bernstein-shape-off-by-one" title="Permanent link">&para;</a></h2>
 <p>zuko's docstring says that θ has shape <code>(*, M-2)</code> for a degree-M polynomial.
 <code>n</code> unconstrained coefficients become <code>n+2</code> control points, which is degree
-<code>n+1</code>. The correct claim is therefore <code>(*, M-1)</code>. This off-by-one is a real
-replication trap: order 21 against the paper's <code>len_theta=20</code>, which is order
-19. The PR is trivial and an accept is near-certain.</p>
+<code>n+1</code>. The correct claim is therefore <code>(*, M-1)</code>. The paper's
+<code>len_theta=20</code> is order 19, not order 21.</p>
 <h2 id="5-logistic-in-zukodistributions">5. <code>Logistic</code> in <code>zuko.distributions</code><a class="headerlink" href="#5-logistic-in-zukodistributions" title="Permanent link">&para;</a></h2>
 <p>Neither zuko nor torch ships a Logistic distribution. tramdag therefore
 hand-rolls <code>StandardLogistic</code>, with <code>log_prob</code>, <code>sample</code> and

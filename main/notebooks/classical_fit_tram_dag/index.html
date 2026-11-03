@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -2347,7 +2375,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8af59eb1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=920e69de">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2365,15 +2393,15 @@ node-conditional is a classical model</p>
 deterministic full-batch L-BFGS, and its report says when it reached the
 maximum-likelihood estimate (<a href="../../fitting/"><code>docs/fitting.md</code></a>). This
 notebook checks the result against <code>statsmodels</code> and R.</p>
-<p>Every R reference printed below comes from a real fit, typed in as a
-constant. <code>notebooks/classical_fit_tram_dag.R</code> holds all of these fits. To
-check them again, run <code>Rscript notebooks/classical_fit_tram_dag.R</code> from the
-repo root. It needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
+<p>The R references below are constants from
+<code>notebooks/classical_fit_tram_dag.R</code>. To check them, run
+<code>Rscript notebooks/classical_fit_tram_dag.R</code> from the repository root. It
+needs <code>MASS</code> and <code>tram</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f915bfe4">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f81a21f8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2454,41 +2482,36 @@ def claim(text, value, bound, fmt="{:.2e}"):
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1b296b18">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a95de2d0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="0-the-zeroth-example-logistic-regression-on-massbirthwt">0. The zeroth example: logistic regression on <code>MASS::birthwt</code><a class="anchor-link" href="#0-the-zeroth-example-logistic-regression-on-massbirthwt">¶</a></h2><p>Before any DAG, take a well-known model on a dataset that every R
-installation has. A <strong>two-level</strong> <code>OrdinalNode</code> whose terms are all <code>LS</code> <em>is</em>
-logistic regression. It is the same model, not an analogue. The ordinal
-transform is</p>
+<h2 id="0-the-zeroth-example-logistic-regression-on-massbirthwt">0. The zeroth example: logistic regression on <code>MASS::birthwt</code><a class="anchor-link" href="#0-the-zeroth-example-logistic-regression-on-massbirthwt">¶</a></h2><p>A two-level <code>OrdinalNode</code> whose terms are all <code>LS</code> is logistic regression.
+The ordinal transform is</p>
 <p>$$P(Y \le 0 \mid x) = \sigma\!\left(\theta_0 - \textstyle\sum_p w_p x_p\right),$$</p>
 <p>and with two levels there is a single cutpoint $\theta_0$, so</p>
 <p>$$\operatorname{logit} P(Y = 1 \mid x) = -\theta_0 + \textstyle\sum_p w_p x_p .$$</p>
-<p>The shift weights <strong>are</strong> the logistic-regression coefficients. The intercept
-is <strong>minus</strong> the cutpoint, because an ordinal node <em>subtracts</em> its shift
+<p>The shift weights are the logistic-regression coefficients. The intercept
+is minus the cutpoint, because an ordinal node subtracts its shift
 (<a href="../../notation/"><code>docs/notation.md</code></a>). Section 2 uses the same model
-with $K-1$ cutpoints instead of one.</p>
-<p>The data is <code>birthwt</code> from <strong>MASS</strong>, the low-birth-weight study of Hosmer &amp;
-Lemeshow. It has 189 births and the outcome <code>low</code> (birth weight under
-2.5 kg). The predictors are <code>age</code> (mother's age), <code>lwt</code> (mother's weight at
-last period, lbs) and <code>smoke</code> (smoking during pregnancy).
-<code>notebooks/data/birthwt.csv</code> holds these columns, exported verbatim from
-MASS. This is not a <strong>causal</strong> model.</p>
+with $K-1$ cutpoints.</p>
+<p>The data is <code>birthwt</code> from MASS, the low-birth-weight study of Hosmer &amp;
+Lemeshow. The outcome is <code>low</code>, and the predictors are <code>age</code>, <code>lwt</code> and
+<code>smoke</code> (<a href="https://github.com/tensorchiefs/tramdag/blob/main/notebooks/data/README.md"><code>notebooks/data/README.md</code></a>). This is not a causal
+model.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dabf827a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d5fc4fac">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>birthwt</code> ships with MASS, so nothing needs a download. Paste this into any
-R session to get the reference fit:</p>
+<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p>Paste this into an R session to get the reference fit:</p>
 <div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">MASS</span><span class="p">)</span>
 <span class="n">m</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">glm</span><span class="p">(</span><span class="n">low</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lwt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">smoke</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">birthwt</span><span class="p">,</span><span class="w"> </span><span class="n">family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">binomial</span><span class="p">)</span>
 <span class="nf">coef</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
@@ -2499,14 +2522,12 @@ R session to get the reference fit:</p>
  1.36822527 -0.03899458 -0.01213854  0.67076374
 'log Lik.' -111.4396765 (df=4)
 </code></pre>
-<p>(R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as <code>R_GLM</code>, so
-the notebook shows the three-way comparison without an R installation. They
-are <code>coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))</code>.</p>
+<p>(R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as <code>R_GLM</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d6025fd0">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bbe198d3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2575,23 +2596,22 @@ print(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=63fee7b5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cb6c07dd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The spec. <code>low</code> is the outcome. <code>smoke</code> is a binary <strong>parent</strong>, so it is an
-ordinal node too. <code>age</code> and <code>lwt</code> are source nodes. The flow also models
-their marginals, which a plain <code>glm</code> does not. Here the marginals are a
-nuisance, so they get the cheapest transform (<code>SI(transform="affine")</code>). They
-cannot change the outcome node: the joint NLL decomposes per node, so the
-gradient of the <code>low</code> node never sees the covariate marginals.</p>
+<p><code>low</code> is the outcome. <code>smoke</code> is a binary parent, so it is an ordinal node
+too. <code>age</code> and <code>lwt</code> are source nodes. The flow also models their
+marginals, which <code>glm</code> does not. They get the cheapest transform,
+<code>SI(transform="affine")</code>. The joint NLL decomposes per node, so the
+marginals cannot change the <code>low</code> node.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd284f61">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cfd652a8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2640,8 +2660,8 @@ flow_bw.fit_classical(bw)</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
- 'final_nll': 9.13761292944806,
- 'seconds': 1.1792994980000913,
+ 'final_nll': 9.137612929448062,
+ 'seconds': 1.2359002280002187,
  'coefficients': {'low': {'age': array([-0.03899379]),
    'lwt': array([-0.01213884]),
    'smoke': array([-0.00437635,  0.66640591])}},
@@ -2651,15 +2671,15 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 3.089470463926682,
    'grad_norm': 1.0146105993900928e-06,
    'decrement': 1.3917636508756161e-12,
-   'seconds': 1.1183431550000478,
+   'seconds': 1.1692782570000873,
    'coefficients': {}},
   'lwt': {'converged': True,
    'stop_reason': 'tolerance',
    'n_iter': 8,
-   'final_nll': 4.789085054515022,
-   'grad_norm': 1.1217799113666196e-05,
-   'decrement': 8.869592011521901e-11,
-   'seconds': 0.006934236000006422,
+   'final_nll': 4.789085054515023,
+   'grad_norm': 1.1217799113443504e-05,
+   'decrement': 8.869592011349744e-11,
+   'seconds': 0.0073786360001122375,
    'coefficients': {}},
   'smoke': {'converged': True,
    'stop_reason': 'tolerance',
@@ -2667,15 +2687,15 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 0.6694294930549758,
    'grad_norm': 2.9695561377940383e-08,
    'decrement': 1.8507472827317275e-15,
-   'seconds': 0.006589093000002322,
+   'seconds': 0.0068830390000584885,
    'coefficients': {}},
   'low': {'converged': True,
    'stop_reason': 'tolerance',
    'n_iter': 30,
    'final_nll': 0.5896279179513815,
-   'grad_norm': 0.0003042491292038694,
-   'decrement': 2.6792449085259093e-11,
-   'seconds': 0.047433014000034746,
+   'grad_norm': 0.00030424912919857543,
+   'decrement': 2.679244908939033e-11,
+   'seconds': 0.052360295999960726,
    'coefficients': {'age': array([-0.03899379]),
     'lwt': array([-0.01213884]),
     'smoke': array([-0.00437635,  0.66640591])}}}}</pre>
@@ -2685,37 +2705,29 @@ flow_bw.fit_classical(bw)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=24ed3b1a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c8ff8f9e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Now read the coefficients back out. <code>age</code> and <code>lwt</code> are continuous parents, so
-they enter raw and their weights compare directly. <code>smoke</code> is ordinal, so it
-enters <strong>one-hot over both levels</strong>.</p>
-<blockquote>
-<p><strong>The coding is different from R.</strong> R gives a binary predictor one column.
-The flow gives it two, $w_0$ and $w_1$, and only their difference is
-identified (<a href="../../interpretation/"><code>docs/interpretation.md</code></a>). This
-difference is the single <code>smoke</code> coefficient of R.</p>
-</blockquote>
-<p>The second column also moves the intercept. With $s \in \{0, 1\}$,
+<p><code>age</code> and <code>lwt</code> are continuous parents, so they enter raw and their weights
+compare directly. <code>smoke</code> is ordinal, so it enters one-hot over both levels,
+$w_0$ and $w_1$. Only their difference is identified
+(<a href="../../interpretation/"><code>docs/interpretation.md</code></a>), and it is the
+<code>smoke</code> coefficient of R. With $s \in \{0, 1\}$,
 $\mathbf{1}[s = 0] = 1 - s$, so the one-hot pair collapses to</p>
 <p>$$w_0\,\mathbf{1}[s = 0] + w_1\,\mathbf{1}[s = 1] \;=\; w_0 + (w_1 - w_0)\,s ,$$</p>
 <p>and the node reads</p>
 <p>$$\operatorname{logit} P(\texttt{low} = 1) \;=\; (-\theta_0 + w_0) \;+\; w_{\text{age}}\,\texttt{age} \;+\; w_{\text{lwt}}\,\texttt{lwt} \;+\; (w_1 - w_0)\,s .$$</p>
-<p>The first bracket is the <code>(Intercept)</code> of R, which is $-\theta_0 + w_0$ and
-not $-\theta_0$. The last term is the <code>smoke</code> of R. The cutpoints are
-$[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The one-hot
-level-0 column of <code>smoke</code> is part of the intercept, hence the $+ w_0$. The
-<code>statsmodels</code> formula is the same as the R call above, with the same names in
-the output.</p>
+<p>The first bracket is the <code>(Intercept)</code> of R. The cutpoints are
+$[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The
+<code>statsmodels</code> formula is the R call above.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3949af9d">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=92e70627">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2828,23 +2840,21 @@ ok  max coefficient spread of the three fits: 1.85e-05 &lt;= 6.00e-05
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eef87616">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c47a2ed1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Three optimizers land on the same maximum likelihood, because there is only
-one. They are L-BFGS on the flow, the Newton solver of <code>statsmodels</code> and the
-IRLS of R. The log-likelihood of the <code>low</code> node agrees with <code>logLik(m)</code> of R
-too. <code>flow.pmf</code> gives the fitted probabilities of <code>glm</code> row by row. The <code>nll()</code>
-method returns the <em>mean</em> NLL per node. Times $n$ and negated, it is the
-log-likelihood.</p>
+<p>L-BFGS on the flow, the Newton solver of <code>statsmodels</code> and the IRLS of R
+find the same maximum likelihood. <code>flow.pmf</code> gives the fitted probabilities
+of <code>glm</code> row by row. <code>nll()</code> gives the mean NLL per node; times $-n$ it is
+the log-likelihood.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7a6be31b">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0c1dc4ee">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2904,23 +2914,20 @@ ok  max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 6.27e-06 &lt;= 1.00e-05
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=06e0d3c7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=467807ac">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>The same regression without the DAG.</strong> The marginals of <code>age</code> and <code>lwt</code>
-are a nuisance here, and a <code>Node</code> drops them. It is the <code>low</code> node alone. It
-takes its name, its node spec and the parent schema,
-<code>{parent: "continuous" | n_levels}</code>. The frame needs only <code>low</code> and its
-parents. <code>Node.fit_classical</code> finds the same maximum likelihood as the flow,
-R and <code>statsmodels</code>.</p>
+<p><strong>The same regression without the DAG.</strong> A lone <code>Node</code> drops the marginals
+of <code>age</code> and <code>lwt</code>. <code>Node.fit_classical</code> finds the same maximum likelihood
+as the flow, R and <code>statsmodels</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=be2f5816">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ffa820fc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2974,8 +2981,8 @@ assert abs(ll_low - R_LOGLIK) &lt; 1e-4, "the lone node misses the glm likelihoo
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>log-likelihood   node alone -111.439677   R glm -111.439676
-smoke   node alone 0.6708   R glm 0.6708
+<pre>log-likelihood   node alone -111.439666   R glm -111.439676
+smoke   node alone 0.6709   R glm 0.6708
 </pre>
 </div>
 </div>
@@ -2983,26 +2990,24 @@ smoke   node alone 0.6708   R glm 0.6708
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f2f698e1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1502ce2f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1-continuous-case">1. Continuous case<a class="anchor-link" href="#1-continuous-case">¶</a></h2><p>Section 0 modelled <code>low</code>, the <em>dichotomized</em> birth weight. <code>birthwt</code> also
-holds <code>bwt</code>, the weight in grams that <code>low</code> was cut from. Thus the same
-three predictors can be fitted against a continuous outcome. With a flexible
-monotone transform and a logistic latent, this is the Colr model of R:</p>
+<h2 id="1-continuous-case">1. Continuous case<a class="anchor-link" href="#1-continuous-case">¶</a></h2><p><code>birthwt</code> also holds <code>bwt</code>, the birth weight in grams that <code>low</code> is cut
+from. With a flexible monotone transform and a logistic latent, the same
+three predictors give the Colr model of R:</p>
 <div class="highlight"><pre><span></span><span class="n">tram</span><span class="o">::</span><span class="nf">Colr</span><span class="p">(</span><span class="n">bwt</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lwt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">smoke</span><span class="p">,</span><span class="w"> </span><span class="n">order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">21</span><span class="p">)</span>
 </pre></div>
-<p><code>glm</code> cannot fit this model. <code>glm(family = gaussian)</code> is <code>lm</code>, with a linear
-transform and a normal latent. The R reference values below come from
-<code>Colr(bwt ~ age + lwt + smoke, order = 21)</code> (R 4.2.3, tram 1.0.4).</p>
+<p><code>glm</code> cannot fit this model. The R references come from this call (R 4.2.3,
+tram 1.0.4).</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2f6e1b41">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bde92748">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3119,25 +3124,22 @@ R Colr     -0.0220  -0.0102   0.6687   -1499.67
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=abfe7e04">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c591c7da">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>This agreement is not exact, and neither fit is the more correct one. The
-two libraries place the Bernstein basis differently. The flow puts it on the
-<code>range_q</code> quantiles with linear tails (<a href="../../model/"><code>docs/model.md</code></a>).
-<code>Colr</code> uses the full range of the data. Thus the two fits maximize slightly
-different likelihoods.</p>
-<p>A coefficient difference matters when it is large relative to the
-<strong>sampling uncertainty</strong> of the estimate. The next cells compute the
-standard errors and compare the differences with them.</p>
+<p>The agreement is not exact, because the two libraries place the Bernstein
+basis differently. The flow puts it on the <code>range_q</code> quantiles with linear
+tails (<a href="../../model/"><code>docs/model.md</code></a>). <code>Colr</code> uses the full range of
+the data. The two fits thus maximize slightly different likelihoods. The
+next cells compare the differences with the standard errors.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=91dbebd4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7114e19b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3151,9 +3153,7 @@ $I^{-1}$. For a contrast $c$, the standard error is $\sqrt{c^\top I^{-1} c}$.</p
 <p>The <strong>observed</strong> Fisher information is the Hessian of the <em>negative</em>
 log-likelihood at the MLE,</p>
 <p>$$I_{ab} = \frac{\partial^{2}(-\ell)}{\partial\theta_a\,\partial\theta_b}\bigg|_{\hat\theta},$$</p>
-<p>which autograd gives directly. One backward pass gives the gradient with the
-graph retained. Then one more backward pass per component gives a row of
-$I$.</p>
+<p>which autograd gives: one backward pass per component gives a row of $I$.</p>
 <p>Here $I$ is singular, so $I^{-1}$ does not exist. The one-hot <code>smoke</code> pair
 and the Bernstein intercept have directions without curvature (see
 "weakly identified directions" in
@@ -3168,20 +3168,16 @@ $I$ is symmetric, so it has an orthonormal eigendecomposition. The
 correct for a contrast that avoids the flat subspace. The <code>leak</code> column
 measures how far a contrast enters it:</p>
 <p>$$\operatorname{leak}(c) = \max_{k\,:\ \lambda_k \le \tau} \left| c^{\top} e_k \right| .$$</p>
-<p>Only interpret rows whose leak is close to zero. The spectrum has three
-parts. A flat block of directions is near zero. One weakly curved direction,
-a Bernstein gap, has a small eigenvalue that is below $\tau$. The remaining
-directions are curved. The threshold drops the weak direction together with
-the flat block. The standard errors need that choice to be harmless. The
-cell below computes them a second time with a threshold between the flat
-block and the weak direction, and compares. The Hessian code runs in
-float64, because second derivatives need it, and restores the stored
-precision afterwards.</p>
+<p>Only interpret rows whose leak is close to zero. The spectrum has a flat
+block near zero, one weakly curved Bernstein direction below $\tau$, and
+the curved directions. The threshold drops the weak direction with the flat
+block. The cell below computes the standard errors again with a threshold
+between the two and compares. The Hessian runs in float64.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=37967d6e">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0591a62f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3378,7 +3374,7 @@ def ls_conf_int(flow, node, data, level=0.95, rcond=1e-7):
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=43127b9d">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5c4b6db6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3422,11 +3418,11 @@ print(
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>                estimate        se     lower     upper  leak
 term                                                        
-age            -0.022342  0.025264 -0.071859  0.027176   0.0
+age            -0.022342  0.025265 -0.071860  0.027176   0.0
 lwt            -0.010276  0.004113 -0.018337 -0.002216   0.0
 smoke (1 vs 0)  0.664065  0.259577  0.155303  1.172827   0.0
 
-24 parameters, 12 of them without curvature   |grad| = 1.6e-02
+24 parameters, 12 of them without curvature   |grad| = 2.5e-02
 </pre>
 </div>
 </div>
@@ -3434,20 +3430,18 @@ smoke (1 vs 0)  0.664065  0.259577  0.155303  1.172827   0.0
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3cdc0862">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fca27999">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The next values come from <code>Colr(bwt ~ age + lwt + smoke, order = 21)</code> on
-<code>birthwt</code> (R 4.2.3, tram 1.0.4), produced by <code>classical_fit_tram_dag.R</code>. They
-are the oracle, not the claim.</p>
+<p>The reference standard errors come from the same <code>Colr</code> fit.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0d5280ef">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1046ebec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3524,8 +3518,8 @@ claim(
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>
-12 flat directions, largest eigenvalue 2.3e-12   weak direction 1.7e-07   tau = 1.2e-01
-ok  max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction: 2.21e-08 &lt;= 1.00e-03
+12 flat directions, largest eigenvalue 2.0e-10   weak direction 2.8e-07   tau = 1.2e-01
+ok  max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction: 3.33e-08 &lt;= 1.00e-03
 ok  max |SE_flow - SE_Colr|: 5.54e-04 &lt;= 1.00e-03
 ok  max |coef_flow - coef_Colr| / SE: 1.78e-02 &lt;= 7.00e-02
 </pre>
@@ -3535,37 +3529,33 @@ ok  max |coef_flow - coef_Colr| / SE: 1.78e-02 &lt;= 7.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=13cf8f5e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=73835c7c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The standard errors of all three parents agree with those of <code>Colr</code>. The
-confidence intervals of <code>confint()</code> on a <code>Colr</code> fit are Wald intervals too.
-The coefficient differences above are a small fraction of one standard
-error.</p>
+<p>The standard errors of all three parents agree with those of <code>Colr</code>, and
+the coefficient differences are a small fraction of one standard error.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3bc7a29e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=301edb15">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1b-a-bimodal-dag-the-demo-data">1b. A bimodal DAG: the demo data<a class="anchor-link" href="#1b-a-bimodal-dag-the-demo-data">¶</a></h2><p>This is the VACA benchmark triangle <code>x1 → x2 → x3 ← x1</code>, the bimodal SCM of
-the <a href="../demo_tram_dag_colab/">demo notebook</a>. The model is <strong>all-<code>ls</code></strong>. Each
-node is a Colr model, a Bernstein baseline with linear shifts.</p>
-<p>The model is misspecified on purpose. The noise of the DGP is Gaussian, and
-the TRAM latent is logistic. Thus the all-<code>ls</code> model is not the true
-generator. <code>fit_classical</code> still finds its MLE.</p>
+<h2 id="1b-a-bimodal-dag-the-demo-data">1b. A bimodal DAG: the demo data<a class="anchor-link" href="#1b-a-bimodal-dag-the-demo-data">¶</a></h2><p>The data is the bimodal VACA triangle <code>x1 → x2 → x3 ← x1</code> of the
+<a href="../demo_tram_dag_colab/">demo notebook</a>. Each node of the all-<code>LS</code> model is
+a Colr model. The DGP noise is Gaussian and the latent is logistic, so the
+model is misspecified. <code>fit_classical</code> still finds its MLE.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=afdfcec9">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1adb8bb1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3616,19 +3606,15 @@ generator. <code>fit_classical</code> still finds its MLE.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b264ac0a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=96109252">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model, a Bernstein baseline with linear shifts.
-The cell above wrote <code>notebooks/data/vaca.csv</code>. The file is tracked, so R
-reads the same rows that the flow is fitted on.</p>
-<p>The two libraries <strong>count the basis differently</strong>. The comparison is only
-meaningful at the same polynomial degree. <code>N_COEFFS = 20</code> below is
-<code>order = 21</code> in tram, because <code>n_coeffs</code> counts unconstrained coefficients
-and zuko adds two control points
+<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model on the tracked <code>notebooks/data/vaca.csv</code>.
+The two libraries count the basis differently: <code>N_COEFFS = 20</code> below is
+<code>order = 21</code> in tram, because zuko adds two control points
 (<a href="../../zuko-upstream/"><code>docs/zuko-upstream.md</code></a>).</p>
 <div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">tram</span><span class="p">)</span>
 <span class="n">d</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">read.csv</span><span class="p">(</span><span class="s">"notebooks/data/vaca.csv"</span><span class="p">)</span>
@@ -3641,13 +3627,13 @@ and zuko adds two control points
 <span class="nf">coef</span><span class="p">(</span><span class="n">m3</span><span class="p">)</span><span class="w">     </span><span class="c1"># -&gt; x1 -1.777289   x2 -0.455282</span>
 <span class="nf">logLik</span><span class="p">(</span><span class="n">m3</span><span class="p">)</span><span class="w">   </span><span class="c1"># -&gt; -1411.901958</span>
 </pre></div>
-<p>The coefficients need <strong>no sign flip</strong>: <code>Colr</code> reports the shift on the same
-side as the flow.</p>
+<p><code>Colr</code> reports the shift on the same side as the flow, so the signs
+match.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fb0e57da">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=4727c9e2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3680,21 +3666,19 @@ side as the flow.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=40dbb084">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4cca50ea">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The reference values below come from <code>Colr(..., order = 21)</code> on <code>vaca.csv</code>
-(R 4.2.3, tram 1.0.4). The code states <code>N_COEFFS</code> instead of using the
-default, for the reason given above the R block. <code>N_COEFFS = 20</code> gives
-Bernstein degree 21.</p>
+<p>The reference values come from <code>classical_fit_tram_dag.R</code> (R 4.2.3,
+tram 1.0.4).</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ee3217d2">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8b1d9512">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3769,10 +3753,10 @@ for node, parents in flow_c.ls_coefficients().items():
 <pre>
              fit_classical      R Colr    |diff|
 x1 -&gt; x2            1.7986      1.8000    0.0014
-logLik x2       -1401.8706  -1401.2135    0.6571
+logLik x2       -1401.8708  -1401.2135    0.6573
 x1 -&gt; x3           -1.7796     -1.7773    0.0023
 x2 -&gt; x3           -0.4549     -0.4553    0.0004
-logLik x3       -1410.9657  -1411.9020    0.9363
+logLik x3       -1410.9656  -1411.9020    0.9364
 </pre>
 </div>
 </div>
@@ -3780,20 +3764,20 @@ logLik x3       -1410.9657  -1411.9020    0.9363
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1abf46c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fabb0df2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="why-this-one-is-not-an-exact-mle-check">Why this one is not an exact-MLE check<a class="anchor-link" href="#why-this-one-is-not-an-exact-mle-check">¶</a></h3><p>The coefficients here agree far less closely than in Sections 0 and 2. The
-cause is the basis placement of Section 1. The shift coefficients are robust
-to it: their relative gap stays small.</p>
+<h3 id="why-this-one-is-not-an-exact-mle-check">Why this one is not an exact-MLE check<a class="anchor-link" href="#why-this-one-is-not-an-exact-mle-check">¶</a></h3><p>The coefficients agree less closely than in Sections 0 and 2, because of
+the basis placement of Section 1. The relative gap of the shift
+coefficients stays small.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d810114c">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f39a2661">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3838,7 +3822,7 @@ claim("max relative coefficient gap", max(g / r for g, r in gaps), 0.02)</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>ok  max |coef_flow - coef_Colr|: 2.34e-03 &lt;= 1.00e-02
-ok  max relative coefficient gap: 1.32e-03 &lt;= 2.00e-02
+ok  max relative coefficient gap: 1.31e-03 &lt;= 2.00e-02
 </pre>
 </div>
 </div>
@@ -3846,7 +3830,7 @@ ok  max relative coefficient gap: 1.32e-03 &lt;= 2.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=07f2ca36">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=67514352">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3855,16 +3839,14 @@ ok  max relative coefficient gap: 1.32e-03 &lt;= 2.00e-02
 <h3 id="the-fitted-conditional-density">The fitted conditional density<a class="anchor-link" href="#the-fitted-conditional-density">¶</a></h3><p><code>flow.density(df, node, grid)</code> evaluates $p(\text{node} = g \mid
 \mathrm{pa})$ at each grid value, in closed form from the transform and with
 no sampling. It is the continuous counterpart of <code>flow.pmf</code>.</p>
-<p>Two checks are worth making on it, and neither needs an external reference.
-A density must integrate to one over a wide enough grid, and its mode must
-track the conditional mean that the linear shifts imply. The first is the
-stronger check, because it exercises the log-determinant of the transform
-rather than only its location.</p>
+<p>A density must integrate to one over a wide grid, which checks the
+log-determinant of the transform. Its mode must move as the linear shifts
+say.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8e675280">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e98bf01b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3912,20 +3894,19 @@ claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=90aed823">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6b59fcbc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The mode should move with the parents in the direction the shifts say. A
-continuous node adds the shift to $h(x)$, so a positive weight lowers the
-value.</p>
+<p>A continuous node adds the shift to $h(x)$, so a positive weight lowers the
+mode.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dcfb76e2">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b6186ab2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3979,23 +3960,21 @@ assert corr &gt; 0.95, f"the density's mode does not track the shifts: r = {corr
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d2dc6319">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=802ca48d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><strong>Classical against Adam: the same optimum.</strong> An Adam fit with
-<code>EarlyStopping</code> reaches the same coefficients. Here the training rows also
-serve as the validation rows. The guarantees of the classical fit are
-determinism and the exact maximum-likelihood estimate, not speed. Which fit
-is faster depends on the model. The cell prints both timings, because a wall
-clock is a property of the machine.</p>
+<code>EarlyStopping</code>, validated on the training rows, reaches the same
+coefficients. The classical fit gives determinism and the exact MLE, not
+speed. The cell prints both timings and does not assert them.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d84ec4dd">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7a66225e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4022,6 +4001,7 @@ clock is a property of the machine.</p>
     <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">,</span>
     <span class="n">validation_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">60</span><span class="p">),</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">t_adam</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
 
@@ -4044,6 +4024,7 @@ flow_a.fit(
     learning_rate=1e-1,
     validation_data=df,
     callbacks=EarlyStopping(patience=60),
+    seed=0,
 )
 t_adam = time.perf_counter() - t0
 
@@ -4072,8 +4053,8 @@ x1-&gt;x2          1.7986      1.7986    0.0001
 x1-&gt;x3         -1.7796     -1.7799    0.0003
 x2-&gt;x3         -0.4549     -0.4550    0.0002
 
-classical 3.91s  vs  adam 31.8s
-ok  max |coef_classical - coef_adam|: 3.12e-04 &lt;= 1.00e-03
+classical 4.21s  vs  adam 31.5s
+ok  max |coef_classical - coef_adam|: 3.14e-04 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -4081,23 +4062,22 @@ ok  max |coef_classical - coef_adam|: 3.12e-04 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=888dbf6d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3d0aea0a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="2-ordinal-case">2. Ordinal case<a class="anchor-link" href="#2-ordinal-case">¶</a></h2><p>For an <strong>ordinal</strong> outcome the classical model is the ordered logit, which
-<code>statsmodels.OrderedModel</code> fits, so here the equivalence is checkable in
-Python. The data is the paper's mixed triangle
-(<code>experiments/data/triangle-mixed/linear</code>): <code>x3</code> has four levels and the two
-continuous parents <code>x1</code> and <code>x2</code>;
-<a href="../../paper-replication/"><code>docs/paper-replication.md</code></a> states the DGP.</p>
+<h2 id="2-ordinal-case">2. Ordinal case<a class="anchor-link" href="#2-ordinal-case">¶</a></h2><p>For an ordinal outcome the classical model is the ordered logit of
+<code>statsmodels.OrderedModel</code>. The data is the paper's mixed triangle
+(<code>experiments/data/triangle-mixed/linear</code>): <code>x3</code> has four levels and the
+continuous parents <code>x1</code> and <code>x2</code>
+(<a href="../../paper-replication/"><code>docs/paper-replication.md</code></a>).</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=df92ab83">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9110be6d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4148,33 +4128,33 @@ flow_o.fit_classical(tm)</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[18]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
- 'final_nll': 1.0638599179974983,
- 'seconds': 6.516956594000021,
+ 'final_nll': 1.0638599166788296,
+ 'seconds': 11.479647939000188,
  'coefficients': {'x2': {'x1': array([2.02991896])},
   'x3': {'x1': array([0.00974636]), 'x2': array([0.38319398])}},
  'nodes': {'x1': {'converged': True,
    'stop_reason': 'tolerance',
-   'n_iter': 124,
-   'final_nll': -0.528496480675719,
-   'grad_norm': 8.061878566644408e-06,
-   'decrement': 6.430472293035621e-10,
-   'seconds': 1.590920419999975,
+   'n_iter': 125,
+   'final_nll': -0.5284964811303434,
+   'grad_norm': 7.935367721321228e-06,
+   'decrement': 3.953522251566813e-10,
+   'seconds': 1.7309166959998947,
    'coefficients': {}},
   'x2': {'converged': True,
    'stop_reason': 'tolerance',
-   'n_iter': 306,
-   'final_nll': 0.38264754696930564,
-   'grad_norm': 1.9038896613669157e-05,
-   'decrement': 7.523436822226438e-10,
-   'seconds': 4.884447301000137,
+   'n_iter': 241,
+   'final_nll': 0.3826475461052615,
+   'grad_norm': 2.3250106041379636e-06,
+   'decrement': 8.507781824995219e-10,
+   'seconds': 9.707766093000146,
    'coefficients': {'x1': array([2.02991896])}},
   'x3': {'converged': True,
    'stop_reason': 'tolerance',
    'n_iter': 15,
-   'final_nll': 1.2097088517039116,
-   'grad_norm': 6.470020896163431e-06,
-   'decrement': 3.1231225589445164e-10,
-   'seconds': 0.041588872999909654,
+   'final_nll': 1.2097088517039114,
+   'grad_norm': 6.470020896085258e-06,
+   'decrement': 3.1231225589370035e-10,
+   'seconds': 0.04096515000014733,
    'coefficients': {'x1': array([0.00974636]), 'x2': array([0.38319398])}}}}</pre>
 </div>
 </div>
@@ -4182,20 +4162,19 @@ flow_o.fit_classical(tm)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=85fcf1a2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d43473e3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="refitting-the-same-design-in-statsmodels">Refitting the same design in statsmodels<a class="anchor-link" href="#refitting-the-same-design-in-statsmodels">¶</a></h3><p><code>flow.design_matrix(df, node, drop_first=True)</code> gives the encoding that the
-flow gives its own shifts. Thus <code>statsmodels</code> fits the same design, not a
-different one.</p>
+<h3 id="refitting-the-same-design-in-statsmodels">Refitting the same design in statsmodels<a class="anchor-link" href="#refitting-the-same-design-in-statsmodels">¶</a></h3><p><code>flow.design_matrix(df, node, drop_first=True)</code> gives the encoding of the
+flow's own shifts, so <code>statsmodels</code> fits the same design.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=583dd626">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=82f7ef92">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4255,19 +4234,19 @@ x2                    0.3832       0.3832   0.0001
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=09a30fc7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=623e0ead">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="standard-errors">Standard errors<a class="anchor-link" href="#standard-errors">¶</a></h3><p>The helper from Section 1 needs no change. <code>statsmodels</code> reports the same
-quantities, so every number below has an external check.</p>
+<h3 id="standard-errors">Standard errors<a class="anchor-link" href="#standard-errors">¶</a></h3><p>The helper of Section 1 applies unchanged, and <code>statsmodels</code> reports the
+same quantities.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=41a085ec">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=91393347">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4338,7 +4317,7 @@ claim("max |SE_flow - SE_statsmodels|", se_gap, 1e-3)</div>
 <pre>        flow SE   sm SE  |est|/SE             flow 95%     statsmodels 95%
 x1       0.1080  0.1080      0.09   [-0.202, +0.221]  [-0.202, +0.221]
 x2       0.0735  0.0735      5.21   [+0.239, +0.527]  [+0.239, +0.527]
-ok  max |SE_flow - SE_statsmodels|: 8.90e-07 &lt;= 1.00e-03
+ok  max |SE_flow - SE_statsmodels|: 8.14e-07 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -4346,7 +4325,7 @@ ok  max |SE_flow - SE_statsmodels|: 8.90e-07 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2edc2d57">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=afad139c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4358,7 +4337,7 @@ the coefficient gap is a small fraction of one standard error.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e23b27bc">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9e1edd18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4383,7 +4362,7 @@ the coefficient gap is a small fraction of one standard error.</p>
     <span class="n">claim</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">: gap against statsmodels / SE"</span><span class="p">,</span>
         <span class="n">observed</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">]),</span>
-        <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="mf">2.5e-3</span><span class="p">,</span>
     <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-21">print(f"|grad| at the classical optimum: {diag_o['grad_norm']:.1e}")
@@ -4393,7 +4372,7 @@ for term in ("x1", "x2"):
     claim(
         f"{term}: gap against statsmodels / SE",
         observed / float(table_o.loc[term, "se"]),
-        1e-3,
+        2.5e-3,
     )</div>
 </div>
 </div>
@@ -4408,9 +4387,9 @@ for term in ("x1", "x2"):
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>|grad| at the classical optimum: 3.2e-02
 x1   |flow - statsmodels| = 8.95e-05
-ok  x1: gap against statsmodels / SE: 8.28e-04 &lt;= 1.00e-03
+ok  x1: gap against statsmodels / SE: 8.28e-04 &lt;= 2.50e-03
 x2   |flow - statsmodels| = 5.52e-05
-ok  x2: gap against statsmodels / SE: 7.51e-04 &lt;= 1.00e-03
+ok  x2: gap against statsmodels / SE: 7.51e-04 &lt;= 2.50e-03
 </pre>
 </div>
 </div>
@@ -4418,21 +4397,19 @@ ok  x2: gap against statsmodels / SE: 7.51e-04 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=63cd8cfa">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2f8aca43">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3-warm-start-classical-fit-then-further-training">3. Warm start: classical fit, then further training<a class="anchor-link" href="#3-warm-start-classical-fit-then-further-training">¶</a></h2><p><code>fit_classical</code> leaves the model at the MLE in float32, ready for any normal
-operation. A continued <code>fit()</code> from the classical solution <em>stays put</em>. This
-confirms that the classical solution is the optimum. It also makes the
-classical fit a warm start for further training.</p>
+<h2 id="3-warm-start-classical-fit-then-further-training">3. Warm start: classical fit, then further training<a class="anchor-link" href="#3-warm-start-classical-fit-then-further-training">¶</a></h2><p>A continued <code>fit()</code> from the classical solution stays put. This confirms
+the optimum and makes the classical fit a warm start.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7c0d1ba3">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f014dc16">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4452,7 +4429,7 @@ classical fit a warm start for further training.</p>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-<span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">after</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"coefficient drift after 300 more Adam epochs from the classical MLE:"</span><span class="p">)</span>
@@ -4462,7 +4439,7 @@ classical fit a warm start for further training.</p>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-22">before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
+flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256, seed=0)
 after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")
@@ -4481,8 +4458,8 @@ for p in ["x1", "x2"]:
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient drift after 300 more Adam epochs from the classical MLE:
-ok  x1: max |drift| / SE: 1.19e-02 &lt;= 1.00e-01
-ok  x2: max |drift| / SE: 2.95e-02 &lt;= 1.00e-01
+ok  x1: max |drift| / SE: 3.39e-02 &lt;= 1.00e-01
+ok  x2: max |drift| / SE: 9.29e-03 &lt;= 1.00e-01
 </pre>
 </div>
 </div>

@@ -17,13 +17,11 @@
 # A complex intercept groups its parents jointly, `CI("x1", "x2")`, or
 # additively, `CI("x1", "x2", allow_interaction=False)`.
 # [`docs/model.md`](../docs/model.md) states the rule, and
-# [`docs/interpretation.md`](../docs/interpretation.md) why the additive form
-# needs `flow.intercept_contributions(data, node)` to be read.
+# [`docs/interpretation.md`](../docs/interpretation.md) how to read the
+# additive form with `flow.intercept_contributions(data, node)`.
 #
-# This notebook fits both models and shows the difference in interpretation.
-# The data have an interaction, so the joint model fits them better. Only the
-# additive model splits into per-parent parts, and `intercept_contributions`
-# gives these parts.
+# This notebook fits both models on data with an interaction. The joint model
+# fits better. Only the additive model splits into per-parent parts.
 
 # %%
 import matplotlib.pyplot as plt
@@ -61,8 +59,7 @@ train.head()
 # %% [markdown]
 # ## Fit both models
 #
-# The data and the node are the same. Only the grouping of the two intercept
-# parents is different.
+# Only the grouping of the two intercept parents differs.
 
 
 # %%
@@ -87,11 +84,12 @@ for f in (flow_joint, flow_add):
         learning_rate=1e-2,
         validation_data=val,
         callbacks=EarlyStopping(),
+        seed=0,
     )
 
 # %% [markdown]
-# The validation NLL is per row. The joint model can represent the interaction,
-# so it has the lower validation NLL.
+# The joint model can represent the interaction, so it has the lower
+# validation NLL per row.
 
 # %%
 nll_joint = sum(flow_joint.nll(val).values())
@@ -106,10 +104,10 @@ assert nll_joint < nll_add, "the joint model should fit the interaction better"
 # %% [markdown]
 # ## `intercept_contributions`: the centered decomposition
 #
-# It returns the mean-centered (sum-to-zero) contribution of each parent's
-# network to the transform parameters `theta`. The removed means collect in
-# `baseline`. The centering is over the rows of the `df` that you pass. The last
-# check below shows the centering: every column mean is about 0.
+# It returns the contribution of each parent's network to the transform
+# parameters `theta`, centered over the rows that you pass. The removed means
+# collect in `baseline`. The last check shows that every column mean is about
+# 0.
 
 # %%
 res_add = flow_add.intercept_contributions(train, "x3")
@@ -130,15 +128,12 @@ assert max(col_means.values()) < 1e-5
 # Pick the transform coefficient that varies most across the data and plot each
 # term's centered contribution to it against a parent value.
 #
-# - **Additive** (`net(x1)` depends only on `x1`): its contribution to any
-#   coefficient is a deterministic 1-D function of `x1`. The points collapse to
-#   a **clean curve**, and the same applies to `x2`. These curves *are* the
-#   per-parent partial effects, because the structure is separable.
-# - **Joint** (one network over both parents): the single `x1+x2` component
-#   depends on *both*. Plotted against `x1` alone it is a **cloud**, and the
-#   hidden `x2` (color) sets its height. There is nothing to read off per
-#   parent. The joint panel picks its own most-varying coefficient and has its
-#   own y-axis.
+# - **Additive**: `net(x1)` depends only on `x1`, so its contribution is a
+#   curve in `x1`, and the same applies to `x2`. These curves are the
+#   per-parent partial effects.
+# - **Joint**: the single `x1+x2` component depends on both parents. Against
+#   `x1` alone it is a cloud, and `x2` (color) sets its height. The joint
+#   panel picks its own most-varying coefficient and has its own y-axis.
 
 # %%
 c1 = res_add["contributions"]["x1"]
@@ -175,10 +170,6 @@ plt.show()
 # | a per-parent partial-effect plot ("what does `x1` do?") | **additive** `CI("x1", "x2", allow_interaction=False)` | `intercept_contributions` → mean-centered, **separable** components |
 # | interactions between parents in the transform | **joint** `CI("x1", "x2")` | one entangled network: flexible, **not** separable |
 #
-# The choice is between fit and interpretation. Here the joint model has the
-# lower validation NLL, and only the additive model is readable per parent.
-#
-# *Caveat:* the contributions live in the **unconstrained** parameter space of
-# the transform. The additive terms are summed there, before the monotonicity
-# constraint. Thus they are partial effects on the parameters. In general,
-# they are not an additive split of the curve `h` itself.
+# The contributions live in the unconstrained parameter space of the
+# transform, before the monotonicity constraint. They are partial effects on
+# the parameters, not an additive split of the curve `h`.

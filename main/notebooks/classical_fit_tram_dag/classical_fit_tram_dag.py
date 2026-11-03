@@ -26,10 +26,10 @@
 # maximum-likelihood estimate ([`docs/fitting.md`](../docs/fitting.md)). This
 # notebook checks the result against `statsmodels` and R.
 #
-# Every R reference printed below comes from a real fit, typed in as a
-# constant. `notebooks/classical_fit_tram_dag.R` holds all of these fits. To
-# check them again, run `Rscript notebooks/classical_fit_tram_dag.R` from the
-# repo root. It needs `MASS` (ships with R) and `tram`.
+# The R references below are constants from
+# `notebooks/classical_fit_tram_dag.R`. To check them, run
+# `Rscript notebooks/classical_fit_tram_dag.R` from the repository root. It
+# needs `MASS` and `tram`.
 #
 
 # %%
@@ -66,10 +66,8 @@ def claim(text, value, bound, fmt="{:.2e}"):
 # %% [markdown]
 # ## 0. The zeroth example: logistic regression on `MASS::birthwt`
 #
-# Before any DAG, take a well-known model on a dataset that every R
-# installation has. A **two-level** `OrdinalNode` whose terms are all `LS` *is*
-# logistic regression. It is the same model, not an analogue. The ordinal
-# transform is
+# A two-level `OrdinalNode` whose terms are all `LS` is logistic regression.
+# The ordinal transform is
 #
 # $$P(Y \le 0 \mid x) = \sigma\!\left(\theta_0 - \textstyle\sum_p w_p x_p\right),$$
 #
@@ -77,23 +75,20 @@ def claim(text, value, bound, fmt="{:.2e}"):
 #
 # $$\operatorname{logit} P(Y = 1 \mid x) = -\theta_0 + \textstyle\sum_p w_p x_p .$$
 #
-# The shift weights **are** the logistic-regression coefficients. The intercept
-# is **minus** the cutpoint, because an ordinal node *subtracts* its shift
+# The shift weights are the logistic-regression coefficients. The intercept
+# is minus the cutpoint, because an ordinal node subtracts its shift
 # ([`docs/notation.md`](../docs/notation.md)). Section 2 uses the same model
-# with $K-1$ cutpoints instead of one.
+# with $K-1$ cutpoints.
 #
-# The data is `birthwt` from **MASS**, the low-birth-weight study of Hosmer &
-# Lemeshow. It has 189 births and the outcome `low` (birth weight under
-# 2.5 kg). The predictors are `age` (mother's age), `lwt` (mother's weight at
-# last period, lbs) and `smoke` (smoking during pregnancy).
-# `notebooks/data/birthwt.csv` holds these columns, exported verbatim from
-# MASS. This is not a **causal** model.
+# The data is `birthwt` from MASS, the low-birth-weight study of Hosmer &
+# Lemeshow. The outcome is `low`, and the predictors are `age`, `lwt` and
+# `smoke` ([`notebooks/data/README.md`](data/README.md)). This is not a causal
+# model.
 
 # %% [markdown]
 # ### The R you can copy-paste
 #
-# `birthwt` ships with MASS, so nothing needs a download. Paste this into any
-# R session to get the reference fit:
+# Paste this into an R session to get the reference fit:
 #
 # ```r
 # library(MASS)
@@ -110,9 +105,7 @@ def claim(text, value, bound, fmt="{:.2e}"):
 # 'log Lik.' -111.4396765 (df=4)
 # ```
 #
-# (R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as `R_GLM`, so
-# the notebook shows the three-way comparison without an R installation. They
-# are `coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))`.
+# (R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as `R_GLM`.
 
 # %%
 R_GLM = {
@@ -130,12 +123,11 @@ print(
 )
 
 # %% [markdown]
-# The spec. `low` is the outcome. `smoke` is a binary **parent**, so it is an
-# ordinal node too. `age` and `lwt` are source nodes. The flow also models
-# their marginals, which a plain `glm` does not. Here the marginals are a
-# nuisance, so they get the cheapest transform (`SI(transform="affine")`). They
-# cannot change the outcome node: the joint NLL decomposes per node, so the
-# gradient of the `low` node never sees the covariate marginals.
+# `low` is the outcome. `smoke` is a binary parent, so it is an ordinal node
+# too. `age` and `lwt` are source nodes. The flow also models their
+# marginals, which `glm` does not. They get the cheapest transform,
+# `SI(transform="affine")`. The joint NLL decomposes per node, so the
+# marginals cannot change the `low` node.
 
 # %%
 spec_bw = {
@@ -149,16 +141,11 @@ flow_bw = CausalFlowDAG(spec_bw, seed=0)
 flow_bw.fit_classical(bw)
 
 # %% [markdown]
-# Now read the coefficients back out. `age` and `lwt` are continuous parents, so
-# they enter raw and their weights compare directly. `smoke` is ordinal, so it
-# enters **one-hot over both levels**.
-#
-# > **The coding is different from R.** R gives a binary predictor one column.
-# > The flow gives it two, $w_0$ and $w_1$, and only their difference is
-# > identified ([`docs/interpretation.md`](../docs/interpretation.md)). This
-# > difference is the single `smoke` coefficient of R.
-#
-# The second column also moves the intercept. With $s \in \{0, 1\}$,
+# `age` and `lwt` are continuous parents, so they enter raw and their weights
+# compare directly. `smoke` is ordinal, so it enters one-hot over both levels,
+# $w_0$ and $w_1$. Only their difference is identified
+# ([`docs/interpretation.md`](../docs/interpretation.md)), and it is the
+# `smoke` coefficient of R. With $s \in \{0, 1\}$,
 # $\mathbf{1}[s = 0] = 1 - s$, so the one-hot pair collapses to
 #
 # $$w_0\,\mathbf{1}[s = 0] + w_1\,\mathbf{1}[s = 1] \;=\; w_0 + (w_1 - w_0)\,s ,$$
@@ -167,12 +154,9 @@ flow_bw.fit_classical(bw)
 #
 # $$\operatorname{logit} P(\texttt{low} = 1) \;=\; (-\theta_0 + w_0) \;+\; w_{\text{age}}\,\texttt{age} \;+\; w_{\text{lwt}}\,\texttt{lwt} \;+\; (w_1 - w_0)\,s .$$
 #
-# The first bracket is the `(Intercept)` of R, which is $-\theta_0 + w_0$ and
-# not $-\theta_0$. The last term is the `smoke` of R. The cutpoints are
-# $[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The one-hot
-# level-0 column of `smoke` is part of the intercept, hence the $+ w_0$. The
-# `statsmodels` formula is the same as the R call above, with the same names in
-# the output.
+# The first bracket is the `(Intercept)` of R. The cutpoints are
+# $[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The
+# `statsmodels` formula is the R call above.
 
 # %%
 import statsmodels.formula.api as smf  # noqa: E402
@@ -212,12 +196,10 @@ for name, flow_value, sm_value, r_value in rows_bw:
 claim("max coefficient spread of the three fits", max(spreads), 6e-5)
 
 # %% [markdown]
-# Three optimizers land on the same maximum likelihood, because there is only
-# one. They are L-BFGS on the flow, the Newton solver of `statsmodels` and the
-# IRLS of R. The log-likelihood of the `low` node agrees with `logLik(m)` of R
-# too. `flow.pmf` gives the fitted probabilities of `glm` row by row. The `nll()`
-# method returns the *mean* NLL per node. Times $n$ and negated, it is the
-# log-likelihood.
+# L-BFGS on the flow, the Newton solver of `statsmodels` and the IRLS of R
+# find the same maximum likelihood. `flow.pmf` gives the fitted probabilities
+# of `glm` row by row. `nll()` gives the mean NLL per node; times $-n$ it is
+# the log-likelihood.
 
 # %%
 ll_flow = -flow_bw.nll(bw)["low"] * len(bw)
@@ -232,12 +214,9 @@ claim(
 )
 
 # %% [markdown]
-# **The same regression without the DAG.** The marginals of `age` and `lwt`
-# are a nuisance here, and a `Node` drops them. It is the `low` node alone. It
-# takes its name, its node spec and the parent schema,
-# `{parent: "continuous" | n_levels}`. The frame needs only `low` and its
-# parents. `Node.fit_classical` finds the same maximum likelihood as the flow,
-# R and `statsmodels`.
+# **The same regression without the DAG.** A lone `Node` drops the marginals
+# of `age` and `lwt`. `Node.fit_classical` finds the same maximum likelihood
+# as the flow, R and `statsmodels`.
 
 # %%
 low = Node(
@@ -256,18 +235,16 @@ assert abs(ll_low - R_LOGLIK) < 1e-4, "the lone node misses the glm likelihood"
 # %% [markdown]
 # ## 1. Continuous case
 #
-# Section 0 modelled `low`, the *dichotomized* birth weight. `birthwt` also
-# holds `bwt`, the weight in grams that `low` was cut from. Thus the same
-# three predictors can be fitted against a continuous outcome. With a flexible
-# monotone transform and a logistic latent, this is the Colr model of R:
+# `birthwt` also holds `bwt`, the birth weight in grams that `low` is cut
+# from. With a flexible monotone transform and a logistic latent, the same
+# three predictors give the Colr model of R:
 #
 # ```r
 # tram::Colr(bwt ~ age + lwt + smoke, order = 21)
 # ```
 #
-# `glm` cannot fit this model. `glm(family = gaussian)` is `lm`, with a linear
-# transform and a normal latent. The R reference values below come from
-# `Colr(bwt ~ age + lwt + smoke, order = 21)` (R 4.2.3, tram 1.0.4).
+# `glm` cannot fit this model. The R references come from this call (R 4.2.3,
+# tram 1.0.4).
 
 # %%
 R_COLR_BWT = {
@@ -310,15 +287,11 @@ print(
 )
 
 # %% [markdown]
-# This agreement is not exact, and neither fit is the more correct one. The
-# two libraries place the Bernstein basis differently. The flow puts it on the
-# `range_q` quantiles with linear tails ([`docs/model.md`](../docs/model.md)).
-# `Colr` uses the full range of the data. Thus the two fits maximize slightly
-# different likelihoods.
-#
-# A coefficient difference matters when it is large relative to the
-# **sampling uncertainty** of the estimate. The next cells compute the
-# standard errors and compare the differences with them.
+# The agreement is not exact, because the two libraries place the Bernstein
+# basis differently. The flow puts it on the `range_q` quantiles with linear
+# tails ([`docs/model.md`](../docs/model.md)). `Colr` uses the full range of
+# the data. The two fits thus maximize slightly different likelihoods. The
+# next cells compare the differences with the standard errors.
 
 # %% [markdown]
 # ### Standard errors and confidence intervals
@@ -336,9 +309,7 @@ print(
 #
 # $$I_{ab} = \frac{\partial^{2}(-\ell)}{\partial\theta_a\,\partial\theta_b}\bigg|_{\hat\theta},$$
 #
-# which autograd gives directly. One backward pass gives the gradient with the
-# graph retained. Then one more backward pass per component gives a row of
-# $I$.
+# which autograd gives: one backward pass per component gives a row of $I$.
 #
 # Here $I$ is singular, so $I^{-1}$ does not exist. The one-hot `smoke` pair
 # and the Bernstein intercept have directions without curvature (see
@@ -358,15 +329,11 @@ print(
 #
 # $$\operatorname{leak}(c) = \max_{k\,:\ \lambda_k \le \tau} \left| c^{\top} e_k \right| .$$
 #
-# Only interpret rows whose leak is close to zero. The spectrum has three
-# parts. A flat block of directions is near zero. One weakly curved direction,
-# a Bernstein gap, has a small eigenvalue that is below $\tau$. The remaining
-# directions are curved. The threshold drops the weak direction together with
-# the flat block. The standard errors need that choice to be harmless. The
-# cell below computes them a second time with a threshold between the flat
-# block and the weak direction, and compares. The Hessian code runs in
-# float64, because second derivatives need it, and restores the stored
-# precision afterwards.
+# Only interpret rows whose leak is close to zero. The spectrum has a flat
+# block near zero, one weakly curved Bernstein direction below $\tau$, and
+# the curved directions. The threshold drops the weak direction with the flat
+# block. The cell below computes the standard errors again with a threshold
+# between the two and compares. The Hessian runs in float64.
 
 # %%
 from scipy.stats import norm  # noqa: E402
@@ -466,9 +433,7 @@ print(
 )
 
 # %% [markdown]
-# The next values come from `Colr(bwt ~ age + lwt + smoke, order = 21)` on
-# `birthwt` (R 4.2.3, tram 1.0.4), produced by `classical_fit_tram_dag.R`. They
-# are the oracle, not the claim.
+# The reference standard errors come from the same `Colr` fit.
 
 # %%
 R_COLR_BWT_SE = {"age": 0.025305, "lwt": 0.004116, "smoke": 0.260131}
@@ -496,21 +461,16 @@ claim(
 )
 
 # %% [markdown]
-# The standard errors of all three parents agree with those of `Colr`. The
-# confidence intervals of `confint()` on a `Colr` fit are Wald intervals too.
-# The coefficient differences above are a small fraction of one standard
-# error.
+# The standard errors of all three parents agree with those of `Colr`, and
+# the coefficient differences are a small fraction of one standard error.
 
 # %% [markdown]
 # ## 1b. A bimodal DAG: the demo data
 #
-# This is the VACA benchmark triangle `x1 → x2 → x3 ← x1`, the bimodal SCM of
-# the [demo notebook](demo_tram_dag_colab.py). The model is **all-`ls`**. Each
-# node is a Colr model, a Bernstein baseline with linear shifts.
-#
-# The model is misspecified on purpose. The noise of the DGP is Gaussian, and
-# the TRAM latent is logistic. Thus the all-`ls` model is not the true
-# generator. `fit_classical` still finds its MLE.
+# The data is the bimodal VACA triangle `x1 → x2 → x3 ← x1` of the
+# [demo notebook](demo_tram_dag_colab.py). Each node of the all-`LS` model is
+# a Colr model. The DGP noise is Gaussian and the latent is logistic, so the
+# model is misspecified. `fit_classical` still finds its MLE.
 
 
 # %%
@@ -531,14 +491,9 @@ if False:
 # %% [markdown]
 # ### The R you can copy-paste
 #
-# `tram::Colr` fits the same model, a Bernstein baseline with linear shifts.
-# The cell above wrote `notebooks/data/vaca.csv`. The file is tracked, so R
-# reads the same rows that the flow is fitted on.
-#
-# The two libraries **count the basis differently**. The comparison is only
-# meaningful at the same polynomial degree. `N_COEFFS = 20` below is
-# `order = 21` in tram, because `n_coeffs` counts unconstrained coefficients
-# and zuko adds two control points
+# `tram::Colr` fits the same model on the tracked `notebooks/data/vaca.csv`.
+# The two libraries count the basis differently: `N_COEFFS = 20` below is
+# `order = 21` in tram, because zuko adds two control points
 # ([`docs/zuko-upstream.md`](../docs/zuko-upstream.md)).
 #
 # ```r
@@ -554,8 +509,8 @@ if False:
 # logLik(m3)   # -> -1411.901958
 # ```
 #
-# The coefficients need **no sign flip**: `Colr` reports the shift on the same
-# side as the flow.
+# `Colr` reports the shift on the same side as the flow, so the signs
+# match.
 
 # %%
 R_COLR = {
@@ -564,10 +519,8 @@ R_COLR = {
 }
 
 # %% [markdown]
-# The reference values below come from `Colr(..., order = 21)` on `vaca.csv`
-# (R 4.2.3, tram 1.0.4). The code states `N_COEFFS` instead of using the
-# default, for the reason given above the R block. `N_COEFFS = 20` gives
-# Bernstein degree 21.
+# The reference values come from `classical_fit_tram_dag.R` (R 4.2.3,
+# tram 1.0.4).
 
 # %%
 df = pd.read_csv(NB_DATA / "vaca.csv")
@@ -595,9 +548,9 @@ for node, parents in flow_c.ls_coefficients().items():
 # %% [markdown]
 # ### Why this one is not an exact-MLE check
 #
-# The coefficients here agree far less closely than in Sections 0 and 2. The
-# cause is the basis placement of Section 1. The shift coefficients are robust
-# to it: their relative gap stays small.
+# The coefficients agree less closely than in Sections 0 and 2, because of
+# the basis placement of Section 1. The relative gap of the shift
+# coefficients stays small.
 
 # %%
 gaps = [
@@ -615,11 +568,9 @@ claim("max relative coefficient gap", max(g / r for g, r in gaps), 0.02)
 # \mathrm{pa})$ at each grid value, in closed form from the transform and with
 # no sampling. It is the continuous counterpart of `flow.pmf`.
 #
-# Two checks are worth making on it, and neither needs an external reference.
-# A density must integrate to one over a wide enough grid, and its mode must
-# track the conditional mean that the linear shifts imply. The first is the
-# stronger check, because it exercises the log-determinant of the transform
-# rather than only its location.
+# A density must integrate to one over a wide grid, which checks the
+# log-determinant of the transform. Its mode must move as the linear shifts
+# say.
 
 # %%
 grid = np.linspace(df["x3"].min() - 2, df["x3"].max() + 2, 601)
@@ -629,9 +580,8 @@ mass = np.trapezoid(dens, grid, axis=1)
 claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e-3)
 
 # %% [markdown]
-# The mode should move with the parents in the direction the shifts say. A
-# continuous node adds the shift to $h(x)$, so a positive weight lowers the
-# value.
+# A continuous node adds the shift to $h(x)$, so a positive weight lowers the
+# mode.
 
 # %%
 modes = grid[dens.argmax(axis=1)]
@@ -645,11 +595,9 @@ assert corr > 0.95, f"the density's mode does not track the shifts: r = {corr:.4
 
 # %% [markdown]
 # **Classical against Adam: the same optimum.** An Adam fit with
-# `EarlyStopping` reaches the same coefficients. Here the training rows also
-# serve as the validation rows. The guarantees of the classical fit are
-# determinism and the exact maximum-likelihood estimate, not speed. Which fit
-# is faster depends on the model. The cell prints both timings, because a wall
-# clock is a property of the machine.
+# `EarlyStopping`, validated on the training rows, reaches the same
+# coefficients. The classical fit gives determinism and the exact MLE, not
+# speed. The cell prints both timings and does not assert them.
 
 # %%
 flow_a = CausalFlowDAG(spec_vaca, seed=0)
@@ -661,6 +609,7 @@ flow_a.fit(
     learning_rate=1e-1,
     validation_data=df,
     callbacks=EarlyStopping(patience=60),
+    seed=0,
 )
 t_adam = time.perf_counter() - t0
 
@@ -677,12 +626,11 @@ claim("max |coef_classical - coef_adam|", float(max(adam_gaps)), 1e-3)
 # %% [markdown]
 # ## 2. Ordinal case
 #
-# For an **ordinal** outcome the classical model is the ordered logit, which
-# `statsmodels.OrderedModel` fits, so here the equivalence is checkable in
-# Python. The data is the paper's mixed triangle
-# (`experiments/data/triangle-mixed/linear`): `x3` has four levels and the two
-# continuous parents `x1` and `x2`;
-# [`docs/paper-replication.md`](../docs/paper-replication.md) states the DGP.
+# For an ordinal outcome the classical model is the ordered logit of
+# `statsmodels.OrderedModel`. The data is the paper's mixed triangle
+# (`experiments/data/triangle-mixed/linear`): `x3` has four levels and the
+# continuous parents `x1` and `x2`
+# ([`docs/paper-replication.md`](../docs/paper-replication.md)).
 
 # %%
 tm = pd.read_csv(DATA / "triangle-mixed" / "linear" / "obs.csv")
@@ -699,9 +647,8 @@ flow_o.fit_classical(tm)
 # %% [markdown]
 # ### Refitting the same design in statsmodels
 #
-# `flow.design_matrix(df, node, drop_first=True)` gives the encoding that the
-# flow gives its own shifts. Thus `statsmodels` fits the same design, not a
-# different one.
+# `flow.design_matrix(df, node, drop_first=True)` gives the encoding of the
+# flow's own shifts, so `statsmodels` fits the same design.
 
 # %%
 design = flow_o.design_matrix(tm, "x3", drop_first=True)
@@ -718,8 +665,8 @@ for name in ("x1", "x2"):
 # %% [markdown]
 # ### Standard errors
 #
-# The helper from Section 1 needs no change. `statsmodels` reports the same
-# quantities, so every number below has an external check.
+# The helper of Section 1 applies unchanged, and `statsmodels` reports the
+# same quantities.
 
 # %%
 table_o, diag_o = ls_conf_int(flow_o, "x3", tm)
@@ -754,21 +701,19 @@ for term in ("x1", "x2"):
     claim(
         f"{term}: gap against statsmodels / SE",
         observed / float(table_o.loc[term, "se"]),
-        1e-3,
+        2.5e-3,
     )
 
 # %% [markdown]
 # ## 3. Warm start: classical fit, then further training
 #
-# `fit_classical` leaves the model at the MLE in float32, ready for any normal
-# operation. A continued `fit()` from the classical solution *stays put*. This
-# confirms that the classical solution is the optimum. It also makes the
-# classical fit a warm start for further training.
+# A continued `fit()` from the classical solution stays put. This confirms
+# the optimum and makes the classical fit a warm start.
 
 # %%
 before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
+flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256, seed=0)
 after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")

@@ -37,10 +37,10 @@ starts from the same weights in every spec that contains it. `Node(seed=)` uses
 the same stream, so a lone node starts from the weights it has in the flow.
 Without a seed, the weights come from torch's global RNG. `nodes.seeded` holds
 this seeding. It runs in `torch.random.fork_rng`, so construction does not
-change torch's global RNG state. Each random act takes
-its own seed: the constructor for the weights, `fit(seed=)` for the shuffle,
-`sample(seed=)` and `abduct(seed=)` for the latent draws. The class composes
-`FitMixin` and `ReadoutsMixin`. The modules below list their methods.
+change torch's global RNG state. Each random act takes its own seed: the
+constructor for the weights, `fit(seed=)` for the shuffle, `sample(seed=)` and
+`abduct(seed=)` for the latent draws. The class composes `FitMixin` and
+`ReadoutsMixin`. The modules below list their methods.
 
 - `CausalFlowDAG.outcome()` gives the one node without children.
 - `sample` covers observational, interventional (`do=`, graph mutilation) and

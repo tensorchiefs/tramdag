@@ -543,7 +543,10 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is continuous, or a ``do`` key is not a parent.
+            If ``node`` is continuous, or a ``do`` key is a node that is not
+            a parent.
+        KeyError
+            If ``node`` or a ``do`` key is not a node.
         """
         if self._node(node).kind != "ordinal":
             raise ValueError(
@@ -588,8 +591,10 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is ordinal (use ``pmf``), or a ``do`` key is not a
-            parent.
+            If ``node`` is ordinal (use ``pmf``), or a ``do`` key is a node
+            that is not a parent.
+        KeyError
+            If ``node`` or a ``do`` key is not a node.
         """
         if self._node(node).kind != "continuous":
             raise ValueError(

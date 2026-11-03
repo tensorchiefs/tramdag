@@ -32,8 +32,7 @@ the autograd call from the forward pass and makes the loss compilable.
 
 zuko pads the knot derivatives with `exp(0)=1`. It extrapolates as the
 identity outside `[-B, B]`. Therefore the tail slope stays fixed at 1 for
-every θ, while about 10 % of the data sits beyond the 5 %/95 % pre-scaling
-range.
+every θ, while the 5 % tails of the data sit beyond the pre-scaling range.
 
 Upstream, zuko can accept boundary derivatives of shape `(*, K+1)`, or it can
 take an opt-in `tails="linear"`. Identity tails are deliberate in the NSF
@@ -57,9 +56,8 @@ framing is "identity/linear initialization support", a standard flow trick.
 
 zuko's docstring says that θ has shape `(*, M-2)` for a degree-M polynomial.
 `n` unconstrained coefficients become `n+2` control points, which is degree
-`n+1`. The correct claim is therefore `(*, M-1)`. This off-by-one is a real
-replication trap: order 21 against the paper's `len_theta=20`, which is order
-19.
+`n+1`. The correct claim is therefore `(*, M-1)`. The paper's
+`len_theta=20` is order 19, not order 21.
 
 ## 5. `Logistic` in `zuko.distributions`
 

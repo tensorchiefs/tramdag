@@ -46,22 +46,19 @@ parents, and it needs no DAG. It fits, scores and saves like the flow, for
 one node. [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
 fits one with Adam, and
 [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
-fits one classically against R `glm`. A lone node starts from the weights it
-has in a seeded flow ([code-map.md](code-map.md#flowpy-the-model)).
+fits one classically against R `glm`. A lone node built with `seed=` starts from
+the weights it has in a flow with that seed ([code-map.md](code-map.md#flowpy-the-model)).
 
 ## Path A: stochastic optimization with `fit`
 
-`fit` is the general-purpose trainer, and the only one for a model with a
-`CS`, `CI` or `VC` term. Per node, it is one minibatch Adam loop that keeps
+`fit` is the general-purpose trainer. With `fit_jointly`, it is one of the
+two Adam paths, the only trainers for a model with a `CS`, `CI` or `VC` term
+(`fit_classical` is not). Per node, it is one minibatch Adam loop that keeps
 the final weights unless a callback restores others. The
 [`fit`][tramdag.flow.CausalFlowDAG.fit] docstring lists every option.
 
 - **Nodes.** The nodes fit in topological order, or in parallel worker
   processes with `n_jobs`.
-- **Joint fit.** `fit_jointly` trains all nodes with one optimizer on the sum
-  of the nodes' mean NLLs. Its optimum is that of `fit`. One schedule and one
-  stop rule then act on the summed NLL, as in the reference implementation.
-  The callbacks get the flow instead of a node.
 - **Epochs.** `epochs` has no default. A fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
 - **Calibration.** The first fit calibrates each node on the training frame.
@@ -72,7 +69,7 @@ the final weights unless a callback restores others. The
   records each node's validation NLL after every epoch. `validation_split`
   takes the last rows unshuffled, so shuffle the frame first if its row order
   means anything.
-- **Callbacks.** A callback gets the node (under `fit_jointly`, the flow) at
+- **Callbacks.** A callback gets the node at
   fit begin, after every epoch and at fit end. A `True` return after an epoch
   stops that node. The shipped callback is
   [`EarlyStopping`][tramdag.callbacks.EarlyStopping], which restores the
@@ -163,11 +160,9 @@ docstring holds the options and the report.
 - **The model stays float32.** Read-outs use the fitted values rounded by
   about 1e-7 relative. Compare the report's float64 `coefficients` with other
   software.
-- **Unidentified directions do not move.** The one-hot of an ordinal parent
-  and the cutpoints share one direction with zero curvature. Compare the
-  contrasts `w[k] - w[0]` with other software.
-  [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
-  compares the fit with classical software.
+- **Unidentified directions do not move.** The
+  [`fit_classical`][tramdag.nodes.Node.fit_classical] docstring names them and
+  says how to compare them with other software.
 
 A converged `fit_classical` leaves the model at the MLE. A `fit` call from
 there stays put, which makes it a warm start. `Node.warm_start` uses it for

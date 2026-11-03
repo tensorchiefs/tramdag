@@ -90,7 +90,7 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 #
 # With `validation_data=`, `fit` scores the validation NLL of each node once
 # per epoch. `flow.history` holds one dict of per-node values per epoch, for
-# the keys that the docstring of `CausalFlowDAG.fit` lists.
+# the keys that the docstring of `CausalFlowDAG.history` lists.
 # It is a view over the per-node `flow.nodes[name].history`.
 
 # %%

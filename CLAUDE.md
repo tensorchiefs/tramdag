@@ -10,7 +10,7 @@ uv sync                                        # install from the pinned uv.lock
 uv run pytest -q -m "not slow"                 # fast suite (PR CI)
 uv run pytest -q                               # full suite (nightly)
 uvx ruff check . && pre-commit run --all-files # the hooks CI enforces
-uv run mkdocs build --strict                   # docs; README.md becomes index.md
+uv run mkdocs build --strict                   # docs; README.md is index.md
 MPLBACKEND=Agg uv run python notebooks/<name>.py   # a notebook, headless
 cd experiments && uv run python -m triangle atan-cs   # one replication
 cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth

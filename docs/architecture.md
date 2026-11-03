@@ -112,7 +112,8 @@ are stable. `tests/test_statedict_stability.py` pins them.
 A custom term is two classes:
 
 - a `ShiftModule` subclass with `__init__(term, schema)`, which builds the
-  network from the parent schema and sets `key` and `parents`, and `shift_value`;
+  network from the parent schema and sets `key`, `parents` and
+  `shift_value`;
 - a `tramdag.Term` subclass with `name` and `module` as class attributes
   (`__init_subclass__` refuses one without). Its options are the keyword
   arguments of its `__init__`, assigned to `self` after

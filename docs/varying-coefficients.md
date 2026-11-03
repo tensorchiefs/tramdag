@@ -21,8 +21,9 @@ Any shift decomposes as $s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t$. But the
 `CS` form has no effect-specific regularization. The likelihood rewards a
 good average fit of $s(x,t)$, and nothing rewards a smooth difference between
 the arms. So the read-out is the difference of two jointly fitted,
-unregularized networks. It amplifies random variation. On the `vc_hetero` process
-the `VC` term clears the recovery bar of the tests (see [Validation](#validation)).
+unregularized networks. It amplifies random variation. On the `vc_hetero`
+process the `VC` term clears the recovery bar of the tests (see
+[Validation](#validation)).
 The `CS` reduced form reaches a clearly lower correlation on the same
 protocol, although the model is in-class. Causal forests and R-learners
 do not work because they target the effect. They work because they

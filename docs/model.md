@@ -88,8 +88,9 @@ $$
 
 Each node declares its transformation as an additive formula of terms. The
 formula is the node's first argument, a `+` sum of terms. Each constructor
-names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`, `VC`
-are the classes `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`.
+names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`,
+`VC` are the classes `Intercept`, `LinearShift`, `ComplexShift`,
+`VaryingCoefficient`.
 
 | formula for a continuous node $x_3$ | $u_3 = h(x_3 \mid \mathrm{pa})$ |
 |---|---|
@@ -155,8 +156,9 @@ $$
 P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 $$
 
-with increasing cutpoints $\vartheta$ and $s$ the total shift. The model subtracts
-the shift where a continuous node adds it. [notation.md](notation.md) states
+with increasing cutpoints $\vartheta$ and $s$ the total shift. The model
+subtracts the shift where a continuous node adds it.
+[notation.md](notation.md) states
 the convention. [interpretation.md](interpretation.md) shows what it does to
 the sign of a coefficient.
 

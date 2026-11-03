@@ -36,8 +36,8 @@ there.
 
 ## `vaca.csv`
 
-The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`: 1000 rows
-of `x1`, `x2`, `x3` from the SCM stated in
+The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`:
+1000 rows of `x1`, `x2`, `x3` from the SCM stated in
 [`docs/paper-replication.md`](../../docs/paper-replication.md).
 
 The notebook holds its seeded generator in an `if False:` block, so a

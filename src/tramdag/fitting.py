@@ -478,9 +478,7 @@ class NodeFitMixin:
         marginal_init : bool, optional
             Start a simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates the node. A
-            spline or affine transform has no start and skips it. A
-            ``range_q=0`` Bernstein transform raises before the column is
-            read, also on an intercept with parents.
+            spline or affine transform has no start and skips it.
         optimizer : torch.optim.Optimizer | callable | None, optional
             A torch optimizer over ``node.parameters()``, or a factory
             ``f(node) -> Optimizer`` (for example to split the parameters into
@@ -749,8 +747,8 @@ class NodeFitMixin:
 class FitMixin:
     """The flow's fitting paths, mixed into [`CausalFlowDAG`][tramdag.CausalFlowDAG].
 
-    Both loop over the nodes; each node fits itself
-    ([`Node.fit`][tramdag.nodes.Node.fit]).
+    `fit` and `fit_classical` loop over the nodes; `fit_jointly` trains them
+    in one loop. Each node fits itself ([`Node.fit`][tramdag.nodes.Node.fit]).
     """
 
     @property

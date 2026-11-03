@@ -198,19 +198,12 @@ otherwise.
 | … glorot init | 0.035 / 0.006 / 0.007 | the cause (a different random draw than the config's seed 7) |
 | … glorot + min/max | 0.035 / 0.056 / 0.057 | |
 
-Under the reference protocol, the do(x2) errors fall until epoch 6000 to
-8500 and then rise again. The plateau anneal fires near epoch 9050 and holds
-them. So the protocol works because its anneal falls inside that window.
+Rejected alternatives:
 
-Rejected alternatives, each measured:
-
-- relu with raw parents wanders 0.17 to 0.45 on do(x2 = −3). It holds the
-  bound only at isolated epochs.
-- tanh on raw parents saturates outright at 0.731.
-- Minibatch stepping converges with a systematic −0.11 common-mode offset of
-  all three do-means. This holds for batch 256, lr 0.001 to 0.004, 300 to 3000
-  epochs, constant or plateau rate, and minmax + tanh. The observational fit
-  is perfect.
+- relu with raw parents holds the bound only at isolated epochs.
+- tanh on raw parents saturates (first table row).
+- Minibatch stepping leaves a common-mode offset in all three do-means,
+  although the observational fit is perfect.
 
 ## CAREFL benchmark (`carefl.py`): paper Sec. 5.3, App. C.2
 
@@ -228,9 +221,9 @@ reference's standardized units.
 **DGP** [@khemakhem2021carefl]: x1, x2 ~ Laplace(0, 1/√2).
 x3 = x1 + 0.5 x2³ + ε, x4 = −x2 + 0.5 x1² + ε with ε ~ Laplace(0, 1/√2),
 x3/x4 divided by their sample sds. Counterfactuals are analytic by abduction
-of the error term. The observation is `xObs.csv` = (2, 1.5, 0.8465, −0.2616); the
-paper prints (2, 1.5, 0.81, −0.28), slightly off it. The queries are
-x3^cf | do(x2 = α) and x4^cf | do(x1 = α) on the committed grid.
+of the error term. The observation is `xObs.csv` = (2, 1.5, 0.8465, −0.2616);
+the paper prints (2, 1.5, 0.81, −0.28), slightly off it. The queries are x3^cf |
+do(x2 = α) and x4^cf | do(x1 = α) on the committed grid.
 
 **Model**: `x1, x2: SI`, `x3, x4: CI(x1, x2)`, Bernstein `n_coeffs = 31`,
 the same `make_model` nets as VACA, `range_q: 0` for the reference's
@@ -319,18 +312,14 @@ summed validation NLL.
 The per-node rule gives a lower x3 validation NLL on every seed. Its error at
 do(x2 = −1) and do(x2 = 0) is smaller on every seed. At the off-manifold
 point do(x2 = −3) the global rule errs less on three of the five seeds.
-CAREFL moves by less than 0.003 in validation NLL, and all its bounds hold.
 
 ## Runtime and the CI deviations
 
-The cost of the reference protocol is the reason for the CI deviations. The
-triangle runs 500 epochs × 1250 steps of batch 32. The step is
-overhead-bound. One epoch takes 3.2 s single-process at 2 to 4 torch threads
-and 5.5 s at 32 threads. So one variant takes 42 to 69 min on the 2-core CI
-runners. The triangle scripts therefore use batch 256 at lr 0.004, with 8×
-fewer optimizer steps per epoch. The grid below, at the paper's 500 epochs with
-glorot init, selects them. Every entry is the cs max err unless the column
-says otherwise.
+The reference protocol is too slow for the 2-core CI runners. The triangle runs
+500 epochs × 1250 steps of batch 32, and the step is overhead-bound. The
+triangle scripts therefore use batch 256 at lr 0.004, with 8× fewer optimizer
+steps per epoch. The grid below, at the paper's 500 epochs with glorot init,
+selects them. Every entry is the cs max err unless the column says otherwise.
 
 | batch / lr / epochs | linear-ls β13 | linear-cs | atan-cs | mixed exp-cs (TV) | steps vs paper |
 |---|---|---|---|---|---|
@@ -344,28 +333,18 @@ says otherwise.
 
 Batch 256 / lr 0.004 is the only row that keeps every cs error within about
 0.02 of the paper protocol. Larger batches or rates bend the misspecified
-linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs. At 500 epochs a
-triangle job takes 7 to 11 min instead of 42 to 69.
+linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs.
 
 The epoch floors, measured at that batch and rate:
 
 - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
   do(x1) bound (0.235 > 0.200). `linear-cs` trains 500, because at 300 its fitted
-  cs curve flattens past |x2| > 0.5. The max err there is 0.140 at 300 epochs,
-  and it is 0.031 at 500 epochs in the pinned run. The DGP line spans only ±0.3.
-  relu is out: with relu, a study run gives β13 +0.53 and cs err 1.42 on atan.
+  cs curve flattens past |x2| > 0.5. The DGP line spans only ±0.3. relu is out: it
+  fits atan badly.
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net and
-  the do(x1) mean. In a study run, the cs max err is 0.344 / 0.177 / 0.156 at
-  100 / 250 / 350 epochs. The do err is 0.033 / 0.060 / 0.022 at the same
-  epochs. At 500 epochs the errors are 0.107 / 0.016, so it trains 350. The
-  coefficient trajectories are flat from about epoch 50 on. `linear-ls` has no
-  CS net to wait for, and at lr 0.002 it trains 200 epochs. A study run at 100
-  epochs measured −0.271 for the weakly identified β13. That is 26 % of its
-  tolerance away from the center of its ground-truth entry. The pinned run at
-  200 epochs reads −0.258 for β13. In the same study, the lower lr 0.002 lands
-  closer to the 500-epoch values. It reads β23 as 0.333, where lr 0.004 reads
-  0.337 instead. With relu at the sd-0.05 normal init, a study run gives cs err
-  0.859 and β13 −0.055 in this setup.
+  the do(x1) mean, so it trains 350 epochs. `linear-ls` has no CS net to wait
+  for, and at lr 0.002 it trains 200 epochs. The lower lr 0.002 lands closer to
+  the 500-epoch values. relu at the sd-0.05 normal init fails here too.
 - **VACA and CAREFL** run their references 1:1 except D5;
   the rejected shortcuts are in their sections.
 

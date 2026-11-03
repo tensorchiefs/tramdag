@@ -1,4 +1,4 @@
-# tramdag — Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
+# tramdag: Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch
 
 [![Open the demo in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)
 [![PyPI](https://img.shields.io/pypi/v/tramdag)](https://pypi.org/project/tramdag/)
@@ -7,9 +7,9 @@
 
 **TRAM-DAGs** model each variable of a structural causal model with a
 monotone normalizing flow, the statistician's *transformation model*. The
-whole model is one triangular normalizing flow from
-iid standard-logistic latents to the observed variables, and its triangular
-structure is exactly your causal DAG. One fit on observational data answers
+whole model is one triangular normalizing flow from iid standard-logistic
+latents to the observed variables. Its triangular structure is exactly your
+causal DAG. One fit on observational data answers
 all three rungs of Pearl's causal hierarchy: observational, interventional
 (the do-operator) and counterfactual (abduction). The model keeps
 **interpretable effects**: every linear-shift coefficient is a log-odds ratio,
@@ -31,60 +31,33 @@ or locally.
 
 ## Install
 
-The package is on PyPI as `tramdag`; `uv add tramdag` or `pip install tramdag`
-installs it, and the `plots` extra (`tramdag[plots]`) adds matplotlib for the
-figures. The PyPI release lags `main`; for the current state install from git
-(`tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main`, pinned to a
-commit for reproducibility). A clone with `uv sync` gives the development
-setup with tests and experiments.
+`uv add tramdag` or `pip install tramdag` installs the package from PyPI. The
+`plots` extra (`tramdag[plots]`) adds matplotlib for the figures. A clone with
+`uv sync` gives the development setup ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
 
 ## Documentation
 
-Guides, executed notebooks and the API reference are published at the
-[documentation site](https://tensorchiefs.github.io/tramdag/). Each subject has
-one guide, and its worked example is one notebook.
+The [documentation site](https://tensorchiefs.github.io/tramdag/) publishes
+the guides, the executed notebooks and the API reference.
 
-| Subject | Guide | Example |
-|---|---|---|
-| The model, its notation, what it cannot do | [`docs/model.md`](docs/model.md), [`docs/notation.md`](docs/notation.md) | [demo](notebooks/demo_tram_dag_colab.py) |
-| Reading a fitted model: coefficients, curves, interventional distributions | [`docs/interpretation.md`](docs/interpretation.md) | [classical fitting](notebooks/classical_fit_tram_dag.py) |
-| Fitting: the likelihood, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes | [`docs/fitting.md`](docs/fitting.md) | [training strategies](notebooks/training_strategies.py) |
-| Complex intercepts, joint versus additive | | [additive vs joint intercepts](notebooks/additive_vs_joint_ci.py) |
-| Treatment effects that vary with covariates | [`docs/varying-coefficients.md`](docs/varying-coefficients.md) | [varying coefficients](notebooks/varying_coefficients.py) |
-| Scores and the effect-modifier scan | [`docs/scores.md`](docs/scores.md) | [varying coefficients](notebooks/varying_coefficients.py) |
-| Agreement with statsmodels and R, standard errors | | [classical fitting](notebooks/classical_fit_tram_dag.py) |
-| What the tests guarantee | [`tests/README.md`](tests/README.md) | |
-| The API, every default and where it lives | [`docs/code-map.md`](docs/code-map.md) | |
-| How the package is built inside | [`docs/architecture.md`](docs/architecture.md) | |
-| zuko, and what tramdag would upstream | [`docs/zuko-upstream.md`](docs/zuko-upstream.md) | |
-| The cited literature | [`docs/references.md`](docs/references.md) | |
-
-[`CONTRIBUTING.md`](CONTRIBUTING.md) covers setup, tests, linting and
-releases; [`notebooks/README.md`](notebooks/README.md) how the notebooks are
-written and run.
-
-## Experiments
-
-`experiments/` replicates the paper's experiments against its own R code and
-checks them against committed ground truth in continuous integration.
-[`experiments/README.md`](experiments/README.md) explains the layout, the
-YAML variants and the frozen data;
-[`docs/paper-replication.md`](docs/paper-replication.md) gives the protocol,
-the hyperparameters and the numbers, experiment by experiment.
-
-## Layout
-
-- `src/tramdag/` is the framework, and nothing else.
-- `tests/` measures it against three inline data-generating processes; it
-  never imports research code.
-- `experiments/` holds the paper replications and their frozen data sets.
-- `notebooks/` are jupytext `.py` files, executed by the docs workflow.
-- `docs/` are the guides; the API pages render from the docstrings.
+- The model: [`docs/model.md`](docs/model.md) and
+  [`docs/notation.md`](docs/notation.md)
+- Reading a fitted model: [`docs/interpretation.md`](docs/interpretation.md)
+- Fitting: [`docs/fitting.md`](docs/fitting.md)
+- Treatment effects that vary with covariates:
+  [`docs/varying-coefficients.md`](docs/varying-coefficients.md) and
+  [`docs/scores.md`](docs/scores.md)
+- The design of the package: [`docs/architecture.md`](docs/architecture.md) and
+  [`docs/code-map.md`](docs/code-map.md)
+- The paper replications: [`docs/paper-replication.md`](docs/paper-replication.md)
+  and [`experiments/README.md`](experiments/README.md)
+- The tests: [`tests/README.md`](tests/README.md)
+- The notebooks: [`notebooks/README.md`](notebooks/README.md)
 
 ## Use of AI tools
 
-This project was developed with the help of LLM coding assistants. The authors
-reviewed and take responsibility for all content.
+LLM coding assistants helped to develop this project. The authors reviewed
+all content and take responsibility for it.
 
 ## Citation
 

@@ -84,8 +84,6 @@ def run(variant: str) -> dict:
     metrics["fit_seconds"] = fit_seconds
 
     if config["shift"] == "cs":
-        # which paper figure this is depends on f (7 right for atan, 17 for
-        # the misspecified linear case, 18 for sin) — see PAPER_COVERAGE.md
         metrics["cs_curve_max_abs_err"] = cs_curve_error(
             flow,
             generator,
@@ -95,7 +93,6 @@ def run(variant: str) -> dict:
         )
         figures.append("cs_curve.png")
 
-    # L1 (observational fit) and L2 (interventional) distributions
     metrics.update(
         compare_do_x1(
             generator,
@@ -118,7 +115,6 @@ def run(variant: str) -> dict:
         f"beta13 = {truths['beta13']:+.1f}.",
         metrics,
         {name: figs[name] for name in figures},
-        # the do(x1) DGP mean is this run's Monte-Carlo truth for the flow's
         truths={**truths, "mean_x3_flow_do_x1": metrics["mean_x3_dgp_do_x1"]},
     )
     print(f"-> {out}")

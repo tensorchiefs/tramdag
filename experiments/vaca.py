@@ -91,7 +91,7 @@ def plot_interventional(generator, flow, config, truth, path, title) -> dict:
             config["n_compare"], do={"x2": value}, seed=config["sample_seed"]
         )
         continuous_density(ax, dgp["x3"], sampled["x3"])
-        ax.set_title(f"do($x_2$ = {value:+.0f})")
+        ax.set_title(f"do($x_2$ = {value:g})")
         ax.set_xlabel("$x_3$")
 
         analytic = truth["do_x2"][str(value)]["mean_x3_analytic"]
@@ -99,10 +99,9 @@ def plot_interventional(generator, flow, config, truth, path, title) -> dict:
         errors[f"mean_x3_flow_do_x2_{value:+.0f}"] = flow_mean
         errors[f"mean_x3_abs_err_do_x2_{value:+.0f}"] = abs(flow_mean - analytic)
         print(
-            f"do(x2={value:+.0f}): E[x3] flow {flow_mean:+.3f} "
-            f"vs analytic {analytic:+.3f}"
+            f"do(x2={value:g}): E[x3] flow {flow_mean:+.3f} vs analytic {analytic:+.3f}"
         )
-    axes[0].legend()
+    axes[0].legend(loc="upper left")
     axes[0].set_ylabel("$p(x_3\\,|\\,do(x_2))$")
     fig.suptitle(title)
     finish(fig, path)
@@ -115,7 +114,7 @@ def run(variant: str) -> dict:
     out = make_output_dir(__file__, f"vaca-{variant}")
 
     generator = VacaTriangle(seed=config["dgp_seed"])
-    truth = generator.true_moments(mc_n=0)  # analytic only, no Monte-Carlo draw
+    truth = generator.true_moments(mc_n=0)
 
     print(
         f"fitting the flexible flow on the VACA triangle, n={config['n_train']}: "
@@ -151,7 +150,6 @@ def run(variant: str) -> dict:
         )
     )
     figures.append("interventional.png")
-    # L1: does the flow reproduce the bimodal source marginal?
     metrics["std_x1_flow"] = float(sampled["x1"].std())
     metrics["std_x1_abs_err"] = abs(metrics["std_x1_flow"] - truth["std_x1_analytic"])
     metrics["fit_seconds"] = fit_seconds

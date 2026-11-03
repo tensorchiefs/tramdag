@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .modules import LinearShiftModule, VaryingCoefficientModule
+from .modules import VaryingCoefficientModule
 
 # %% global variables ------------------------------------------------------------------
 __all__ = ["ReadoutsMixin"]
@@ -29,6 +29,9 @@ class ReadoutsMixin:
 
         The parent runs over ``grid`` with the term's other inputs absent, so the
         term must read exactly this one parent (an ``LS`` or one-parent ``CS``).
+        The evaluation runs through the term's own ``shift_value``, so custom
+        terms work too. The grid is copied, as in ``_tensorize``: torch warns on
+        a non-writable numpy array, which a broadcast or read-only grid is.
 
         Parameters
         ----------
@@ -42,8 +45,16 @@ class ReadoutsMixin:
         Returns
         -------
         np.ndarray
-            The shift values, shape ``(m,)`` — the curve a replication plots
+            The shift values, shape ``(m,)``: the curve a replication plots
             against the data-generating truth.
+
+        Raises
+        ------
+        KeyError
+            If ``node`` is unknown, or the node has no shift term keyed
+            ``parent``.
+        ValueError
+            If ``parent`` is an ordinal node.
         """
         nd = self._node(node)
         if parent not in nd.shifts:
@@ -52,20 +63,37 @@ class ReadoutsMixin:
                 f"available: {sorted(nd.shifts)}"
             )
         if self.spec[parent].kind == "ordinal":
-            # a domain error (wrong parent kind), not a Python type error
             raise ValueError(
                 f"{parent!r} is an ordinal parent, so it enters the term "
                 "one-hot over all its levels and a 1-D grid of level indices "
                 "is not its input. Read its effect with ls_coefficients() "
                 "instead, whose weights are the level contrasts."
             )
-        # copy, like `_tensorize`: torch warns on a non-writable numpy array,
-        # which a broadcast or read-only grid is
         x = torch.as_tensor(np.array(grid), dtype=self._dtype, device=self.device)
         x = x.view(-1, 1)
-        # through the term's own evaluation, so custom terms work too
         curve = nd.shifts[parent].shift_value(nd, {parent: x})
         return curve.cpu().numpy().ravel()
+
+    def _vc_term(self, node: str, t: str | None) -> tuple:
+        """Find the node, treatment name and modifiers of one VC term."""
+        nd = self._node(node)
+        vcs = {
+            m.key: m.mods
+            for m in nd.shifts.values()
+            if isinstance(m, VaryingCoefficientModule)
+        }
+        if not vcs:
+            raise ValueError(f"node {node!r} has no VC term")
+        if t is None:
+            if len(vcs) > 1:
+                raise ValueError(
+                    f"node {node!r} has several VC terms ({sorted(vcs)}); "
+                    "pass t=<treatment name>"
+                )
+            t = next(iter(vcs))
+        if t not in vcs:
+            raise KeyError(f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})")
+        return nd, t, vcs[t]
 
     @torch.no_grad()
     def varying_coef(
@@ -103,24 +131,7 @@ class ReadoutsMixin:
             If the node has no VC term, or if ``t`` is omitted while the
             node has several VC terms.
         """
-        nd = self._node(node)
-        vcs = {
-            m.key: m.mods
-            for m in nd.shifts.values()
-            if isinstance(m, VaryingCoefficientModule)
-        }
-        if not vcs:
-            raise ValueError(f"node {node!r} has no VC term.")
-        if t is None:
-            if len(vcs) > 1:
-                raise ValueError(
-                    f"node {node!r} has several VC terms ({sorted(vcs)}); "
-                    "pass t=<treatment name>"
-                )
-            t = next(iter(vcs))
-        if t not in vcs:
-            raise KeyError(f"node {node!r} has no VC term on {t!r} (has {sorted(vcs)})")
-        mods = vcs[t]
+        nd, t, mods = self._vc_term(node, t)
         mod_feat = None
         if mods:
             feats = self._features(self._tensorize(df, mods))
@@ -142,16 +153,8 @@ class ReadoutsMixin:
             The weights, as ``{node: {parent: array}}``. A node without
             linear-shift terms is absent.
         """
-        out: dict[str, dict[str, np.ndarray]] = {}
-        for name in self.order:
-            linear = {
-                parent: module.weight.cpu().numpy().ravel().copy()
-                for parent, module in self.nodes[name].shifts.items()
-                if isinstance(module, LinearShiftModule)
-            }
-            if linear:
-                out[name] = linear
-        return out
+        weights = {name: self.nodes[name].ls_coefficients() for name in self.order}
+        return {name: w for name, w in weights.items() if w}
 
     def to_matrix(self) -> pd.DataFrame:
         """Give the labeled adjacency matrix of term effects.
@@ -169,7 +172,6 @@ class ReadoutsMixin:
         m = pd.DataFrame("", index=list(self.order), columns=list(self.order))
         for child in self.order:
             for term in self.spec[child].terms:
-                # a VC modifier may share its cell with an edge-owning term
                 for p, tag, joint in term.cells():
                     if joint:
                         tag = f"{tag}{list(term.parents)}"
@@ -192,17 +194,16 @@ class ReadoutsMixin:
             Rows over which to center and at which to evaluate the
             contributions. Must contain every intercept-parent column.
         node : str
-            Name of a node with at least one complex-intercept (``I``) term
-            that has parents.
+            Name of a node whose intercept term has parents.
 
         Returns
         -------
         dict
             Three keys. ``"baseline"`` is the absorbed constant, a ``(P,)``
-            array — the sum of the per-term means. ``P`` is the node's
+            array: the sum of the per-term means. ``P`` is the node's
             transform-parameter count: ``ut.n_params`` for a continuous
             node, ``levels - 1`` cutpoint parameters for an ordinal node.
-            ``"contributions"`` is ``{term_label: (n, P) array}`` — each
+            ``"contributions"`` is ``{term_label: (n, P) array}``: each
             term's mean-centered contribution at each row, columns summing
             to about zero over the rows. ``term_label`` is the term's
             parents joined by ``"+"``. ``"parents"`` is
@@ -214,7 +215,7 @@ class ReadoutsMixin:
             If ``node`` is unknown, or if an intercept-parent column is
             missing from ``df``.
         ValueError
-            If the node has no complex-intercept term with parents.
+            If the node's intercept term has no parents.
 
         Notes
         -----
@@ -231,16 +232,14 @@ class ReadoutsMixin:
                 "Its intercept is unconditional, so there is nothing to decompose."
             )
         feats = self._features(self._tensorize(df, nd.intercept.ci_parents))
-        # one net per group: the additive intercept holds them in `nets`, every
-        # other intercept is itself the one network
         nets = getattr(nd.intercept, "nets", [nd.intercept])
 
         contributions: dict[str, np.ndarray] = {}
         parents: dict[str, tuple] = {}
         baseline = None
         for net, grp in zip(nets, groups, strict=True):
-            raw = net(nd.net_input(feats, grp, "@I"))  # (n, P)
-            mean = raw.mean(dim=0, keepdim=True)  # (1, P)
+            raw = net(nd.net_input(feats, grp, "@I"))
+            mean = raw.mean(dim=0, keepdim=True)
             label = "+".join(grp)
             contributions[label] = (raw - mean).cpu().numpy()
             parents[label] = grp
@@ -259,7 +258,7 @@ class ReadoutsMixin:
 
         A continuous parent stays raw in one column named after it. An
         ordinal parent becomes one column per level, named
-        ``"{parent}[{k}]"`` — the same one-hot the flow builds internally.
+        ``"{parent}[{k}]"``, the same one-hot the flow builds internally.
 
         Use ``drop_first=True`` to get the design a classical reference
         expects (``statsmodels`` ``OrderedModel``, R ``polr``). It drops the
@@ -279,13 +278,20 @@ class ReadoutsMixin:
         -------
         pd.DataFrame
             One column per encoded feature, indexed like ``df``.
+
+        Raises
+        ------
+        KeyError
+            If ``node`` is unknown, or ``df`` lacks a parent column.
+        ValueError
+            If an ordinal parent value is not a level index.
         """
         nd = self._node(node)
-        feats = self._features(self._tensorize(df, nd.parents))
+        feats = nd.features(self._tensorize(df, nd.parents))
         cols: dict[str, np.ndarray] = {}
         for p in nd.parents:
             arr = feats[p].cpu().numpy()
-            if self.spec[p].kind == "continuous":  # raw
+            if self.spec[p].kind == "continuous":
                 cols[p] = arr[:, 0]
             else:
                 for k in range(1 if drop_first else 0, arr.shape[1]):

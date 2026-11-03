@@ -1,0 +1,6 @@
+extends: existence
+message: Passive voice ('%s'). Name the actor.
+level: error
+ignorecase: true
+raw:
+- \b(am|are|were|being|is|been|was|be)\b\s+(\w+ed|built|done|given|made|run|sent|set|shown|taken|written|kept|left|held|known|seen)\b

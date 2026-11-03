@@ -12,19 +12,12 @@ the same data. Anything larger means the generator changed.
 
 ``carefl-cf`` is not listed: it is CAREFL's own committed data (see its
 ``truth.json``), external frozen input with no generator here.
-
-Usage (from experiments/):
-
-```
-uv run python -m check_data
-```
 """
 
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
 import json
-import sys
 from functools import partial
 from pathlib import Path
 
@@ -38,7 +31,6 @@ from simulations.vaca import VacaTriangle
 DATA = Path(__file__).resolve().parent / "data"
 ATOL = 1e-9
 
-# dataset directory -> generator factory (called with seed=)
 DATASETS = {
     "carefl": Carefl4,
     "vaca": VacaTriangle,
@@ -54,8 +46,8 @@ DATASETS = {
 def worst_deviation(subdir: str) -> float:
     """Regenerate one frozen dataset and give its largest absolute deviation.
 
-    ``experiments/tests/test_generators.py`` asserts on this same
-    function, so the CLI and the test cannot drift apart.
+    ``experiments/tests/test_generators.py`` asserts on this
+    function.
 
     Raises
     ------
@@ -76,26 +68,3 @@ def worst_deviation(subdir: str) -> float:
             f"row count changed: {len(frozen)} against n_obs {truth['n_obs']}"
         )
     return float(np.abs(frozen.to_numpy(float) - regenerated.to_numpy(float)).max())
-
-
-def main() -> int:
-    """Check every dataset and give the process exit code."""
-    failures = 0
-    for name in DATASETS:
-        deviation = worst_deviation(name)
-        if deviation > ATOL:
-            failures += 1
-            print(f"  FAIL {name}: max |diff| = {deviation:.2e} > {ATOL:.0e}")
-        else:
-            print(f"  ok   {name}: max |diff| = {deviation:.2e}")
-
-    if failures:
-        print(f"\n{failures} dataset(s) no longer match their generator")
-        return 1
-    print(f"\nall {len(DATASETS)} frozen datasets regenerate within {ATOL:.0e}")
-    return 0
-
-
-# %% main ------------------------------------------------------------------------------
-if __name__ == "__main__":
-    sys.exit(main())

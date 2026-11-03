@@ -1,7 +1,7 @@
 # Upstream candidates for zuko
 
 This document lists what tramdag works around in
-[zuko](https://zuko.readthedocs.io/stable/) (1.6.0). The list is ranked by
+[zuko](https://zuko.readthedocs.io/stable/). The list ranks them by
 value against effort, as candidate upstream PRs or issues. tramdag uses zuko
 in one place only. It uses these three transforms from `zuko.transforms`:
 
@@ -23,9 +23,9 @@ It also makes the per-node loss un-`torch.compile`-able. Autograd in the
 forward pass gives a double backward, and `aot_autograd` does not support one.
 Therefore the op-count axis stays closed in eager mode.
 
-The derivative is closed form: `f'(x) = order·Δθ` against the order−1 basis.
+The derivative has a closed form: `f'(x) = order·Δθ` against the order−1 basis.
 zuko already computes it in `_offset_and_slope` for the tail slopes. An
-override is therefore ~25 lines and needs no API change.
+override is therefore small and needs no API change.
 `MonotonicRQSTransform` already has such an override. tramdag gets a free
 speedup and the `torch.compile` axis back.
 
@@ -51,9 +51,9 @@ that function:
 - the `log(2)·n/2` centering
 - the tying of the first two and the last two diffs
 
-Any upstream reparametrization therefore breaks the calibrated start silently.
+Any upstream reparametrization therefore breaks the marginal start silently.
 A public `unconstrain_theta(theta)` that takes the target control points is
-~15 lines upstream. It removes the coupling to these private details. The
+small upstream. It removes the coupling to these private details. The
 framing is "identity/linear initialization support", a standard flow trick.
 
 ## 4. Docstring fix: the Bernstein θ-shape off-by-one
@@ -67,7 +67,7 @@ replication trap: order 21 against the paper's `len_theta=20`, which is order
 ## 5. `Logistic` in `zuko.distributions`
 
 Neither zuko nor torch ships a Logistic distribution. tramdag therefore
-hand-rolls `StandardLogistic` in ~50 lines, with `log_prob`, `sample` and
+hand-rolls `StandardLogistic`, with `log_prob`, `sample` and
 `icdf`. Logistic latents are standard in TRAM-DAGs and in discrete
 flows, and zuko has a precedent in `GeneralizedNormal`. But zuko can point at
 `TransformedUniform(SigmoidTransform().inv)` instead. tramdag keeps its
@@ -76,14 +76,14 @@ the five.
 
 ## Anti-candidates (look upstreamable, are not)
 
-- **Quantile pre-scaling and `_ScaledUT`** — this is a modeling choice. zuko's
+- **Quantile pre-scaling and `_ScaledUT`**: this is a modeling choice. zuko's
   `ComposedTransform` with `MonotonicAffineTransform` already composes it.
-- **The ordinal ordered-logit transform and log-space `ordinal_log_prob`** —
+- **The ordinal ordered-logit transform and log-space `ordinal_log_prob`**:
   this transform is not a bijection. It stays outside zuko's flow scope. It is
   torch.distributions material, if anywhere.
-- **LS, CS, CI and VC terms, the marginal-init policy, propensity centering
-  and scores** — these are TRAM-DAG semantics. zuko's `MaskedMLP` already
+- **LS, CS, CI and VC terms, the marginal-start policy, propensity centering
+  and scores**: these are TRAM-DAG semantics. zuko's `MaskedMLP` already
   supports arbitrary adjacency. tramdag does not use it, because it needs
   per-term interpretability.
-- **The spline `slope` knob and the Bernstein `eps` knob** — zuko already
+- **The spline `slope` knob and the Bernstein `eps` knob**: zuko already
   exposes both upstream.

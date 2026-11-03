@@ -36,6 +36,10 @@
 # fitted model is in [`docs/interpretation.md`](../docs/interpretation.md).
 #
 # The notebook runs on CPU in well under five minutes.
+#
+# The first code cell installs `tramdag` from PyPI when the package is missing,
+# as on Colab. To track active development instead of the latest release,
+# install with `pip install "git+https://github.com/tensorchiefs/tramdag.git@main"`.
 
 # %%
 import importlib.util
@@ -43,12 +47,10 @@ import subprocess
 import sys
 import time
 
-if importlib.util.find_spec("tramdag") is None:  # Colab: install from PyPI
+if importlib.util.find_spec("tramdag") is None:
     subprocess.check_call(
         [sys.executable, "-m", "pip", "install", "-q", "tramdag[plots]"]
     )
-    # to track active development instead of the latest release, use:
-    #   pip install "git+https://github.com/tensorchiefs/tramdag.git@main"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -56,7 +58,7 @@ import pandas as pd
 import torch
 
 from tramdag import CausalFlowDAG, ContinuousNode, I, plot_dag
-from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
+from tramdag.callbacks import EarlyStopping
 from tramdag.plots import plot_marginals, plot_training
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -83,20 +85,20 @@ print(f"torch {torch.__version__}  device: {DEVICE}")
 # bimodal, which is the part that a location-scale model cannot fit; the
 # monotone transform of each node is what fits it
 # ([`docs/model.md`](../docs/model.md)).
+#
+# The code writes the process out, so the notebook needs nothing but `tramdag`.
+# `draw_latents` and `simulate` stay separate on purpose. Keeping the noise
+# lets section 5 intervene on the same individuals, which makes an individual
+# counterfactual checkable.
+
 
 # %%
-# The process is written out here, so the notebook needs nothing but tramdag.
-# draw_latents and simulate stay separate on purpose. Keeping the noise lets
-# section 5 intervene on the same individuals, which is what makes an
-# individual counterfactual checkable.
-
-
 def draw_latents(n, rng):
     """Draw every noise variable of the process, n rows each."""
     return {
-        "x1_mix": rng.uniform(size=n),  # which mixture component
-        "x1_a": rng.normal(size=n),  # the N(-2, 1.5) branch
-        "x1_b": rng.normal(size=n),  # the N(1.5, 1) branch
+        "x1_mix": rng.uniform(size=n),
+        "x1_a": rng.normal(size=n),
+        "x1_b": rng.normal(size=n),
         "x2": rng.normal(size=n),
         "x3": rng.normal(size=n),
     }
@@ -134,6 +136,7 @@ fig, ax = plt.subplots(figsize=(5.5, 3))
 ax.hist(df["x1"], bins=80, density=True, alpha=0.7)
 ax.set_title(f"the source $x_1$ has two modes ({N:,} rows)")
 ax.set_xlabel("$x_1$")
+ax.set_ylabel("density")
 fig.tight_layout()
 plt.show()
 
@@ -146,19 +149,19 @@ plt.show()
 # [`notebooks/classical_fit_tram_dag.py`](classical_fit_tram_dag.py) writes the
 # same DAG with interpretable terms.
 #
-# One Adam fits every node at once ([`docs/fitting.md`](../docs/fitting.md)).
-# `validation_data=` scores the validation rows per epoch, `verbose=` prints
-# progress, and the strategy attaches through `callbacks=`: `per_node_adam`
-# with `PerNodeEarlyStopping` freezes each node once its own validation score
-# has plateaued and loads its best weights back, so `epochs=200` is a ceiling
-# and not a budget.
+# Each node fits on its own Adam loop ([`docs/fitting.md`](../docs/fitting.md)).
+# `validation_data=` scores the validation rows per epoch, and `verbose=` prints
+# progress. The strategy attaches through `callbacks=`. `EarlyStopping` stops
+# each node when its own validation score stops improving, and loads its best
+# weights back. Thus `epochs=200` is a ceiling and not a budget. The `seed=` of
+# `CausalFlowDAG` makes the initial weights reproducible.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
 
 # %%
 spec = {
-    "x1": ContinuousNode(),  # the source has no parents
+    "x1": ContinuousNode(),
     "x2": ContinuousNode(I("x1")),
     "x3": ContinuousNode(I("x1", "x2")),
 }
@@ -166,9 +169,7 @@ plot_dag(spec)
 plt.show()
 
 # %%
-torch.manual_seed(0)
-flow = CausalFlowDAG(spec, device=DEVICE)
-sched = PerNodeEarlyStopping(patience=40)
+flow = CausalFlowDAG(spec, device=DEVICE, seed=0)
 
 t0 = time.perf_counter()
 flow.fit(
@@ -177,23 +178,21 @@ flow.fit(
     batch_size=2048,
     validation_data=val,
     verbose=50,
-    optimizer=per_node_adam(flow, lr=1e-1),
-    callbacks=sched,
+    learning_rate=1e-1,
+    callbacks=EarlyStopping(patience=40),
 )
 t_fit = time.perf_counter() - t0
-epochs_used = len(flow.history["val"])
-print(f"\nfitted on {DEVICE} in {t_fit:.1f}s, {epochs_used} epochs")
-print(f"each node froze at epoch: {dict(sorted(sched.frozen.items()))}")
+stopped = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}
+print(f"\nfitted on {DEVICE} in {t_fit:.1f}s")
+print(f"each node stopped at epoch: {stopped}")
 
-# The ceiling must not bind. If it does, the per-node stop never finished and
-# the numbers below describe an unconverged fit.
-assert epochs_used < 200, (
-    "the fit used all 200 epochs, so no node froze and the per-node stop did "
-    "not self-stop; raise the ceiling before trusting anything below"
+assert max(stopped.values()) < 200, (
+    "a node used all 200 epochs, so its early stop never triggered; raise the "
+    "ceiling before trusting anything below"
 )
 
 # %%
-plot_training(flow, frozen=sched.frozen)
+plot_training(flow, stops=True)
 plt.show()
 
 # %% [markdown]
@@ -227,15 +226,16 @@ assert corr_gap < 0.05, f"the sampled dependence structure is off by {corr_gap:.
 fig, axes = plt.subplots(1, 3, figsize=(11, 3.2), sharey=True)
 errors = []
 print("E[x3 | do(x2=a)]     analytic    TRAM-DAG      error")
-for ax, a in zip(axes, (-3.0, -1.0, 0.0), strict=True):
+for i, (ax, a) in enumerate(zip(axes, (-3.0, -1.0, 0.0), strict=True)):
     truth = sample_dgp(len(df), seed=543, do={"x2": a})
-    fitted = flow.sample(len(df), do={"x2": a}, seed=2)
+    fitted = flow.sample(len(df), do={"x2": a}, seed=2 + i)
     bins = np.linspace(truth["x3"].quantile(0.001), truth["x3"].quantile(0.999), 70)
     ax.hist(truth["x3"], bins=bins, density=True, alpha=0.5, label="process")
     ax.hist(
         fitted["x3"], bins=bins, density=True, histtype="step", lw=1.6, label="TRAM-DAG"
     )
-    ax.set_title(f"$p(x_3 \\mid do(x_2={a:+.0f}))$")
+    ax.set_title(f"$p(x_3 \\mid do(x_2={a:g}))$")
+    ax.set_xlabel("$x_3$")
 
     analytic = -0.25 + 0.25 * a
     got = float(fitted["x3"].mean())
@@ -247,8 +247,10 @@ axes[0].legend()
 fig.tight_layout()
 plt.show()
 
-# The bound is about three times the largest error measured while writing this
-# notebook (0.048), which leaves room for another machine and another draw.
+# %% [markdown]
+# The bound leaves room for another machine and another draw.
+
+# %%
 assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %% [markdown]
@@ -266,14 +268,18 @@ assert max(errors) < 0.15, f"interventional mean off by {max(errors):.4f}"
 
 # %%
 lat = draw_latents(1_000, np.random.default_rng(7))
-factual = simulate(lat)  # the same noise on both sides,
-cf_true = simulate(lat, do={"x1": 0.0})  # so these are true counterfactuals
+factual = simulate(lat)
+cf_true = simulate(lat, do={"x1": 0.0})
 
 u = flow.abduct(factual)
 recon_err = float(np.abs(flow.sample(u=u).to_numpy() - factual.to_numpy()).max())
 print(f"abduction then reconstruction: max |error| = {recon_err:.2e}")
-# This inverts a monotone transform in float32, so the bound is a precision
-# bound rather than a statistical one.
+
+# %% [markdown]
+# Abduction inverts a monotone transform in float32. The bound is a precision
+# bound, not a statistical one.
+
+# %%
 assert recon_err < 1e-4, f"abduction did not round-trip: {recon_err:.2e}"
 
 cf_flow = flow.sample(do={"x1": 0.0}, u=u)

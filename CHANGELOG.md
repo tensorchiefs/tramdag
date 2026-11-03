@@ -1,3 +1,101 @@
+## v1.0.0rc2 (2026-11-02)
+
+### BREAKING CHANGE
+
+- outcome is a method. Call flow.outcome() instead of
+reading flow.outcome.
+- seeded fits differ from earlier versions.
+- plot_training takes stops=True instead of a dict. It
+reads the stop epochs and the best epochs from the node histories.
+- write the transform options of an intercept as
+transform_kwargs={"n_coeffs": 5}, not as free keywords.
+- node_negative_log_prob, Node.ls_weights and the public
+node_log_prob are gone; use nll, Node.ls_coefficients and
+Node.row_log_prob.
+- Node(name, node_spec, parents) and term modules
+module(term, schema) replace the spec argument; callbacks receive the
+node; PerNodeEarlyStopping and per_node_adam are gone; optimizer= of
+CausalFlowDAG.fit is a factory; the fit_classical report and the
+checkpoint layout change, so v1.0.0rc1 checkpoints do not load.
+
+### Feat
+
+- export EarlyStopping and the plot functions from tramdag
+- seed each node's initialization from the seed and its name
+- **plots**: record each node's best epoch; plot_training marks it
+- **flow**: history_frame gives one row per node and epoch
+- **nodes**: Node.warm_start sets each VC beta0 from a classical fit
+- **flow**: zero_shift_networks starts every CS shift at 0
+- **nodes**: Node.parameter_groups gives the parameters by kind
+- **spec**: strict loading requires every option that acts on a term
+- **flow**: CausalFlowDAG.outcome gives the one node without children
+- **spec**: spec_from_dict(strict=True) refuses omitted shaping options
+- **callbacks**: EarlyStopping min_epochs and smoothing
+- **plots**: ax= and style=, modifiers on the treatment edge, plot_varying_coef
+- Node is public and saves and loads on its own
+- every node fits itself; the flow fits node by node
+
+### Fix
+
+- density takes a reversed grid; a scan without candidates is empty
+- outcome is a method
+- a reversed frame tensorizes
+- docstrings name transform_kwargs for transform options
+- the package exposes no version function
+- final review round two
+- bound the Newton polish of fit_classical and accept a kink
+- **callbacks**: the restore error names min_epochs
+- **plots**: plot_training refuses a stops value that is not a bool
+- state that fit_classical leaves a float32 model
+- fit_classical reaches the optimum and reports a stall
+- refuse a do key that is not a parent in pmf and density
+- refuse a plot_varying_coef modifier that the term lacks
+- check the do keys of pmf and density like sample
+- refuse nan and inf in a continuous column
+- **plots**: modifier arrows clear every node; three plot edge cases
+- **plots**: plot_training keeps spikes, title and legend off the marks
+- the effect-modifier scan leaves out descendants of the treatment
+- sample(u=) keeps the latents' index
+- an ordinal draw takes the model's dtype
+- **experiments**: figure titles, captions and colours that misled
+- an additive intercept is not a joint term
+- n_jobs is Linux only; its tests skip elsewhere
+- a centered VC's validation NLL uses the live propensity again
+- an unseeded forked fit draws its base seed again
+- **notebooks**: the markdown cell marker stands on its own line
+- accept a numpy integer as a schema level count
+- keep each node's normalized callbacks
+- calibrate every node first; name a bad schema entry
+- check every node's callbacks before the first node fits
+- name a missing schema parent and an optimizer class
+- forked fits load callable transforms, evaluate, and check first
+
+### Refactor
+
+- derive converged from stop_reason in fit_classical
+- reuse _node_seed and zero shift nets in one loop
+- **experiments**: check_data keeps only the comparison
+- drop the check mode of the state-dict smoke tool
+- take transform options only as transform_kwargs
+- drop the comments in the experiment code
+- drop the comments in src and tools
+- one name per concept on the node and the flow
+- the forked fit loads states without the lazy import
+- design_matrix encodes the parents through Node.features
+- no seed draw for unseeded forked fits
+- drop the schema and optimizer-class guards
+- **experiments**: fit_paper uses the default Adam and ls_weights
+- one LS-weight reader; fewer single-caller helpers
+- one schema_entry for the node and the flow's schema
+- **experiments**: fit_paper fits node by node
+- plot_training marks stops=, not frozen=
+- score_columns takes no flow
+- Node(name, node_spec, schema) and one own-encoding value
+- one tensorize loop for the flow and the node
+- each node calibrates itself and keeps its own flag
+- a node encodes and tensorizes its own columns
+- nodes and term modules read a parent schema, not the spec
+
 ## v1.0.0rc1 (2026-10-01)
 
 ### BREAKING CHANGE

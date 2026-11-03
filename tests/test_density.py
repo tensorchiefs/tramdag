@@ -19,7 +19,7 @@ def _flow(ls_chain):
 def test_density_equals_exp_log_prob_at_the_observed_value(ls_chain):
     """At a row's own value the density is exp of that row's log-likelihood term."""
     flow, df = _flow(ls_chain)
-    per_node = flow.node_log_prob(flow._tensorize(df))
+    per_node = flow._node_log_prob(flow._tensorize(df))
     expected = per_node["x2"].exp().detach().numpy()
     got = np.array(
         [flow.density(df.iloc[[i]], "x2", [df["x2"].iloc[i]])[0, 0] for i in range(8)]
@@ -41,7 +41,7 @@ def test_do_overrides_the_parent_column(ls_chain):
     with_do = flow.density(df.iloc[:3], "x2", grid, do={"x1": 0.7})
     by_hand = flow.density(df.iloc[:3].assign(x1=0.7), "x2", grid)
     np.testing.assert_allclose(with_do, by_hand)
-    assert np.allclose(with_do[0], with_do[1])  # the only parent is clamped
+    assert np.allclose(with_do[0], with_do[1])
 
 
 def test_density_rejects_an_ordinal_node():
@@ -49,3 +49,13 @@ def test_density_rejects_an_ordinal_node():
     flow = CausalFlowDAG(spec, seed=0)
     with pytest.raises(ValueError, match="requires a continuous node"):
         flow.density(pd.DataFrame({"x": [0.0]}), "y", [0, 1, 2])
+
+
+def test_density_takes_a_reversed_grid(ls_chain):
+    """A reversed grid gives the reversed densities of the forward grid."""
+    flow, df = _flow(ls_chain)
+    grid = np.linspace(-3, 3, 7)
+    forward = flow.density(df.iloc[:2], "x2", grid)
+    np.testing.assert_allclose(
+        flow.density(df.iloc[:2], "x2", grid[::-1]), forward[:, ::-1]
+    )

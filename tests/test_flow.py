@@ -1,6 +1,8 @@
 """Unit tests for the tramdag causal flow."""
 
 # %% imports ---------------------------------------------------------------------------
+import inspect
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -54,10 +56,10 @@ def test_univariate_roundtrip(ut):
     ut.set_range(-3.0, 7.0)
     n = 200
     theta = torch.randn(n, ut.n_params)
-    x = torch.linspace(-6.0, 10.0, n)  # includes values outside the fitted range
+    x = torch.linspace(-6.0, 10.0, n)
     z0, ladj = ut.forward(theta, x)
     assert torch.isfinite(z0).all()
-    far = ut.inverse(theta[:2], torch.tensor([-40.0, 60.0]))  # far tails: closed form
+    far = ut.inverse(theta[:2], torch.tensor([-40.0, 60.0]))
     assert torch.isfinite(far).all()
     assert torch.isfinite(ladj).all()
     x_rec = ut.inverse(theta, z0)
@@ -70,8 +72,6 @@ def test_ordinal_log_prob_matches_pmf():
     y = torch.randint(0, 7, (128,)).float()
     lp = ordinal_log_prob(theta, shift, y)
     p = ordinal_pmf(theta, shift)[torch.arange(128), y.long()]
-    # below ~1e-4 the naive sigmoid-difference pmf hits float32 quantization
-    # (eps ~ 1.2e-7 near sigmoid = 1); the log-space form stays accurate there
     ok = p > 1e-4
     assert ok.sum() > 100
     assert torch.allclose(lp[ok], torch.log(p[ok]), atol=2e-3)
@@ -82,9 +82,9 @@ def test_ordinal_log_prob_gradient_survives_saturation():
     in float32) has exactly-zero gradients and can never recover. The log-space
     form must keep finite, non-zero gradients.
     """
-    theta = torch.zeros(8, 1, requires_grad=True)  # binary node
-    shift = torch.full((8,), -60.0, requires_grad=True)  # heavily saturated
-    y = torch.ones(8)  # observed level has p ~ 0
+    theta = torch.zeros(8, 1, requires_grad=True)
+    shift = torch.full((8,), -60.0, requires_grad=True)
+    y = torch.ones(8)
     lp = ordinal_log_prob(theta, shift, y)
     assert torch.isfinite(lp).all()
     lp.sum().backward()
@@ -95,7 +95,7 @@ def test_ordinal_log_prob_gradient_survives_saturation():
 
 
 def test_ordinal_cutpoints_increasing_and_pmf_sums_to_one():
-    theta = torch.randn(64, 6)  # 7 levels
+    theta = torch.randn(64, 6)
     cuts = ordinal_cutpoints(theta)
     assert (cuts[:, 1:] >= cuts[:, :-1]).all()
     pmf = ordinal_pmf(theta, torch.randn(64))
@@ -145,7 +145,6 @@ def test_counterfactual_only_changes_descendants(fitted_flow):
     sub = df.iloc[:300]
     u = flow.abduct(sub, seed=5)
     cf = flow.sample(do={"Y": 3}, u=u)
-    # X is not a descendant of Y -> unchanged; Y is clamped; W may change
     assert np.abs(cf["X"].values - sub["X"].values).max() < 1e-3
     assert (cf["Y"].values == 3).all()
 
@@ -196,13 +195,11 @@ def test_ls_node_equals_proportional_odds():
         method="bfgs", disp=False
     )
 
-    # our model: P(Y<=k) = sigmoid(theta_k - (w1 x1 + w2 x2)); statsmodels likewise
     coefs = flow.ls_coefficients()["Y"]
     w1, w2 = float(coefs["X1"][0]), float(coefs["X2"][0])
     assert w1 == pytest.approx(res.params["X1"], abs=0.05)
     assert w2 == pytest.approx(res.params["X2"], abs=0.05)
 
-    # per-row PMFs agree
     pmf_flow = flow.pmf(df.iloc[:500], node="Y")
     pmf_sm = res.model.predict(
         res.params, exog=df[["X1", "X2"]].values[:500], which="prob"
@@ -227,7 +224,6 @@ def test_affine_zero_theta_is_the_logistic_density():
     np.testing.assert_allclose(
         flow.log_prob(df).detach().numpy(), expected.numpy(), atol=1e-5
     )
-    # the transform ranges are the train 5%/95% quantiles
     q = df["x"].quantile([0.05, 0.95])
     assert (xmin, xmax) == pytest.approx((q.iloc[0], q.iloc[1]))
 
@@ -238,14 +234,16 @@ def test_range_q_option_sets_the_domain():
     survives a save/load round-trip through the spec.
     """
     df = pd.DataFrame({"x": np.linspace(-4.0, 6.0, 400)})
-    flow = CausalFlowDAG({"x": ContinuousNode(I(range_q=0.0))}, seed=0)
+    flow = CausalFlowDAG(
+        {"x": ContinuousNode(I(transform_kwargs={"range_q": 0.0}))}, seed=0
+    )
     flow._calibrate(df)
     ut = flow.nodes["x"].ut
     assert (float(ut.xmin), float(ut.xmax)) == pytest.approx((-4.0, 6.0))
     d = spec_from_dict(spec_to_dict(flow.spec))
     assert d["x"].terms[0] == flow.spec["x"].terms[0]
     with pytest.raises(ValueError, match="range_q"):
-        CausalFlowDAG({"x": ContinuousNode(I(range_q=0.6))})
+        CausalFlowDAG({"x": ContinuousNode(I(transform_kwargs={"range_q": 0.6}))})
 
 
 def test_shift_curve_matches_the_manual_composition(ls_chain):
@@ -288,3 +286,101 @@ def test_shift_curve_names_an_ordinal_parent_instead_of_dying_in_torch(ls_chain)
     flow.fit(df, epochs=2, batch_size=100)
     with pytest.raises(ValueError, match="ordinal parent"):
         flow.shift_curve("y", "t", np.linspace(0, 1, 5))
+
+
+def test_sample_runs_in_float64_with_an_ordinal_parent():
+    """An ordinal draw takes the model's dtype, so a float64 flow can sample."""
+    spec = {"a": OrdinalNode(2), "b": ContinuousNode(LS("a"))}
+    flow = CausalFlowDAG(spec, seed=0).double()
+    out = flow.sample(20, seed=0)
+    assert out.shape == (20, 2)
+
+
+def test_a_counterfactual_keeps_the_rows_of_its_latents():
+    """sample(u=abduct(df)) keeps df's index, so cf - factual lines up."""
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame({"x": rng.normal(size=50)}, index=range(100, 150))
+    df["y"] = df["x"] + rng.logistic(size=50)
+    spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
+    cf = flow.sample(u=flow.abduct(df), do={"x": 0.0})
+    assert list(cf.index) == list(df.index)
+
+
+def test_a_reversed_frame_gives_the_same_nll():
+    """A reversed frame is a negative-stride view; its nll equals the forward one."""
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame({"x": rng.normal(size=60)})
+    df["y"] = df["x"] + rng.logistic(size=60)
+    spec = {"x": ContinuousNode(), "y": ContinuousNode(LS("x"))}
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1)
+    forward = flow.nll(df)
+    reverse = flow.nll(df.iloc[::-1])
+    assert reverse == pytest.approx(forward, rel=1e-5)
+
+
+def test_outcome_is_the_single_sink():
+    """``outcome()`` names the one childless node and refuses several."""
+    chain = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(LS("a")),
+        "c": OrdinalNode(3, [LS("b")]),
+    }
+    assert CausalFlowDAG(chain).outcome() == "c"
+    fork = {**chain, "d": ContinuousNode(LS("a"))}
+    with pytest.raises(ValueError, match=r"\['c', 'd'\]"):
+        CausalFlowDAG(fork).outcome()
+
+
+@pytest.mark.parametrize("init", ["torch", "glorot"])
+def test_zero_shift_networks_zeroes_only_the_cs_output_layers(init):
+    """Every CS shift starts at 0; every other weight is the seed's."""
+    spec = {
+        "x0": ContinuousNode(),
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(I("x0") + CS("x1")),
+        "y": OrdinalNode(3, LS("x0") + CS("x1", "x2")),
+    }
+    base = CausalFlowDAG(spec, seed=0, init=init).state_dict()
+    zeroed = CausalFlowDAG(spec, seed=0, init=init, zero_shift_networks=True)
+    out = {"nodes.x2.shifts.x1.net.6.weight", "nodes.y.shifts.x1+x2.net.6.weight"}
+    for k, v in zeroed.state_dict().items():
+        assert torch.equal(v, torch.zeros_like(v) if k in out else base[k]), k
+    df = pd.DataFrame({"x0": [-1.0, 0.5, 2.0], "x1": [0.3, -2.0, 1.0]})
+    x2 = zeroed.nodes["x2"]
+    _, shift = x2.theta_shift(x2.features(x2.tensorize(df, ["x0", "x1"])), 3)
+    assert torch.equal(shift, torch.zeros(3))
+
+
+@pytest.mark.parametrize("init", ["torch", "glorot", "normal"])
+def test_node_start_ignores_other_nodes(init):
+    base = {"a": ContinuousNode(), "y": ContinuousNode(LS("a"))}
+    other = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(CS("a")),
+        "y": ContinuousNode(LS("a")),
+    }
+    s1 = CausalFlowDAG(base, seed=3, init=init).nodes["y"].state_dict()
+    s2 = CausalFlowDAG(other, seed=3, init=init).nodes["y"].state_dict()
+    s3 = CausalFlowDAG(base, seed=4, init=init).nodes["y"].state_dict()
+    assert all(torch.equal(s1[k], s2[k]) for k in s1)
+    assert not all(torch.equal(s1[k], s3[k]) for k in s1)
+
+
+def test_seed_ends_with_the_global_stream_seeded():
+    CausalFlowDAG({"x": ContinuousNode()}, seed=5)
+    got = torch.rand(3)
+    torch.manual_seed(5)
+    assert torch.equal(got, torch.rand(3))
+
+
+def test_hasattr_outcome_does_not_raise_on_two_sinks():
+    """``outcome`` is a method, so ``hasattr`` and ``getmembers`` do not raise."""
+    spec = {
+        "a": ContinuousNode(),
+        "b": ContinuousNode(LS("a")),
+        "c": ContinuousNode(LS("a")),
+    }
+    flow = CausalFlowDAG(spec)
+    assert hasattr(flow, "outcome")
+    assert "outcome" in dict(inspect.getmembers(flow))

@@ -1,16 +1,15 @@
 # Reading a fitted TRAM-DAG
 
-A TRAM-DAG is a normalizing flow, but it is built so that parts of it stay
+A TRAM-DAG is a normalizing flow, but its design keeps parts of it
 readable. This page collects the read-outs and says what each number means.
 For the model itself see [model.md](model.md), and for the symbols see
 [notation.md](notation.md).
 
-Every claim on this page is checked somewhere that runs. The links say where,
-so nothing here is a number typed into prose.
+Code that runs checks the claims on this page. The links say where.
 
 ## Which term owns which edge
 
-`flow.to_matrix()` gives the labelled adjacency matrix of the model. Rows are
+`flow.to_matrix()` gives the labeled adjacency matrix of the model. Rows are
 parents and columns are children. A cell holds the term tag: `LS`, `CS`, `CI`,
 `VC` for a treatment edge, or `VCm` for a varying-coefficient modifier. An
 empty cell means no edge. A multi-parent term carries its parent group as a
@@ -25,8 +24,8 @@ Exercised in the [varying-coefficients notebook](../notebooks/varying_coefficien
 ## A linear shift is a log-odds ratio
 
 `flow.ls_coefficients()` gives `{node: {parent: weights}}` for the `LS` terms
-only. A `CS` or `VC` shift is a network and has no single weight, so those are
-skipped.
+only. A `CS` or `VC` shift is a network and has no single weight, so
+`flow.ls_coefficients()` skips them.
 
 Two things decide how to read a weight.
 
@@ -42,12 +41,14 @@ the scaling cancels. An ordinal node has no such scaling, so $\exp(\beta)$ is
 an odds ratio directly.
 
 **An ordinal parent gives one weight per level**, from its one-hot encoding.
-Those weights are identified only up to a common constant. The one-hot columns
+The data fix those weights only up to a common constant. The one-hot columns
 sum to one in every row. Adding a constant to all of them, and subtracting it
 from the intercept, leaves the likelihood unchanged. Read them as
 differences.
-`w[k] - w[0]` is the level-k-against-level-0 log-odds ratio, and it is the
-column that `flow.design_matrix(df, node, drop_first=True)` drops.
+`w[k] - w[0]` is the level-k-against-level-0 log-odds ratio. It matches the
+coefficient of column `{parent}[k]` in
+`flow.design_matrix(df, node, drop_first=True)`, which drops the level-0
+column.
 
 Checked in [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py),
 which compares the weights against `statsmodels` and R, and pinned in
@@ -63,12 +64,12 @@ you read a fitted baseline.
 
 `flow.pmf(df, node, do=...)` gives the class probabilities per row, in closed
 form. It needs no sampling, and `do=` makes it interventional by overriding
-columns before the parents are read. That combination is what lets a
-treatment-effect question be answered exactly rather than by Monte Carlo.
+columns before the parents are read. With that combination, you can answer a
+treatment-effect question exactly, not by Monte Carlo.
 
 Exercised in the [classical-fitting notebook](../notebooks/classical_fit_tram_dag.py),
-and under `do=` in `experiments/triangle_mixed.py`, which is checked against
-committed ground truth on every run.
+and under `do=` in `experiments/triangle_mixed.py`. Every run checks that script
+against committed ground truth.
 
 ## Continuous nodes: density and one fitted shift
 
@@ -78,13 +79,18 @@ each grid value, in closed form from the transform. Use it to look at a fitted
 conditional without sampling it.
 
 `flow.shift_curve(node, parent, grid)` evaluates one fitted shift term along a
-grid of parent values. Use it to plot a `CS` term against the function it was
-supposed to learn. It goes through the term's own evaluation, so a custom term
+grid of parent values. Use it to plot a `CS` term against the function that it
+has to learn. It goes through the term's own evaluation, so a custom term
 works too.
 
-A caution on both: a `CS` term is identified only up to a constant, because
+A caution on both: the data fix a `CS` term only up to a constant, because
 that constant can move into the intercept. Compare a fitted curve to the truth
-after mean-centring both, not point by point.
+after mean-centering both, not point by point.
+
+`density` runs in the
+[classical-fitting notebook](../notebooks/classical_fit_tram_dag.py), section
+1b. `experiments/triangle.py` compares the `shift_curve` of each `CS` variant
+with the true function against committed ground truth.
 
 ## The price of a complex intercept
 
@@ -99,7 +105,7 @@ edge.
 A middle option exists. `I("a", "b", allow_interaction=False)` builds one
 network per parent and sums their parameter vectors, so the parents act
 additively on the transform. `flow.intercept_contributions(df, node)` then
-decomposes that sum into mean-centred per-term parts, using the usual additive
+decomposes that sum into mean-centered per-term parts, using the usual additive
 model convention, so the parts become comparable. This is a post-hoc read-out
 and changes nothing about the fitted model.
 
@@ -107,15 +113,7 @@ Worked through in the [intercept notebook](../notebooks/additive_vs_joint_ci.py)
 
 ## An effect that varies with a covariate
 
-`VC(*modifiers, t=...)` fits $\beta(\text{modifiers}) \cdot x_t$, and
-`flow.varying_coef(df, node)` reads the fitted $\beta$ back in closed form.
-
-`flow.scores(df, node)` and `flow.effect_modifier_scan(df, node, t=...)` come
-before that decision rather than after it. They rank candidate modifiers by
-how much the treatment coefficient's per-observation scores drift when the
-rows are ordered by each candidate. A cheap all-`LS` fit is enough, so the
-shortlist is measured rather than guessed.
-
-See [varying-coefficients.md](varying-coefficients.md) and
-[scores.md](scores.md), and
-[`notebooks/varying_coefficients.py`](../notebooks/varying_coefficients.py).
+`VC(*modifiers, t=...)` fits an effect that varies with the modifiers.
+[varying-coefficients.md](varying-coefficients.md) is the guide. Before you
+declare a `VC` term, `flow.effect_modifier_scan` shortlists the modifiers on a
+cheap all-`LS` fit ([scores.md](scores.md)).

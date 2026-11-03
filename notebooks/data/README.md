@@ -16,7 +16,7 @@ reader can re-fit in R.
 | `age` | mother's age in years |
 | `lwt` | mother's weight at last menstrual period, lbs |
 | `smoke` | smoking during pregnancy (0/1) |
-| `bwt` | birth weight in grams — the continuous outcome `low` is cut from |
+| `bwt` | birth weight in grams, the continuous outcome that `low` is cut from |
 
 Exported verbatim from MASS 7.3-58.2 under R 4.2.3:
 
@@ -39,15 +39,15 @@ CSV therefore means you re-run the R snippet and update `R_GLM` and
 
 ## `vaca.csv`
 
-The bimodal VACA triangle of Section 1 of `classical_fit_tram_dag.py`: 1000 rows
+The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`: 1000 rows
 of `x1`, `x2`, `x3` from the SCM stated in
 [`docs/paper-replication.md`](../../docs/paper-replication.md).
 
 The notebook carries its generator in an `if False:` block, so a normal run
 reads this file and does not rewrite it. Run that block by hand to regenerate
-the sample, which is seeded and therefore reproducible. The file is tracked so
-that the R snippet in the same section reads the identical rows the flow was
-fitted on.
+the sample, which has a seed and is therefore reproducible. Git tracks the file
+so that the R snippet in the same section reads the identical rows that the flow
+used for its fit.
 
 The notebook pins R's reference coefficients for this file in its `R_COLR`
 constant, and `classical_fit_tram_dag.R` is the script that produces them.
@@ -58,7 +58,7 @@ A change to `n` or to the seed changes those numbers. Re-run
 `Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
 change either.
 
-Not to be confused with `experiments/data/vaca/`, the frozen 5000-row
+Do not confuse this file with `experiments/data/vaca/`, the frozen 5000-row
 benchmark of the paper replications under the data contract of
 [`experiments/README.md`](../../experiments/README.md). This file is neither
 frozen nor a contract.

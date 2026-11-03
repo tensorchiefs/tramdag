@@ -3,7 +3,7 @@
 A TRAM-DAG is one triangular normalizing flow whose sparsity is a causal DAG.
 This page states the model in the notation of the paper and maps each part of
 it onto the constructors in `tramdag.spec`. For the symbols see
-[notation.md](notation.md); to read a model after it is fitted see
+[notation.md](notation.md); to read a fitted model see
 [interpretation.md](interpretation.md); for a worked fit see the
 [demo notebook](../notebooks/demo_tram_dag_colab.py).
 
@@ -35,6 +35,10 @@ Together the $h$'s form one triangular flow. Each variable depends only on its
 causal parents $\mathrm{pa}(x_i)$, which is a subset of its predecessors. The
 Jacobian sparsity of the flow is therefore the DAG itself.
 
+Each $h(x_i \mid \mathrm{pa})$ is one transformation model of $x_i$ given its
+parents. In code it is a `Node`, which also fits on its own, without the DAG
+([fitting.md](fitting.md#one-node-alone)).
+
 The latents $u_1,\dots,u_p$ are standard logistic. That choice is what makes
 the fitted parameters interpretable, because a shift on the latent scale is
 then a log-odds ratio.
@@ -49,7 +53,8 @@ u_i \;=\; h(x_i \mid \mathrm{pa}(x_i)) \;=\;
 \underbrace{h_{\boldsymbol{\vartheta}}(x_i)}_{\text{intercept}}
 \;+\; \underbrace{\textstyle\sum_j \beta_{ij}\, x_j}_{\text{linear shifts}}
 \;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}}
-\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}_{\text{varying coefficient}} ,
+\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}
+_{\text{varying coefficient}} ,
 $$
 
 and every causal parent enters through exactly one term. Take $x_5$ with
@@ -65,10 +70,11 @@ parents $\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}$ as the example.
   number per parent.
 - **Complex shift, CS.** $g(x_4)$, an unrestricted network of the parent. It
   stays additive on the latent scale.
-- **Varying coefficient, VC.** $(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t$:
-  a treatment $x_t$ whose effect $\beta$ varies with modifier covariates
-  through a small penalized network. [varying-coefficients.md](varying-coefficients.md)
-  is its guide.
+- **Varying coefficient, VC.**
+  $(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t$: a treatment
+  $x_t$ whose effect $\beta$ varies with modifier covariates through a small
+  penalized network.
+  [varying-coefficients.md](varying-coefficients.md) is its guide.
 
 Sampling has to invert only the intercept, because the shifts move to the
 other side:
@@ -106,33 +112,32 @@ Three rules follow from the model.
   parents the complex one; `SI()` and `CI(...)` spell that out with the arity
   checked.
 - **Joint versus additive is argument grouping.** Several parents in one term
-  form one network over all of them, an interaction; the same parents in
-  separate terms act additively. For the intercept the grouping is said with
-  `allow_interaction`, because a node takes at most one intercept with
-  parents.
+  form one network over all of them, an interaction. The same parents in
+  separate terms act additively. A node takes at most one intercept with
+  parents, so for the intercept `allow_interaction` sets the grouping.
 - **Every parent enters through exactly one edge-owning term.** The VC
   modifiers are the one exception: `CS("X2") + VC("X2", t="T")` is the
-  intended pattern, where $x_2$ acts prognostically through the shift and
-  modifies the treatment effect.
+  intended pattern. There $x_2$ acts prognostically through the shift and
+  also modifies the treatment effect.
 
 ### The three knobs on a term
 
 **`transform=` on `I`** picks the class of $h_{\boldsymbol{\vartheta}}$ for a
 continuous node:
 
-- `"bernstein"`, the default: a Bernstein polynomial with `n_coeffs=20`
-  unconstrained coefficients whose tails extrapolate along the boundary
-  slope;
-- `"spline"`: a monotone rational-quadratic spline with `bins=8`, whose tail
-  slope is fixed ([zuko-upstream.md](zuko-upstream.md) explains the
+- `"bernstein"`, the default: a Bernstein polynomial whose tails extrapolate
+  along the boundary slope;
+- `"spline"`: a monotone rational-quadratic spline, whose tail slope has a
+  fixed value ([zuko-upstream.md](zuko-upstream.md) explains the
   consequence);
 - `"affine"`: location and scale only, so the node-conditional is a logistic
   GLM.
 
-Extra keyword arguments of `I` pass straight to the transform class,
-`I(transform="spline", bins=16)`. Each transform pre-scales the data from the
-training `range_q` and $1 - $`range_q` quantiles onto a fixed domain;
-`range_q` is an intercept option, default 0.05, and `range_q=0` uses the
+The keyword arguments of the transform class go in `transform_kwargs`,
+`I(transform="spline", transform_kwargs={"bins": 16})`. Each transform
+pre-scales the data from the training `range_q` and $1 - $`range_q` quantiles
+onto a fixed domain.
+`range_q` is a transform option with default 0.05, and `range_q=0` uses the
 minimum and maximum. Ordinal nodes have no transform to pick.
 
 **`input_transform=` on `I`, `CS`, `VC`** transforms that term's continuous
@@ -141,7 +146,7 @@ network inputs, with statistics frozen at the first fit: `"minmax"`,
 stay raw, so their coefficients keep their units.
 
 **`units=`, `activation=`, `batch_norm=` on `I`, `CS`, `VC`** size the
-term's network. [code-map.md](code-map.md) lists every default.
+term's network. The defaults are in the API pages of the terms.
 
 ## Ordinal nodes
 
@@ -152,16 +157,16 @@ $$
 P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 $$
 
-with increasing cutpoints $\vartheta$ and $s$ the total shift. The shift is
-subtracted where a continuous node adds it; [notation.md](notation.md) states
-the convention and [interpretation.md](interpretation.md) works through what
-it does to the sign of a coefficient.
+with increasing cutpoints $\vartheta$ and $s$ the total shift. The model subtracts
+the shift where a continuous node adds it. [notation.md](notation.md) states
+the convention. [interpretation.md](interpretation.md) shows what it does to
+the sign of a coefficient.
 
-The log-probability of an observed level is the difference of two sigmoids,
-computed in log space with `logsigmoid` and a stable `log(1 - exp(x))` and
-taking per element the better-conditioned side. The direct difference of two
-sigmoids has exactly zero gradient once they saturate in float32, and a node
-that starts there never recovers.
+The log-probability of an observed level is the difference of two sigmoids.
+The code computes it in log space with `logsigmoid` and a stable
+`log(1 - exp(x))`, and per element it takes the better-conditioned side.
+The direct difference of two sigmoids has exactly zero gradient once they
+saturate in float32, and a node that starts there never recovers.
 
 Parents enter every network as features: a continuous parent raw, in one
 column; an ordinal parent one-hot, in one column per level. Abduction is exact
@@ -173,7 +178,8 @@ intervention, and `sample(u=..., do=...)` predicts.
 
 ## What the model cannot do
 
-- The latent distribution is fixed to standard logistic. It is not learned.
+- The model fixes the latent distribution to standard logistic. It does not
+  learn it.
 - A `VC` treatment is continuous or a binary ordinal node; a multi-level
   ordinal treatment is not supported. Propensity centering needs a binary
   ordinal treatment.

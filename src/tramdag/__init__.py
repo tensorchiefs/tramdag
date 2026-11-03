@@ -1,10 +1,12 @@
 """Interpretable Neural Causal Models (TRAM-DAGs) in PyTorch."""
 
 # %% imports ---------------------------------------------------------------------------
-from importlib.metadata import version
+from importlib.metadata import version as _version
 
+from .callbacks import EarlyStopping
 from .flow import CausalFlowDAG
-from .plots import plot_dag
+from .nodes import Node
+from .plots import plot_dag, plot_marginals, plot_training, plot_varying_coef
 from .spec import (
     CI,
     CS,
@@ -35,16 +37,21 @@ __all__ = [
     "CausalFlowDAG",
     "ComplexShift",
     "ContinuousNode",
+    "EarlyStopping",
     "I",
     "Intercept",
     "LinearShift",
+    "Node",
     "OrdinalNode",
     "Term",
     "VaryingCoefficient",
     "node_parents",
     "plot_dag",
+    "plot_marginals",
+    "plot_training",
+    "plot_varying_coef",
     "spec_from_dict",
     "spec_to_dict",
     "validate_and_sort",
 ]
-__version__ = version("tramdag")
+__version__ = _version("tramdag")

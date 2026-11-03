@@ -11,9 +11,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tramdag import spec_from_dict
+
 # %% global variables ------------------------------------------------------------------
 EXPERIMENTS = Path(__file__).resolve().parents[1]
-CONFIGS = sorted(EXPERIMENTS.glob("*.yaml"))  # the same glob the workflow plans from
+CONFIGS = sorted(EXPERIMENTS.glob("*.yaml"))
 
 
 # %% private functions -----------------------------------------------------------------
@@ -28,7 +30,6 @@ def _keys_read(script: Path, pattern: str) -> set[str]:
 # %% public functions ------------------------------------------------------------------
 @pytest.mark.parametrize("config", CONFIGS, ids=lambda p: p.stem)
 def test_every_yaml_key_is_read_by_the_script(config):
-    # every variant is read through the one `config` dict
     sections = yaml.safe_load(config.read_text())["variants"]
     read = _keys_read(config.with_suffix(".py"), r"""config\[["']([a-z_0-9]+)["']\]""")
     for section, values in sections.items():
@@ -36,3 +37,19 @@ def test_every_yaml_key_is_read_by_the_script(config):
         assert not unread, (
             f"{config.name}[{section}]: keys nothing reads: {sorted(unread)}"
         )
+
+
+def _specs(node):
+    if isinstance(node, dict):
+        if "spec" in node:
+            yield node["spec"]
+        for value in node.values():
+            yield from _specs(value)
+
+
+@pytest.mark.parametrize("config", CONFIGS, ids=lambda p: p.stem)
+def test_every_spec_loads_strictly(config):
+    specs = list(_specs(yaml.safe_load(config.read_text())["variants"]))
+    assert specs
+    for spec in specs:
+        spec_from_dict(spec, strict=True)

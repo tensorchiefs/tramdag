@@ -1,12 +1,12 @@
 """Seeded state_dict-diff smoke: the RNG-stream and key-layout tripwire.
 
-Builds one flow per inline DGP spec at a fixed seed and compares every parameter
-bit-for-bit against a recorded baseline. Any change that reorders parameter
-construction fails here at the commit that caused it. That is the silent
-killer: the tests pass and the pinned experiment centers move.
+Builds one flow per inline DGP spec at a fixed seed and records every parameter
+as the baseline. ``tests/test_statedict_stability.py`` compares against it
+bit-for-bit, so a change that reorders parameter construction fails at the
+commit that caused it. That is the silent killer: the tests pass and the
+pinned experiment centers move.
 
-Usage:  uv run python tests/tools/statedict_smoke.py record   # write baseline
-        uv run python tests/tools/statedict_smoke.py check    # compare
+Usage:  uv run python tests/tools/statedict_smoke.py   # write baseline
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -45,19 +45,6 @@ SPECS = {
 }
 
 
-# %% private functions -----------------------------------------------------------------
-def _diff(name: str, params: dict, cur: dict | None) -> list[str]:
-    if cur is None:
-        return [f"{name}: spec no longer builds"]
-    if set(cur) != set(params):
-        gone = sorted(set(params) - set(cur))
-        new = sorted(set(cur) - set(params))
-        return [f"{name}: key layout changed (-{gone} +{new})"]
-    return [
-        f"{name}: {k} differs" for k, v in params.items() if not torch.equal(v, cur[k])
-    ]
-
-
 # %% public functions ------------------------------------------------------------------
 def build() -> dict:
     out = {}
@@ -68,23 +55,8 @@ def build() -> dict:
 
 
 def main() -> int:
-    mode = sys.argv[1] if len(sys.argv) > 1 else "check"
-    current = build()
-    if mode == "record":
-        torch.save(current, BASELINE)
-        print(f"baseline recorded: {BASELINE}")
-        return 0
-    baseline = torch.load(BASELINE, weights_only=True)
-    bad = [
-        b
-        for name, params in baseline.items()
-        for b in _diff(name, params, current.get(name))
-    ]
-    if bad:
-        print("STATE-DICT SMOKE FAILED — RNG stream or key layout moved:")
-        print("\n".join(f"  {b}" for b in bad))
-        return 1
-    print("state-dict smoke OK: all parameters bit-identical to baseline")
+    torch.save(build(), BASELINE)
+    print(f"baseline recorded: {BASELINE}")
     return 0
 
 

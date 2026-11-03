@@ -1,0 +1,10 @@
+extends: substitution
+message: Use '%s' instead of '%s'.
+level: error
+ignorecase: true
+swap:
+  noise: latent
+  exogenous: latent
+  thresholds?: cutpoint
+  cut-points?: cutpoint
+  predictors?: parent

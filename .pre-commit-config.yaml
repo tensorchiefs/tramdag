@@ -1,9 +1,6 @@
-# Activate in a fresh clone with (plain `install` wires up the pre-commit
-# stage only and leaves commitizen dormant):
-#   pre-commit install --install-hooks -t pre-commit -t commit-msg
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.16.9
+  rev: v0.17.2
   hooks:
   - id: ruff-check
     args: [--fix]
@@ -18,7 +15,6 @@ repos:
   - id: check-shebang-scripts-are-executable
   - id: check-toml
   - id: check-yaml
-    # syntax-only: mkdocs.yml needs the !!python/name mermaid-fence tag
     args: [--unsafe]
   - id: end-of-file-fixer
   - id: mixed-line-ending
@@ -31,20 +27,15 @@ repos:
     args: [--autofix, --indent, '2']
   - id: pretty-format-toml
     args: [--autofix]
-    exclude: ^uv\.lock$   # uv owns this file; formatting reorders 2883 lines
+    exclude: ^uv\.lock$
 
 - repo: https://github.com/codespell-project/codespell
   rev: v2.4.3
   hooks:
-  # nd: the _Node variable in flow.py; continous: quotes the upstream
-  # R script's filename (tensorchiefs/tram-dag), typo and all; lik: R prints
-  # its log-likelihood as "'log Lik.'", quoted verbatim in a notebook
   - id: codespell
     name: codespell (tracked files)
     args: [-L, 'nd,continous,lik']
     exclude: ^(experiments/.*/data/|uv\.lock|.*\.ipynb$|.*texfrag/)
-  # a commit-msg-stage hook is handed ONLY the message file, so the message is
-  # spell-checked without the file excludes above applying to it
   - id: codespell
     alias: codespell-commit-msg
     name: codespell (commit message)
@@ -52,42 +43,97 @@ repos:
     stages: [commit-msg]
 
 - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-  rev: v8.0.1
+  rev: v8.1.0
   hooks:
-  # cognitive complexity, tiered: framework code may be intricate where the
-  # maths is; examples and tests must stay simple enough to read as prose
   - id: complexipy
     alias: complexipy-src
     name: complexipy (src + tools, max 15)
     args: [--max-complexity-allowed, '15']
-    # tools/ is developer code, so it belongs on the framework tier rather
-    # than the examples one; it matched neither before, and gen_diagrams.py
-    # had drifted to 22 unnoticed
     files: ^(src|tools)/
   - id: complexipy
     alias: complexipy-examples
     name: complexipy (experiments/notebooks/tests, max 10)
     args: [--max-complexity-allowed, '10']
     files: ^(experiments|notebooks|tests)/
-    exclude: \.ipynb$   # generated from the .py sources
+    exclude: \.ipynb$
 
 - repo: https://github.com/rhysd/actionlint
   rev: v1.7.12
   hooks:
-  - id: actionlint   # workflow syntax, expressions, runner labels, shellcheck
+  - id: actionlint
 
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.12.19
+  rev: 0.13.5
   hooks:
-  - id: uv-lock   # keep uv.lock in sync when pyproject dependencies change
+  - id: uv-lock
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v4.19.0
+  rev: v4.19.2
   hooks:
-  - id: commitizen   # conventional-commit message check, per message
+  - id: commitizen
     stages: [commit-msg]
-    # `commitizen-branch` (pre-push) is deliberately not wired up: pre-commit
-    # exports PRE_COMMIT_FROM_REF/TO_REF only when both refs exist, so the
-    # first push of a new branch hands commitizen the literal
-    # "$PRE_COMMIT_FROM_REF..$PRE_COMMIT_TO_REF" and it aborts. The commit-msg
-    # hook above already checks every message as it is written.
+
+- repo: local
+  hooks:
+  - id: no-agent-attribution
+    name: no agent attribution in the commit message
+    entry: (?i)^(co-authored-by|assisted-by|generated-by|claude-session):|generated with
+    language: pygrep
+    stages: [commit-msg]
+  - id: vale-commit-msg
+    name: vale (commit message)
+    entry: vale
+    language: python
+    additional_dependencies: [vale==3.26.0.1]
+    stages: [commit-msg]
+  - id: tests-do-not-import-experiments
+    name: tests never import experiments
+    entry: ^\s*(from|import)\s+experiments\b
+    language: pygrep
+    files: ^tests/.*\.py$
+  - id: frozen-experiment-data
+    name: experiments/data takes new folders only, no edits
+    entry: git diff --cached --quiet --diff-filter=MDR -- experiments/data/
+    language: system
+    files: ^experiments/data/
+    pass_filenames: false
+  - id: section-markers
+    name: module sections use the eight names of CONTRIBUTING.md
+    entry: ^# %%(?! (imports|global variables|private functions|public functions|private classes|public classes|alias|main) -+$)
+    language: pygrep
+    files: ^(src|tools|tests|experiments)/.*\.py$
+  - id: no-python-comments
+    name: python carries no comments
+    entry: python tools/check_comments.py
+    language: python
+    types: [python]
+  - id: no-config-comments
+    name: config files carry no comments
+    entry: (^|\s)#(?! v\d+\.\d+\.\d+$)
+    language: pygrep
+    files: ^(pyproject\.toml|\.pre-commit-config\.yaml|mkdocs\.yml|\.github/workflows/.*\.ya?ml)$
+  - id: no-experiment-yaml-comments
+    name: experiment yaml carries only the dag line
+    entry: (^|\s)#(?!\s\w+ ~ )
+    language: pygrep
+    files: ^experiments/[^/]+\.ya?ml$
+  - id: error-message-style
+    name: error messages start lowercase, no trailing period
+    entry: raise \w+\(f?"([A-Z][a-z]* |(?![^"]*\. )[^"]*\."\))
+    language: pygrep
+    files: ^src/.*\.py$
+  - id: vale
+    name: vale (docs prose)
+    entry: vale
+    language: python
+    additional_dependencies: [vale==3.26.0.1]
+    require_serial: true
+    types: [markdown]
+    exclude: ^CHANGELOG\.md$
+  - id: pymarkdown
+    name: prose lines of at most 80 columns
+    entry: pymarkdown scan
+    language: python
+    additional_dependencies: [pymarkdownlnt==0.9.41]
+    types: [markdown]
+    exclude: ^CHANGELOG\.md$

@@ -198,7 +198,7 @@ def compare(name: str) -> tuple[list[str], list[str], list[str], list[str]]:
     results = [
         pair
         for metric, expected in truth.items()
-        if not metric.startswith("_")  # a note for the reader, not a metric
+        if not metric.startswith("_")
         for pair in _check_metric(name, metric, metrics, expected)
     ]
     if not results:

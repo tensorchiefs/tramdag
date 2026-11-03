@@ -44,7 +44,6 @@ from simulations.carefl import Carefl4
 # %% global variables ------------------------------------------------------------------
 DATA = Path(__file__).resolve().parent / "data" / "carefl-cf"
 COLUMNS = ["x1", "x2", "x3", "x4"]
-# the curve files' grid: carefl_fig5.r's seq(-3, 2.9, 0.1)
 ALPHAS = np.round(np.arange(-3.0, 3.0, 0.1), 4)
 
 
@@ -85,9 +84,9 @@ def plot_curves(flow_x3, flow_x4, ref, path, title) -> dict:
     ]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
     for ax, (fitted, target, carefl, xlabel) in zip(axes, panels, strict=True):
-        ax.plot(ALPHAS, ref[f"true_{target}"], "-", color="C3", lw=2, label="DGP")
+        ax.plot(ALPHAS, ref[f"true_{target}"], "k-", lw=2, label="DGP")
         ax.plot(ALPHAS, ref[carefl], "o", ms=4, color="gold", label="CAREFL")
-        ax.plot(ALPHAS, fitted, "o", ms=3, color="C0", label="flow")
+        ax.plot(ALPHAS, fitted, "o", ms=3, color="C3", label="flow")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(f"${target[0]}_{target[1]}$")
         ax.legend()
@@ -154,7 +153,6 @@ def run(variant: str) -> dict:
         f"fitting the flexible flow on CAREFL's own rows, n={len(ref['train'])}: "
         f"{config['fit_kwargs']['epochs']} epochs at lr {config['learning_rate']:g} ..."
     )
-    # val = train, as in carefl_fig5.r: the plateau rule watches the train NLL
     flow, _, fit_seconds = fit_paper(ref["train"], ref["train"], config, out)
     x_obs = ", ".join(f"{value:.2f}" for value in ref["x_obs"].iloc[0])
     figs = figure_specs(config, x_obs=x_obs)
@@ -171,7 +169,6 @@ def run(variant: str) -> dict:
     figures.append("cf_curves.png")
     generator = Carefl4(seed=config["dgp_seed"])
     metrics.update(heldout_errors(generator, flow, ref["sds"], config))
-    # the reference holds nothing out; a fresh standardized draw scores the fit
     heldout = standardized(
         generator.observational(config["n_val"], seed_offset=1), ref["sds"]
     )

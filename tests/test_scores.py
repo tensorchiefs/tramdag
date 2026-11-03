@@ -91,7 +91,7 @@ def test_scores_match_finite_differences():
         "Y": ContinuousNode(LS("X1") + CS("X3") + VC("X2", "X3", t="T")),
     }
     flow = CausalFlowDAG(spec, seed=1)
-    flow.fit(df, epochs=5, seed=1)  # any point works; move off init
+    flow.fit(df, epochs=5, seed=1)
     flow.double()
     try:
         for node, targets in [
@@ -112,12 +112,12 @@ def test_scores_match_finite_differences():
             for col, param in targets.items():
                 h = 1e-6
                 flat = param.data.view(-1)
-                idx = 0  # first element of the parameter
+                idx = 0
                 with torch.no_grad():
                     flat[idx] += h
-                    lp_plus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_plus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] -= 2 * h
-                    lp_minus = flow.node_log_prob(np_vals, nodes=[node])[node]
+                    lp_minus = flow._node_log_prob(np_vals, nodes=[node])[node]
                     flat[idx] += h
                 fd = ((lp_plus - lp_minus) / (2 * h)).numpy()
                 np.testing.assert_allclose(
@@ -133,11 +133,10 @@ def test_effect_modifier_scan_flags_true_modifiers(mle_flow):
     """
     flow, df = mle_flow
     scan = flow.effect_modifier_scan(df, node="Y", t="T")
-    assert set(scan.index) == {"X1", "X2", "X3"}, scan.to_string()  # default cands
+    assert set(scan.index) == {"X1", "X2", "X3"}, scan.to_string()
     assert bool(scan.loc["X2", "flag"]), scan.to_string()
     assert bool(scan.loc["X3", "flag"]), scan.to_string()
     assert not bool(scan.loc["X1", "flag"]), scan.to_string()
-    # the modifiers clearly dominate the ranking
     assert scan.loc[["X2", "X3"], "stat"].min() > 2 * scan.loc["X1", "stat"]
 
 
@@ -173,7 +172,7 @@ def test_scores_on_vc_model_and_scan_column_resolution():
     flow = CausalFlowDAG(spec, seed=0)
     flow.fit(df, epochs=40, seed=0)
     psi = flow.scores(df, node="Y")
-    assert "T" in psi.columns  # beta0 score, not one-hot columns
+    assert "T" in psi.columns
     scan = flow.effect_modifier_scan(df, node="Y", t="T", candidates=["X2"])
     assert list(scan.index) == ["X2"]
 
@@ -185,7 +184,7 @@ def test_scores_error_paths(mle_flow):
     with pytest.raises(KeyError, match="lacks the column"):
         flow.scores(df.drop(columns=["Y"]), node="Y")
     with pytest.raises(ValueError, match="no LS or VC"):
-        flow.scores(df, node="T")  # T is a source: no shift terms
+        flow.scores(df, node="T")
     with pytest.raises(KeyError, match="no score column"):
         flow.effect_modifier_scan(df, node="Y", t="X9")
 
@@ -208,3 +207,34 @@ def test_scan_column_override_scans_a_level_contrast(ls_chain):
     pd.testing.assert_frame_equal(by_default, by_column)
     with pytest.raises(KeyError, match="no score column 'nope'"):
         flow.effect_modifier_scan(df, "y", t="t", column="nope")
+
+
+def test_the_default_scan_leaves_out_descendants_of_the_treatment(ls_chain):
+    """A child of the outcome follows the treatment, so it is no candidate."""
+    df = ls_chain["draw"](800, 1)
+    rng = np.random.default_rng(1)
+    df["z"] = df["y"] + rng.logistic(size=len(df))
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, LS("x1") + LS("x2") + LS("t")),
+        "z": ContinuousNode(LS("y")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    scan = flow.effect_modifier_scan(df.assign(row_id=range(len(df))), "y", t="t")
+    assert set(scan.index) == {"x1", "x2"}
+
+
+def test_scan_without_candidates_gives_an_empty_frame():
+    """A treatment with no other parent leaves nothing to scan."""
+    rng = np.random.default_rng(3)
+    t = (rng.uniform(size=400) < 0.5).astype(float)
+    df = pd.DataFrame({"T": t, "Y": rng.logistic(size=400) + 0.9 * t})
+    spec = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(LS("T"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit_classical(df)
+    scan = flow.effect_modifier_scan(df, node="Y", t="T")
+    assert scan.empty
+    assert list(scan.columns) == ["stat", "p_value", "crit_5pct", "flag"]

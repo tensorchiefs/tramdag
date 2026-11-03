@@ -76,7 +76,6 @@ def test_carefl_noise_recovery_is_exact():
     recovered = gen.abduct_noise(df)
     for name in ("x3", "x4"):
         np.testing.assert_allclose(recovered[name], latents[name], atol=1e-12)
-    # a counterfactual at the observed value reproduces the observation
     unchanged = gen.true_counterfactual(X_OBS, {"x2": X_OBS["x2"]})
     assert abs(unchanged["x3"] - X_OBS["x3"]) < 1e-12
 
@@ -84,7 +83,7 @@ def test_carefl_noise_recovery_is_exact():
 def test_vaca_analytic_moments():
     """The stored interventional means are the closed-form ones."""
     truth = VacaTriangle().true_moments(mc_n=200_000)
-    mean_x1 = -0.25  # 0.5*(-2) + 0.5*1.5
+    mean_x1 = -0.25
     assert abs(truth["obs_mean"]["x1"] - mean_x1) < 0.02
     assert abs(truth["do_x2"]["0.0"]["mean_x3_analytic"] - mean_x1) < 1e-12
     assert abs(truth["do_x2"]["-3.0"]["mean_x3_analytic"] - (mean_x1 - 0.75)) < 1e-12
@@ -95,8 +94,8 @@ def test_frozen_csv_regenerates(subdir):
     """Each committed CSV still comes out of its generator, to 1e-9.
 
     Not bit equality: numpy's transcendental functions move their last bits
-    between releases. ``worst_deviation`` is the function ``check_data``
-    runs from the command line, so the two cannot drift apart.
+    between releases. ``worst_deviation`` is the function of
+    ``check_data``.
     """
     assert worst_deviation(subdir) <= ATOL
 
@@ -121,7 +120,7 @@ def test_mixed_counterfactual_pmf_matches_simulation(f):
     realised = counterfactual["x3"].to_numpy().astype(int)
     for level in range(4):
         rows = factual["x3"].to_numpy() == level
-        if rows.sum() < 300:  # too few to compare frequencies
+        if rows.sum() < 300:
             continue
         empirical = np.bincount(realised[rows], minlength=4) / rows.sum()
         np.testing.assert_allclose(empirical, pmf[rows].mean(axis=0), atol=0.02)

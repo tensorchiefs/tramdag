@@ -52,10 +52,6 @@ cat("logLik", sprintf("%.4f", as.numeric(logLik(g1))), "\n")
 #   2362.4955      7.1538      4.0155   -269.2570
 # logLik -1506.6629
 #
-# The notebook fits the flow both ways for the comparison: with a Bernstein
-# baseline it reaches -1500.55, with a linear one -1507.62. The linear flow and
-# lm differ only in the latent (logistic vs normal) and land within 1 nat.
-#
 # The `smoke` coefficient is +0.669 here and +0.671 from m0 above. A linear
 # shift moves the whole latent distribution, so cutting the outcome at 2500 g
 # discards information about the baseline transformation but not the shift.
@@ -74,7 +70,7 @@ cat(sprintf(
 ))
 # x3 node : x1 -1.777289  x2 -0.455282   logLik -1411.901958
 #
-# The flow reaches logLik -1410.97 on x3 and -1401.88 on x2: better on one node,
+# The flow reaches logLik -1410.97 on x3 and -1401.87 on x2: better on one node,
 # worse on the other. The flow pre-scales the 5%/95% quantiles onto [-5, 5] and
 # runs Bernstein there, leaving 10% of rows in linear tails, while Colr spends
 # its whole basis on the observed support. Neither function class contains the

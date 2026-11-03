@@ -34,7 +34,7 @@ pytestmark = pytest.mark.skipif(
 def test_seeded_state_dicts_match_the_recorded_baseline():
     import torch
 
-    assert BASELINE.exists(), "baseline missing — run statedict_smoke.py record"
+    assert BASELINE.exists(), "baseline missing — run statedict_smoke.py"
     baseline = torch.load(BASELINE, weights_only=True)
     current = build()
     for name, params in baseline.items():

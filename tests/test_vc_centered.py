@@ -28,7 +28,6 @@ T_SPEC = {"X": ContinuousNode(I(transform="affine")), "T": OrdinalNode(2, LS("X"
 def _misspecified_spec(centered) -> dict:
     return {
         **T_SPEC,
-        # prognostic part deliberately under-specified (linear vs true x^2)
         "Y": ContinuousNode(
             LS("X") + VC("X", propensity="ps" if centered else None, t="T")
         ),
@@ -63,7 +62,7 @@ def _fit(spec, df, epochs=250):
 def test_propensity_validation():
     spec = {"D": ContinuousNode(), "Y": ContinuousNode(VC(propensity="ps", t="D"))}
     with pytest.raises(ValueError, match="binary ordinal"):
-        validate_and_sort(spec)  # continuous treatment cannot center
+        validate_and_sort(spec)
     chained = {
         "X": ContinuousNode(),
         "A": OrdinalNode(2, LS("X")),
@@ -72,7 +71,6 @@ def test_propensity_validation():
     }
     with pytest.raises(ValueError, match="chained"):
         validate_and_sort(chained)
-    # propensity names a COLUMN: a bool refuses loudly
     as_bool = {
         "X": ContinuousNode(),
         "T": OrdinalNode(2, LS("X")),
@@ -120,7 +118,7 @@ def test_no_propensity_is_bit_identical_to_plain_vc(vc_hetero):
 
     a = fit_with(VC("X2", "X3", t="T"))
     b = fit_with(VC("X2", "X3", propensity=None, t="T"))
-    assert VC("X2", t="T") == VC("X2", propensity=None, t="T")  # Term equality
+    assert VC("X2", t="T") == VC("X2", propensity=None, t="T")
     for (ka, pa), (kb, pb) in zip(
         a.state_dict().items(), b.state_dict().items(), strict=True
     ):
@@ -164,10 +162,9 @@ def test_gradient_isolation(confounded):
     flow.fit(df.assign(ps=_oof_propensity(df)[0]), epochs=3, seed=0)
     flow.zero_grad()
     vals = flow._tensorize(df)
-    (-flow.node_log_prob(vals)["Y"].mean()).backward()
+    (-flow._node_log_prob(vals)["Y"].mean()).backward()
     for p in flow.nodes["T"].parameters():
         assert p.grad is None or float(p.grad.abs().max()) == 0.0
-    # the Y-node itself DID get gradients (the loss is not degenerate)
     assert any(
         p.grad is not None and float(p.grad.abs().max()) > 0
         for p in flow.nodes["Y"].parameters()
@@ -184,16 +181,13 @@ def test_do_recomputes_centered_regressor(confounded):
     df = confounded["draw"](2000, 4)
     flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
     flow.fit(df.assign(ps=_oof_propensity(df)[0]), epochs=40, seed=0)
-    fresh = confounded["draw"](300, 99)  # never seen in fit
+    fresh = confounded["draw"](300, 99)
 
     beta = flow.varying_coef(fresh, "Y")
     u1 = flow.abduct(fresh.assign(T=1.0), seed=0)["Y"].values
     u0 = flow.abduct(fresh.assign(T=0.0), seed=0)["Y"].values
     np.testing.assert_allclose(u1 - u0, beta, rtol=0, atol=1e-5)
 
-    # e_hat enters the latent: u(T=0) = h(y) + g(x) - beta * e_hat(x); compare
-    # against the same evaluation with e_hat forced to 0 -> difference must be
-    # exactly -beta * e_hat with e_hat from the flow's own T node (pmf)
     vals = flow._tensorize(fresh.assign(T=0.0))
     feats = flow._features(vals)
     nd = flow.nodes["Y"]
@@ -205,14 +199,11 @@ def test_do_recomputes_centered_regressor(confounded):
         _, s_zero = nd.theta_shift(feats | {"ps": torch.zeros(len(fresh))}, len(fresh))
     np.testing.assert_allclose((s_live - s_zero).numpy(), -beta * e, atol=1e-5)
 
-    # counterfactual round-trip under do: push abducted u through do(T=1),
-    # re-abduct the result at T=1 -> the same u comes back
     u = flow.abduct(fresh, seed=0)
     cf = flow.sample(u=u, do={"T": 1})
     u_back = flow.abduct(cf.assign(T=1.0), seed=0)["Y"].values
     np.testing.assert_allclose(u_back, u["Y"].values, atol=1e-3)
 
-    # evaluating a centered term without its propensity must fail loudly
     with pytest.raises(RuntimeError, match="propensity"):
         nd.theta_shift(feats, len(fresh))
 
@@ -270,27 +261,27 @@ def test_propensities_must_be_probabilities(confounded):
 
 def test_centered_fit_with_managed_validation(confounded):
     """Fit-managed validation composes with a centered spec: the frozen OOF
-    column trains, the per-epoch validation NLL falls back to the LIVE
-    propensity (validation frames carry no OOF column by design), and
-    EarlyStopping restores best weights.
+    column trains, the per-epoch validation NLL uses the LIVE propensity of
+    the fitted treatment node (validation frames carry no OOF column by
+    design), and EarlyStopping restores best weights.
     """
     from tramdag.callbacks import EarlyStopping
 
     df = confounded["draw"](800, 3)
-    val = confounded["draw"](300, 30)  # no 'ps' column: live e_hat by design
+    val = confounded["draw"](300, 30)
     flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
-    early = EarlyStopping()
+    stops = {}
     flow.fit(
         df.assign(ps=_oof_propensity(df)[0]),
         epochs=8,
         seed=0,
         validation_data=val,
-        callbacks=early,
+        callbacks=lambda name: stops.setdefault(name, EarlyStopping()),
     )
     assert len(flow.history["val"]) == 8
-    assert np.isfinite(early.best_nll)
-    # restored best: the flow's val NLL equals the callback's best
-    assert sum(flow.nll(val).values()) == pytest.approx(early.best_nll, rel=1e-6)
+    for name, nll in flow.nll(val).items():
+        assert np.isfinite(stops[name].best_nll)
+        assert nll == pytest.approx(stops[name].best_nll, rel=1e-6)
 
 
 def test_stray_propensity_column_is_ignored_on_an_uncentered_fit(confounded):
@@ -309,3 +300,14 @@ def test_stray_propensity_column_is_ignored_on_an_uncentered_fit(confounded):
     ):
         assert ka == kb
         assert torch.equal(pa, pb), ka
+
+
+def test_the_validation_nll_uses_the_live_propensity(confounded):
+    """The split carries the frozen column along; the validation NLL still
+    uses the live propensity of the fitted treatment node, as queries do.
+    """
+    df = confounded["draw"](600, 4)
+    flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
+    flow.fit(df.assign(ps=0.5), epochs=3, seed=1, validation_split=0.25)
+    val = df.iloc[450:]
+    assert flow.history["val"][-1]["Y"] == pytest.approx(flow.nll(val)["Y"], rel=1e-6)

@@ -42,7 +42,7 @@ def test_additive_ci_runs_and_finite():
         },
         seed=0,
     )
-    lp = flow.node_log_prob(flow._tensorize(df))["x3"]
+    lp = flow._node_log_prob(flow._tensorize(df))["x3"]
     assert lp.shape == (64,)
     assert torch.isfinite(lp).all()
 
@@ -51,8 +51,6 @@ def test_additive_ci_runs_and_finite():
 def test_additive_ci_beats_additive_shift_on_heteroscedastic(fit_x3_nll):
     df = _scale_df(4000)
     train, val = df.iloc[:3500], df.iloc[3500:]
-    ci = fit_x3_nll(
-        I("x1", "x2", allow_interaction=False), train, val
-    )  # reshape per parent
-    shift = fit_x3_nll(CS("x1") + CS("x2"), train, val)  # location only
+    ci = fit_x3_nll(I("x1", "x2", allow_interaction=False), train, val)
+    shift = fit_x3_nll(CS("x1") + CS("x2"), train, val)
     assert ci < shift - 0.05, (ci, shift)

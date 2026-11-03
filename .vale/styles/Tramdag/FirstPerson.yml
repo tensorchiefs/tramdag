@@ -1,0 +1,9 @@
+extends: existence
+message: First person ('%s'). Say what the code does.
+level: error
+ignorecase: false
+tokens:
+- \bI\b
+- \b[Ww]e\b
+- \b[Oo]ur\b
+- \b[Uu]s\b

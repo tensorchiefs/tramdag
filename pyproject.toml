@@ -3,7 +3,6 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [dependency-groups]
-# dev is the default `uv sync` group: everything a working checkout needs
 dev = [
   { include-group = "docs" },
   { include-group = "experiments" },
@@ -11,51 +10,42 @@ dev = [
   { include-group = "test" },
   "pre-commit",
   "pylsp-rope",
-  # pinned to the ruff-pre-commit hook's rev. Without it `ruff` is only a
-  # transitive dependency of python-lsp-ruff, so `uv run ruff` and the hook
-  # can sit on different versions and disagree about what is formatted.
-  "ruff==0.16.9",
-  # actionlint lints a workflow's shell scripts only when shellcheck is on
-  # PATH. Without it, a local hook run silently checks less than CI does.
+  "ruff==0.17.2",
   "shellcheck-py",
   "python-lsp-ruff",
   "python-lsp-server[all]"
 ]
 docs = [
   "mkdocs-material",
-  "mkdocs-autorefs",  # the code map's symbol links
-  "mkdocstrings[python]",  # API pages from the numpy docstrings
-  "mkdocs-jupyter",  # executes and renders the jupytext notebooks
-  "mike",  # one site version per branch on gh-pages
-  "nbconvert",  # notebooks -> markdown for the pandoc PDF
-  "mkdocs-bibtex",  # [@key] citations from docs/references.bib
-  "pypandoc-binary"  # the pandoc that mkdocs-bibtex formats with
+  "mkdocs-autorefs",
+  "mkdocstrings[python]",
+  "mkdocs-jupyter",
+  "mike",
+  "nbconvert",
+  "mkdocs-bibtex",
+  "pypandoc-binary"
 ]
 experiments = [
   "matplotlib",
-  "pyyaml",  # the per-experiment hyperparameter files
-  "scipy",  # KS tests in the generator checks
-  "statsmodels"  # classical reference (OrderedModel in the classical notebook)
+  "pyyaml",
+  "scipy",
+  "statsmodels"
 ]
 notebooks = [
   "jupytext",
-  "ipykernel",  # so JupyterLab / VS Code can run the generated .ipynb
-  "matplotlib",  # the notebooks plot ...
-  "scipy",  # ... and use scipy.stats
-  "statsmodels"  # classical_fit_tram_dag.py checks against OrderedModel
+  "ipykernel",
+  "matplotlib",
+  "scipy",
+  "statsmodels"
 ]
 test = [
   "pytest",
-  "pytest-cov",  # the CI coverage gate ([tool.coverage] + `pytest --cov`)
+  "pytest-cov",
   "pytest-xdist",
-  # testpaths covers experiments/ too, so this group must be able to import
-  # what those tests import: the generators (scipy), matplotlib through the
-  # experiment modules, and pyyaml for experiments/tests/test_configs.py, which reads
-  # the four hyperparameter files.
   "matplotlib",
   "pyyaml",
   "scipy",
-  "statsmodels"  # exact-MLE agreement tests
+  "statsmodels"
 ]
 
 [project]
@@ -98,7 +88,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
-plots = ["matplotlib"]  # tramdag.plots: plot_dag, plot_marginals, plot_training
+plots = ["matplotlib"]
 
 [project.urls]
 Homepage = "https://github.com/tensorchiefs/tramdag"
@@ -106,51 +96,43 @@ Homepage = "https://github.com/tensorchiefs/tramdag"
 "Stroke case study" = "https://arxiv.org/abs/2606.12623"
 
 [tool.commitizen]
-# `cz bump` derives the next version from the conventional commits since the
-# last tag and creates the tag the release workflow publishes
 name = "cz_conventional_commits"
 tag_format = "v$version"
 version_provider = "scm"
 version_scheme = "pep440"
 
 [tool.coverage.report]
-# the fast suite alone measures 97%; 95 leaves room for noise
-# while still failing on an untested new code path
 fail_under = 95
 
 [tool.coverage.run]
 source = ["src/tramdag"]
 
 [tool.hatch.build.targets.sdist]
-# without this, the sdist ships experiments/ (~2 MB frozen CSVs) and tests/;
-# README, LICENSE and pyproject.toml ride along automatically
 only-include = ["src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tramdag"]
 
 [tool.hatch.version]
-# the version is the git tag (skeleton convention: setuptools_scm there,
-# hatch-vcs here — same tag-based scheme, no local segment for PyPI)
 source = "vcs"
 
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"
 
+[tool.pymarkdown]
+extensions.markdown-tables.enabled = true
+plugins.md013.code_blocks = false
+plugins.md013.enabled = true
+plugins.md013.headings = false
+plugins.md013.tables = false
+plugins.selectively_enable_rules = true
+
 [tool.pytest.ini_options]
 addopts = ["-v", "--tb=short"]
-# -n auto is passed by the CI invocation, not baked into addopts, so a bare
-# local `pytest` stays serial and readable. Parallel does pay off: 16 workers
-# run the full suite in ~12 min wall against ~24 min serial (32-core box).
 markers = [
   "slow: long fit/training tests — excluded from PR CI, run in the nightly full suite"
 ]
-# so `simulations` and `common` import the same way as when a script is
-# run with `python -m triangle` from experiments/
 pythonpath = ["experiments"]
-# The framework suite and the experiment checks both run on a bare
-# `pytest`. The experiment tests are cheap (numpy-only generator properties);
-# the training runs live in the experiments workflow, not here.
 testpaths = ["tests", "experiments"]
 
 [tool.ruff]
@@ -159,43 +141,36 @@ line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
-# ruff's default set stays active (in 0.16 that is more than the historical
-# E4/E7/E9/F: it includes e.g. S110, BLE001, TRY004); these add to it
 extend-select = [
-  "I",  # import order
-  "E",  # the full pycodestyle errors, beyond the default E4/E7/E9
-  "D",  # docstrings (numpy convention below)
-  "UP",  # modern syntax
-  "B",  # bugbear: real bug patterns (B905: zip truncates silently)
-  "C4",  # comprehension misuse
-  "C90",  # cyclomatic complexity (cognitive complexity: complexipy hook)
-  "NPY",  # numpy pitfalls (legacy random API)
-  "PERF",  # accidental quadratic/copy patterns
-  "PT",  # pytest style: composite asserts hide which clause failed
-  "RUF",  # ruff-native checks (unused noqa, __all__ order)
-  "SIM",  # simplifiable constructs
-  # the following are clean and bind new code only
-  "A",  # builtin shadowing
-  "DTZ",  # naive datetimes
-  "FURB",  # modernization (refurb)
-  "G",  # logging format strings
-  "ICN",  # import-alias conventions (np, pd, plt, mpl)
-  "ISC",  # implicit string concatenation hides missing commas
-  "LOG",  # logging misuse
-  "PIE",  # misc correctness/duplication
-  "PLW1641",  # __eq__ without __hash__ makes a class silently unhashable
-  "PTH",  # pathlib over os.path
-  "RET"  # return-statement hygiene
+  "I",
+  "E",
+  "D",
+  "UP",
+  "B",
+  "C4",
+  "C90",
+  "NPY",
+  "PERF",
+  "PT",
+  "RUF",
+  "SIM",
+  "A",
+  "DTZ",
+  "FURB",
+  "G",
+  "ICN",
+  "ISC",
+  "LOG",
+  "PIE",
+  "PLW1641",
+  "PTH",
+  "RET"
 ]
 ignore = [
-  # em-dashes and Greek letters in prose are deliberate (docs/notation.md)
   "RUF001",
   "RUF002",
   "RUF003",
-  # dict(arrowstyle=...) as kwargs-style collection literals is deliberate
-  # matplotlib idiom in the experiments' plotting code
   "C408",
-  # a ternary is not automatically clearer than if/else; keep it a choice
   "SIM108"
 ]
 
@@ -203,19 +178,8 @@ ignore = [
 max-complexity = 12
 
 [tool.ruff.lint.per-file-ignores]
-# Notebook prose lives in `# %% [markdown]` cells, where a line is a
-# paragraph: E501 would force hard wraps into rendered markdown. Their
-# docstrings are narrative, so the numpydoc summary rules do not apply.
-# The glob must match at any depth: docs/notebooks/ holds tracked symlinks to
-# these same files, and ruff follows them, so a bare `notebooks/*` leaves the
-# symlinked paths unignored and `ruff check .` reports them.
 "**/notebooks/*" = ["D100", "D103", "D205", "D401", "E501"]
-# D103: scripts and tests document themselves in prose and in tests/README.md.
-# A docstring per function adds noise, not clarity. (Measured: these
-# are the only rules the directories actually raise.)
 "experiments/*" = ["D103"]
-# Test docstrings state what a test guarantees, in prose. They are not API
-# documentation, and tests/ is the measurement -- reformatting it is churn.
 "tests/*" = ["D103", "D205", "D401"]
 
 [tool.ruff.lint.pydocstyle]

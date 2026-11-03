@@ -55,28 +55,25 @@ def small_fitted(vc_hetero):
 
 def test_vc_constructor():
     t = VC("X2", "X3", penalty=2.5, t="T")
-    # internal layout: treatment first, modifiers positional
     assert (t.name, t.parents, t.penalty) == ("VC", ("T", "X2", "X3"), 2.5)
-    assert VC(t="T").penalty == 1.0  # the documented default
+    assert VC(t="T").penalty == 1.0
     with pytest.raises(TypeError):
-        VC("T", "X2")  # the treatment is the keyword t=
+        VC("T", "X2")
     with pytest.raises(
         ValueError, match=r"cannot be both the treatment \(t\) and a modifier"
     ):
-        VC("T", t="T")  # on cannot be a modifier
+        VC("T", t="T")
     with pytest.raises(ValueError, match="penalty must be >= 0"):
-        VC(penalty=-1.0, t="T")  # negative penalty
+        VC(penalty=-1.0, t="T")
 
 
 def test_vc_modifier_may_repeat_but_on_owns_its_edge():
-    # modifier X2 also acts prognostically (the intended pattern) -> valid
     ok = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
         "Y": ContinuousNode(CS("X2") + VC("X2", t="T")),
     }
     assert validate_and_sort(ok)[-1] == "Y"
-    # a second edge-owning term for T -> invalid (beta0 vs main effect unidentified)
     bad = {
         "X2": ContinuousNode(),
         "T": OrdinalNode(levels=2),
@@ -106,13 +103,16 @@ def test_vc_modifiers_are_real_dag_edges():
 def test_to_matrix_vc_labels():
     m = CausalFlowDAG(_vc_spec(), seed=0).to_matrix()
     assert m.loc["T", "Y"] == "VC"
-    assert m.loc["X2", "Y"] == "CS['X1', 'X2', 'X3']+VCm"  # prognostic + modifier
+    assert m.loc["X2", "Y"] == "CS['X1', 'X2', 'X3']+VCm"
     assert m.loc["X3", "Y"] == "CS['X1', 'X2', 'X3']+VCm"
 
 
 def test_vc_without_modifiers_equals_ls_exactly():
     """VC(t=) without modifiers has no net — with beta0 set to the LS weight the
     two models give bit-identical log-probs (the nesting is exact, not approximate).
+
+    LS enters via the 2-column one-hot and only w[1] - w[0] is identified. The
+    weights (0, 0.4) make LS equal beta(x) * t with beta0 = 0.4.
     """
     rng = np.random.default_rng(3)
     t = rng.integers(0, 2, 200).astype(float)
@@ -122,8 +122,6 @@ def test_vc_without_modifiers_equals_ls_exactly():
     spec_ls = {"T": OrdinalNode(levels=2), "Y": ContinuousNode(LS("T"))}
     fv, fl = CausalFlowDAG(spec_vc, seed=0), CausalFlowDAG(spec_ls, seed=0)
     with torch.no_grad():
-        # LS enters via the 2-column one-hot; only w[1]-w[0] is identified.
-        # Set w = (0, 0.4) so it equals beta(x)*t with beta0 = 0.4.
         fl.nodes["Y"].shifts["T"].fc.weight.copy_(torch.tensor([[0.0, 0.4]]))
         fv.nodes["Y"].shifts["T"].beta0.fill_(0.4)
     assert torch.equal(fv.log_prob(df), fl.log_prob(df))
@@ -139,7 +137,7 @@ def test_varying_coef_deterministic_and_y_free(small_fitted):
     flow, dgp = small_fitted
     new = dgp["draw"](300, 900)
     b1 = flow.varying_coef(new, "Y")
-    b2 = flow.varying_coef(new.drop(columns=["Y", "T", "X1"]), "Y")  # nur Modifier
+    b2 = flow.varying_coef(new.drop(columns=["Y", "T", "X1"]), "Y")
     np.testing.assert_array_equal(b1, b2)
     assert b1.shape == (300,)
     assert b1.std() > 0
@@ -208,7 +206,6 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
             batch_size=1024,
             seed=0,
         )
-    # the head is dead: beta(x) constant
     assert flow.varying_coef(df, "Y").std() < 1e-3
 
     ls_spec = {
@@ -227,6 +224,12 @@ def test_recovery_bar_on_hetero_dgp(vc_hetero):
     n = 5000 on the heterogeneous-effect DGP, default penalty. The
     unregularized CS(on, x...) workaround measures ~0.5 on this task class —
     this test is the regression guard against 'expressive but unestimated'.
+
+    beta0 is the interpretable main effect, the mean of beta(x) over the
+    training rows (-0.98 here, b0 = -1). Measured -1.16 on linux and -1.22 on
+    macOS from the zero start, and the same from a classical warm start of
+    beta0. The penalized head absorbs a fifth of the main effect at this n, so
+    the tolerance on beta0 is loose. The correlation is the acceptance bar.
     """
     df = vc_hetero["draw"](5000, 100)
     train = df.iloc[:4500]
@@ -237,11 +240,6 @@ def test_recovery_bar_on_hetero_dgp(vc_hetero):
     beta_hat = flow.varying_coef(test, "Y")
     corr = float(np.corrcoef(beta_hat, vc_hetero["beta"](test))[0, 1])
     assert corr >= 0.9, f"recovery corr {corr:.3f} < 0.9"
-    # beta0 is the interpretable main effect, the mean of beta(x) over the
-    # training rows (-0.98 here, b0 = -1). Measured -1.16 on linux and -1.22
-    # on macOS from the zero start, and the same from a classical warm start
-    # of beta0: the penalized head absorbs a fifth of the main effect at this
-    # n, so the tolerance is loose; corr is the acceptance bar.
     b0 = vc_hetero["truth"]["b0"]
     assert float(flow.nodes["Y"].shifts["T"].beta0) == pytest.approx(b0, abs=0.3)
 
@@ -269,3 +267,28 @@ def test_vc_continuous_treatment():
     u0 = flow.abduct(df.assign(D=0.0), seed=0)["Y"].values
     np.testing.assert_allclose(2.0 * beta, u2 - u0, rtol=0, atol=1e-4)
     assert flow.sample(50, do={"D": 1.0}, seed=0).shape == (50, 3)
+
+
+def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
+    """Both treatment kinds start at the all-LS MLE, which recovers the truth."""
+    df = ls_chain["draw"](4000, 3)
+    truth = ls_chain["truth"]
+    spec = {
+        "x1": ContinuousNode(I(transform="affine")),
+        "x2": ContinuousNode(I(transform="affine") + LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, VC("x1", t="t") + VC(t="x2")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    report = flow.nodes["y"].warm_start(df)
+    assert report["converged"]
+    ls_spec = {**spec, "y": OrdinalNode(4, LS("x1") + LS("t") + LS("x2"))}
+    ref = CausalFlowDAG(ls_spec, seed=1)
+    w = ref.fit_classical(df)["coefficients"]["y"]
+    shifts = flow.nodes["y"].shifts
+    assert shifts["t"].beta0.item() == pytest.approx(w["t"][1] - w["t"][0], abs=1e-4)
+    assert shifts["x2"].beta0.item() == pytest.approx(w["x2"][0], abs=1e-4)
+    assert shifts["t"].beta0.item() == pytest.approx(truth["beta_y_t"], abs=0.3)
+    assert shifts["x2"].beta0.item() == pytest.approx(truth["beta_y_x2"], abs=0.1)
+    with pytest.raises(ValueError, match="node 'x2' has no VC term"):
+        flow.nodes["x2"].warm_start(df)

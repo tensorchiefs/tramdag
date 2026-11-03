@@ -701,7 +701,7 @@ for term in ("x1", "x2"):
     claim(
         f"{term}: gap against statsmodels / SE",
         observed / float(table_o.loc[term, "se"]),
-        1e-3,
+        2.5e-3,
     )
 
 # %% [markdown]

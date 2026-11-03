@@ -284,7 +284,9 @@ def test_each_node_stops_on_its_own_and_keeps_the_mle(ls_chain):
         epochs=4000,
         batch_size=512,
         validation_data=df,
-        callbacks=lambda name: stops.setdefault(name, EarlyStopping(patience=40)),
+        callbacks=lambda name: stops.setdefault(
+            name, EarlyStopping(patience=40, min_delta=1e-4)
+        ),
         seed=0,
     )
     for name, nd in flow.nodes.items():

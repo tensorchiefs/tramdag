@@ -178,9 +178,10 @@ pinned flow value.
 | sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.064, error 0.012 |
 | val NLL x3 | (none) | 1.4335 |
 
-The do(x2) errors vary with the seed. D5 below gives the spread over four
-init draws. The paper shows one run's densities. The committed bounds sit at
-1.5x to 4x of the pinned measurement.
+The do(x2) errors vary with the init seed. D5 below gives five seeds. At
+do(x2 = −1) the per-node error goes from 0.001 to 0.018, and the config's
+seed 7 gives the smallest. The paper shows one run's densities. The
+committed bounds sit at 1.5x to 4x of the pinned measurement.
 
 The table below traces what each protocol ingredient is worth under the
 reference protocol with its global plateau, one change at a time. It uses the
@@ -197,10 +198,9 @@ otherwise.
 | … glorot init | 0.035 / 0.006 / 0.007 | the cause (a different random draw than the config's seed 7) |
 | … glorot + min/max | 0.035 / 0.056 / 0.057 | |
 
-A probe of the reference trajectory shows that the do(x2) errors descend
-until epoch 6000 to 8500 and then creep back up. The plateau anneal fires at
-about 9050 and freezes them. The reference protocol's quality is its anneal
-landing inside that window.
+Under the reference protocol, the do(x2) errors fall until epoch 6000 to
+8500 and then rise again. The plateau anneal fires near epoch 9050 and holds
+them. So the protocol works because its anneal falls inside that window.
 
 Rejected alternatives, each measured:
 
@@ -287,8 +287,7 @@ the start off and on, seeds unchanged:
 | triangle sin-cs | 34 → 10 | cs max err 0.240 → 0.088; do(x1) err 0.075 → 0.201, past the 0.188 bound | off: a different optimum, better curve, worse L2 |
 | mixed linear-ls | 42 → 9 | identical | on |
 | mixed exp-cs | 28 → 6 | cs max err 0.143 → 0.060; do(x1) err 0.018 → 0.010 | on |
-| VACA | within 0.5: 2245 → 168 (global plateau) | per-node plateau (D5): val NLL 1.4347 → 1.4347; do(x2) err 0.080 / 0.068 / 0.092 → 0.094 / 0.079 / 0.102 | off: no gain, slightly worse at every do point |
-| CAREFL | (none) | (none) | impossible: `range_q: 0` has no marginal start |
+| VACA, CAREFL | (none) | (none) | impossible: `range_q: 0` has no marginal start |
 
 The start is only an initialization. Where the optimizer reaches the same
 basin, the endpoint is identical. Only the epoch count changes. Where the
@@ -305,21 +304,22 @@ rule on its own validation NLL, with its own optimizer. The rule and its
 constants are those of the reference.
 
 The table gives the VACA do(x2) errors at a = −3 / −1 / 0. It also gives the
-x3 validation NLL, with one run per init seed on the same data.
+x3 validation NLL, with one run per init seed on the same data. The global
+column runs the reference rule through `fit_jointly`: one plateau on the
+summed validation NLL.
 
 | init seed | per node (here) | global (reference) |
 |---|---|---|
-| 1 | 0.038 / 0.047 / 0.074, 1.4344 | 0.331 / 0.051 / 0.037, 1.4514 |
-| 2 | 0.038 / 0.032 / 0.076, 1.4351 | 0.213 / 0.044 / 0.041, 1.4476 |
-| 3 | 0.070 / 0.005 / 0.039, 1.4345 | 0.221 / 0.066 / 0.048, 1.4481 |
-| 4 | 0.012 / 0.037 / 0.072, 1.4345 | 0.317 / 0.053 / 0.098, 1.4541 |
-| 7 (config) | 0.080 / 0.068 / 0.092, 1.4347 | 0.096 / 0.080 / 0.018, 1.4495 |
+| 1 | 0.087 / 0.006 / 0.039, 1.4339 | 0.046 / 0.111 / 0.093, 1.4384 |
+| 2 | 0.077 / 0.008 / 0.042, 1.4339 | 0.357 / 0.212 / 0.123, 1.4379 |
+| 3 | 0.103 / 0.018 / 0.036, 1.4341 | 0.036 / 0.088 / 0.056, 1.4385 |
+| 4 | 0.096 / 0.011 / 0.040, 1.4337 | 0.011 / 0.062 / 0.047, 1.4367 |
+| 7 (config) | 0.074 / 0.001 / 0.052, 1.4335 | 0.095 / 0.093 / 0.054, 1.4383 |
 
 The per-node rule gives a lower x3 validation NLL on every seed. Its error at
-the off-manifold point do(x2 = −3) is smaller on every seed, and much smaller
-on seeds 1 to 4. At do(x2 = 0) it is worse on three of the five seeds, and
-seed 7 shows the largest gap. CAREFL moves by less than 0.003 in validation
-NLL, and all its bounds hold.
+do(x2 = −1) and do(x2 = 0) is smaller on every seed. At the off-manifold
+point do(x2 = −3) the global rule errs less on three of the five seeds.
+CAREFL moves by less than 0.003 in validation NLL, and all its bounds hold.
 
 ## Runtime and the CI deviations
 

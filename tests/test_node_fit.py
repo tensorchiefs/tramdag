@@ -102,7 +102,7 @@ def test_a_node_round_trips_through_save_and_load(ls_chain, tmp_path):
 def test_the_flow_history_repeats_a_stopped_nodes_last_entry(ls_chain):
     df = ls_chain["draw"](400, 3)[["x1", "x2"]]
     flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
-    flow.fit(df, epochs=lambda name: 3 if name == "x1" else 6, batch_size=128)
+    flow.fit(df, epochs={"x1": 3, "x2": 6}, batch_size=128)
     train = flow.history["train"]
     assert len(train) == 6
     assert [row["x1"] for row in train[3:]] == [
@@ -153,7 +153,8 @@ def test_a_generator_of_callbacks_reaches_every_node(ls_chain):
 
     df = ls_chain["draw"](300, 8)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
-    for callbacks in (lambda name: (c for c in [StopAt2()]), (c for c in [StopAt2()])):
+    per_node = {n: (c for c in [StopAt2()]) for n in spec}
+    for callbacks in (per_node, (c for c in [StopAt2()])):
         flow = CausalFlowDAG(spec, seed=0).fit(
             df, epochs=50, callbacks=callbacks, seed=0
         )

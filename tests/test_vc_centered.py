@@ -13,6 +13,8 @@ intervention (never cached).
 """
 
 # %% imports ---------------------------------------------------------------------------
+from collections import defaultdict
+
 import numpy as np
 import pytest
 import torch
@@ -270,13 +272,13 @@ def test_centered_fit_with_managed_validation(confounded):
     df = confounded["draw"](800, 3)
     val = confounded["draw"](300, 30)
     flow = CausalFlowDAG(_misspecified_spec(True), seed=0)
-    stops = {}
+    stops = defaultdict(EarlyStopping)
     flow.fit(
         df.assign(ps=_oof_propensity(df)[0]),
         epochs=8,
         seed=0,
         validation_data=val,
-        callbacks=lambda name: stops.setdefault(name, EarlyStopping()),
+        callbacks=stops,
     )
     assert len(flow.history["val"]) == 8
     for name, nll in flow.nll(val).items():

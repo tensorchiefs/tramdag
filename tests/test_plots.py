@@ -2,6 +2,7 @@
 
 # %% imports ---------------------------------------------------------------------------
 import sys
+from collections import defaultdict
 
 import matplotlib as mpl
 import numpy as np
@@ -73,7 +74,7 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
         epochs=30,
         batch_size=100,
         validation_data=df,
-        callbacks=lambda name: EarlyStopping(patience=8),
+        callbacks=defaultdict(lambda: EarlyStopping(patience=8)),
         seed=0,
     )
     axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png", title="m")

@@ -34,6 +34,7 @@
 
 # %%
 import time
+from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -131,10 +132,10 @@ def callbacks(plateau):
 
 ARMS = {
     "per node": lambda f, p, s: f.fit(
-        train, seed=s, callbacks=lambda name: callbacks(p), **KW
+        train, seed=s, callbacks=defaultdict(lambda: callbacks(p)), **KW
     ),
     "per node, n_jobs=3": lambda f, p, s: f.fit(
-        train, seed=s, n_jobs=3, callbacks=lambda name: callbacks(p), **KW
+        train, seed=s, n_jobs=3, callbacks=defaultdict(lambda: callbacks(p)), **KW
     ),
     "joint": lambda f, p, s: f.fit_jointly(train, seed=s, callbacks=callbacks(p), **KW),
 }

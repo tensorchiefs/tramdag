@@ -63,6 +63,10 @@ the final weights unless a callback restores others. The
   processes with `n_jobs`.
 - **Epochs.** `epochs` has no default. A fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
+- **Per-node arguments.** `epochs`, `learning_rate`, `optimizer` and
+  `callbacks` take one value for every node or a dict by node name. A
+  missing name gets the default; for `epochs` it raises. A
+  `collections.defaultdict` gives its own fallback.
 - **Shuffle.** Every node shuffles its rows from the fit's `seed=`. So a
   node fits as `Node.fit` with that seed, and `fit_jointly` sees the same
   row order.
@@ -144,9 +148,9 @@ Three details are easy to get wrong.
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
 - A callback instance passed to the flow's `fit` serves every node in turn,
-  so its attributes describe the last node only. Use a function of the node
-  name to keep one instance per node. Under `n_jobs` the callbacks stay in
-  the workers; read `node.history` instead.
+  so its attributes describe the last node only. Use a dict by node name, or
+  a `defaultdict`, to keep one instance per node. Under `n_jobs` the
+  callbacks stay in the workers; read `node.history` instead.
 - A post-fit `load_state_dict` skips the `VC` re-centering. Restore weights
   from `on_fit_end` instead, as `EarlyStopping` does.
 

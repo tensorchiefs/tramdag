@@ -310,9 +310,35 @@ def _newton_polish(
     return _newton(node, values)[1], max_steps, False
 
 
-def _per_node(value, name: str):
-    """Give a per-node argument: ``value(name)`` for a function, else ``value``."""
-    return value(name) if callable(value) else value
+def _per_node(arg: str, value, name: str):
+    """Give a per-node argument: ``value[name]`` for a dict, else ``value``.
+
+    A dict without the node gives None, the argument's default. ``epochs`` has
+    no default, so there the lookup raises.
+    """
+    if not isinstance(value, dict):
+        return value
+    try:
+        return value[name]
+    except KeyError:
+        if arg == "epochs":
+            raise KeyError(f"epochs= has no entry for node {name!r}") from None
+        return None
+
+
+def _node_jobs(order: list, per_node: dict, shared: dict) -> dict[str, dict]:
+    """Give each node its ``Node.fit`` keyword arguments, checked.
+
+    ``per_node`` holds the arguments that take a value or a dict, ``shared``
+    the others. The check runs before any node fits.
+    """
+    jobs = {}
+    for name in order:
+        kwargs = {k: _per_node(k, v, name) for k, v in per_node.items()}
+        _check_learning_rate(kwargs["learning_rate"], kwargs["optimizer"])
+        kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
+        jobs[name] = kwargs | shared
+    return jobs
 
 
 def _fit_in_child(name: str):
@@ -830,15 +856,15 @@ class FitMixin:
         self,
         train_df: pd.DataFrame,
         *,
-        epochs: int | Callable[[str], int],
-        learning_rate: float | Callable[[str], float] | None = None,
+        epochs: int | dict[str, int],
+        learning_rate: float | dict[str, float] | None = None,
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
         verbose: int = 0,
         seed: int | None = None,
         marginal_init: bool = False,
-        optimizer: Callable[[Node], torch.optim.Optimizer] | None = None,
+        optimizer: Callable[[Node], torch.optim.Optimizer] | dict | None = None,
         callbacks=None,
         n_jobs: int = 1,
     ) -> CausalFlowDAG:
@@ -853,16 +879,24 @@ class FitMixin:
         ``VC`` fit last, so their validation NLL uses the fitted treatment
         node.
 
+        ``epochs``, ``learning_rate``, ``optimizer`` and ``callbacks`` each
+        take one value for every node or a dict keyed by node name. The node
+        gets ``value[name]``. A missing key gives the argument's default
+        (None), so a ``collections.defaultdict`` gives its own fallback.
+        ``epochs`` has no default, so a missing key raises. Keys that name no
+        node are ignored.
+
         Parameters
         ----------
         train_df : pd.DataFrame
             Training data, one column per node, plus the side columns.
-        epochs : int | callable
-            Passes over the data, or ``f(name) -> int`` per node. Required;
-            there is no default.
-        learning_rate : float | callable, optional
-            Adam step size of the default optimizer, or ``f(name) -> float``.
-            The default (None) is 1e-2. Exclusive with ``optimizer``.
+        epochs : int | dict
+            Passes over the data, one value or one per node. Required; there
+            is no default.
+        learning_rate : float | dict, optional
+            Adam step size of the default optimizer, one value or one per
+            node. The default (None) is 1e-2. A node cannot get both a
+            ``learning_rate`` and an ``optimizer``.
         batch_size : int, optional
             Rows per gradient step, by default 512.
         validation_data : pd.DataFrame | None, optional
@@ -886,17 +920,18 @@ class FitMixin:
             Start every simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates a node. See
             [`Node.fit`][tramdag.nodes.Node.fit].
-        optimizer : callable | None, optional
+        optimizer : callable | dict | None, optional
             A factory ``f(node) -> Optimizer``, called once per node fit, for
-            example ``lambda node: torch.optim.AdamW(node.parameters())``. The
-            default (None) is ``Adam(lr=1e-2)``.
-        callbacks : Callback | list | callable | None, optional
-            The callbacks of every node, or a function of the node name that
-            gives them per node, by default None. A bare callable is that
-            function, so a bare hook goes into a list. A shared shipped
-            callback resets at every node's fit begin, so its attributes
-            describe the last node only; a function of the node name keeps
-            one instance per node.
+            example ``lambda node: torch.optim.AdamW(node.parameters())``, or
+            a dict of factories or optimizer instances by node name. The
+            default (None) is ``Adam(lr=1e-2)``. One optimizer instance
+            cannot serve every node, so the dict holds the instances.
+        callbacks : Callback | list | callable | dict | None, optional
+            The callbacks of every node, or a dict of them by node name, by
+            default None. A bare callable is an ``on_epoch_end`` hook, as in
+            [`Node.fit`][tramdag.nodes.Node.fit]. A shared shipped callback
+            resets at every node's fit begin, so its attributes describe the
+            last node only; a dict keeps one instance per node.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
@@ -922,44 +957,45 @@ class FitMixin:
         Raises
         ------
         TypeError
-            If ``optimizer`` is an optimizer instance instead of a factory.
+            If ``optimizer`` is one optimizer instance instead of a factory
+            or a dict.
         KeyError
-            If a frame lacks a node column.
+            If a frame lacks a node column, or a dict ``epochs`` lacks a node.
         ValueError
             See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every
             node's callbacks are checked before the first node fits. Also if
-            ``learning_rate`` and ``optimizer`` are both given.
+            a node gets both a ``learning_rate`` and an ``optimizer``.
         """
         if isinstance(optimizer, torch.optim.Optimizer):
             raise TypeError(
                 "optimizer= of CausalFlowDAG.fit is a factory f(node) -> "
-                "Optimizer, called once per node; got an optimizer instance"
+                "Optimizer or a dict of optimizers by node name; got one "
+                "optimizer instance for every node"
             )
-        _check_learning_rate(learning_rate, optimizer)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )
         self._check_frames(train_df, validation_data)
         if seed is None and n_jobs > 1:
             seed = int(torch.randint(2**62, ()))
-        if not callable(callbacks):
+        if not isinstance(callbacks, dict):
             callbacks = _normalize_callbacks(callbacks)
-        jobs = {
-            name: dict(
-                epochs=_per_node(epochs, name),
-                learning_rate=_per_node(learning_rate, name),
+        jobs = _node_jobs(
+            self.order,
+            dict(
+                epochs=epochs,
+                learning_rate=learning_rate,
+                optimizer=optimizer,
+                callbacks=callbacks,
+            ),
+            dict(
                 batch_size=batch_size,
                 validation_data=validation_data,
                 verbose=verbose,
                 seed=seed,
                 marginal_init=marginal_init,
-                optimizer=optimizer,
-                callbacks=_per_node(callbacks, name),
-            )
-            for name in self.order
-        }
-        for kwargs in jobs.values():
-            kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
+            ),
+        )
         self._calibrate(train_df, marginal_init=marginal_init)
         later = [n for n in self.order if self.nodes[n].side_columns()]
         if validation_data is None:

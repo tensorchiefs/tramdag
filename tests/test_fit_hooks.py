@@ -8,6 +8,7 @@ all-`ls` DGP (see conftest).
 
 # %% imports ---------------------------------------------------------------------------
 import copy
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -82,17 +83,61 @@ def test_callbacks_all_run_and_any_stops(ls_chain):
     ]
 
 
-def test_flow_callbacks_factory_gives_each_node_its_own(ls_chain):
-    """``callbacks=f(name)`` is called once per node, in topological order."""
+def test_a_bare_hook_serves_every_node_of_the_flow(ls_chain):
+    """A bare callable is an ``on_epoch_end`` hook, as in ``Node.fit``."""
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     seen = []
+    flow.fit(df, epochs=2, callbacks=lambda nd, e, opt: seen.append((nd.name, e)))
+    assert seen == [("x1", 1), ("x1", 2), ("x2", 1), ("x2", 2)]
 
-    def factory(name):
-        return lambda nd, epoch, opt: seen.append((name, nd.name, epoch))
 
-    flow.fit(df, epochs=2, callbacks=factory, seed=0)
-    assert seen == [("x1", "x1", 1), ("x1", "x1", 2), ("x2", "x2", 1), ("x2", "x2", 2)]
+def test_a_dict_gives_each_node_its_value_or_the_default(ls_chain):
+    """A missing key gives the argument's default."""
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    seen = []
+    flow.fit(
+        df,
+        epochs={"x1": 2, "x2": 3},
+        learning_rate={"x2": 0.5},
+        callbacks={"x2": lambda nd, e, opt: seen.append(nd.name)},
+    )
+    assert flow.nodes["x1"].history["lr"] == [{0: 1e-2}] * 2
+    assert flow.nodes["x2"].history["lr"] == [{0: 0.5}] * 3
+    assert seen == ["x2"] * 3
+
+
+def test_a_defaultdict_gives_its_own_fallback(ls_chain):
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.fit(
+        df,
+        epochs=defaultdict(lambda: 2, x2=1),
+        learning_rate=defaultdict(lambda: 0.5, x2=0.25),
+    )
+    assert flow.nodes["x1"].history["lr"] == [{0: 0.5}] * 2
+    assert flow.nodes["x2"].history["lr"] == [{0: 0.25}]
+
+
+def test_an_epochs_dict_without_a_node_fails_before_any_node_fits(ls_chain):
+    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    with pytest.raises(KeyError, match="no entry for node 'x2'"):
+        flow.fit(df, epochs={"x1": 2})
+    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
+
+
+def test_an_optimizer_dict_keeps_each_instance_across_fits(ls_chain):
+    df = ls_chain["draw"](400, 1)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow._calibrate(df)
+    x2 = flow.nodes["x2"]
+    opt = torch.optim.Adam(x2.parameters(), lr=1e-2)
+    for _ in range(2):
+        flow.fit(df, epochs=2, batch_size=400, optimizer={"x2": opt}, seed=0)
+    assert opt.state[x2.shifts["x1"].fc.weight]["step"] == 4
+    assert len(flow.nodes["x1"].history["lr"]) == 4
 
 
 def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
@@ -122,9 +167,12 @@ def test_learning_rate_and_optimizer_exclude_each_other(ls_chain):
     sgd = torch.optim.SGD(node.parameters(), lr=0.1)
     with pytest.raises(ValueError, match="learning_rate= or optimizer="):
         node.fit(df, epochs=1, learning_rate=1e-2, optimizer=sgd)
-    for lr in (1e-2, lambda name: 1e-2):
+    for lr, adam in (
+        (1e-2, torch.optim.Adam),
+        ({"x2": 1e-2}, {"x2": torch.optim.Adam}),
+    ):
         with pytest.raises(ValueError, match="learning_rate= or optimizer="):
-            flow.fit(df, epochs=1, learning_rate=lr, optimizer=torch.optim.Adam)
+            flow.fit(df, epochs=1, learning_rate=lr, optimizer=adam)
     with pytest.raises(ValueError, match="learning_rate= or optimizer="):
         flow.fit_jointly(df, epochs=1, learning_rate=1e-2, optimizer=sgd)
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
@@ -221,7 +269,7 @@ def test_early_stopping_without_restore_keeps_the_final_weights(ls_chain):
         df,
         epochs=4000,
         validation_data=val,
-        callbacks=lambda name: EarlyStopping(patience=5, restore_best=False),
+        callbacks=defaultdict(lambda: EarlyStopping(patience=5, restore_best=False)),
         seed=0,
     )
     final = sum(flow.nll(val).values())
@@ -278,15 +326,13 @@ def test_each_node_stops_on_its_own_and_keeps_the_mle(ls_chain):
     """
     df = ls_chain["draw"](2000, 4)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    stops = {}
+    stops = defaultdict(lambda: EarlyStopping(patience=40, min_delta=1e-4))
     flow.fit(
         df,
         epochs=4000,
         batch_size=512,
         validation_data=df,
-        callbacks=lambda name: stops.setdefault(
-            name, EarlyStopping(patience=40, min_delta=1e-4)
-        ),
+        callbacks=stops,
         seed=0,
     )
     for name, nd in flow.nodes.items():
@@ -325,14 +371,14 @@ def test_each_node_is_restored_at_its_best_epoch(ls_chain):
     val = ls_chain["draw"](150, 2)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    stops = {}
+    stops = defaultdict(lambda: EarlyStopping(patience=60))
     flow.fit(
         train,
         epochs=600,
         batch_size=150,
         learning_rate=3e-2,
         validation_data=val,
-        callbacks=lambda name: stops.setdefault(name, EarlyStopping(patience=60)),
+        callbacks=stops,
         seed=0,
     )
     final = flow.nll(val)
@@ -388,7 +434,7 @@ def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):
             self.plateau.step(node.history["train"][-1])
             return opt.param_groups[0]["lr"] <= 1e-5 and epoch > 500
 
-    flow.fit(obs, epochs=4000, batch_size=512, callbacks=lambda name: Plateau(), seed=3)
+    flow.fit(obs, epochs=4000, batch_size=512, callbacks=defaultdict(Plateau), seed=3)
     coefs = flow.ls_coefficients()["y"]
     w_t = np.asarray(coefs["t"]).ravel()
     assert float(coefs["x1"][0]) == pytest.approx(res.params["x1"], abs=0.03)
@@ -569,12 +615,12 @@ def test_the_best_epoch_is_on_record_across_fits_and_checkpoints(ls_chain, tmp_p
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
     flow.fit(df, epochs=5, seed=0)
     assert not any("best_epoch" in nd.history for nd in flow.nodes.values())
-    stoppers = {}
+    stoppers = defaultdict(lambda: EarlyStopping(patience=5))
     flow.fit(
         df,
         epochs=4000,
         validation_data=val,
-        callbacks=lambda name: stoppers.setdefault(name, EarlyStopping(patience=5)),
+        callbacks=stoppers,
         seed=0,
     )
     nll = flow.nll(val)

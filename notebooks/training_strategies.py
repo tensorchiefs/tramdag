@@ -24,6 +24,7 @@
 
 # %%
 import time
+from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -196,20 +197,20 @@ for name, nd in flow.nodes.items():
 # ## 5. `EarlyStopping(patience=)`: stop each node on its own
 #
 # With `patience`, a node also stops once its best epoch is that many epochs
-# old, so each node stops at its own epoch. A function of the node name,
-# `callbacks=lambda name: ...`, gives each node its own instance.
+# old, so each node stops at its own epoch. A dict by node name gives each
+# node its own instance; a `defaultdict` makes one for every node.
 
 # %%
 flow = build()
 t0 = time.perf_counter()
-stoppers = {}
+stoppers = defaultdict(lambda: EarlyStopping(patience=25))
 flow.fit(
     train,
     epochs=CEILING,
     batch_size=256,
     learning_rate=1e-2,
     validation_data=val,
-    callbacks=lambda name: stoppers.setdefault(name, EarlyStopping(patience=25)),
+    callbacks=stoppers,
 )
 record("EarlyStopping(25)", flow, time.perf_counter() - t0)
 

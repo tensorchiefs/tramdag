@@ -310,3 +310,19 @@ def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
     assert shifts["x2"].beta0.item() == pytest.approx(truth["beta_y_x2"], abs=0.1)
     with pytest.raises(ValueError, match="node 'x2' has no VC term"):
         flow.nodes["x2"].warm_start(df)
+
+
+def test_flow_warm_start_covers_the_vc_nodes_only(ls_chain):
+    """One call warm-starts each VC node; a flow without one gives an empty dict."""
+    df = ls_chain["draw"](1000, 3)
+    spec = {
+        "x1": ContinuousNode(I(transform="affine")),
+        "t": OrdinalNode(2, LS("x1")),
+        "y": OrdinalNode(4, VC("x1", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    reports = flow.warm_start(df)
+    assert list(reports) == ["y"]
+    assert flow.nodes["y"].shifts["t"].beta0.item() != 0.0
+    plain = CausalFlowDAG({"x1": spec["x1"], "t": spec["t"]}, seed=0)
+    assert plain.warm_start(df) == {}

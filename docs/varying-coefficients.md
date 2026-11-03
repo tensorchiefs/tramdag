@@ -50,7 +50,8 @@ ingredient into the TRAM framework.
 - **Warm start.** `flow.nodes[name].warm_start(train_df)` fits the all-`LS`
   version of the node classically and copies the treatment weight into
   `beta0`. Call it before `fit`. Training then starts at the classical
-  answer and learns only deviations.
+  answer and learns only deviations. `flow.warm_start(train_df)` does this
+  for every node with a `VC` term and returns the reports by node name.
 - **Treatments.** Continuous or binary ordinal, entering as its 0/1 level so
   that $\beta$ is the identified level-1-against-0 contrast. The term is
   linear in the treatment.

@@ -26,6 +26,7 @@ from torch import Tensor
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
 
 from .callbacks import Callback
+from .spec import VaryingCoefficient
 
 if TYPE_CHECKING:
     from .flow import CausalFlowDAG
@@ -806,6 +807,29 @@ class FitMixin:
             lr = pd.DataFrame(h.get("lr", [])).rename(columns="lr[{}]".format)
             frames.append(pd.concat([frame, lr], axis=1))
         return pd.concat(frames, ignore_index=True)
+
+    def warm_start(self, train_df: pd.DataFrame) -> dict[str, dict]:
+        """Warm-start every node that has a ``VC`` term.
+
+        Each such node runs [`Node.warm_start`][tramdag.nodes.Node.warm_start].
+        Call it before ``fit``.
+
+        Parameters
+        ----------
+        train_df : pd.DataFrame
+            Training rows with every node's column.
+
+        Returns
+        -------
+        dict[str, dict]
+            The reports of the nodes with a ``VC`` term, keyed by node name.
+            The dict is empty when no node has one.
+        """
+        return {
+            name: self.nodes[name].warm_start(train_df)
+            for name, node_spec in self.spec.items()
+            if any(isinstance(t, VaryingCoefficient) for t in node_spec.terms)
+        }
 
     def fit(
         self,

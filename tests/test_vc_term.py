@@ -269,6 +269,24 @@ def test_vc_continuous_treatment():
     assert flow.sample(50, do={"D": 1.0}, seed=0).shape == (50, 3)
 
 
+def test_warm_start_ignores_the_global_rng(ls_chain):
+    """The twin's start is seeded, so warm_start is a function of the data."""
+    df = ls_chain["draw"](1000, 3)
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, VC("x1", t="t") + VC(t="x2")),
+    }
+    starts = []
+    for state in (1, 2):
+        torch.manual_seed(state)
+        flow = CausalFlowDAG(spec, seed=0)
+        flow.nodes["y"].warm_start(df)
+        starts.append([m.beta0.item() for m in flow.nodes["y"].shifts.values()])
+    assert starts[0] == starts[1]
+
+
 def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
     """Both treatment kinds start at the all-LS MLE, which recovers the truth."""
     df = ls_chain["draw"](4000, 3)

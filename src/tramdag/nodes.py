@@ -462,7 +462,8 @@ class Node(NodeFitMixin, nn.Module):
         $\beta_0$ takes the twin's coefficient of its treatment. A binary
         ordinal treatment takes the level-1-against-0 contrast ``w[1] - w[0]``,
         a continuous one its weight ``w[0]``. Call it before ``fit``; the twin
-        ignores a centering column.
+        ignores a centering column. The twin starts from seed 0, so the result
+        does not depend on torch's global RNG.
 
         Parameters
         ----------
@@ -487,7 +488,9 @@ class Node(NodeFitMixin, nn.Module):
             raise ValueError(f"node {self.name!r} has no VC term to warm-start")
         spec = copy.copy(self.node_spec)
         spec.terms = [Intercept(), *(LinearShift(p) for p in self.parents)]
-        twin = Node(self.name, spec, self.schema).to(next(self.parameters()).device)
+        twin = Node(self.name, spec, self.schema, seed=0).to(
+            next(self.parameters()).device
+        )
         report = twin.fit_classical(train_df)
         with torch.no_grad():
             for m in vcs:

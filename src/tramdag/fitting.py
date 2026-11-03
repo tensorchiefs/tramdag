@@ -305,11 +305,8 @@ def _node_seed(seed: int, index: int) -> int:
 
 
 def _per_node(value, name: str):
-    """Give a per-node argument: ``value(name)`` for a function, else ``value``.
-
-    A class is not a factory.
-    """
-    return value(name) if callable(value) and not isinstance(value, type) else value
+    """Give a per-node argument: ``value(name)`` for a function, else ``value``."""
+    return value(name) if callable(value) else value
 
 
 def _fit_in_child(name: str):
@@ -894,7 +891,7 @@ class FitMixin:
         self._check_frames(train_df, validation_data)
         if seed is None and n_jobs > 1:
             seed = int(torch.randint(2**62, ()))
-        if not callable(callbacks) or isinstance(callbacks, type):
+        if not callable(callbacks):
             callbacks = _normalize_callbacks(callbacks)
         jobs = {
             name: dict(

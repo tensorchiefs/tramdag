@@ -523,7 +523,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
     def pmf(
         self, df: pd.DataFrame, node: str, *, do: dict[str, float] | None = None
     ) -> np.ndarray:
-        """Give the analytic class probabilities of an ordinal node.
+        """Give the class probabilities of an ordinal node in closed form.
 
         Parameters
         ----------
@@ -532,7 +532,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         node : str
             Name of the ordinal node.
         do : dict[str, float] | None, optional
-            Column overrides, applied to ``df`` before the evaluation.
+            Parent values ``{parent: value}``, set in ``df`` before the node
+            reads its parents. A key that is not a parent raises.
 
         Returns
         -------
@@ -542,7 +543,7 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is continuous.
+            If ``node`` is continuous, or a ``do`` key is not a parent.
         """
         if self._node(node).kind != "ordinal":
             raise ValueError(
@@ -576,7 +577,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         grid : array-like
             Values of ``node`` at which to evaluate the density, shape ``(m,)``.
         do : dict[str, float] | None, optional
-            Column overrides, applied to ``df`` before the evaluation.
+            Parent values ``{parent: value}``, set in ``df`` before the node
+            reads its parents. A key that is not a parent raises.
 
         Returns
         -------
@@ -586,7 +588,8 @@ class CausalFlowDAG(FitMixin, ReadoutsMixin, nn.Module):
         Raises
         ------
         ValueError
-            If ``node`` is ordinal; use ``pmf`` for it.
+            If ``node`` is ordinal (use ``pmf``), or a ``do`` key is not a
+            parent.
         """
         if self._node(node).kind != "continuous":
             raise ValueError(

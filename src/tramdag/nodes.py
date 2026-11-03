@@ -209,7 +209,8 @@ class Node(NodeFitMixin, nn.Module):
         weights are then those of this node in ``CausalFlowDAG(spec,
         seed=seed)`` with the default ``init``. Construction does not change
         torch's global RNG state. Without a seed, the weights come from
-        torch's global RNG.
+        torch's global RNG. A lone node always uses torch's default init;
+        ``init=`` exists on [`CausalFlowDAG`][tramdag.CausalFlowDAG] only.
 
     Attributes
     ----------
@@ -309,8 +310,7 @@ class Node(NodeFitMixin, nn.Module):
         the marginal class log-odds; spline/affine intercepts and intercepts
         with parents are untouched. The start rides on this method's guard, so
         a second ``fit`` (the next phase of a schedule) continues training
-        instead of discarding the intercept it just trained. A spline or
-        affine transform has no start.
+        instead of discarding the intercept it just trained.
 
         Parameters
         ----------

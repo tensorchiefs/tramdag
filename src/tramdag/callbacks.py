@@ -109,7 +109,9 @@ class EarlyStopping(Callback):
     best_nll, best_epoch
         The best validation NLL seen this fit and its epoch. Each hooked
         node's ``history["best_epoch"]`` holds that epoch on the history axis,
-        which counts the epochs of every fit.
+        which counts the epochs of every fit;
+        [`plot_training`][tramdag.plots.plot_training] with ``stops=True``
+        marks it.
 
     Raises
     ------

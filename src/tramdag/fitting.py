@@ -458,7 +458,9 @@ class NodeFitMixin:
             Validation rows, with the same columns as ``train_df``, by
             default None. When given (or split off), ``fit`` appends the
             validation NLL to ``node.history["val"]`` after every epoch;
-            ``EarlyStopping`` reads it there.
+            ``EarlyStopping`` reads it there. A centered ``VC`` reads its
+            propensity column from this frame; the flow's ``fit`` puts the
+            live propensity of the fitted treatment node there.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
             validation set, without shuffling, and only the remaining rows
@@ -470,10 +472,15 @@ class NodeFitMixin:
         seed : int | None, optional
             Seeds the minibatch shuffling with a private generator, by
             default None (torch's global RNG). ``Node(seed=)`` and
-            ``CausalFlowDAG(seed=)`` seed the weight initialization.
+            ``CausalFlowDAG(seed=)`` seed the weight initialization. A flow
+            fit derives each node's seed from ``(seed, node index)``, so this
+            seed alone does not repeat a node of a seeded flow fit.
         marginal_init : bool, optional
             Start a simple intercept at its column's marginal, by default
-            ``False``. Applied only by the fit that calibrates the node.
+            ``False``. Applied only by the fit that calibrates the node. A
+            spline or affine transform has no start and skips it. A
+            ``range_q=0`` Bernstein transform raises before the column is
+            read, also on an intercept with parents.
         optimizer : torch.optim.Optimizer | callable | None, optional
             A torch optimizer over ``node.parameters()``, or a factory
             ``f(node) -> Optimizer`` (for example to split the parameters into
@@ -483,7 +490,8 @@ class NodeFitMixin:
             [`Callback`][tramdag.callbacks.Callback]
             hooks all three points of the fit; its docstring is the contract.
             A bare callable is an ``on_epoch_end`` hook, ``cb(node, epoch,
-            optimizer)``. Two callbacks that restore weights are refused.
+            optimizer)``; a ``True`` return stops the fit. Two callbacks that
+            restore weights are refused.
 
         Returns
         -------
@@ -513,8 +521,9 @@ class NodeFitMixin:
             If ``learning_rate`` and ``optimizer`` are both given, the
             validation arguments clash, a centered VC term's
             propensity column is missing or out of [0, 1], two callbacks
-            restore weights, an ordinal value is not a level index, or the
-            node's calibration refuses the frame.
+            restore weights, an ordinal value is not a level index, the
+            node's calibration refuses the frame, or ``marginal_init`` meets
+            a ``range_q=0`` Bernstein transform.
         KeyError
             If a frame lacks a column the node reads.
         """
@@ -647,6 +656,11 @@ class NodeFitMixin:
         ``converged`` is ``stop_reason == "tolerance"``: a stall short of the
         optimum is not converged, because the Newton steps continue from it
         until they stop on their own or spend the budget.
+
+        The Newton step skips the eigenvalues of the Hessian at float64 noise
+        level. So it does not move along a direction with zero curvature,
+        such as the one that the one-hot of an ordinal parent shares with the
+        cutpoints. Compare the contrasts ``w[k] - w[0]`` with other software.
         """
         self._check_classical()
         self.calibrate(train_df)
@@ -770,7 +784,8 @@ class FitMixin:
             Columns ``node``, ``epoch`` (from 1), ``train``, ``val`` (NaN in an
             epoch without validation) and one ``lr[k]`` per optimizer group
             ``k`` (NaN in a node without that group). A node that no ``fit``
-            trained has no rows.
+            trained has no rows, and a node that stopped early does not
+            repeat its last entry.
         """
         frames = []
         for name, nd in self.nodes.items():
@@ -821,7 +836,8 @@ class FitMixin:
         train_df : pd.DataFrame
             Training data, one column per node, plus the side columns.
         epochs : int | callable
-            Passes over the data, or ``f(name) -> int`` per node.
+            Passes over the data, or ``f(name) -> int`` per node. Required;
+            there is no default.
         learning_rate : float | callable, optional
             Adam step size of the default optimizer, or ``f(name) -> float``.
             The default (None) is 1e-2. Exclusive with ``optimizer``.
@@ -832,7 +848,9 @@ class FitMixin:
             default None.
         validation_split : float | None, optional
             Keras' rule: the LAST fraction of ``train_df`` becomes the
-            validation set. Mutually exclusive with ``validation_data``.
+            validation set, without shuffling, and only the remaining rows
+            train and calibrate. Shuffle the frame first if its row order
+            means anything. Mutually exclusive with ``validation_data``.
         verbose : int, optional
             0 (default) is silent; ``N >= 1`` prints every ``N`` epochs.
         seed : int | None, optional
@@ -843,16 +861,19 @@ class FitMixin:
             from torch's global RNG; see ``n_jobs``.
         marginal_init : bool, optional
             Start every simple intercept at its column's marginal, by default
-            ``False``. Applied only by the fit that calibrates a node.
+            ``False``. Applied only by the fit that calibrates a node. See
+            [`Node.fit`][tramdag.nodes.Node.fit].
         optimizer : callable | None, optional
             A factory ``f(node) -> Optimizer``, called once per node fit, for
             example ``lambda node: torch.optim.AdamW(node.parameters())``. The
             default (None) is ``Adam(lr=1e-2)``.
         callbacks : Callback | list | callable | None, optional
             The callbacks of every node, or a function of the node name that
-            gives them per node, by default None. A shared shipped callback
-            resets at every node's fit begin, so its attributes describe the
-            last node only.
+            gives them per node, by default None. A bare callable is that
+            function, so a bare hook goes into a list. A shared shipped
+            callback resets at every node's fit begin, so its attributes
+            describe the last node only; a function of the node name keeps
+            one instance per node.
         n_jobs : int, optional
             Number of processes, by default 1 (serial, topological order).
             ``n_jobs > 1`` forks ``n_jobs`` workers, one task per node (Linux
@@ -1016,7 +1037,8 @@ class FitMixin:
             Seeds the minibatch shuffling, by default None.
         marginal_init : bool, optional
             Start every simple intercept at its column's marginal, by default
-            ``False``. Applied only by the fit that calibrates a node.
+            ``False``. Applied only by the fit that calibrates a node. See
+            [`Node.fit`][tramdag.nodes.Node.fit].
         optimizer : torch.optim.Optimizer | callable | None, optional
             A torch optimizer over ``flow.parameters()``, or a factory
             ``f(flow) -> Optimizer``. The default (None) is

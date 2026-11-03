@@ -421,20 +421,9 @@ class Term:
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
     and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)
-    as class attributes, and assign the options (the keyword arguments of
-    ``__init__``, with their defaults) to ``self``:
-
-    ```python
-    class Scaled(Term):
-        name = "Scaled"
-        module = ScaledModule
-
-        def __init__(self, *parents, scale=1.0):
-            super().__init__(*parents)
-            self.scale = scale
-            if len(self.parents) != 1:
-                raise ValueError("Scaled() takes exactly one parent")
-    ```
+    as class attributes, assign the options (the keyword arguments of
+    ``__init__``, with their defaults) to ``self``, and raise ``ValueError``
+    in ``__init__`` on a bad option or parent count.
 
     A term is exactly its ``__dict__``: the parents the base assigns and the
     options each subclass assigns from its own signature. That is what makes

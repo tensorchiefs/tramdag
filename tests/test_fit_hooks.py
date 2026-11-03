@@ -445,9 +445,9 @@ def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):
     flow.fit(obs, epochs=4000, batch_size=512, callbacks=defaultdict(Plateau), seed=3)
     coefs = flow.ls_coefficients()["y"]
     w_t = np.asarray(coefs["t"]).ravel()
-    assert float(coefs["x1"][0]) == pytest.approx(res.params["x1"], abs=0.03)
-    assert float(coefs["x2"][0]) == pytest.approx(res.params["x2"], abs=0.03)
-    assert (w_t[1] - w_t[0]) == pytest.approx(res.params["t[1]"], abs=0.06)
+    assert float(coefs["x1"][0]) == pytest.approx(res.params["x1"], abs=7e-4)
+    assert float(coefs["x2"][0]) == pytest.approx(res.params["x2"], abs=3e-4)
+    assert (w_t[1] - w_t[0]) == pytest.approx(res.params["t[1]"], abs=1e-3)
     assert len(flow.nodes["y"].history["train"]) < 4000
 
 
@@ -461,9 +461,9 @@ def test_fit_jointly_lands_on_the_classical_mle(ls_chain):
     )
     want, got = ref.ls_coefficients(), flow.ls_coefficients()
     for name, parent in [("x2", "x1"), ("t", "x1"), ("t", "x2"), ("y", "x1")]:
-        assert got[name][parent][0] == pytest.approx(want[name][parent][0], abs=1e-3)
+        assert got[name][parent][0] == pytest.approx(want[name][parent][0], abs=5e-4)
     contrast = np.diff(got["y"]["t"])[0]
-    assert contrast == pytest.approx(np.diff(want["y"]["t"])[0], abs=1e-3)
+    assert contrast == pytest.approx(np.diff(want["y"]["t"])[0], abs=5e-6)
 
 
 def test_fit_jointly_early_stopping_restores_the_summed_best(ls_chain):

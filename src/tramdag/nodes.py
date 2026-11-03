@@ -22,7 +22,7 @@ import pandas as pd
 import torch
 from torch import Tensor, nn
 
-from .fitting import NodeFitMixin, _node_seed
+from .fitting import NodeFitMixin
 from .modules import LinearShiftModule, VaryingCoefficientModule
 from .spec import (
     Intercept,
@@ -172,7 +172,9 @@ def seeded(seed: int | None, name: str):
         yield
         return
     with torch.random.fork_rng(devices=[]):
-        torch.default_generator.manual_seed(_node_seed(seed, zlib.crc32(name.encode())))
+        key = [seed, zlib.crc32(name.encode())]
+        state = np.random.SeedSequence(key).generate_state(1)[0]
+        torch.default_generator.manual_seed(int(state))
         yield
 
 

@@ -19,7 +19,6 @@ import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -311,11 +310,6 @@ def _newton_polish(
     return _newton(node, values)[1], max_steps, False
 
 
-def _node_seed(seed: int, index: int) -> int:
-    """Give node ``index`` its own shuffling seed, derived from the fit's ``seed``."""
-    return int(np.random.SeedSequence([seed, index]).generate_state(1)[0])
-
-
 def _per_node(value, name: str):
     """Give a per-node argument: ``value(name)`` for a function, else ``value``."""
     return value(name) if callable(value) else value
@@ -472,10 +466,11 @@ class NodeFitMixin:
             validation NLL when validation is configured.
         seed : int | None, optional
             Seeds the minibatch shuffling with a private generator, by
-            default None (torch's global RNG). ``Node(seed=)`` and
-            ``CausalFlowDAG(seed=)`` seed the weight initialization. A flow
-            fit derives each node's seed from ``(seed, node index)``, so this
-            seed alone does not repeat a node of a seeded flow fit.
+            default None (torch's global RNG). ``CausalFlowDAG.fit`` and
+            ``fit_jointly`` shuffle from the same generator, so with the same
+            ``seed`` all three see the same row order in every epoch.
+            ``Node(seed=)`` and ``CausalFlowDAG(seed=)`` seed the weight
+            initialization.
         marginal_init : bool, optional
             Start a simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates the node. A
@@ -881,11 +876,12 @@ class FitMixin:
         verbose : int, optional
             0 (default) is silent; ``N >= 1`` prints every ``N`` epochs.
         seed : int | None, optional
-            Seeds the minibatch shuffling, by default None. Each node gets its
-            own seed derived from ``(seed, node index)``, so a seeded result
-            does not depend on whether the nodes run serially or in
-            processes. Unseeded with ``n_jobs > 1``, a base seed is drawn
-            from torch's global RNG; see ``n_jobs``.
+            Seeds the minibatch shuffling, by default None. Every node fits
+            with this ``seed``, so a node shuffles as
+            [`Node.fit`][tramdag.nodes.Node.fit] with the same ``seed``. The
+            result does not depend on the other nodes or on ``n_jobs``.
+            Unseeded with ``n_jobs > 1``, one seed is drawn from torch's
+            global RNG; see the Notes.
         marginal_init : bool, optional
             Start every simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates a node. See
@@ -917,7 +913,8 @@ class FitMixin:
         Notes
         -----
         Without a ``seed``, ``n_jobs > 1`` draws one from torch's RNG, because
-        forked workers would otherwise replay one RNG state. A centered VC
+        forked workers would otherwise replay one RNG state. Every worker
+        gets this one seed. A centered VC
         validates against the live propensity of its fitted treatment node, as
         every query does. Those nodes therefore fit second. The callbacks
         normalize once here, so an iterator of callbacks survives a single pass.
@@ -954,12 +951,12 @@ class FitMixin:
                 batch_size=batch_size,
                 validation_data=validation_data,
                 verbose=verbose,
-                seed=None if seed is None else _node_seed(seed, i),
+                seed=seed,
                 marginal_init=marginal_init,
                 optimizer=optimizer,
                 callbacks=_per_node(callbacks, name),
             )
-            for i, name in enumerate(self.order)
+            for name in self.order
         }
         for kwargs in jobs.values():
             kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
@@ -1061,7 +1058,8 @@ class FitMixin:
             0 (default) is silent; ``N >= 1`` prints the summed NLLs every
             ``N`` epochs and on the final epoch.
         seed : int | None, optional
-            Seeds the minibatch shuffling, by default None.
+            Seeds the minibatch shuffling, by default None. The row order of
+            every epoch is that of ``fit`` with the same ``seed``.
         marginal_init : bool, optional
             Start every simple intercept at its column's marginal, by default
             ``False``. Applied only by the fit that calibrates a node. See

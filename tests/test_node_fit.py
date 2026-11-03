@@ -1,7 +1,6 @@
 """A node fits on its own: alone, in a flow, in processes, and round trips."""
 
 # %% imports ---------------------------------------------------------------------------
-import copy
 import math
 import sys
 
@@ -12,7 +11,6 @@ import torch
 
 from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
 from tramdag.callbacks import Callback
-from tramdag.fitting import _node_seed
 
 # %% global variables ------------------------------------------------------------------
 _LINUX = pytest.mark.skipif(sys.platform != "linux", reason="n_jobs forks: Linux only")
@@ -39,23 +37,40 @@ def _scale(x, train):
 
 # %% public functions ------------------------------------------------------------------
 def test_a_node_fitted_alone_equals_the_node_in_a_flow(ls_chain):
-    """Same start, same rows, same shuffling seed: the same weights.
+    """Same seeds, same rows: the same weights.
 
     The standalone node gets a frame with only its own and its parents'
-    columns, and the flow's derived seed for its position.
+    columns, and the seeds of the flow.
     """
     df = ls_chain["draw"](600, 0)
     flow = CausalFlowDAG(_ls_spec(), seed=0)
-    alone = Node("y", flow.spec["y"], {"x1": "continuous", "x2": "continuous", "t": 2})
-    alone.load_state_dict(copy.deepcopy(flow.nodes["y"].state_dict()))
+    schema = {"x1": "continuous", "x2": "continuous", "t": 2}
+    alone = Node("y", flow.spec["y"], schema, seed=0)
     flow.fit(df, epochs=5, batch_size=128, seed=3)
-    index = flow.order.index("y")
-    alone.fit(
-        df[["y", "x1", "x2", "t"]], epochs=5, batch_size=128, seed=_node_seed(3, index)
-    )
+    alone.fit(df[["y", "x1", "x2", "t"]], epochs=5, batch_size=128, seed=3)
     assert _same_weights(alone, flow.nodes["y"])
     assert alone.history == flow.nodes["y"].history
     assert alone.nll(df) == pytest.approx(flow.nll(df)["y"], rel=1e-6)
+
+
+def test_an_unrelated_root_leaves_the_other_nodes_unchanged(ls_chain):
+    """Every node shuffles from the fit seed, whatever the other nodes are."""
+    df = ls_chain["draw"](600, 0)
+    df["z"] = np.random.default_rng(0).normal(size=len(df))
+    flow = CausalFlowDAG(_ls_spec(), seed=0).fit(df, epochs=3, batch_size=128, seed=3)
+    wider = CausalFlowDAG({"z": ContinuousNode(), **_ls_spec()}, seed=0)
+    wider.fit(df, epochs=3, batch_size=128, seed=3)
+    assert all(_same_weights(nd, wider.nodes[n]) for n, nd in flow.nodes.items())
+
+
+def test_fit_and_fit_jointly_shuffle_alike(ls_chain):
+    """One node, one seed: both loops see the same rows in every epoch."""
+    df = ls_chain["draw"](600, 0)[["x1"]]
+    a = CausalFlowDAG({"x1": ContinuousNode()}, seed=0)
+    b = CausalFlowDAG({"x1": ContinuousNode()}, seed=0)
+    a.fit(df, epochs=3, batch_size=128, seed=3)
+    b.fit_jointly(df, epochs=3, batch_size=128, seed=3)
+    assert _same_weights(a, b)
 
 
 @_LINUX

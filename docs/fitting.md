@@ -48,7 +48,8 @@ fits one with Adam, and
 [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
 fits one classically against R `glm`. A lone node built with `seed=` starts from
 the weights it has in a flow with that seed and the default `init`
-([code-map.md](code-map.md#flowpy-the-model)).
+([code-map.md](code-map.md#flowpy-the-model)). A fit with the flow's fit
+`seed=` then gives the weights of that node in the flow.
 
 ## Path A: stochastic optimization with `fit`
 
@@ -62,6 +63,9 @@ the final weights unless a callback restores others. The
   processes with `n_jobs`.
 - **Epochs.** `epochs` has no default. A fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.
+- **Shuffle.** Every node shuffles its rows from the fit's `seed=`. So a
+  node fits as `Node.fit` with that seed, and `fit_jointly` sees the same
+  row order.
 - **Calibration.** The first fit calibrates each node on the training frame.
   Every term freezes its data-dependent state there: the intercept its
   `range_q` quantiles and each `input_transform=` its statistics. A loaded

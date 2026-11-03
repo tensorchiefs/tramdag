@@ -1452,8 +1452,9 @@ the arms. So the read-out is the difference of two jointly fitted,
 unregularized networks. It amplifies random variation. On the <code>vc_hetero</code>
 process the <code>VC</code> term clears the recovery bar of the tests (see
 <a href="#validation">Validation</a>).
-The <code>CS</code> reduced form reaches a clearly lower correlation on the same
-protocol, although the model is in-class. Causal forests and R-learners
+The <code>CS</code> reduced form stays below a correlation of 0.8 on the same
+protocol, although the model is in-class
+(<code>test_cs_reduced_form_falls_short_of_the_bar</code>). Causal forests and R-learners
 do not work because they target the effect. They work because they
 regularize it (Athey et al., 2019; Nie &amp; Wager, 2021)<sup id="fnref:athey2019grf"><a class="footnote-ref" href="#fn:athey2019grf">1</a></sup> <sup id="fnref:nie2021quasioracle"><a class="footnote-ref" href="#fn:nie2021quasioracle">2</a></sup>. <code>VC</code> brings that
 ingredient into the TRAM framework.</p>

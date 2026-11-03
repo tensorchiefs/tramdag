@@ -338,9 +338,9 @@ linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs.
 The epoch floors, measured at that batch and rate:
 
 - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
-  do(x1) bound (0.235 > 0.200). `linear-cs` trains 500, because at 300 its fitted
-  cs curve flattens past |x2| > 0.5. The DGP line spans only ±0.3. relu is out: it
-  fits atan badly.
+  do(x1) bound (0.235 > 0.200). `linear-cs` trains 500, because at 300 its
+  fitted cs curve flattens past |x2| > 0.5. The DGP line spans only ±0.3.
+  relu is out: it fits atan badly.
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net and
   the do(x1) mean, so it trains 350 epochs. `linear-ls` has no CS net to wait
   for, and at lr 0.002 it trains 200 epochs. The lower lr 0.002 lands closer to

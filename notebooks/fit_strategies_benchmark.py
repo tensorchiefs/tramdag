@@ -205,8 +205,8 @@ plt.show()
 # the notebook prints them and does not assert them. The `n_jobs` arm runs
 # three processes, the other arms one.
 #
-# The optimum is the same, so all arms reach the same best validation NLL;
-# a large gap points to a bug in one path. The gap in intervention error
+# The optimum is the same, so all arms reach the same best validation NLL.
+# The gap in intervention error
 # between the arms stays within two seed standard deviations. All arms come
 # within `EPS` of their best after a similar number of epochs. Every plateau
 # arm ends with the rate of each node cut, so the schedule acts.
@@ -238,7 +238,7 @@ claim(
 
 # %% [markdown]
 # Serial and forked per-node fits with the same seed train the same nodes on
-# the same batches. On one thread their curves agree to the last bits.
+# the same batches. On one thread their curves agree to 1e-6.
 
 # %%
 claim(

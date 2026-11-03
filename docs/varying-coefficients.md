@@ -11,8 +11,8 @@ which is the one place for the code, or in the tests that the text names.
 
 Modifiers may appear twice in a node, as prognostic parents through `CS` or
 `LS` and as effect modifiers through `VC`. The design intends this pattern.
-Only the treatment named by `t=` owns its edge, and a second term that declares it
-raises an error.
+Only the treatment named by `t=` owns its edge, and a second term that
+declares it raises an error.
 
 ## Why not a joint `CS` over treatment and modifiers
 

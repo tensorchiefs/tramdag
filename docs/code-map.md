@@ -115,7 +115,8 @@ callback. Anything else is torch's `lr_scheduler` and a few lines of callback
 ## `plots.py`: the figures
 
 matplotlib is optional (`tramdag[plots]`) and the first plot
-call imports it, never the package import. [`plot_dag()`][tramdag.plots.plot_dag],
+call imports it, never the package import.
+[`plot_dag()`][tramdag.plots.plot_dag],
 [`plot_marginals()`][tramdag.plots.plot_marginals],
 [`plot_training()`][tramdag.plots.plot_training] and
 [`plot_varying_coef()`][tramdag.plots.plot_varying_coef] each take `ax=` to

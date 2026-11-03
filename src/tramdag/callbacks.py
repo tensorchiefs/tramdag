@@ -20,7 +20,7 @@ __all__ = ["Callback", "EarlyStopping"]
 
 # %% private functions -----------------------------------------------------------------
 def _nodes(target) -> list:
-    """Give the nodes a callback hooks: the node itself, or a flow's nodes."""
+    """Give the nodes that a callback hooks: the node, or a flow's nodes."""
     return list(getattr(target, "nodes", {"": target}).values())
 
 

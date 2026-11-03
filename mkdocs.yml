@@ -35,6 +35,7 @@ nav:
 - Notebooks:
   - Introduction and demo (Colab): notebooks/demo_tram_dag_colab.py
   - Training strategies: notebooks/training_strategies.py
+  - Per-node or joint fit: notebooks/fit_strategies_benchmark.py
   - Additive vs joint intercepts: notebooks/additive_vs_joint_ci.py
   - Varying coefficients: notebooks/varying_coefficients.py
   - Classical fitting: notebooks/classical_fit_tram_dag.py

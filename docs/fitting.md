@@ -76,6 +76,15 @@ the final weights.
   a base seed from torch's global RNG.
   `epochs=`, `learning_rate=` and `callbacks=` take one value for all
   nodes or a function of the node name.
+- **Joint fit.** `fit_jointly` trains all nodes with one optimizer and one
+  minibatch loop. Each step minimizes the sum of the nodes' mean NLLs. The
+  optimum is that of `fit`. One schedule and one stop rule then act on the
+  summed NLL, as in the reference implementation. The hooks get the flow, so
+  `EarlyStopping` tracks the summed validation NLL and restores the whole
+  flow. `fit_jointly` takes an optimizer instance or a factory `f(flow)`, and
+  no `n_jobs`.
+  [`notebooks/fit_strategies_benchmark.py`](../notebooks/fit_strategies_benchmark.py)
+  compares it with `fit`.
 - **Optimizer.** One optimizer per node, `Adam(lr=learning_rate)` by default.
   `optimizer=` takes a factory `f(node)`, for example to give the networks
   weight decay in their own parameter group. `Node.fit` also takes an
@@ -186,6 +195,7 @@ and need the best-validation weights to recover the causal effect.
 | `EarlyStopping(patience=)` | also stop each node once its best epoch is that old |
 | `EarlyStopping(min_epochs=, smoothing=)` | ignore epochs before `min_epochs`; judge the best epoch on a moving average of the validation NLL, for small validation sets |
 | a plateau `Callback` around torch's `ReduceLROnPlateau` | a decaying rate per node |
+| `fit_jointly` | one schedule or stop rule on the summed NLL, as in the reference implementation |
 
 Three details are easy to get wrong.
 

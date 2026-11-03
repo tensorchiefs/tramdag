@@ -303,9 +303,10 @@ off.
 ## D5: the plateau rule per node
 
 The reference reduces the learning rate of one optimizer when the summed
-validation NLL stops improving. Here every node fits on its own, so no summed
-NLL exists during a fit. Each node runs the same rule on its own validation
-NLL, with its own optimizer. The rule and its constants are those of the reference.
+validation NLL stops improving. The replication fits every node on its own
+with `fit`, so no summed NLL exists during its fit. Each node runs the same
+rule on its own validation NLL, with its own optimizer. The rule and its
+constants are those of the reference.
 
 The table gives the VACA do(x2) errors at a = −3 / −1 / 0. It also gives the
 x3 validation NLL, with one run per init seed on the same data.

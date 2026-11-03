@@ -400,6 +400,36 @@ def test_torch_plateau_scheduler_preserves_exact_mle(ls_chain):
     assert len(flow.nodes["y"].history["train"]) < 4000
 
 
+def test_fit_jointly_lands_on_the_classical_mle(ls_chain):
+    """One optimizer over all nodes has the optimum of the exact classical fit."""
+    obs = ls_chain["draw"](2000, 3)
+    ref = CausalFlowDAG(_ls_spec(), seed=3)
+    ref.fit_classical(obs)
+    flow = CausalFlowDAG(_ls_spec(), seed=3).fit_jointly(
+        obs, epochs=300, learning_rate=5e-2, batch_size=len(obs), seed=0
+    )
+    want, got = ref.ls_coefficients(), flow.ls_coefficients()
+    for name, parent in [("x2", "x1"), ("t", "x1"), ("t", "x2"), ("y", "x1")]:
+        assert got[name][parent][0] == pytest.approx(want[name][parent][0], abs=1e-3)
+    contrast = np.diff(got["y"]["t"])[0]
+    assert contrast == pytest.approx(np.diff(want["y"]["t"])[0], abs=1e-3)
+
+
+def test_fit_jointly_early_stopping_restores_the_summed_best(ls_chain):
+    """EarlyStopping on a flow tracks the summed NLL and marks every node."""
+    df = ls_chain["draw"](600, 4)
+    flow = CausalFlowDAG(_ls_spec(), seed=4)
+    stop = EarlyStopping(patience=5)
+    flow.fit_jointly(
+        df, epochs=400, learning_rate=5e-2, validation_split=0.3, callbacks=stop
+    )
+    lengths = {len(nd.history["train"]) for nd in flow.nodes.values()}
+    best = {nd.history["best_epoch"] for nd in flow.nodes.values()}
+    assert lengths == {stop.best_epoch + 5}
+    assert best == {stop.best_epoch}
+    assert sum(flow.nll(df.iloc[420:]).values()) == pytest.approx(stop.best_nll)
+
+
 def test_history_accumulates_across_fit_calls(ls_chain):
     """A second fit continues the record instead of replacing it."""
     df = ls_chain["draw"](200, 5)[["x1", "x2"]]

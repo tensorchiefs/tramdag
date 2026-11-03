@@ -1,10 +1,11 @@
 """Predefined ``fit`` callbacks: ``EarlyStopping``.
 
-Every node fits on its own, so a callback hooks one node's fit. ``fit`` owns
-validation and progress printing; ``EarlyStopping`` reads the validation NLL that
-``fit`` appends to ``node.history["val"]`` after every epoch. One ``callbacks=``
-list is the whole registration; anything not covered here is a
-[`Callback`][tramdag.callbacks.Callback] subclass of your own (docs/fitting.md).
+A callback hooks one node's fit, or the whole flow's under ``fit_jointly``.
+``fit`` owns validation and progress printing; ``EarlyStopping`` reads the
+validation NLL that ``fit`` appends to ``node.history["val"]`` after every
+epoch. One ``callbacks=`` list is the whole registration; anything not
+covered here is a [`Callback`][tramdag.callbacks.Callback] subclass of your
+own (docs/fitting.md).
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -21,17 +22,21 @@ __all__ = ["Callback", "EarlyStopping"]
 def _last_val(node, cb: Callback) -> float:
     """Give the current epoch's validation NLL of the node, or fail loudly.
 
+    For a flow (``fit_jointly``) it is the sum over the nodes.
+
     A stale entry from an earlier validated fit does not count: the last
     entry must belong to the last train epoch (``history["val_epoch"]``
     records which one it belongs to).
     """
-    val_epoch = node.history.get("val_epoch", [])
-    if not val_epoch or val_epoch[-1] != len(node.history["train"]):
+    history = node.history
+    val_epoch = history.get("val_epoch", [])
+    if not val_epoch or val_epoch[-1] != len(history["train"]):
         raise RuntimeError(
             f"{type(cb).__name__} reads node.history['val']; pass validation_data= "
             "or validation_split= to fit()"
         )
-    return node.history["val"][-1]
+    val = history["val"][-1]
+    return sum(val.values()) if isinstance(val, dict) else val
 
 
 # %% public classes --------------------------------------------------------------------
@@ -45,7 +50,9 @@ class Callback:
     ``node.history["train"]``; the fit stops after an epoch in which any
     callback returned ``True``. ``on_fit_end(node, optimizer)`` runs once
     after the loop and **before** the VC re-centering, so a hook that swaps
-    the weights hands them to the re-centering.
+    the weights hands them to the re-centering. Under
+    [`fit_jointly`][tramdag.CausalFlowDAG.fit_jointly] each hook gets the
+    flow in place of the node.
     """
 
     def on_fit_begin(self, node, optimizer) -> None:
@@ -156,7 +163,8 @@ class EarlyStopping(Callback):
             return False
         if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
-            node.history["best_epoch"] = len(node.history["train"])
+            for nd in getattr(node, "nodes", {"": node}).values():
+                nd.history["best_epoch"] = len(nd.history["train"])
             if self.restore_best:
                 self._state = copy.deepcopy(node.state_dict())
         return self.patience is not None and epoch - self.best_epoch >= self.patience

@@ -9,6 +9,7 @@ truth**.
 |---|---|
 | `demo_tram_dag_colab.py` | the introduction and the showcase in one: the paper's bimodal VACA benchmark, L1 to L3, each checked against the known truth ([open in Colab](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)) |
 | `training_strategies.py` | every shipped fitting recipe on one workload, from the API side: `fit`'s own records, plain Adam, two phases, `EarlyStopping`, per-node stops, a `Callback` of your own, an optimizer factory, one node alone, and the runtime scoreboard |
+| `fit_strategies_benchmark.py` | `fit` per node, in series and in processes, against `fit_jointly`, each with and without a plateau schedule, on a process with a known truth: runtime, convergence, validation NLL and an intervention error |
 | `additive_vs_joint_ci.py` | joint vs additive complex intercept, and reading per-parent effects out of the additive one with `intercept_contributions` |
 | `varying_coefficients.py` | heterogeneous treatment effects: the `VC` head, `varying_coef`, the modifier scan and propensity centering, all scored against a known `beta(x)` |
 | `classical_fit_tram_dag.py` | `fit_classical` on all-`ls` models, opening with plain logistic regression on `MASS::birthwt` (a 2-level ordinal node) checked against R `glm`: the converged MLE against `statsmodels` / R, the same regression as a lone `Node`, and the classical-fit-then-keep-training warm start |

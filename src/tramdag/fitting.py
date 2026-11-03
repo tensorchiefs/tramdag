@@ -47,6 +47,16 @@ def _check_learning_rate(learning_rate, optimizer) -> None:
         raise ValueError("pass learning_rate= or optimizer=, not both")
 
 
+def _make_optimizer(target, optimizer, learning_rate):
+    """Give the fit's optimizer: the given one, the factory's, or Adam at 1e-2."""
+    if callable(optimizer):
+        return optimizer(target)
+    if optimizer is not None:
+        return optimizer
+    lr = 1e-2 if learning_rate is None else learning_rate
+    return torch.optim.Adam(target.parameters(), lr=lr)
+
+
 def _split_validation(
     train_df: pd.DataFrame,
     validation_data: pd.DataFrame | None,
@@ -153,10 +163,11 @@ def _fit_epoch(
     scale the epoch NLL down by 1/n. The penalty joins the loss but not the
     history.
     """
-    n = len(values[nodes[0].name])
+    column = values[nodes[0].name]
+    n = len(column)
     acc = dict.fromkeys([nd.name for nd in nodes], 0.0)
     trained = 0
-    perm = torch.randperm(n, generator=generator).to(values[nodes[0].name].device)
+    perm = torch.randperm(n, generator=generator).to(column.device)
     for idx in perm.split(batch_size):
         if idx.numel() < 2:
             continue
@@ -521,11 +532,7 @@ class NodeFitMixin:
         )
         self.calibrate(train_df, marginal_init=marginal_init)
         generator = None if seed is None else torch.Generator().manual_seed(seed)
-        if callable(optimizer):
-            optimizer = optimizer(self)
-        opt = optimizer or torch.optim.Adam(
-            self.parameters(), lr=1e-2 if learning_rate is None else learning_rate
-        )
+        opt = _make_optimizer(self, optimizer, learning_rate)
 
         def validate():
             if val_values is None:
@@ -1042,11 +1049,7 @@ class FitMixin:
         side = [c for nd in nodes for c in nd.side_columns()]
         values = self._tensorize(train_df, [*self.order, *dict.fromkeys(side)])
         generator = None if seed is None else torch.Generator().manual_seed(seed)
-        if callable(optimizer):
-            optimizer = optimizer(self)
-        opt = optimizer or torch.optim.Adam(
-            self.parameters(), lr=1e-2 if learning_rate is None else learning_rate
-        )
+        opt = _make_optimizer(self, optimizer, learning_rate)
         _train_loop(
             self,
             "flow",

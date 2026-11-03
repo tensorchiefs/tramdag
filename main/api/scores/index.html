@@ -775,7 +775,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1570,6 +1570,13 @@ contrast of level 1 against level 0.</p>
     </table>
 
 
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The scores are not free of <code>y</code>, because the derivative of the log-likelihood
+needs the node column <code>x</code>. The scores also need the <code>e_hat</code> inputs of
+centered terms.</p>
+</details>
+
 <p><span class="doc-section-title">Raises:</span></p>
     <table>
       <thead>
@@ -1606,20 +1613,7 @@ contrast of level 1 against level 0.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/scores.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 47</span>
-<span class="normal"> 48</span>
-<span class="normal"> 49</span>
-<span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 60</span>
 <span class="normal"> 61</span>
 <span class="normal"> 62</span>
 <span class="normal"> 63</span>
@@ -1661,7 +1655,25 @@ contrast of level 1 against level 0.</p>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">node_scores</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute the per-observation scores of the interpretable coefficients.</span>
 
@@ -1690,6 +1702,12 @@ contrast of level 1 against level 0.</p>
 <span class="sd">        binary ordinal treatment that score belongs to the identified</span>
 <span class="sd">        contrast of level 1 against level 0.</span>
 
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The scores are not free of ``y``, because the derivative of the log-likelihood</span>
+<span class="sd">    needs the node column ``x``. The scores also need the ``e_hat`` inputs of</span>
+<span class="sd">    centered terms.</span>
+
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    KeyError</span>
@@ -1706,16 +1724,15 @@ contrast of level 1 against level 0.</p>
             <span class="s2">"at least one interpretable shift coefficient."</span>
         <span class="p">)</span>
 
-    <span class="c1"># not y-free: l_i needs x. Plus the e_hat inputs of centered terms.</span>
     <span class="n">needed</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">nd</span><span class="o">.</span><span class="n">parents</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="o">*</span><span class="n">flow</span><span class="o">.</span><span class="n">_query_side_columns</span><span class="p">(</span><span class="n">nd</span><span class="p">)]</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">needed</span><span class="p">)</span>  <span class="c1"># names a missing column</span>
-    <span class="n">feats</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">_parent_feats</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">needed</span><span class="p">)</span>
+    <span class="n">feats</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">features</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
     <span class="n">feats</span> <span class="o">|=</span> <span class="n">flow</span><span class="o">.</span><span class="n">_side_feats</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
     <span class="n">dlds</span> <span class="o">=</span> <span class="n">_dl_ds</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">feats</span><span class="p">,</span> <span class="n">values</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
 
     <span class="n">cols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">scored</span><span class="p">:</span>
-        <span class="n">cols</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">score_columns</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">feats</span><span class="p">,</span> <span class="n">dlds</span><span class="p">))</span>
+        <span class="n">cols</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">score_columns</span><span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">feats</span><span class="p">,</span> <span class="n">dlds</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1793,32 +1810,51 @@ contrast of level 1 against level 0.</p>
     </table>
 
 
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The series has 100 terms, and all are needed. The k-th term is
+<code>exp(-2 k^2 stat^2)</code>. It underflows past <code>k</code> about 10 only for a large
+statistic. A small statistic converges slowly. At <code>stat = 0.02</code>, a cut at
+<code>k = 10</code> returns 0.084 where the full series gives 0.9997. A perfectly
+stable coefficient then looks significant. <code>stat = 0.2</code> still needs 20
+terms.</p>
+<p>The function returns 1.0 for <code>stat &lt;= 0</code>. There the series alternates to
+0.0, which is the wrong tail.</p>
+</details>
+
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/scores.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span>
-<span class="normal">128</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sup_bb_pvalue</span><span class="p">(</span><span class="n">stat</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sup_bb_pvalue</span><span class="p">(</span><span class="n">stat</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Give ``P(sup |Brownian bridge| &gt; stat)``, the Kolmogorov series.</span>
 
 <span class="sd">    Parameters</span>
@@ -1830,14 +1866,21 @@ contrast of level 1 against level 0.</p>
 <span class="sd">    -------</span>
 <span class="sd">    float</span>
 <span class="sd">        The p-value, clipped to [0, 1].</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The series has 100 terms, and all are needed. The k-th term is</span>
+<span class="sd">    ``exp(-2 k^2 stat^2)``. It underflows past ``k`` about 10 only for a large</span>
+<span class="sd">    statistic. A small statistic converges slowly. At ``stat = 0.02``, a cut at</span>
+<span class="sd">    ``k = 10`` returns 0.084 where the full series gives 0.9997. A perfectly</span>
+<span class="sd">    stable coefficient then looks significant. ``stat = 0.2`` still needs 20</span>
+<span class="sd">    terms.</span>
+
+<span class="sd">    The function returns 1.0 for ``stat &lt;= 0``. There the series alternates to</span>
+<span class="sd">    0.0, which is the wrong tail.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">stat</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mf">1.0</span>  <span class="c1"># the series alternates to 0.0 here, which is the wrong tail</span>
-    <span class="c1"># 100 terms, and they are all needed. The k-th is exp(-2k^2 stat^2), which</span>
-    <span class="c1"># underflows past k ~ 10 only for a LARGE statistic. A small one converges</span>
-    <span class="c1"># slowly: at stat = 0.02 the truncation at k = 10 returns 0.084 where the</span>
-    <span class="c1"># series gives 0.9997, so a perfectly stable coefficient would be reported</span>
-    <span class="c1"># as significant. stat = 0.2 still needs 20 terms.</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
     <span class="n">s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
         <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">stat</span> <span class="o">*</span> <span class="n">stat</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span>
     <span class="p">)</span>
@@ -1958,8 +2001,10 @@ continuous parent or a VC term, and the identified level-1 column
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Candidate covariates. Defaults to every column of <code>df</code> except
-<code>node</code> and <code>t</code>.</p>
+                <p>Candidate covariates. Defaults to every node that is not <code>t</code>,
+not <code>node</code> and not a descendant of <code>t</code>: a modifier is fixed
+before the treatment, and a descendant would pick up the effect
+itself.</p>
               </div>
             </td>
             <td>
@@ -1975,7 +2020,7 @@ continuous parent or a VC term, and the identified level-1 column
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Score column to scan, overriding the <code>t</code>-derived choice — the
+                <p>Score column to scan, overriding the <code>t</code>-derived choice. This is the
 way to scan one level contrast of a multi-level ordinal
 treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
               </div>
@@ -2048,32 +2093,7 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/scores.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">156</span>
 <span class="normal">157</span>
 <span class="normal">158</span>
 <span class="normal">159</span>
@@ -2144,7 +2164,36 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="normal">224</span>
 <span class="normal">225</span>
 <span class="normal">226</span>
-<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">effect_modifier_scan</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
@@ -2176,10 +2225,12 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
 <span class="sd">        continuous parent or a VC term, and the identified level-1 column</span>
 <span class="sd">        ``"{t}[1]"`` for a binary ordinal LS parent.</span>
 <span class="sd">    candidates : list[str] | None, optional</span>
-<span class="sd">        Candidate covariates. Defaults to every column of ``df`` except</span>
-<span class="sd">        ``node`` and ``t``.</span>
+<span class="sd">        Candidate covariates. Defaults to every node that is not ``t``,</span>
+<span class="sd">        not ``node`` and not a descendant of ``t``: a modifier is fixed</span>
+<span class="sd">        before the treatment, and a descendant would pick up the effect</span>
+<span class="sd">        itself.</span>
 <span class="sd">    column : str | None, optional</span>
-<span class="sd">        Score column to scan, overriding the ``t``-derived choice — the</span>
+<span class="sd">        Score column to scan, overriding the ``t``-derived choice. This is the</span>
 <span class="sd">        way to scan one level contrast of a multi-level ordinal</span>
 <span class="sd">        treatment (e.g. ``"t[2]"``), which has no single default column.</span>
 
@@ -2213,7 +2264,7 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
         <span class="ow">and</span> <span class="n">flow</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">levels</span> <span class="o">==</span> <span class="mi">2</span>
         <span class="ow">and</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">[1]"</span> <span class="ow">in</span> <span class="n">psi_df</span><span class="o">.</span><span class="n">columns</span>
     <span class="p">):</span>
-        <span class="n">col</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">[1]"</span>  <span class="c1"># the identified contrast of a binary ordinal LS parent</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">[1]"</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"no score column for treatment </span><span class="si">{</span><span class="n">t</span><span class="si">!r}</span><span class="s2"> on node </span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> "</span>
@@ -2227,7 +2278,7 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"score column </span><span class="si">{</span><span class="n">col</span><span class="si">!r}</span><span class="s2"> is constant; there is nothing to scan"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">candidates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">t</span><span class="p">)]</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">_default_candidates</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
         <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"stable"</span><span class="p">)</span>
@@ -2239,7 +2290,9 @@ treatment (e.g. <code>"t[2]"</code>), which has no single default column.</p>
             <span class="s2">"crit_5pct"</span><span class="p">:</span> <span class="n">CRIT_5PCT</span><span class="p">,</span>
             <span class="s2">"flag"</span><span class="p">:</span> <span class="n">stat</span> <span class="o">&gt;</span> <span class="n">CRIT_5PCT</span><span class="p">,</span>
         <span class="p">}</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">"index"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">"index"</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"stat"</span><span class="p">,</span> <span class="s2">"p_value"</span><span class="p">,</span> <span class="s2">"crit_5pct"</span><span class="p">,</span> <span class="s2">"flag"</span><span class="p">]</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"stat"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>

@@ -574,10 +574,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-the-scores-are-computed" class="md-nav__link">
+  <a href="#how-the-code-computes-the-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How the scores are computed
+        How the code computes the scores
       
     </span>
   </a>
@@ -890,7 +890,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -1416,10 +1416,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-the-scores-are-computed" class="md-nav__link">
+  <a href="#how-the-code-computes-the-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How the scores are computed
+        How the code computes the scores
       
     </span>
   </a>
@@ -1466,7 +1466,7 @@ itself.</p>
 <li><strong>Check that the answers cancel in every group.</strong> At the fitted <span class="arithmatex">\(\beta\)</span>
    the scores sum to about zero, because <span class="arithmatex">\(\beta\)</span> is the best compromise. If
    the effect is really constant, the scores of any group of rows also sum to
-   about zero, apart from noise.</li>
+   about zero, apart from random variation.</li>
 <li><strong>Sort and add up.</strong> Sort the rows by a candidate covariate, for example
    age. The sum of the first <span class="arithmatex">\(j\)</span> scores is the score sum of the group "age up
    to the <span class="arithmatex">\(j\)</span>-th value". So the running sum checks all these groups at once.</li>
@@ -1540,7 +1540,8 @@ covariate. Two causes give this:</p>
   prognostic part, wrongly.</li>
 </ul>
 <p>The second cause works through the score. The treatment score of row <span class="arithmatex">\(i\)</span> is
-<span class="arithmatex">\(\psi_i = r_i \, t_i\)</span>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row. The factor
+<span class="arithmatex">\(\psi_i = r_i\)</span> times the term's regressor: <span class="arithmatex">\(t_i\)</span>, or <span class="arithmatex">\(t_i - \hat e_i\)</span> for a
+centered <code>VC</code>. Here <span class="arithmatex">\(t_i\)</span> is the treatment of the row. The factor
 <span class="arithmatex">\(r_i = \partial \ell_i / \partial s_i\)</span> is the derivative of <span class="arithmatex">\(\ell_i\)</span> with
 respect to the row's total shift <span class="arithmatex">\(s_i\)</span>, and it acts like a residual. If the
 simple model gets the prognostic effect of <code>X1</code> wrong, <span class="arithmatex">\(r_i\)</span> follows a
@@ -1564,8 +1565,10 @@ misspecification, and both are worth knowing.</p>
 <code>t</code> of <code>node</code>. It returns one row per candidate with <code>stat</code>, <code>p_value</code>,
 <code>crit_5pct</code> and <code>flag</code>, sorted by <code>stat</code>.</p>
 <ul>
-<li><code>candidates=</code> lists the covariates to scan. By default it is every column
-  of <code>df</code> except <code>node</code> and <code>t</code>. A candidate does not have to be a parent.</li>
+<li><code>candidates=</code> lists the covariates to scan. By default it is every node
+  except <code>node</code>, <code>t</code> and the descendants of <code>t</code>. A modifier comes
+  before the treatment. A descendant would pick up the effect itself. A
+  candidate does not have to be a parent.</li>
 <li>For a binary ordinal <code>LS</code> treatment, <code>t</code> resolves to the identified
   contrast of level 1 against level 0. For a <code>VC</code> treatment it resolves to
   <span class="arithmatex">\(\beta_0\)</span>, the constant part of <span class="arithmatex">\(\beta(x)\)</span>.</li>
@@ -1577,14 +1580,14 @@ of <code>df</code>, and one column per interpretable shift coefficient of the no
 <ul>
 <li>A continuous <code>LS</code> parent gives one column, named after the parent.</li>
 <li>An ordinal <code>LS</code> parent gives one column per level of its one-hot
-  encoding, named <code>"t[0]"</code>, <code>"t[1]"</code> and so on. A row's score goes to the
-  column of the level that the row has.</li>
+  encoding, named <code>"{parent}[0]"</code>, <code>"{parent}[1]"</code> and so
+  on. A row's score goes to the column of the level that the row has.</li>
 <li>A <code>VC</code> term gives one column for its <span class="arithmatex">\(\beta_0\)</span>, named after the
   treatment.</li>
 <li>A <code>CS</code> term is a network with no single coefficient, so it has no column.</li>
 </ul>
 <p>The scores also serve influence analyses and robust standard errors.</p>
-<h2 id="how-the-scores-are-computed">How the scores are computed<a class="headerlink" href="#how-the-scores-are-computed" title="Permanent link">&para;</a></h2>
+<h2 id="how-the-code-computes-the-scores">How the code computes the scores<a class="headerlink" href="#how-the-code-computes-the-scores" title="Permanent link">&para;</a></h2>
 <p>Every shift coefficient <span class="arithmatex">\(\gamma\)</span> adds <span class="arithmatex">\(\gamma z\)</span> to the node's total shift
 <span class="arithmatex">\(s\)</span>. Here <span class="arithmatex">\(z\)</span> is the value of a parent, or one column of its one-hot
 encoding. The chain rule therefore gives</p>
@@ -1593,21 +1596,24 @@ encoding. The chain rule therefore gives</p>
 = \frac{\partial \ell_i}{\partial s_i}\, z_i = r_i \, z_i,
 \]</div>
 <p>so one derivative <span class="arithmatex">\(r_i\)</span> per row serves every coefficient. The derivative has
-a closed form for both node kinds, and the computation uses no autograd. Below,
-<span class="arithmatex">\(h\)</span> is the fitted monotone transformation and <span class="arithmatex">\(\sigma\)</span> the logistic
+a closed form for both node kinds, and the computation uses no autograd.</p>
+<p>Here <span class="arithmatex">\(h\)</span> is the fitted monotone transformation and <span class="arithmatex">\(\sigma\)</span> the logistic
 function.</p>
-<ul>
-<li><strong>Continuous node.</strong> For the node value <span class="arithmatex">\(y\)</span> the latent value is
-  <span class="arithmatex">\(u = h(y) + s\)</span> and <span class="arithmatex">\(\ell = \log f(u) + \log h'(y)\)</span>, with <span class="arithmatex">\(f\)</span> the
-  standard-logistic density. So <span class="arithmatex">\(\partial \ell / \partial s = 1 - 2\sigma(u)\)</span>.</li>
-<li><strong>Ordinal node.</strong> <span class="arithmatex">\(P(Y = y) = \sigma(b) - \sigma(a)\)</span> with the shifted
-  cutpoints <span class="arithmatex">\(a = \vartheta_{y-1} - s\)</span> and <span class="arithmatex">\(b = \vartheta_y - s\)</span>, as in
-  <a href="../model/#ordinal-nodes">model.md</a>. So
-  <span class="arithmatex">\(\partial \ell / \partial s = \bigl(\sigma'(a) - \sigma'(b)\bigr) /
-  \bigl(\sigma(b) - \sigma(a)\bigr)\)</span>, with <span class="arithmatex">\(\sigma' = \sigma(1 - \sigma)\)</span>.
-  For the first and last class the outer cutpoint is <span class="arithmatex">\(\mp\infty\)</span> and its
-  <span class="arithmatex">\(\sigma'\)</span> is zero.</li>
-</ul>
+<p>For a continuous node with value <span class="arithmatex">\(y\)</span>, the latent value is <span class="arithmatex">\(u = h(y) + s\)</span>
+and <span class="arithmatex">\(\ell = \log f(u) + \log h'(y)\)</span>, with <span class="arithmatex">\(f\)</span> the standard-logistic
+density. Then</p>
+<div class="arithmatex">\[
+\frac{\partial \ell}{\partial s} = 1 - 2\sigma(u).
+\]</div>
+<p>For an ordinal node, <span class="arithmatex">\(P(Y = y) = \sigma(b) - \sigma(a)\)</span> with the shifted
+cutpoints <span class="arithmatex">\(a = \vartheta_{y-1} - s\)</span> and <span class="arithmatex">\(b = \vartheta_y - s\)</span>. Then</p>
+<div class="arithmatex">\[
+\frac{\partial \ell}{\partial s} =
+\frac{\sigma'(a) - \sigma'(b)}{\sigma(b) - \sigma(a)},
+\qquad \sigma' = \sigma(1 - \sigma).
+\]</div>
+<p>For the first and last class, the outer cutpoint is <span class="arithmatex">\(\mp\infty\)</span> and its
+<span class="arithmatex">\(\sigma'\)</span> is zero.</p>
 <p>The function only reads the fitted model. It changes neither fitting nor
 sampling. The tests check that each column sums to about zero at a fitted
 optimum, and that the scores agree with float64 finite differences.</p>

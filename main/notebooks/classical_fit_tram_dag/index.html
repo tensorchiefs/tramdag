@@ -777,7 +777,7 @@
   <span class="md-ellipsis">
     
   
-    Additive vs joint complex intercept — interpreting per-parent effects
+    Additive vs joint complex intercept: reading per-parent effects
   
 
     
@@ -889,12 +889,12 @@
   <a href="#0-the-zeroth-example-logistic-regression-on" class="md-nav__link">
     <span class="md-ellipsis">
       
-        0. The zeroth example — logistic regression on
+        0. The zeroth example: logistic regression on
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0. The zeroth example — logistic regression on">
+    <nav class="md-nav" aria-label="0. The zeroth example: logistic regression on">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -945,12 +945,12 @@
   <a href="#1b-a-bimodal-dag-the-demo-data" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1b. A bimodal DAG — the demo data
+        1b. A bimodal DAG: the demo data
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1b. A bimodal DAG — the demo data">
+    <nav class="md-nav" aria-label="1b. A bimodal DAG: the demo data">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1031,10 +1031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-warm-start-handoff-classical-fit-further-training" class="md-nav__link">
+  <a href="#3-warm-start-classical-fit-then-further-training" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Warm-start handoff: classical fit → further training
+        3. Warm start: classical fit, then further training
       
     </span>
   </a>
@@ -1454,12 +1454,12 @@
   <a href="#0-the-zeroth-example-logistic-regression-on" class="md-nav__link">
     <span class="md-ellipsis">
       
-        0. The zeroth example — logistic regression on
+        0. The zeroth example: logistic regression on
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0. The zeroth example — logistic regression on">
+    <nav class="md-nav" aria-label="0. The zeroth example: logistic regression on">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1510,12 +1510,12 @@
   <a href="#1b-a-bimodal-dag-the-demo-data" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1b. A bimodal DAG — the demo data
+        1b. A bimodal DAG: the demo data
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1b. A bimodal DAG — the demo data">
+    <nav class="md-nav" aria-label="1b. A bimodal DAG: the demo data">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1596,10 +1596,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-warm-start-handoff-classical-fit-further-training" class="md-nav__link">
+  <a href="#3-warm-start-classical-fit-then-further-training" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Warm-start handoff: classical fit → further training
+        3. Warm start: classical fit, then further training
       
     </span>
   </a>
@@ -2347,7 +2347,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e2674273">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8af59eb1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2361,19 +2361,19 @@ node-conditional is a classical model</p>
 <li><p>a Colr model (R's <code>tram::Colr</code>) for continuous ones.</p>
 </li>
 </ul>
-<p>For such a model <code>flow.fit_classical()</code> is the optimizer: deterministic
-full-batch L-BFGS whose report says when it reached the maximum-likelihood
-estimate (<a href="../../fitting/"><code>docs/fitting.md</code></a>). This notebook checks that
-against <code>statsmodels</code> and R.</p>
-<p>Every R reference printed below is hard-coded from a real fit, and every one
-of those fits lives in <code>notebooks/classical_fit_tram_dag.R</code>. Run
-<code>Rscript notebooks/classical_fit_tram_dag.R</code> from the repo root to re-check
-them; it needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
+<p>For such a model <code>flow.fit_classical()</code> is the optimizer. It is a
+deterministic full-batch L-BFGS, and its report says when it reached the
+maximum-likelihood estimate (<a href="../../fitting/"><code>docs/fitting.md</code></a>). This
+notebook checks the result against <code>statsmodels</code> and R.</p>
+<p>Every R reference printed below comes from a real fit, typed in as a
+constant. <code>notebooks/classical_fit_tram_dag.R</code> holds all of these fits. To
+check them again, run <code>Rscript notebooks/classical_fit_tram_dag.R</code> from the
+repo root. It needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6176fc62">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f915bfe4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2399,10 +2399,9 @@ them; it needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">statsmodels.miscmodels.ordinal_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedModel</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">LS</span><span class="p">,</span> <span class="n">SI</span><span class="p">,</span> <span class="n">CausalFlowDAG</span><span class="p">,</span> <span class="n">ContinuousNode</span><span class="p">,</span> <span class="n">OrdinalNode</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerNodeEarlyStopping</span><span class="p">,</span> <span class="n">per_node_adam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tramdag</span><span class="w"> </span><span class="kn">import</span> <span class="n">LS</span><span class="p">,</span> <span class="n">SI</span><span class="p">,</span> <span class="n">CausalFlowDAG</span><span class="p">,</span> <span class="n">ContinuousNode</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">OrdinalNode</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">EarlyStopping</span>
 
-<span class="c1"># repo-relative data, whether the notebook runs from the repo root or notebooks/</span>
 <span class="n">HERE</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">(),</span> <span class="o">*</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span>
 <span class="n">REPO</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">HERE</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">"pyproject.toml"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span>
 <span class="n">DATA</span> <span class="o">=</span> <span class="n">REPO</span> <span class="o">/</span> <span class="s2">"experiments"</span> <span class="o">/</span> <span class="s2">"data"</span>
@@ -2414,12 +2413,8 @@ them; it needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 
 <span class="sd">    Every agreement this notebook asserts goes through here, so no number is</span>
 <span class="sd">    typed into a markdown cell where it can drift away from the code. The</span>
-<span class="sd">    prose says what is being checked and why the bound is what it is; the</span>
-<span class="sd">    bound is the only number in the source.</span>
-
-<span class="sd">    A bound sits at roughly 1.5 to 4 times the measured value, which is the</span>
-<span class="sd">    band that ``experiments/ground_truth/*.json`` already uses. Tighter than</span>
-<span class="sd">    that and another machine trips it; wider and it stops meaning anything.</span>
+<span class="sd">    prose says what is checked. The bound is the only number in the source,</span>
+<span class="sd">    and it leaves room for another machine.</span>
 <span class="sd">    """</span>
     <span class="n">ok</span> <span class="o">=</span> <span class="s2">"ok  "</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">bound</span> <span class="k">else</span> <span class="s2">"FAIL"</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ok</span><span class="si">}{</span><span class="n">text</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> &lt;= </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -2433,10 +2428,9 @@ import pandas as pd
 import torch
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, OrdinalNode
-from tramdag.callbacks import PerNodeEarlyStopping, per_node_adam
+from tramdag import LS, SI, CausalFlowDAG, ContinuousNode, Node, OrdinalNode
+from tramdag.callbacks import EarlyStopping
 
-# repo-relative data, whether the notebook runs from the repo root or notebooks/
 HERE = [Path.cwd(), *Path.cwd().parents]
 REPO = next(p for p in HERE if (p / "pyproject.toml").exists())
 DATA = REPO / "experiments" / "data"
@@ -2448,12 +2442,8 @@ def claim(text, value, bound, fmt="{:.2e}"):
 
     Every agreement this notebook asserts goes through here, so no number is
     typed into a markdown cell where it can drift away from the code. The
-    prose says what is being checked and why the bound is what it is; the
-    bound is the only number in the source.
-
-    A bound sits at roughly 1.5 to 4 times the measured value, which is the
-    band that ``experiments/ground_truth/*.json`` already uses. Tighter than
-    that and another machine trips it; wider and it stops meaning anything.
+    prose says what is checked. The bound is the only number in the source,
+    and it leaves room for another machine.
     """
     ok = "ok  " if value &lt;= bound else "FAIL"
     print(f"{ok}{text}: {fmt.format(value)} &lt;= {fmt.format(bound)}")
@@ -2464,40 +2454,41 @@ def claim(text, value, bound, fmt="{:.2e}"):
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b83637a4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1b296b18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="0-the-zeroth-example-logistic-regression-on-massbirthwt">0. The zeroth example — logistic regression on <code>MASS::birthwt</code><a class="anchor-link" href="#0-the-zeroth-example-logistic-regression-on-massbirthwt">¶</a></h2><p>Before any DAG, take the model everyone already knows, on a dataset every R
-user already has. A <strong>two-level</strong> <code>OrdinalNode</code> whose terms are all <code>LS</code> <em>is</em>
-logistic regression — not an analogue of it, the same model. The ordinal
+<h2 id="0-the-zeroth-example-logistic-regression-on-massbirthwt">0. The zeroth example: logistic regression on <code>MASS::birthwt</code><a class="anchor-link" href="#0-the-zeroth-example-logistic-regression-on-massbirthwt">¶</a></h2><p>Before any DAG, take a well-known model on a dataset that every R
+installation has. A <strong>two-level</strong> <code>OrdinalNode</code> whose terms are all <code>LS</code> <em>is</em>
+logistic regression. It is the same model, not an analogue. The ordinal
 transform is</p>
 <p>$$P(Y \le 0 \mid x) = \sigma\!\left(\theta_0 - \textstyle\sum_p w_p x_p\right),$$</p>
 <p>and with two levels there is a single cutpoint $\theta_0$, so</p>
 <p>$$\operatorname{logit} P(Y = 1 \mid x) = -\theta_0 + \textstyle\sum_p w_p x_p .$$</p>
-<p>The shift weights <strong>are</strong> the logistic-regression coefficients; the intercept
+<p>The shift weights <strong>are</strong> the logistic-regression coefficients. The intercept
 is <strong>minus</strong> the cutpoint, because an ordinal node <em>subtracts</em> its shift
-(<a href="../../notation/"><code>docs/notation.md</code></a>). Section 2 is this same picture
+(<a href="../../notation/"><code>docs/notation.md</code></a>). Section 2 uses the same model
 with $K-1$ cutpoints instead of one.</p>
 <p>The data is <code>birthwt</code> from <strong>MASS</strong>, the low-birth-weight study of Hosmer &amp;
-Lemeshow: 189 births, outcome <code>low</code> (birth weight under 2.5 kg), predictors
-<code>age</code> (mother's age), <code>lwt</code> (mother's weight at last period, lbs) and <code>smoke</code>
-(smoking during pregnancy). <code>notebooks/data/birthwt.csv</code> is those four columns
-exported verbatim from MASS. Please note that this is not a <strong>causal</strong> model.</p>
+Lemeshow. It has 189 births and the outcome <code>low</code> (birth weight under
+2.5 kg). The predictors are <code>age</code> (mother's age), <code>lwt</code> (mother's weight at
+last period, lbs) and <code>smoke</code> (smoking during pregnancy).
+<code>notebooks/data/birthwt.csv</code> holds these columns, exported verbatim from
+MASS. This is not a <strong>causal</strong> model.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1b2f12dc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dabf827a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>birthwt</code> ships with MASS, so nothing needs downloading — paste this into any
-R session and you have the reference fit:</p>
+<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>birthwt</code> ships with MASS, so nothing needs a download. Paste this into any
+R session to get the reference fit:</p>
 <div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">MASS</span><span class="p">)</span>
 <span class="n">m</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">glm</span><span class="p">(</span><span class="n">low</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lwt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">smoke</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">birthwt</span><span class="p">,</span><span class="w"> </span><span class="n">family</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">binomial</span><span class="p">)</span>
 <span class="nf">coef</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
@@ -2508,13 +2499,14 @@ R session and you have the reference fit:</p>
  1.36822527 -0.03899458 -0.01213854  0.67076374
 'log Lik.' -111.4396765 (df=4)
 </code></pre>
-<p>(R 4.2.3, MASS 7.3-58.2.) Those four numbers are hard-coded below as <code>R_GLM</code>,
-so the notebook can show the three-way comparison without an R installation.</p>
+<p>(R 4.2.3, MASS 7.3-58.2.) The cell below holds these numbers as <code>R_GLM</code>, so
+the notebook shows the three-way comparison without an R installation. They
+are <code>coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d97f7dea">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d6025fd0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2532,7 +2524,7 @@ so the notebook can show the three-way comparison without an R installation.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_GLM</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_GLM</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"intercept"</span><span class="p">:</span> <span class="mf">1.3682252685</span><span class="p">,</span>
     <span class="s2">"age"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.0389945827</span><span class="p">,</span>
     <span class="s2">"lwt"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.0121385423</span><span class="p">,</span>
@@ -2546,7 +2538,7 @@ so the notebook can show the three-way comparison without an R installation.</p>
     <span class="sa">f</span><span class="s2">"</span><span class="se">\n\n</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span><span class="si">}</span><span class="s2"> births, </span><span class="si">{</span><span class="n">bw</span><span class="p">[</span><span class="s1">'low'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> of them low birth weight"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">R_GLM = {  # coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))
+<div class="clipboard-copy-txt" id="cell-2">R_GLM = {
     "intercept": 1.3682252685,
     "age": -0.0389945827,
     "lwt": -0.0121385423,
@@ -2583,23 +2575,23 @@ print(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=abd731fc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=63fee7b5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The spec. <code>low</code> is the outcome; <code>smoke</code> is a binary <strong>parent</strong>, so it is an
-ordinal node too. <code>age</code> and <code>lwt</code> are source nodes — the flow models their
-marginals as well, which a plain <code>glm</code> does not. That is a nuisance here, not
-a feature, so they get the cheapest transform (<code>SI(transform="affine")</code>), and
-it cannot disturb the outcome node in any case: the joint NLL decomposes per
-node, so the <code>low</code> node's gradient never sees the covariate marginals.</p>
+<p>The spec. <code>low</code> is the outcome. <code>smoke</code> is a binary <strong>parent</strong>, so it is an
+ordinal node too. <code>age</code> and <code>lwt</code> are source nodes. The flow also models
+their marginals, which a plain <code>glm</code> does not. Here the marginals are a
+nuisance, so they get the cheapest transform (<code>SI(transform="affine")</code>). They
+cannot change the outcome node: the joint NLL decomposes per node, so the
+gradient of the <code>low</code> node never sees the covariate marginals.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=24176b02">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd284f61">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2648,21 +2640,52 @@ flow_bw.fit_classical(bw)</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
- 'stop_reason': 'tolerance',
- 'n_iter': 64,
- 'final_nll': 9.137612929338468,
- 'grad_norm': 0.00015174226148570872,
- 'seconds': 1.3321441690000029,
- 'coefficients': {'low': {'age': array([-0.03899488]),
-   'lwt': array([-0.01213841]),
-   'smoke': array([-0.13497242,  0.53579548])}}}</pre>
+ 'final_nll': 9.13761292944806,
+ 'seconds': 1.1792994980000913,
+ 'coefficients': {'low': {'age': array([-0.03899379]),
+   'lwt': array([-0.01213884]),
+   'smoke': array([-0.00437635,  0.66640591])}},
+ 'nodes': {'age': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 7,
+   'final_nll': 3.089470463926682,
+   'grad_norm': 1.0146105993900928e-06,
+   'decrement': 1.3917636508756161e-12,
+   'seconds': 1.1183431550000478,
+   'coefficients': {}},
+  'lwt': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 8,
+   'final_nll': 4.789085054515022,
+   'grad_norm': 1.1217799113666196e-05,
+   'decrement': 8.869592011521901e-11,
+   'seconds': 0.006934236000006422,
+   'coefficients': {}},
+  'smoke': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 5,
+   'final_nll': 0.6694294930549758,
+   'grad_norm': 2.9695561377940383e-08,
+   'decrement': 1.8507472827317275e-15,
+   'seconds': 0.006589093000002322,
+   'coefficients': {}},
+  'low': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 30,
+   'final_nll': 0.5896279179513815,
+   'grad_norm': 0.0003042491292038694,
+   'decrement': 2.6792449085259093e-11,
+   'seconds': 0.047433014000034746,
+   'coefficients': {'age': array([-0.03899379]),
+    'lwt': array([-0.01213884]),
+    'smoke': array([-0.00437635,  0.66640591])}}}}</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e1abbfb5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=24ed3b1a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2672,24 +2695,27 @@ flow_bw.fit_classical(bw)</div>
 they enter raw and their weights compare directly. <code>smoke</code> is ordinal, so it
 enters <strong>one-hot over both levels</strong>.</p>
 <blockquote>
-<p><strong>Careful — different coding from R.</strong> R gives a binary predictor one
-column; the flow gives it two, $w_0$ and $w_1$, identified only through
-their difference (<a href="../../interpretation/"><code>docs/interpretation.md</code></a>),
-and that difference is what R's single <code>smoke</code> coefficient means. Section 2
-uses the same rule for <code>T</code>.</p>
+<p><strong>The coding is different from R.</strong> R gives a binary predictor one column.
+The flow gives it two, $w_0$ and $w_1$, and only their difference is
+identified (<a href="../../interpretation/"><code>docs/interpretation.md</code></a>). This
+difference is the single <code>smoke</code> coefficient of R.</p>
 </blockquote>
-<p>The second column also moves the intercept. With $s \in \{0, 1\}$ we have
+<p>The second column also moves the intercept. With $s \in \{0, 1\}$,
 $\mathbf{1}[s = 0] = 1 - s$, so the one-hot pair collapses to</p>
 <p>$$w_0\,\mathbf{1}[s = 0] + w_1\,\mathbf{1}[s = 1] \;=\; w_0 + (w_1 - w_0)\,s ,$$</p>
 <p>and the node reads</p>
 <p>$$\operatorname{logit} P(\texttt{low} = 1) \;=\; (-\theta_0 + w_0) \;+\; w_{\text{age}}\,\texttt{age} \;+\; w_{\text{lwt}}\,\texttt{lwt} \;+\; (w_1 - w_0)\,s .$$</p>
-<p>The first bracket is R's <code>(Intercept)</code> — it is $-\theta_0 + w_0$, not
-$-\theta_0$ — and the last is R's <code>smoke</code>.</p>
+<p>The first bracket is the <code>(Intercept)</code> of R, which is $-\theta_0 + w_0$ and
+not $-\theta_0$. The last term is the <code>smoke</code> of R. The cutpoints are
+$[-\infty, \theta_0, +\infty]$, so the code takes the finite one. The one-hot
+level-0 column of <code>smoke</code> is part of the intercept, hence the $+ w_0$. The
+<code>statsmodels</code> formula is the same as the R call above, with the same names in
+the output.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=322c2888">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3949af9d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2711,15 +2737,13 @@ $-\theta_0$ — and the last is R's <code>smoke</code>.</p>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tramdag.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ordinal_cutpoints</span>  <span class="c1"># noqa: E402</span>
 
-<span class="c1"># the same formula as the R call above, and the same names in the output</span>
 <span class="n">res_bw</span> <span class="o">=</span> <span class="n">smf</span><span class="o">.</span><span class="n">logit</span><span class="p">(</span><span class="s2">"low ~ age + lwt + smoke"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">bw</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">disp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="n">w</span> <span class="o">=</span> <span class="n">flow_bw</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"low"</span><span class="p">]</span>
-<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>  <span class="c1"># cutpoints are [-inf, theta_0, +inf]; take the finite one</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
     <span class="n">theta_0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ordinal_cutpoints</span><span class="p">(</span><span class="n">flow_bw</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="s2">"low"</span><span class="p">]</span><span class="o">.</span><span class="n">intercept</span><span class="p">(</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 
 <span class="n">rows_bw</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="c1"># -theta_0 + w_smoke[0]: the one-hot level-0 column is part of the intercept</span>
     <span class="p">(</span>
         <span class="s2">"intercept"</span><span class="p">,</span>
         <span class="o">-</span><span class="n">theta_0</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">"smoke"</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
@@ -2736,25 +2760,26 @@ $-\theta_0$ — and the last is R's <code>smoke</code>.</p>
     <span class="p">),</span>
 <span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">''</span><span class="si">:</span><span class="s2">&lt;11</span><span class="si">}{</span><span class="s1">'fit_classical'</span><span class="si">:</span><span class="s2">&gt;14</span><span class="si">}{</span><span class="s1">'sm.Logit'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}{</span><span class="s1">'R glm'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}{</span><span class="s1">'max|diff|'</span><span class="si">:</span><span class="s2">&gt;11</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">spreads</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">flow_value</span><span class="p">,</span> <span class="n">sm_value</span><span class="p">,</span> <span class="n">r_value</span> <span class="ow">in</span> <span class="n">rows_bw</span><span class="p">:</span>
-    <span class="n">spread</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">flow_value</span> <span class="o">-</span> <span class="n">sm_value</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">flow_value</span> <span class="o">-</span> <span class="n">r_value</span><span class="p">))</span>
+    <span class="n">spreads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">flow_value</span> <span class="o">-</span> <span class="n">sm_value</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">flow_value</span> <span class="o">-</span> <span class="n">r_value</span><span class="p">)))</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;11</span><span class="si">}{</span><span class="n">flow_value</span><span class="si">:</span><span class="s2">&gt;14.4f</span><span class="si">}{</span><span class="n">sm_value</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}{</span><span class="n">r_value</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}{</span><span class="n">spread</span><span class="si">:</span><span class="s2">&gt;11.2e</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;11</span><span class="si">}{</span><span class="n">flow_value</span><span class="si">:</span><span class="s2">&gt;14.4f</span><span class="si">}{</span><span class="n">sm_value</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}{</span><span class="n">r_value</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spreads</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;11.2e</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span><span class="s2">"max coefficient spread of the three fits"</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">spreads</span><span class="p">),</span> <span class="mf">6e-5</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">import statsmodels.formula.api as smf  # noqa: E402
 
 from tramdag.transforms import ordinal_cutpoints  # noqa: E402
 
-# the same formula as the R call above, and the same names in the output
 res_bw = smf.logit("low ~ age + lwt + smoke", data=bw).fit(disp=False)
 
 w = flow_bw.ls_coefficients()["low"]
-with torch.no_grad():  # cutpoints are [-inf, theta_0, +inf]; take the finite one
+with torch.no_grad():
     theta_0 = float(ordinal_cutpoints(flow_bw.nodes["low"].intercept(1))[0, 1])
 
 rows_bw = [
-    # -theta_0 + w_smoke[0]: the one-hot level-0 column is part of the intercept
     (
         "intercept",
         -theta_0 + float(w["smoke"][0]),
@@ -2771,11 +2796,14 @@ rows_bw = [
     ),
 ]
 print(f"{'':&lt;11}{'fit_classical':&gt;14}{'sm.Logit':&gt;10}{'R glm':&gt;10}{'max|diff|':&gt;11}")
+spreads = []
 for name, flow_value, sm_value, r_value in rows_bw:
-    spread = max(abs(flow_value - sm_value), abs(flow_value - r_value))
+    spreads.append(max(abs(flow_value - sm_value), abs(flow_value - r_value)))
     print(
-        f"{name:&lt;11}{flow_value:&gt;14.4f}{sm_value:&gt;10.4f}{r_value:&gt;10.4f}{spread:&gt;11.2e}"
-    )</div>
+        f"{name:&lt;11}{flow_value:&gt;14.4f}{sm_value:&gt;10.4f}{r_value:&gt;10.4f}"
+        f"{spreads[-1]:&gt;11.2e}"
+    )
+claim("max coefficient spread of the three fits", max(spreads), 6e-5)</div>
 </div>
 </div>
 </div>
@@ -2788,10 +2816,11 @@ for name, flow_value, sm_value, r_value in rows_bw:
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>            fit_classical  sm.Logit     R glm  max|diff|
-intercept          1.3682    1.3682    1.3682   6.34e-06
-age               -0.0390   -0.0390   -0.0390   2.96e-07
-lwt               -0.0121   -0.0121   -0.0121   1.32e-07
-smoke              0.6708    0.6708    0.6708   4.16e-06
+intercept          1.3682    1.3682    1.3682   1.08e-06
+age               -0.0390   -0.0390   -0.0390   7.92e-07
+lwt               -0.0121   -0.0121   -0.0121   3.01e-07
+smoke              0.6708    0.6708    0.6708   1.85e-05
+ok  max coefficient spread of the three fits: 1.85e-05 &lt;= 6.00e-05
 </pre>
 </div>
 </div>
@@ -2799,22 +2828,23 @@ smoke              0.6708    0.6708    0.6708   4.16e-06
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c3e76611">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eef87616">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Three optimizers — L-BFGS on the flow, <code>statsmodels</code>' Newton
-solver, R's IRLS — land on the same maximum likelihood, because there is only
-one. The agreement is not only in the parameters: the log-likelihood of the
-<code>low</code> node and R's <code>logLik(m)</code> are the same number, and <code>flow.pmf</code> reproduces
-<code>glm</code>'s fitted probabilities row by row.</p>
+<p>Three optimizers land on the same maximum likelihood, because there is only
+one. They are L-BFGS on the flow, the Newton solver of <code>statsmodels</code> and the
+IRLS of R. The log-likelihood of the <code>low</code> node agrees with <code>logLik(m)</code> of R
+too. <code>flow.pmf</code> gives the fitted probabilities of <code>glm</code> row by row. The <code>nll()</code>
+method returns the <em>mean</em> NLL per node. Times $n$ and negated, it is the
+log-likelihood.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8a22f11f">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7a6be31b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2832,24 +2862,26 @@ one. The agreement is not only in the parameters: the log-likelihood of the
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># nll() is the *mean* NLL per node; times n and negated it is the log-likelihood</span>
-<span class="n">ll_flow</span> <span class="o">=</span> <span class="o">-</span><span class="n">flow_bw</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">bw</span><span class="p">)[</span><span class="s2">"low"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">ll_flow</span> <span class="o">=</span> <span class="o">-</span><span class="n">flow_bw</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">bw</span><span class="p">)[</span><span class="s2">"low"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span>
 <span class="n">p_flow</span> <span class="o">=</span> <span class="n">flow_bw</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">bw</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="s2">"low"</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">p_classical</span> <span class="o">=</span> <span class="n">res_bw</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"log-likelihood   flow </span><span class="si">{</span><span class="n">ll_flow</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">   R glm </span><span class="si">{</span><span class="n">R_LOGLIK</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">"max |P_flow(low=1) - P_glm(low=1)| over </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows: "</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p_flow</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">p_classical</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">claim</span><span class="p">(</span><span class="s2">"|logLik_flow - logLik_glm|"</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ll_flow</span> <span class="o">-</span> <span class="n">R_LOGLIK</span><span class="p">),</span> <span class="mf">3e-6</span><span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"max |P_flow(low=1) - P_glm(low=1)| over </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">,</span>
+    <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p_flow</span> <span class="o">-</span> <span class="n">p_classical</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+    <span class="mf">1e-5</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># nll() is the *mean* NLL per node; times n and negated it is the log-likelihood
-ll_flow = -flow_bw.nll(bw)["low"] * len(bw)
+<div class="clipboard-copy-txt" id="cell-5">ll_flow = -flow_bw.nll(bw)["low"] * len(bw)
 p_flow = flow_bw.pmf(bw, node="low")[:, 1]
 p_classical = res_bw.predict(bw).values
 print(f"log-likelihood   flow {ll_flow:.6f}   R glm {R_LOGLIK:.6f}")
-print(
-    f"max |P_flow(low=1) - P_glm(low=1)| over {len(bw)} rows: "
-    f"{np.abs(p_flow - p_classical).max():.2e}"
+claim("|logLik_flow - logLik_glm|", abs(ll_flow - R_LOGLIK), 3e-6)
+claim(
+    f"max |P_flow(low=1) - P_glm(low=1)| over {len(bw)} rows",
+    float(np.abs(p_flow - p_classical).max()),
+    1e-5,
 )</div>
 </div>
 </div>
@@ -2863,7 +2895,8 @@ print(
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>log-likelihood   flow -111.439677   R glm -111.439676
-max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 3.32e-06
+ok  |logLik_flow - logLik_glm|: 6.89e-07 &lt;= 3.00e-06
+ok  max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 6.27e-06 &lt;= 1.00e-05
 </pre>
 </div>
 </div>
@@ -2871,23 +2904,23 @@ max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 3.32e-06
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cbdaf644">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=06e0d3c7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1-continuous-case">1. Continuous case<a class="anchor-link" href="#1-continuous-case">¶</a></h2><p>Section 0 modelled <code>low</code>, the <em>dichotomized</em> birth weight. <code>birthwt</code> also
-carries the number it was cut from — <code>bwt</code>, the weight in grams — so the same
-three predictors can be fitted against a continuous outcome. That is a
-Colr model, R's <code>tram::Colr</code>
-bwt ~ age + lwt + smoke
-No way to model this with glm.</p>
+<p><strong>The same regression without the DAG.</strong> The marginals of <code>age</code> and <code>lwt</code>
+are a nuisance here, and a <code>Node</code> drops them. It is the <code>low</code> node alone. It
+takes its name, its node spec and the parent schema,
+<code>{parent: "continuous" | n_levels}</code>. The frame needs only <code>low</code> and its
+parents. <code>Node.fit_classical</code> finds the same maximum likelihood as the flow,
+R and <code>statsmodels</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=73977514">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=be2f5816">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2905,7 +2938,89 @@ No way to model this with glm.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_COLR_BWT</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># Colr(bwt ~ age + lwt + smoke, order = 21); R 4.2.3 / tram 1.0.4</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">low</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+    <span class="s2">"low"</span><span class="p">,</span> <span class="n">spec_bw</span><span class="p">[</span><span class="s2">"low"</span><span class="p">],</span> <span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="s2">"continuous"</span><span class="p">,</span> <span class="s2">"lwt"</span><span class="p">:</span> <span class="s2">"continuous"</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">low</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">bw</span><span class="p">[[</span><span class="s2">"age"</span><span class="p">,</span> <span class="s2">"lwt"</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">,</span> <span class="s2">"low"</span><span class="p">]])</span>
+<span class="n">w_low</span> <span class="o">=</span> <span class="n">low</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>
+<span class="n">ll_low</span> <span class="o">=</span> <span class="o">-</span><span class="n">low</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"log-likelihood   node alone </span><span class="si">{</span><span class="n">ll_low</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">   R glm </span><span class="si">{</span><span class="n">R_LOGLIK</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"smoke   node alone </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">w_low</span><span class="p">[</span><span class="s1">'smoke'</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">w_low</span><span class="p">[</span><span class="s1">'smoke'</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"   R glm </span><span class="si">{</span><span class="n">R_GLM</span><span class="p">[</span><span class="s1">'smoke'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ll_low</span> <span class="o">-</span> <span class="n">R_LOGLIK</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="s2">"the lone node misses the glm likelihood"</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-6">low = Node(
+    "low", spec_bw["low"], {"age": "continuous", "lwt": "continuous", "smoke": 2}
+)
+low.fit_classical(bw[["age", "lwt", "smoke", "low"]])
+w_low = low.ls_coefficients()
+ll_low = -low.nll(bw) * len(bw)
+print(f"log-likelihood   node alone {ll_low:.6f}   R glm {R_LOGLIK:.6f}")
+print(
+    f"smoke   node alone {float(w_low['smoke'][1] - w_low['smoke'][0]):.4f}"
+    f"   R glm {R_GLM['smoke']:.4f}"
+)
+assert abs(ll_low - R_LOGLIK) &lt; 1e-4, "the lone node misses the glm likelihood"</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>log-likelihood   node alone -111.439677   R glm -111.439676
+smoke   node alone 0.6708   R glm 0.6708
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f2f698e1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="1-continuous-case">1. Continuous case<a class="anchor-link" href="#1-continuous-case">¶</a></h2><p>Section 0 modelled <code>low</code>, the <em>dichotomized</em> birth weight. <code>birthwt</code> also
+holds <code>bwt</code>, the weight in grams that <code>low</code> was cut from. Thus the same
+three predictors can be fitted against a continuous outcome. With a flexible
+monotone transform and a logistic latent, this is the Colr model of R:</p>
+<div class="highlight"><pre><span></span><span class="n">tram</span><span class="o">::</span><span class="nf">Colr</span><span class="p">(</span><span class="n">bwt</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">lwt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">smoke</span><span class="p">,</span><span class="w"> </span><span class="n">order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">21</span><span class="p">)</span>
+</pre></div>
+<p><code>glm</code> cannot fit this model. <code>glm(family = gaussian)</code> is <code>lm</code>, with a linear
+transform and a normal latent. The R reference values below come from
+<code>Colr(bwt ~ age + lwt + smoke, order = 21)</code> (R 4.2.3, tram 1.0.4).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2f6e1b41">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_COLR_BWT</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"age"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.021971</span><span class="p">,</span>
     <span class="s2">"lwt"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.010233</span><span class="p">,</span>
     <span class="s2">"smoke"</span><span class="p">:</span> <span class="mf">0.668698</span><span class="p">,</span>
@@ -2913,11 +3028,11 @@ No way to model this with glm.</p>
 <span class="p">}</span>
 
 <span class="n">spec_bwt</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"age"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="s2">"affine"</span><span class="p">)),</span>  <span class="c1"># nuisance marginals</span>
+    <span class="s2">"age"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="s2">"affine"</span><span class="p">)),</span>
     <span class="s2">"lwt"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="s2">"affine"</span><span class="p">)),</span>
     <span class="s2">"smoke"</span><span class="p">:</span> <span class="n">OrdinalNode</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
     <span class="s2">"bwt"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span>
-        <span class="n">SI</span><span class="p">(</span><span class="n">n_coeffs</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"age"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"lwt"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"smoke"</span><span class="p">)</span>  <span class="c1"># degree 21</span>
+        <span class="n">SI</span><span class="p">(</span><span class="n">transform_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_coeffs"</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"age"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"lwt"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"smoke"</span><span class="p">)</span>
     <span class="p">),</span>
 <span class="p">}</span>
 
@@ -2928,7 +3043,7 @@ No way to model this with glm.</p>
 <span class="n">fitted</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"age"</span><span class="p">:</span> <span class="n">w</span><span class="p">[</span><span class="s2">"age"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
     <span class="s2">"lwt"</span><span class="p">:</span> <span class="n">w</span><span class="p">[</span><span class="s2">"lwt"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-    <span class="s2">"smoke"</span><span class="p">:</span> <span class="n">w</span><span class="p">[</span><span class="s2">"smoke"</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">w</span><span class="p">[</span><span class="s2">"smoke"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># one-hot: read the difference</span>
+    <span class="s2">"smoke"</span><span class="p">:</span> <span class="n">w</span><span class="p">[</span><span class="s2">"smoke"</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">w</span><span class="p">[</span><span class="s2">"smoke"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
     <span class="s2">"loglik"</span><span class="p">:</span> <span class="o">-</span><span class="n">flow_bwt</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">bw</span><span class="p">)[</span><span class="s2">"bwt"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bw</span><span class="p">),</span>
 <span class="p">}</span>
 
@@ -2944,7 +3059,7 @@ No way to model this with glm.</p>
     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">diff</span><span class="p">[</span><span class="s1">'loglik'</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;11.2f</span><span class="si">}</span><span class="s2">"</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">R_COLR_BWT = {  # Colr(bwt ~ age + lwt + smoke, order = 21); R 4.2.3 / tram 1.0.4
+<div class="clipboard-copy-txt" id="cell-7">R_COLR_BWT = {
     "age": -0.021971,
     "lwt": -0.010233,
     "smoke": 0.668698,
@@ -2952,11 +3067,11 @@ No way to model this with glm.</p>
 }
 
 spec_bwt = {
-    "age": ContinuousNode(SI(transform="affine")),  # nuisance marginals
+    "age": ContinuousNode(SI(transform="affine")),
     "lwt": ContinuousNode(SI(transform="affine")),
     "smoke": OrdinalNode(2),
     "bwt": ContinuousNode(
-        SI(n_coeffs=20) + LS("age") + LS("lwt") + LS("smoke")  # degree 21
+        SI(transform_kwargs={"n_coeffs": 20}) + LS("age") + LS("lwt") + LS("smoke")
     ),
 }
 
@@ -2967,7 +3082,7 @@ w = flow_bwt.ls_coefficients()["bwt"]
 fitted = {
     "age": w["age"][0],
     "lwt": w["lwt"][0],
-    "smoke": w["smoke"][1] - w["smoke"][0],  # one-hot: read the difference
+    "smoke": w["smoke"][1] - w["smoke"][0],
     "loglik": -flow_bwt.nll(bw)["bwt"] * len(bw),
 }
 
@@ -2994,9 +3109,9 @@ print(
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>               age      lwt    smoke     logLik
-flow       -0.0223  -0.0103   0.6637   -1500.55
+flow       -0.0223  -0.0103   0.6641   -1500.55
 R Colr     -0.0220  -0.0102   0.6687   -1499.67
-|diff|      0.0004   0.0000   0.0050       0.88
+|diff|      0.0004   0.0000   0.0046       0.88
 </pre>
 </div>
 </div>
@@ -3004,23 +3119,25 @@ R Colr     -0.0220  -0.0102   0.6687   -1499.67
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f82f33e2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=abfe7e04">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The largest <em>absolute</em> difference is in <code>smoke</code>, but that only reflects its
-coefficient being some thirty times bigger than the others; as a fraction of
-the estimate it is the smallest of the three. Neither comparison is the useful
-one. A difference matters when it is large relative to the <strong>sampling
-uncertainty</strong> of the estimate — and that is a quantity we have not computed
-yet.</p>
+<p>This agreement is not exact, and neither fit is the more correct one. The
+two libraries place the Bernstein basis differently. The flow puts it on the
+<code>range_q</code> quantiles with linear tails (<a href="../../model/"><code>docs/model.md</code></a>).
+<code>Colr</code> uses the full range of the data. Thus the two fits maximize slightly
+different likelihoods.</p>
+<p>A coefficient difference matters when it is large relative to the
+<strong>sampling uncertainty</strong> of the estimate. The next cells compute the
+standard errors and compare the differences with them.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fd486fa5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=91dbebd4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3028,44 +3145,51 @@ yet.</p>
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="standard-errors-and-confidence-intervals">Standard errors and confidence intervals<a class="anchor-link" href="#standard-errors-and-confidence-intervals">¶</a></h3><p>The sampling distribution of the maximum likelihood estimator is</p>
 <p>$$\hat{\theta} \;\overset{\cdot}{\sim}\; N(\theta, I^{-1})$$</p>
-<p>where $I$ is the Fisher information matrix. Since $\theta$ is unknown we
-evaluate $I$ at $\hat\theta$, and read the standard errors off the diagonal of
-$I^{-1}$. For a contrast $c$, we read off $\sqrt{c^\top I^{-1} c}$.</p>
+<p>where $I$ is the Fisher information matrix. $\theta$ is unknown, so $I$ is
+evaluated at $\hat\theta$. The standard errors are on the diagonal of
+$I^{-1}$. For a contrast $c$, the standard error is $\sqrt{c^\top I^{-1} c}$.</p>
 <p>The <strong>observed</strong> Fisher information is the Hessian of the <em>negative</em>
 log-likelihood at the MLE,</p>
 <p>$$I_{ab} = \frac{\partial^{2}(-\ell)}{\partial\theta_a\,\partial\theta_b}\bigg|_{\hat\theta},$$</p>
-<p>which autograd gives directly: one backward pass produces the gradient with
-the graph retained, then one further backward pass per component produces a
-row of $I$.</p>
-<p>Here $I$ is singular, so $I^{-1}$ does not exist. It is symmetric, so it has an
-orthonormal eigendecomposition, and the <strong>pseudo-inverse</strong> inverts only the
-directions that carry curvature:</p>
+<p>which autograd gives directly. One backward pass gives the gradient with the
+graph retained. Then one more backward pass per component gives a row of
+$I$.</p>
+<p>Here $I$ is singular, so $I^{-1}$ does not exist. The one-hot <code>smoke</code> pair
+and the Bernstein intercept have directions without curvature (see
+"weakly identified directions" in
+<a href="../../fitting/#path-b-classical-optimization-with-fit_classical"><code>docs/fitting.md</code></a>).
+$I$ is symmetric, so it has an orthonormal eigendecomposition. The
+<strong>pseudo-inverse</strong> inverts only the directions that have curvature:</p>
 <p>$$I = \sum_{k=1}^{P} \lambda_k\, e_k e_k^{\top}
   \qquad\Longrightarrow\qquad
   I^{+} = \sum_{k\,:\ \lambda_k &gt; \tau} \frac{1}{\lambda_k}\, e_k e_k^{\top},
   \qquad \tau = 10^{-7}\,\lambda_{\max}.$$</p>
-<p>Terms with $\lambda_k \le \tau$ are dropped rather than inverted. That is right
-for a contrast which avoids the flat subspace, and the <code>leak</code> column measures
-exactly how far it fails to:</p>
+<p>Terms with $\lambda_k \le \tau$ are dropped and not inverted. This is
+correct for a contrast that avoids the flat subspace. The <code>leak</code> column
+measures how far a contrast enters it:</p>
 <p>$$\operatorname{leak}(c) = \max_{k\,:\ \lambda_k \le \tau} \left| c^{\top} e_k \right| .$$</p>
-<p>Only interpret rows whose leak is close to zero. The choice of $\tau$ is not
-delicate, because the spectrum splits into a flat block and a curved block
-with orders of magnitude between them. Any threshold inside that gap gives
-the same answer, and the cell below measures the gap rather than asserting
-it.</p>
+<p>Only interpret rows whose leak is close to zero. The spectrum has three
+parts. A flat block of directions is near zero. One weakly curved direction,
+a Bernstein gap, has a small eigenvalue that is below $\tau$. The remaining
+directions are curved. The threshold drops the weak direction together with
+the flat block. The standard errors need that choice to be harmless. The
+cell below computes them a second time with a threshold between the flat
+block and the weak direction, and compares. The Hessian code runs in
+float64, because second derivatives need it, and restores the stored
+precision afterwards.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=615099fe">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=37967d6e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3080,9 +3204,10 @@ it.</p>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">observed_information</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Give one node's NLL Hessian, the gradient norm, and parameter offsets."""</span>
-    <span class="n">flow</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>  <span class="c1"># second derivatives need float64</span>
+    <span class="n">flow</span><span class="o">.</span><span class="n">double</span><span class="p">()</span>
     <span class="n">names</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">nll</span> <span class="o">=</span> <span class="o">-</span><span class="n">flow</span><span class="o">.</span><span class="n">node_log_prob</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">_tensorize</span><span class="p">(</span><span class="n">data</span><span class="p">))[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+    <span class="n">nll</span> <span class="o">=</span> <span class="o">-</span><span class="n">nd</span><span class="o">.</span><span class="n">row_log_prob</span><span class="p">(</span><span class="n">nd</span><span class="o">.</span><span class="n">tensorize</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
     <span class="n">grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
         <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">nll</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
     <span class="p">)</span>
@@ -3102,43 +3227,44 @@ it.</p>
         <span class="n">offsets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">at</span>
         <span class="n">at</span> <span class="o">+=</span> <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">hess</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="nb">float</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">norm</span><span class="p">()),</span> <span class="n">offsets</span>
-    <span class="n">flow</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># back to the stored precision</span>
+    <span class="n">flow</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">result</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">spectrum_split</span><span class="p">(</span><span class="n">evals</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Describe the curvature spectrum either side of ``tau``.</span>
+<span class="w">    </span><span class="sd">"""Split the eigenvalues at or below ``tau`` into a flat and a weak block.</span>
 
-<span class="sd">    A wide gap between the flat block and the curved block is what makes the</span>
-<span class="sd">    threshold uncritical, so this reports both edges of the gap and lets the</span>
-<span class="sd">    caller check it instead of describing it in prose.</span>
+<span class="sd">    The flat block is the directions near zero. The weak block is the</span>
+<span class="sd">    directions above the widest log-gap among the eigenvalues at or below</span>
+<span class="sd">    ``tau``. ``tau`` drops them too. The result gives the size of</span>
+<span class="sd">    the flat block and its largest eigenvalue, and the smallest weak</span>
+<span class="sd">    eigenvalue, so that a caller can place a second threshold between them.</span>
 <span class="sd">    """</span>
-    <span class="n">absolute</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span>
-    <span class="n">flat</span><span class="p">,</span> <span class="n">curved</span> <span class="o">=</span> <span class="n">absolute</span><span class="p">[</span><span class="n">absolute</span> <span class="o">&lt;=</span> <span class="n">tau</span><span class="p">],</span> <span class="n">absolute</span><span class="p">[</span><span class="n">absolute</span> <span class="o">&gt;</span> <span class="n">tau</span><span class="p">]</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tau</span><span class="p">]),</span> <span class="mf">1e-300</span><span class="p">))</span>
+    <span class="n">cut</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">low</span><span class="p">))))</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">low</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">low</span><span class="o">.</span><span class="n">size</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"n_flat"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
-        <span class="s2">"flat_max"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="k">if</span> <span class="n">flat</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="s2">"curved_min"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">curved</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="k">if</span> <span class="n">curved</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">"n_flat"</span><span class="p">:</span> <span class="n">cut</span><span class="p">,</span>
+        <span class="s2">"flat_max"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">low</span><span class="p">[</span><span class="n">cut</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">cut</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">"weak_min"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">low</span><span class="p">[</span><span class="n">cut</span><span class="p">])</span> <span class="k">if</span> <span class="n">cut</span> <span class="o">&lt;</span> <span class="n">low</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">ls_conf_int</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mf">0.95</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ls_conf_int</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Give Wald intervals for the linear-shift coefficients of one node."""</span>
     <span class="n">hess</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">offsets</span> <span class="o">=</span> <span class="n">observed_information</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
     <span class="n">evals</span><span class="p">,</span> <span class="n">evecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">hess</span><span class="p">)</span>
-    <span class="n">rcond</span> <span class="o">=</span> <span class="mf">1e-7</span>
-    <span class="n">tau</span> <span class="o">=</span> <span class="n">rcond</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>  <span class="c1"># one threshold, used for both</span>
-    <span class="n">flat</span> <span class="o">=</span> <span class="n">evecs</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tau</span><span class="p">]</span>  <span class="c1"># the directions without curvature</span>
-    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">hess</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="n">rcond</span><span class="p">)</span>  <span class="c1"># invert only the rest</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">rcond</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">flat</span> <span class="o">=</span> <span class="n">evecs</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tau</span><span class="p">]</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">hess</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="n">rcond</span><span class="p">)</span>
     <span class="n">z</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">level</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
     <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">flow</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="n">node</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">hess</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">offsets</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">"shifts.</span><span class="si">{</span><span class="n">parent</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># continuous parent: one weight</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">c</span><span class="p">[</span><span class="n">offsets</span><span class="p">[</span><span class="n">key</span><span class="p">]],</span> <span class="n">estimate</span><span class="p">,</span> <span class="n">term</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parent</span>
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># ordinal parent: the contrast w[1] - w[0]</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">c</span><span class="p">[</span><span class="n">offsets</span><span class="p">[</span><span class="n">key</span><span class="p">]],</span> <span class="n">c</span><span class="p">[</span><span class="n">offsets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>
             <span class="n">estimate</span><span class="p">,</span> <span class="n">term</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">parent</span><span class="si">}</span><span class="s2"> (1 vs 0)"</span>
         <span class="n">se</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">@</span> <span class="n">cov</span> <span class="o">@</span> <span class="n">c</span><span class="p">))</span>
@@ -3149,25 +3275,26 @@ it.</p>
                 <span class="s2">"se"</span><span class="p">:</span> <span class="n">se</span><span class="p">,</span>
                 <span class="s2">"lower"</span><span class="p">:</span> <span class="n">estimate</span> <span class="o">-</span> <span class="n">z</span> <span class="o">*</span> <span class="n">se</span><span class="p">,</span>
                 <span class="s2">"upper"</span><span class="p">:</span> <span class="n">estimate</span> <span class="o">+</span> <span class="n">z</span> <span class="o">*</span> <span class="n">se</span><span class="p">,</span>
-                <span class="c1"># 0 = the contrast avoids the flat subspace, so the SE is real</span>
                 <span class="s2">"leak"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span> <span class="o">@</span> <span class="n">flat</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="k">if</span> <span class="n">flat</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
     <span class="n">diagnostics</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"n_params"</span><span class="p">:</span> <span class="n">hess</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="s2">"grad_norm"</span><span class="p">:</span> <span class="n">grad_norm</span><span class="p">,</span>
+        <span class="s2">"lambda_max"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
         <span class="o">**</span><span class="n">spectrum_split</span><span class="p">(</span><span class="n">evals</span><span class="p">,</span> <span class="n">tau</span><span class="p">),</span>
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"term"</span><span class="p">),</span> <span class="n">diagnostics</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">from scipy.stats import norm  # noqa: E402
+<div class="clipboard-copy-txt" id="cell-8">from scipy.stats import norm  # noqa: E402
 
 
 def observed_information(flow, node, data):
     """Give one node's NLL Hessian, the gradient norm, and parameter offsets."""
-    flow.double()  # second derivatives need float64
+    flow.double()
     names, params = zip(*flow.nodes[node].named_parameters(), strict=True)
-    nll = -flow.node_log_prob(flow._tensorize(data))[node].sum()
+    nd = flow.nodes[node]
+    nll = -nd.row_log_prob(nd.tensorize(data)).sum()
     grad = torch.cat(
         [g.reshape(-1) for g in torch.autograd.grad(nll, params, create_graph=True)]
     )
@@ -3187,43 +3314,44 @@ def observed_information(flow, node, data):
         offsets[name] = at
         at += p.numel()
     result = hess.detach().numpy(), float(grad.detach().norm()), offsets
-    flow.float()  # back to the stored precision
+    flow.float()
     return result
 
 
 def spectrum_split(evals, tau):
-    """Describe the curvature spectrum either side of ``tau``.
+    """Split the eigenvalues at or below ``tau`` into a flat and a weak block.
 
-    A wide gap between the flat block and the curved block is what makes the
-    threshold uncritical, so this reports both edges of the gap and lets the
-    caller check it instead of describing it in prose.
+    The flat block is the directions near zero. The weak block is the
+    directions above the widest log-gap among the eigenvalues at or below
+    ``tau``. ``tau`` drops them too. The result gives the size of
+    the flat block and its largest eigenvalue, and the smallest weak
+    eigenvalue, so that a caller can place a second threshold between them.
     """
-    absolute = np.abs(evals)
-    flat, curved = absolute[absolute &lt;= tau], absolute[absolute &gt; tau]
+    low = np.sort(np.maximum(np.abs(evals[np.abs(evals) &lt;= tau]), 1e-300))
+    cut = int(np.argmax(np.diff(np.log(low)))) + 1 if low.size &gt; 1 else low.size
     return {
-        "n_flat": int(flat.size),
-        "flat_max": float(flat.max()) if flat.size else 0.0,
-        "curved_min": float(curved.min()) if curved.size else 0.0,
+        "n_flat": cut,
+        "flat_max": float(low[cut - 1]) if cut else 0.0,
+        "weak_min": float(low[cut]) if cut &lt; low.size else 0.0,
     }
 
 
-def ls_conf_int(flow, node, data, level=0.95):
+def ls_conf_int(flow, node, data, level=0.95, rcond=1e-7):
     """Give Wald intervals for the linear-shift coefficients of one node."""
     hess, grad_norm, offsets = observed_information(flow, node, data)
     evals, evecs = np.linalg.eigh(hess)
-    rcond = 1e-7
-    tau = rcond * np.abs(evals).max()  # one threshold, used for both
-    flat = evecs[:, np.abs(evals) &lt;= tau]  # the directions without curvature
-    cov = np.linalg.pinv(hess, rcond=rcond)  # invert only the rest
+    tau = rcond * np.abs(evals).max()
+    flat = evecs[:, np.abs(evals) &lt;= tau]
+    cov = np.linalg.pinv(hess, rcond=rcond)
     z = norm.ppf(0.5 + level / 2)
 
     rows = []
     for parent, w in flow.ls_coefficients()[node].items():
         c = np.zeros(hess.shape[0])
         key = next(n for n in offsets if n.startswith(f"shifts.{parent}"))
-        if len(w) == 1:  # continuous parent: one weight
+        if len(w) == 1:
             c[offsets[key]], estimate, term = 1.0, w[0], parent
-        else:  # ordinal parent: the contrast w[1] - w[0]
+        else:
             c[offsets[key]], c[offsets[key] + 1] = -1.0, 1.0
             estimate, term = w[1] - w[0], f"{parent} (1 vs 0)"
         se = float(np.sqrt(c @ cov @ c))
@@ -3234,13 +3362,13 @@ def ls_conf_int(flow, node, data, level=0.95):
                 "se": se,
                 "lower": estimate - z * se,
                 "upper": estimate + z * se,
-                # 0 = the contrast avoids the flat subspace, so the SE is real
                 "leak": float(np.abs(c @ flat).max()) if flat.size else 0.0,
             }
         )
     diagnostics = {
         "n_params": hess.shape[0],
         "grad_norm": grad_norm,
+        "lambda_max": float(np.abs(evals).max()),
         **spectrum_split(evals, tau),
     }
     return pd.DataFrame(rows).set_index("term"), diagnostics</div>
@@ -3250,15 +3378,15 @@ def ls_conf_int(flow, node, data, level=0.95):
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=356bacae">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=43127b9d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3274,43 +3402,13 @@ def ls_conf_int(flow, node, data, level=0.95):
     <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'n_params'</span><span class="p">]</span><span class="si">}</span><span class="s2"> parameters, </span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'n_flat'</span><span class="p">]</span><span class="si">}</span><span class="s2"> of them without curvature"</span>
     <span class="sa">f</span><span class="s2">"   |grad| = </span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'grad_norm'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span>
 <span class="p">)</span>
-<span class="c1"># Colr(bwt ~ age + lwt + smoke, order = 21) on birthwt; R 4.2.3 / tram 1.0.4,</span>
-<span class="c1"># produced by classical_fit_tram_dag.R. This is the oracle, not the claim.</span>
-<span class="n">R_COLR_BWT_SE</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="mf">0.025305</span><span class="p">,</span> <span class="s2">"lwt"</span><span class="p">:</span> <span class="mf">0.004116</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">:</span> <span class="mf">0.260131</span><span class="p">}</span>
-
-<span class="nb">print</span><span class="p">()</span>
-<span class="n">claim</span><span class="p">(</span>
-    <span class="s2">"flat_max / curved_min, so smaller is a wider gap"</span><span class="p">,</span>
-    <span class="n">diag</span><span class="p">[</span><span class="s2">"flat_max"</span><span class="p">]</span> <span class="o">/</span> <span class="n">diag</span><span class="p">[</span><span class="s2">"curved_min"</span><span class="p">],</span>
-    <span class="mf">1e-4</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">se_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-    <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">])</span> <span class="o">-</span> <span class="n">r</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"age"</span><span class="p">,</span> <span class="n">R_COLR_BWT_SE</span><span class="p">[</span><span class="s2">"age"</span><span class="p">]),</span> <span class="p">(</span><span class="s2">"lwt"</span><span class="p">,</span> <span class="n">R_COLR_BWT_SE</span><span class="p">[</span><span class="s2">"lwt"</span><span class="p">])]</span>
-<span class="p">)</span>
-<span class="n">claim</span><span class="p">(</span><span class="s2">"max |SE_flow - SE_Colr|, continuous parents"</span><span class="p">,</span> <span class="n">se_gap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">table, diag = ls_conf_int(flow_bwt, "bwt", bw)
+<div class="clipboard-copy-txt" id="cell-9">table, diag = ls_conf_int(flow_bwt, "bwt", bw)
 print(table.round(6).to_string())
 print(
     f"\n{diag['n_params']} parameters, {diag['n_flat']} of them without curvature"
     f"   |grad| = {diag['grad_norm']:.1e}"
-)
-# Colr(bwt ~ age + lwt + smoke, order = 21) on birthwt; R 4.2.3 / tram 1.0.4,
-# produced by classical_fit_tram_dag.R. This is the oracle, not the claim.
-R_COLR_BWT_SE = {"age": 0.025305, "lwt": 0.004116, "smoke": 0.260131}
-
-print()
-claim(
-    "flat_max / curved_min, so smaller is a wider gap",
-    diag["flat_max"] / diag["curved_min"],
-    1e-4,
-)
-se_gap = max(
-    abs(float(table.loc[t, "se"]) - r)
-    for t, r in [("age", R_COLR_BWT_SE["age"]), ("lwt", R_COLR_BWT_SE["lwt"])]
-)
-claim("max |SE_flow - SE_Colr|, continuous parents", se_gap, 1e-3)</div>
+)</div>
 </div>
 </div>
 </div>
@@ -3324,14 +3422,11 @@ claim("max |SE_flow - SE_Colr|, continuous parents", se_gap, 1e-3)</div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>                estimate        se     lower     upper  leak
 term                                                        
-age            -0.022349  0.025265 -0.071867  0.027168   0.0
-lwt            -0.010274  0.004113 -0.018334 -0.002213   0.0
-smoke (1 vs 0)  0.663712  0.259578  0.154949  1.172476   0.0
+age            -0.022342  0.025264 -0.071859  0.027176   0.0
+lwt            -0.010276  0.004113 -0.018337 -0.002216   0.0
+smoke (1 vs 0)  0.664065  0.259577  0.155303  1.172827   0.0
 
-24 parameters, 13 of them without curvature   |grad| = 1.5e-01
-
-ok  flat_max / curved_min, so smaller is a wider gap: 2.61e-05 &lt;= 1.00e-04
-ok  max |SE_flow - SE_Colr|, continuous parents: 4.04e-05 &lt;= 1.00e-03
+24 parameters, 12 of them without curvature   |grad| = 1.6e-02
 </pre>
 </div>
 </div>
@@ -3339,43 +3434,146 @@ ok  max |SE_flow - SE_Colr|, continuous parents: 4.04e-05 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6f83c2e9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3cdc0862">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The standard errors of the two continuous parents reproduce <code>Colr</code>'s, and
-R's <code>confint()</code> on a <code>Colr</code> fit is Wald as well.</p>
+<p>The next values come from <code>Colr(bwt ~ age + lwt + smoke, order = 21)</code> on
+<code>birthwt</code> (R 4.2.3, tram 1.0.4), produced by <code>classical_fit_tram_dag.R</code>. They
+are the oracle, not the claim.</p>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2bec1859">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1b-a-bimodal-dag-the-demo-data">1b. A bimodal DAG — the demo data<a class="anchor-link" href="#1b-a-bimodal-dag-the-demo-data">¶</a></h2><p>The VACA benchmark triangle <code>x1 → x2 → x3 ← x1</code>, the bimodal SCM of the
-<a href="../demo_tram_dag_colab/">demo notebook</a>. We fit an <strong>all-<code>ls</code></strong> model: each
-node is a Colr model: a Bernstein baseline with linear shifts.</p>
-<p>Note this is an <em>honest misspecification</em>: the DGP noise is Gaussian while the
-TRAM latent is logistic, so the all-<code>ls</code> model is not the true generator — but
-<code>fit_classical</code> still finds its exact MLE, which is the point here.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2533a68c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0d5280ef">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_COLR_BWT_SE</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="mf">0.025305</span><span class="p">,</span> <span class="s2">"lwt"</span><span class="p">:</span> <span class="mf">0.004116</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">:</span> <span class="mf">0.260131</span><span class="p">}</span>
+
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'n_flat'</span><span class="p">]</span><span class="si">}</span><span class="s2"> flat directions, largest eigenvalue </span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'flat_max'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"   weak direction </span><span class="si">{</span><span class="n">diag</span><span class="p">[</span><span class="s1">'weak_min'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span>
+    <span class="sa">f</span><span class="s2">"   tau = </span><span class="si">{</span><span class="mf">1e-7</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diag</span><span class="p">[</span><span class="s1">'lambda_max'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">tau2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">diag</span><span class="p">[</span><span class="s2">"flat_max"</span><span class="p">]</span> <span class="o">*</span> <span class="n">diag</span><span class="p">[</span><span class="s2">"weak_min"</span><span class="p">])</span>
+<span class="n">table2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ls_conf_int</span><span class="p">(</span><span class="n">flow_bwt</span><span class="p">,</span> <span class="s2">"bwt"</span><span class="p">,</span> <span class="n">bw</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="n">tau2</span> <span class="o">/</span> <span class="n">diag</span><span class="p">[</span><span class="s2">"lambda_max"</span><span class="p">])</span>
+<span class="n">claim</span><span class="p">(</span>
+    <span class="s2">"max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction"</span><span class="p">,</span>
+    <span class="nb">float</span><span class="p">((</span><span class="n">table</span><span class="p">[</span><span class="s2">"se"</span><span class="p">]</span> <span class="o">-</span> <span class="n">table2</span><span class="p">[</span><span class="s2">"se"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+    <span class="mf">1e-3</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">rows_se</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"age"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"lwt"</span><span class="p">,</span> <span class="s2">"lwt"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"smoke (1 vs 0)"</span><span class="p">,</span> <span class="s2">"smoke"</span><span class="p">)]</span>
+<span class="n">se_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">])</span> <span class="o">-</span> <span class="n">R_COLR_BWT_SE</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows_se</span><span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span><span class="s2">"max |SE_flow - SE_Colr|"</span><span class="p">,</span> <span class="n">se_gap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span>
+    <span class="s2">"max |coef_flow - coef_Colr| / SE"</span><span class="p">,</span>
+    <span class="nb">max</span><span class="p">(</span><span class="n">diff</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows_se</span><span class="p">),</span>
+    <span class="mf">0.07</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-10">R_COLR_BWT_SE = {"age": 0.025305, "lwt": 0.004116, "smoke": 0.260131}
+
+print()
+print(
+    f"{diag['n_flat']} flat directions, largest eigenvalue {diag['flat_max']:.1e}"
+    f"   weak direction {diag['weak_min']:.1e}"
+    f"   tau = {1e-7 * diag['lambda_max']:.1e}"
+)
+tau2 = np.sqrt(diag["flat_max"] * diag["weak_min"])
+table2, _ = ls_conf_int(flow_bwt, "bwt", bw, rcond=tau2 / diag["lambda_max"])
+claim(
+    "max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction",
+    float((table["se"] - table2["se"]).abs().max()),
+    1e-3,
+)
+rows_se = [("age", "age"), ("lwt", "lwt"), ("smoke (1 vs 0)", "smoke")]
+se_gap = max(abs(float(table.loc[t, "se"]) - R_COLR_BWT_SE[r]) for t, r in rows_se)
+claim("max |SE_flow - SE_Colr|", se_gap, 1e-3)
+claim(
+    "max |coef_flow - coef_Colr| / SE",
+    max(diff[r] / float(table.loc[t, "se"]) for t, r in rows_se),
+    0.07,
+)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>
+12 flat directions, largest eigenvalue 2.3e-12   weak direction 1.7e-07   tau = 1.2e-01
+ok  max |SE(tau) - SE(tau2)|, tau2 between the flat block and the weak direction: 2.21e-08 &lt;= 1.00e-03
+ok  max |SE_flow - SE_Colr|: 5.54e-04 &lt;= 1.00e-03
+ok  max |coef_flow - coef_Colr| / SE: 1.78e-02 &lt;= 7.00e-02
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=13cf8f5e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>The standard errors of all three parents agree with those of <code>Colr</code>. The
+confidence intervals of <code>confint()</code> on a <code>Colr</code> fit are Wald intervals too.
+The coefficient differences above are a small fraction of one standard
+error.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3bc7a29e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="1b-a-bimodal-dag-the-demo-data">1b. A bimodal DAG: the demo data<a class="anchor-link" href="#1b-a-bimodal-dag-the-demo-data">¶</a></h2><p>This is the VACA benchmark triangle <code>x1 → x2 → x3 ← x1</code>, the bimodal SCM of
+the <a href="../demo_tram_dag_colab/">demo notebook</a>. The model is <strong>all-<code>ls</code></strong>. Each
+node is a Colr model, a Bernstein baseline with linear shifts.</p>
+<p>The model is misspecified on purpose. The noise of the DGP is Gaussian, and
+the TRAM latent is logistic. Thus the all-<code>ls</code> model is not the true
+generator. <code>fit_classical</code> still finds its MLE.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=afdfcec9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3399,7 +3597,7 @@ TRAM latent is logistic, so the all-<code>ls</code> model is not the true genera
     <span class="n">df</span> <span class="o">=</span> <span class="n">sample_vaca</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
     <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">NB_DATA</span> <span class="o">/</span> <span class="s2">"vaca.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">if False:
+<div class="clipboard-copy-txt" id="cell-11">if False:
 
     def sample_vaca(n, seed):
         """Draw n rows from the VACA bimodal triangle SCM."""
@@ -3418,20 +3616,20 @@ TRAM latent is logistic, so the all-<code>ls</code> model is not the true genera
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d656a8a6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b264ac0a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model: a Bernstein baseline with linear shifts.
-The cell above is what wrote
-<code>notebooks/data/vaca.csv</code>, which is committed, so R reads the identical rows
-the flow is fitted on.</p>
-<p>The two libraries <strong>count the basis differently</strong>, and the comparison is only
-meaningful at the same polynomial degree: <code>N_COEFFS = 20</code> below is tram's
-<code>order = 21</code>, because <code>n_coeffs</code> counts unconstrained coefficients and zuko
-ties two control points on (<a href="../../zuko-upstream/"><code>docs/zuko-upstream.md</code></a>).</p>
+<h3 id="the-r-you-can-copy-paste">The R you can copy-paste<a class="anchor-link" href="#the-r-you-can-copy-paste">¶</a></h3><p><code>tram::Colr</code> fits the same model, a Bernstein baseline with linear shifts.
+The cell above wrote <code>notebooks/data/vaca.csv</code>. The file is tracked, so R
+reads the same rows that the flow is fitted on.</p>
+<p>The two libraries <strong>count the basis differently</strong>. The comparison is only
+meaningful at the same polynomial degree. <code>N_COEFFS = 20</code> below is
+<code>order = 21</code> in tram, because <code>n_coeffs</code> counts unconstrained coefficients
+and zuko adds two control points
+(<a href="../../zuko-upstream/"><code>docs/zuko-upstream.md</code></a>).</p>
 <div class="highlight"><pre><span></span><span class="nf">library</span><span class="p">(</span><span class="n">tram</span><span class="p">)</span>
 <span class="n">d</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">read.csv</span><span class="p">(</span><span class="s">"notebooks/data/vaca.csv"</span><span class="p">)</span>
 
@@ -3449,15 +3647,15 @@ side as the flow.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=51c945c0">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fb0e57da">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3467,12 +3665,12 @@ side as the flow.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_COLR</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># Colr(..., order = 21) on vaca.csv; R 4.2.3 / tram 1.0.4</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">R_COLR</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"x2"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"coef"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"x1"</span><span class="p">:</span> <span class="mf">1.800042</span><span class="p">},</span> <span class="s2">"loglik"</span><span class="p">:</span> <span class="o">-</span><span class="mf">1401.213542</span><span class="p">},</span>
     <span class="s2">"x3"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"coef"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"x1"</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.777289</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.455282</span><span class="p">},</span> <span class="s2">"loglik"</span><span class="p">:</span> <span class="o">-</span><span class="mf">1411.901958</span><span class="p">},</span>
 <span class="p">}</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">R_COLR = {  # Colr(..., order = 21) on vaca.csv; R 4.2.3 / tram 1.0.4
+<div class="clipboard-copy-txt" id="cell-12">R_COLR = {
     "x2": {"coef": {"x1": 1.800042}, "loglik": -1401.213542},
     "x3": {"coef": {"x1": -1.777289, "x2": -0.455282}, "loglik": -1411.901958},
 }</div>
@@ -3481,16 +3679,30 @@ side as the flow.</p>
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=40dbb084">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>The reference values below come from <code>Colr(..., order = 21)</code> on <code>vaca.csv</code>
+(R 4.2.3, tram 1.0.4). The code states <code>N_COEFFS</code> instead of using the
+default, for the reason given above the R block. <code>N_COEFFS = 20</code> gives
+Bernstein degree 21.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=05030ac2">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ee3217d2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3501,20 +3713,20 @@ side as the flow.</p>
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">NB_DATA</span> <span class="o">/</span> <span class="s2">"vaca.csv"</span><span class="p">)</span>
-<span class="c1"># stated rather than left to the default, for the reason the markdown cell</span>
-<span class="c1"># above the R block gives</span>
-<span class="n">N_COEFFS</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># -&gt; Bernstein degree 21, which is tram's `order = 21`</span>
+<span class="n">N_COEFFS</span> <span class="o">=</span> <span class="mi">20</span>
 
 <span class="n">spec_vaca</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"x1"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">n_coeffs</span><span class="o">=</span><span class="n">N_COEFFS</span><span class="p">)),</span>
-    <span class="s2">"x2"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">n_coeffs</span><span class="o">=</span><span class="n">N_COEFFS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)),</span>
-    <span class="s2">"x3"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">n_coeffs</span><span class="o">=</span><span class="n">N_COEFFS</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x2"</span><span class="p">)),</span>
+    <span class="s2">"x1"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">transform_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_coeffs"</span><span class="p">:</span> <span class="n">N_COEFFS</span><span class="p">})),</span>
+    <span class="s2">"x2"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span><span class="n">SI</span><span class="p">(</span><span class="n">transform_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_coeffs"</span><span class="p">:</span> <span class="n">N_COEFFS</span><span class="p">})</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)),</span>
+    <span class="s2">"x3"</span><span class="p">:</span> <span class="n">ContinuousNode</span><span class="p">(</span>
+        <span class="n">SI</span><span class="p">(</span><span class="n">transform_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_coeffs"</span><span class="p">:</span> <span class="n">N_COEFFS</span><span class="p">})</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x1"</span><span class="p">)</span> <span class="o">+</span> <span class="n">LS</span><span class="p">(</span><span class="s2">"x2"</span><span class="p">)</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">flow_c</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec_vaca</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">rep</span> <span class="o">=</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>  <span class="c1"># logs iters / NLL / time</span>
+<span class="n">rep</span> <span class="o">=</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="s1">''</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}{</span><span class="s1">'fit_classical'</span><span class="si">:</span><span class="s2">&gt;14</span><span class="si">}{</span><span class="s1">'R Colr'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}{</span><span class="s1">'|diff|'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="n">loglik</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="o">-</span><span class="n">v</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>  <span class="c1"># nll() is a mean</span>
+<span class="n">loglik</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="o">-</span><span class="n">v</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">parents</span> <span class="ow">in</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">parents</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">R_COLR</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s2">"coef"</span><span class="p">][</span><span class="n">p</span><span class="p">]</span>
@@ -3522,21 +3734,21 @@ side as the flow.</p>
     <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">loglik</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">R_COLR</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s2">"loglik"</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'logLik '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">node</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}{</span><span class="n">c</span><span class="si">:</span><span class="s2">&gt;14.4f</span><span class="si">}{</span><span class="n">r</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}{</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">df = pd.read_csv(NB_DATA / "vaca.csv")
-# stated rather than left to the default, for the reason the markdown cell
-# above the R block gives
-N_COEFFS = 20  # -&gt; Bernstein degree 21, which is tram's `order = 21`
+<div class="clipboard-copy-txt" id="cell-13">df = pd.read_csv(NB_DATA / "vaca.csv")
+N_COEFFS = 20
 
 spec_vaca = {
-    "x1": ContinuousNode(SI(n_coeffs=N_COEFFS)),
-    "x2": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1")),
-    "x3": ContinuousNode(SI(n_coeffs=N_COEFFS) + LS("x1") + LS("x2")),
+    "x1": ContinuousNode(SI(transform_kwargs={"n_coeffs": N_COEFFS})),
+    "x2": ContinuousNode(SI(transform_kwargs={"n_coeffs": N_COEFFS}) + LS("x1")),
+    "x3": ContinuousNode(
+        SI(transform_kwargs={"n_coeffs": N_COEFFS}) + LS("x1") + LS("x2")
+    ),
 }
 
 flow_c = CausalFlowDAG(spec_vaca, seed=0)
-rep = flow_c.fit_classical(df)  # logs iters / NLL / time
+rep = flow_c.fit_classical(df)
 print(f"\n{'':&lt;12}{'fit_classical':&gt;14}{'R Colr':&gt;12}{'|diff|':&gt;10}")
-loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}  # nll() is a mean
+loglik = {k: -v * len(df) for k, v in flow_c.nll(df).items()}
 for node, parents in flow_c.ls_coefficients().items():
     for p, w in parents.items():
         c, r = w[0], R_COLR[node]["coef"][p]
@@ -3560,7 +3772,7 @@ x1 -&gt; x2            1.7986      1.8000    0.0014
 logLik x2       -1401.8706  -1401.2135    0.6571
 x1 -&gt; x3           -1.7796     -1.7773    0.0023
 x2 -&gt; x3           -0.4549     -0.4553    0.0004
-logLik x3       -1410.9658  -1411.9020    0.9362
+logLik x3       -1410.9657  -1411.9020    0.9363
 </pre>
 </div>
 </div>
@@ -3568,33 +3780,28 @@ logLik x3       -1410.9658  -1411.9020    0.9362
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9caa7ce4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d1abf46c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="why-this-one-is-not-an-exact-mle-check">Why this one is not an exact-MLE check<a class="anchor-link" href="#why-this-one-is-not-an-exact-mle-check">¶</a></h3><p>The coefficients here agree far less closely than in Sections 0 and 2, and
-neither result is the more correct one. The two libraries place the
-Bernstein basis differently: the flow puts it on the <code>range_q</code> quantiles with
-linear tails (<a href="../../model/"><code>docs/model.md</code></a>), while <code>Colr</code> uses the
-full range of the data. The shift
-coefficients survive that difference in relative terms, which is why the
-ordered logit above finds the same two numbers without any Bernstein basis
-at all.</p>
+<h3 id="why-this-one-is-not-an-exact-mle-check">Why this one is not an exact-MLE check<a class="anchor-link" href="#why-this-one-is-not-an-exact-mle-check">¶</a></h3><p>The coefficients here agree far less closely than in Sections 0 and 2. The
+cause is the basis placement of Section 1. The shift coefficients are robust
+to it: their relative gap stays small.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=36aa0abb">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d810114c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-14">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3612,7 +3819,7 @@ at all.</p>
 <span class="n">claim</span><span class="p">(</span><span class="s2">"max |coef_flow - coef_Colr|"</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">gaps</span><span class="p">),</span> <span class="mf">0.01</span><span class="p">)</span>
 <span class="n">claim</span><span class="p">(</span><span class="s2">"max relative coefficient gap"</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">g</span> <span class="o">/</span> <span class="n">r</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">gaps</span><span class="p">),</span> <span class="mf">0.02</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12">gaps = [
+<div class="clipboard-copy-txt" id="cell-14">gaps = [
     (abs(float(w[0]) - R_COLR[node]["coef"][parent]), abs(R_COLR[node]["coef"][parent]))
     for node in R_COLR
     for parent, w in flow_c.ls_coefficients()[node].items()
@@ -3630,8 +3837,8 @@ claim("max relative coefficient gap", max(g / r for g, r in gaps), 0.02)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>ok  max |coef_flow - coef_Colr|: 2.32e-03 &lt;= 1.00e-02
-ok  max relative coefficient gap: 1.30e-03 &lt;= 2.00e-02
+<pre>ok  max |coef_flow - coef_Colr|: 2.34e-03 &lt;= 1.00e-02
+ok  max relative coefficient gap: 1.32e-03 &lt;= 2.00e-02
 </pre>
 </div>
 </div>
@@ -3639,7 +3846,7 @@ ok  max relative coefficient gap: 1.30e-03 &lt;= 2.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1709e128">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=07f2ca36">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3657,15 +3864,15 @@ rather than only its location.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=20519d4e">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8e675280">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3677,13 +3884,66 @@ rather than only its location.</p>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">601</span><span class="p">)</span>
 <span class="n">rows</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span>
-<span class="n">dens</span> <span class="o">=</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>  <span class="c1"># (200, 601)</span>
+<span class="n">dens</span> <span class="o">=</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>
 <span class="n">mass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapezoid</span><span class="p">(</span><span class="n">dens</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">claim</span><span class="p">(</span><span class="s2">"worst |integral of the density - 1|"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mass</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="mf">5e-3</span><span class="p">)</span>
-
-<span class="c1"># the mode should move with the parents in the direction the shifts say: the</span>
-<span class="c1"># flow subtracts on the latent scale, so a positive weight lowers the value</span>
-<span class="n">modes</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">dens</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-15">grid = np.linspace(df["x3"].min() - 2, df["x3"].max() + 2, 601)
+rows = df.iloc[:200]
+dens = flow_c.density(rows, "x3", grid)
+mass = np.trapezoid(dens, grid, axis=1)
+claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e-3)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>ok  worst |integral of the density - 1|: 1.29e-03 &lt;= 5.00e-03
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=90aed823">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>The mode should move with the parents in the direction the shifts say. A
+continuous node adds the shift to $h(x)$, so a positive weight lowers the
+value.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dcfb76e2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">modes</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">dens</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
 <span class="n">shift</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
     <span class="nb">float</span><span class="p">(</span><span class="n">flow_c</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">][</span><span class="s2">"x1"</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">]</span>
     <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">flow_c</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">][</span><span class="s2">"x2"</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"x2"</span><span class="p">]</span>
@@ -3692,15 +3952,7 @@ rather than only its location.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"corr(mode of the fitted density, the linear predictor) = </span><span class="si">{</span><span class="n">corr</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">corr</span> <span class="o">&gt;</span> <span class="mf">0.95</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"the density's mode does not track the shifts: r = </span><span class="si">{</span><span class="n">corr</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">grid = np.linspace(df["x3"].min() - 2, df["x3"].max() + 2, 601)
-rows = df.iloc[:200]
-dens = flow_c.density(rows, "x3", grid)  # (200, 601)
-mass = np.trapezoid(dens, grid, axis=1)
-claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e-3)
-
-# the mode should move with the parents in the direction the shifts say: the
-# flow subtracts on the latent scale, so a positive weight lowers the value
-modes = grid[dens.argmax(axis=1)]
+<div class="clipboard-copy-txt" id="cell-16">modes = grid[dens.argmax(axis=1)]
 shift = -(
     float(flow_c.ls_coefficients()["x3"]["x1"][0]) * rows["x1"]
     + float(flow_c.ls_coefficients()["x3"]["x2"][0]) * rows["x2"]
@@ -3719,8 +3971,7 @@ assert corr &gt; 0.95, f"the density's mode does not track the shifts: r = {corr
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>ok  worst |integral of the density - 1|: 1.29e-03 &lt;= 5.00e-03
-corr(mode of the fitted density, the linear predictor) = 0.9951
+<pre>corr(mode of the fitted density, the linear predictor) = 0.9951
 </pre>
 </div>
 </div>
@@ -3728,33 +3979,31 @@ corr(mode of the fitted density, the linear predictor) = 0.9951
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3fa5007a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d2dc6319">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Classical against Adam: the same optimum.</strong> A converged Adam fit with no
-early stopping reaches the same coefficients. The guarantees of the
-classical fit are determinism and the exact maximum-likelihood estimate, not
-speed. Which one is faster depends on the model. It wins clearly on
-ordinal-outcome models, as in Section 2, while on this Bernstein-heavy
-continuous DAG the flat directions of the basis slow L-BFGS down. Both
-timings are printed below rather than claimed, because a wall clock is a
-property of the machine.</p>
+<p><strong>Classical against Adam: the same optimum.</strong> An Adam fit with
+<code>EarlyStopping</code> reaches the same coefficients. Here the training rows also
+serve as the validation rows. The guarantees of the classical fit are
+determinism and the exact maximum-likelihood estimate, not speed. Which fit
+is faster depends on the model. The cell prints both timings, because a wall
+clock is a property of the machine.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a626d655">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d84ec4dd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-14">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3766,43 +4015,47 @@ property of the machine.</p>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">flow_a</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec_vaca</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-<span class="n">sched</span> <span class="o">=</span> <span class="n">PerNodeEarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
 <span class="n">flow_a</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
     <span class="n">df</span><span class="p">,</span>
     <span class="n">epochs</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">,</span>
     <span class="n">validation_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="o">=</span><span class="n">per_node_adam</span><span class="p">(</span><span class="n">flow_a</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">),</span>
-    <span class="n">callbacks</span><span class="o">=</span><span class="n">sched</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">60</span><span class="p">),</span>
 <span class="p">)</span>
 <span class="n">t_adam</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
 
 <span class="n">coef_c</span><span class="p">,</span> <span class="n">coef_a</span> <span class="o">=</span> <span class="n">flow_c</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">(),</span> <span class="n">flow_a</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'coef'</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}{</span><span class="s1">'classical'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}{</span><span class="s1">'adam'</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}{</span><span class="s1">'|diff|'</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">adam_gaps</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x1"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"x3"</span><span class="p">,</span> <span class="s2">"x1"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"x3"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">)]:</span>
     <span class="n">c</span><span class="p">,</span> <span class="n">aw</span> <span class="o">=</span> <span class="n">coef_c</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">p</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">coef_a</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">p</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="si">:</span><span class="s2">&lt;6</span><span class="si">}{</span><span class="n">c</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}{</span><span class="n">aw</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}{</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">aw</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">adam_gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">aw</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="si">:</span><span class="s2">&lt;6</span><span class="si">}{</span><span class="n">c</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}{</span><span class="n">aw</span><span class="si">:</span><span class="s2">&gt;12.4f</span><span class="si">}{</span><span class="n">adam_gaps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">classical </span><span class="si">{</span><span class="n">rep</span><span class="p">[</span><span class="s1">'seconds'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s  vs  adam </span><span class="si">{</span><span class="n">t_adam</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s"</span><span class="p">)</span>
+<span class="n">claim</span><span class="p">(</span><span class="s2">"max |coef_classical - coef_adam|"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">adam_gaps</span><span class="p">)),</span> <span class="mf">1e-3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14">flow_a = CausalFlowDAG(spec_vaca, seed=0)
+<div class="clipboard-copy-txt" id="cell-17">flow_a = CausalFlowDAG(spec_vaca, seed=0)
 t0 = time.perf_counter()
-sched = PerNodeEarlyStopping(patience=60)
 flow_a.fit(
     df,
     epochs=2000,
     batch_size=4096,
+    learning_rate=1e-1,
     validation_data=df,
-    optimizer=per_node_adam(flow_a, lr=1e-1),
-    callbacks=sched,
+    callbacks=EarlyStopping(patience=60),
 )
 t_adam = time.perf_counter() - t0
 
 coef_c, coef_a = flow_c.ls_coefficients(), flow_a.ls_coefficients()
 print(f"{'coef':&lt;10}{'classical':&gt;12}{'adam':&gt;12}{'|diff|':&gt;10}")
+adam_gaps = []
 for node, p in [("x2", "x1"), ("x3", "x1"), ("x3", "x2")]:
     c, aw = coef_c[node][p][0], coef_a[node][p][0]
-    print(f"{p}-&gt;{node:&lt;6}{c:&gt;12.4f}{aw:&gt;12.4f}{abs(c - aw):&gt;10.4f}")
-print(f"\nclassical {rep['seconds']:.2f}s  vs  adam {t_adam:.1f}s")</div>
+    adam_gaps.append(abs(c - aw))
+    print(f"{p}-&gt;{node:&lt;6}{c:&gt;12.4f}{aw:&gt;12.4f}{adam_gaps[-1]:&gt;10.4f}")
+print(f"\nclassical {rep['seconds']:.2f}s  vs  adam {t_adam:.1f}s")
+claim("max |coef_classical - coef_adam|", float(max(adam_gaps)), 1e-3)</div>
 </div>
 </div>
 </div>
@@ -3815,11 +4068,12 @@ print(f"\nclassical {rep['seconds']:.2f}s  vs  adam {t_adam:.1f}s")</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coef         classical        adam    |diff|
-x1-&gt;x2          1.7986      1.7986    0.0000
-x1-&gt;x3         -1.7796     -1.7800    0.0003
-x2-&gt;x3         -0.4549     -0.4551    0.0002
+x1-&gt;x2          1.7986      1.7986    0.0001
+x1-&gt;x3         -1.7796     -1.7799    0.0003
+x2-&gt;x3         -0.4549     -0.4550    0.0002
 
-classical 6.78s  vs  adam 29.8s
+classical 3.91s  vs  adam 31.8s
+ok  max |coef_classical - coef_adam|: 3.12e-04 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -3827,7 +4081,7 @@ classical 6.78s  vs  adam 29.8s
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3fc7c551">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=888dbf6d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3843,15 +4097,15 @@ continuous parents <code>x1</code> and <code>x2</code>;
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3011fd59">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=df92ab83">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3872,7 +4126,7 @@ continuous parents <code>x1</code> and <code>x2</code>;
 <span class="n">flow_o</span> <span class="o">=</span> <span class="n">CausalFlowDAG</span><span class="p">(</span><span class="n">spec_tm</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">flow_o</span><span class="o">.</span><span class="n">fit_classical</span><span class="p">(</span><span class="n">tm</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15">tm = pd.read_csv(DATA / "triangle-mixed" / "linear" / "obs.csv")
+<div class="clipboard-copy-txt" id="cell-18">tm = pd.read_csv(DATA / "triangle-mixed" / "linear" / "obs.csv")
 
 spec_tm = {
     "x1": ContinuousNode(),
@@ -3891,44 +4145,65 @@ flow_o.fit_classical(tm)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[18]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
- 'stop_reason': 'tolerance',
- 'n_iter': 413,
- 'final_nll': 1.0638610128437505,
- 'grad_norm': 2.0093402325646972e-05,
- 'seconds': 10.862858089999918,
- 'coefficients': {'x2': {'x1': array([2.03000452])},
-  'x3': {'x1': array([0.00950195]), 'x2': array([0.38326684])}}}</pre>
+ 'final_nll': 1.0638599179974983,
+ 'seconds': 6.516956594000021,
+ 'coefficients': {'x2': {'x1': array([2.02991896])},
+  'x3': {'x1': array([0.00974636]), 'x2': array([0.38319398])}},
+ 'nodes': {'x1': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 124,
+   'final_nll': -0.528496480675719,
+   'grad_norm': 8.061878566644408e-06,
+   'decrement': 6.430472293035621e-10,
+   'seconds': 1.590920419999975,
+   'coefficients': {}},
+  'x2': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 306,
+   'final_nll': 0.38264754696930564,
+   'grad_norm': 1.9038896613669157e-05,
+   'decrement': 7.523436822226438e-10,
+   'seconds': 4.884447301000137,
+   'coefficients': {'x1': array([2.02991896])}},
+  'x3': {'converged': True,
+   'stop_reason': 'tolerance',
+   'n_iter': 15,
+   'final_nll': 1.2097088517039116,
+   'grad_norm': 6.470020896163431e-06,
+   'decrement': 3.1231225589445164e-10,
+   'seconds': 0.041588872999909654,
+   'coefficients': {'x1': array([0.00974636]), 'x2': array([0.38319398])}}}}</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ba91d745">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=85fcf1a2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="refitting-the-same-design-in-statsmodels">Refitting the same design in statsmodels<a class="anchor-link" href="#refitting-the-same-design-in-statsmodels">¶</a></h3><p><code>flow.design_matrix(node, drop_first=True)</code> gives the encoding the flow
-feeds its own shifts, so handing it to <code>statsmodels</code> compares two fits of
-one design rather than two different designs.</p>
+<h3 id="refitting-the-same-design-in-statsmodels">Refitting the same design in statsmodels<a class="anchor-link" href="#refitting-the-same-design-in-statsmodels">¶</a></h3><p><code>flow.design_matrix(df, node, drop_first=True)</code> gives the encoding that the
+flow gives its own shifts. Thus <code>statsmodels</code> fits the same design, not a
+different one.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=60fdbfd1">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=583dd626">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3949,7 +4224,7 @@ one design rather than two different designs.</p>
     <span class="n">a_</span><span class="p">,</span> <span class="n">b_</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fitted</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;14</span><span class="si">}{</span><span class="n">a_</span><span class="si">:</span><span class="s2">&gt;14.4f</span><span class="si">}{</span><span class="n">b_</span><span class="si">:</span><span class="s2">&gt;13.4f</span><span class="si">}{</span><span class="nb">abs</span><span class="p">(</span><span class="n">a_</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">b_</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;9.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16">design = flow_o.design_matrix(tm, "x3", drop_first=True)
+<div class="clipboard-copy-txt" id="cell-19">design = flow_o.design_matrix(tm, "x3", drop_first=True)
 res = OrderedModel(tm["x3"].astype(int), design, distr="logit").fit(
     method="bfgs", disp=False
 )
@@ -3971,8 +4246,8 @@ for name in ("x1", "x2"):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient    fit_classical  statsmodels   |diff|
-x1                    0.0095       0.0097   0.0002
-x2                    0.3833       0.3832   0.0000
+x1                    0.0097       0.0097   0.0001
+x2                    0.3832       0.3832   0.0001
 </pre>
 </div>
 </div>
@@ -3980,28 +4255,27 @@ x2                    0.3833       0.3832   0.0000
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cff1f254">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=09a30fc7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="standard-errors">Standard errors<a class="anchor-link" href="#standard-errors">¶</a></h3><p>The helper from Section 1 needs no change: give it the node, and
-<code>statsmodels</code> reports the same quantities, so every number below has an
-external check.</p>
+<h3 id="standard-errors">Standard errors<a class="anchor-link" href="#standard-errors">¶</a></h3><p>The helper from Section 1 needs no change. <code>statsmodels</code> reports the same
+quantities, so every number below has an external check.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bba09add">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=41a085ec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4031,7 +4305,7 @@ external check.</p>
 <span class="p">)</span>
 <span class="n">claim</span><span class="p">(</span><span class="s2">"max |SE_flow - SE_statsmodels|"</span><span class="p">,</span> <span class="n">se_gap</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17">table_o, diag_o = ls_conf_int(flow_o, "x3", tm)
+<div class="clipboard-copy-txt" id="cell-20">table_o, diag_o = ls_conf_int(flow_o, "x3", tm)
 ci_sm = res.conf_int()
 print(
     f"{'':&lt;6}{'flow SE':&gt;9}{'sm SE':&gt;8}{'|est|/SE':&gt;10}   "
@@ -4064,7 +4338,7 @@ claim("max |SE_flow - SE_statsmodels|", se_gap, 1e-3)</div>
 <pre>        flow SE   sm SE  |est|/SE             flow 95%     statsmodels 95%
 x1       0.1080  0.1080      0.09   [-0.202, +0.221]  [-0.202, +0.221]
 x2       0.0735  0.0735      5.21   [+0.239, +0.527]  [+0.239, +0.527]
-ok  max |SE_flow - SE_statsmodels|: 3.41e-07 &lt;= 1.00e-03
+ok  max |SE_flow - SE_statsmodels|: 8.90e-07 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -4072,29 +4346,27 @@ ok  max |SE_flow - SE_statsmodels|: 3.41e-07 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e1569ee9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2edc2d57">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The standard errors agree with <code>statsmodels</code>. The <code>|diff|</code> column above is
-not evidence about identification: it is the optimizer stopping while the
-likelihood is still flat, and the cell below checks that the gap stays a
-small fraction of one standard error.</p>
+<p>The standard errors agree with <code>statsmodels</code>. The cell below checks that
+the coefficient gap is a small fraction of one standard error.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ac60dea1">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e23b27bc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-21">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4107,20 +4379,22 @@ small fraction of one standard error.</p>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"|grad| at the classical optimum: </span><span class="si">{</span><span class="n">diag_o</span><span class="p">[</span><span class="s1">'grad_norm'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">):</span>
     <span class="n">observed</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"estimate"</span><span class="p">])</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">term</span><span class="p">]))</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;4</span><span class="si">}</span><span class="s2"> |flow - statsmodels| = </span><span class="si">{</span><span class="n">observed</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span>
-        <span class="sa">f</span><span class="s2">"   = </span><span class="si">{</span><span class="n">observed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span><span class="w"> </span><span class="s1">'se'</span><span class="p">])</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> of one SE"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">:</span><span class="s2">&lt;4</span><span class="si">}</span><span class="s2"> |flow - statsmodels| = </span><span class="si">{</span><span class="n">observed</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">claim</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">: gap against statsmodels / SE"</span><span class="p">,</span>
+        <span class="n">observed</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">term</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">]),</span>
+        <span class="mf">1e-3</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">claim</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">: gap against statsmodels"</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="mf">5e-2</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-18">print(f"|grad| at the classical optimum: {diag_o['grad_norm']:.1e}")
+<div class="clipboard-copy-txt" id="cell-21">print(f"|grad| at the classical optimum: {diag_o['grad_norm']:.1e}")
 for term in ("x1", "x2"):
     observed = abs(float(table_o.loc[term, "estimate"]) - float(res.params[term]))
-    print(
-        f"{term:&lt;4} |flow - statsmodels| = {observed:.2e}"
-        f"   = {observed / float(table_o.loc[term, 'se']):.0%} of one SE"
-    )
-    claim(f"{term}: gap against statsmodels", observed, 5e-2)</div>
+    print(f"{term:&lt;4} |flow - statsmodels| = {observed:.2e}")
+    claim(
+        f"{term}: gap against statsmodels / SE",
+        observed / float(table_o.loc[term, "se"]),
+        1e-3,
+    )</div>
 </div>
 </div>
 </div>
@@ -4132,11 +4406,11 @@ for term in ("x1", "x2"):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>|grad| at the classical optimum: 6.2e-02
-x1   |flow - statsmodels| = 1.55e-04   = 0% of one SE
-ok  x1: gap against statsmodels: 1.55e-04 &lt;= 5.00e-02
-x2   |flow - statsmodels| = 1.76e-05   = 0% of one SE
-ok  x2: gap against statsmodels: 1.76e-05 &lt;= 5.00e-02
+<pre>|grad| at the classical optimum: 3.2e-02
+x1   |flow - statsmodels| = 8.95e-05
+ok  x1: gap against statsmodels / SE: 8.28e-04 &lt;= 1.00e-03
+x2   |flow - statsmodels| = 5.52e-05
+ok  x2: gap against statsmodels / SE: 7.51e-04 &lt;= 1.00e-03
 </pre>
 </div>
 </div>
@@ -4144,33 +4418,29 @@ ok  x2: gap against statsmodels: 1.76e-05 &lt;= 5.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=da2cbaff">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=63cd8cfa">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3-warm-start-handoff-classical-fit-further-training">3. Warm-start handoff: classical fit → further training<a class="anchor-link" href="#3-warm-start-handoff-classical-fit-further-training">¶</a></h2><p><code>fit_classical</code> leaves the model at the MLE in float32, ready for any normal
-operation. Two things to verify:</p>
-<ol>
-<li>the float64→float32 round-trip didn't move the coefficients, and</li>
-<li>continuing with <code>fit()</code> from the classical solution <em>stays put</em> — confirming
-it really is the optimum (and showing the classical fit as a fast, principled
-initialization for further or richer training).</li>
-</ol>
+<h2 id="3-warm-start-classical-fit-then-further-training">3. Warm start: classical fit, then further training<a class="anchor-link" href="#3-warm-start-classical-fit-then-further-training">¶</a></h2><p><code>fit_classical</code> leaves the model at the MLE in float32, ready for any normal
+operation. A continued <code>fit()</code> from the classical solution <em>stays put</em>. This
+confirms that the classical solution is the optimum. It also makes the
+classical fit a warm start for further training.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1dd15fd5">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7c0d1ba3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-22">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4182,29 +4452,23 @@ initialization for further or richer training).</li>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-<span class="c1"># continue training from the classical solution with a gentle Adam phase</span>
 <span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
 <span class="n">after</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"coefficient drift after 300 more Adam epochs from the classical MLE:"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">]:</span>
     <span class="n">d</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">after</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">-</span> <span class="n">before</span><span class="p">[</span><span class="n">p</span><span class="p">])</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">&lt;8</span><span class="si">}</span><span class="s2"> max|Δ| = </span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">-&gt; small drift = the classical fit was already at the optimum;"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"   fit_classical is a valid warm start for continued / flexible training."</span><span class="p">)</span>
+    <span class="n">claim</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">: max |drift| / SE"</span><span class="p">,</span> <span class="n">d</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">table_o</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">]),</span> <span class="mf">0.1</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-19">before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
+<div class="clipboard-copy-txt" id="cell-22">before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-# continue training from the classical solution with a gentle Adam phase
 flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
 after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")
 for p in ["x1", "x2"]:
     d = float(np.abs(after[p] - before[p]).max())
-    print(f"  {p:&lt;8} max|Δ| = {d:.4f}")
-print("\n-&gt; small drift = the classical fit was already at the optimum;")
-print("   fit_classical is a valid warm start for continued / flexible training.")</div>
+    claim(f"{p}: max |drift| / SE", d / float(table_o.loc[p, "se"]), 0.1)</div>
 </div>
 </div>
 </div>
@@ -4217,11 +4481,8 @@ print("   fit_classical is a valid warm start for continued / flexible training.
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient drift after 300 more Adam epochs from the classical MLE:
-  x1       max|Δ| = 0.0027
-  x2       max|Δ| = 0.0013
-
--&gt; small drift = the classical fit was already at the optimum;
-   fit_classical is a valid warm start for continued / flexible training.
+ok  x1: max |drift| / SE: 1.19e-02 &lt;= 1.00e-01
+ok  x2: max |drift| / SE: 2.95e-02 &lt;= 1.00e-01
 </pre>
 </div>
 </div>

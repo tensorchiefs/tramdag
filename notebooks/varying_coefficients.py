@@ -25,10 +25,9 @@
 # [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) states the
 # model, its penalty and its centering; this notebook runs it.
 #
-# This notebook builds a DGP with a known effect function, fits the
-# model, and scores the recovered `beta(x)` against the truth. It then shows
-# the two things the term exists for that a plain flexible shift does not give:
-# a read-out you can plot, and a **propensity-centered** variant that survives
+# The notebook scores the recovered `beta(x)` against a known effect
+# function. It then shows what a plain flexible shift does not give: a
+# read-out you can plot, and a **propensity-centered** variant that survives
 # confounding.
 
 # %%
@@ -299,8 +298,7 @@ assert gap < 1e-5, f"the read-out differs from the latent difference by {gap:.2e
 # `propensity="ps"` replaces $t$ by $t - \hat e(x)$ with out-of-fold propensities
 # from the training-frame column `ps`.
 # [`docs/varying-coefficients.md`](../docs/varying-coefficients.md) says why
-# they must be out of fold. Stage 1, the propensities, is yours. Here, five
-# classical fits of the treatment spec give them.
+# they must be out of fold.
 
 # %%
 TAU = -1.0

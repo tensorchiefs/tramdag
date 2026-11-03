@@ -47,7 +47,8 @@ one node. [`notebooks/training_strategies.py`](../notebooks/training_strategies.
 fits one with Adam, and
 [`notebooks/classical_fit_tram_dag.py`](../notebooks/classical_fit_tram_dag.py)
 fits one classically against R `glm`. A lone node built with `seed=` starts from
-the weights it has in a flow with that seed ([code-map.md](code-map.md#flowpy-the-model)).
+the weights it has in a flow with that seed and the default `init`
+([code-map.md](code-map.md#flowpy-the-model)).
 
 ## Path A: stochastic optimization with `fit`
 

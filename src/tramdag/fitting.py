@@ -1044,7 +1044,7 @@ class FitMixin:
         train_df : pd.DataFrame
             Training data, one column per node, plus the side columns.
         epochs : int
-            Passes over the data.
+            Passes over the data. Required; there is no default.
         learning_rate : float, optional
             Adam step size of the default optimizer. The default (None) is
             1e-2. Exclusive with ``optimizer``.
@@ -1059,7 +1059,7 @@ class FitMixin:
             ``validation_data``.
         verbose : int, optional
             0 (default) is silent; ``N >= 1`` prints the summed NLLs every
-            ``N`` epochs.
+            ``N`` epochs and on the final epoch.
         seed : int | None, optional
             Seeds the minibatch shuffling, by default None.
         marginal_init : bool, optional

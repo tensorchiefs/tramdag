@@ -41,6 +41,12 @@ _FORK_JOB: tuple | None = None
 
 
 # %% private functions -----------------------------------------------------------------
+def _check_learning_rate(learning_rate, optimizer) -> None:
+    """Refuse ``learning_rate=`` together with ``optimizer=``."""
+    if learning_rate is not None and optimizer is not None:
+        raise ValueError("pass learning_rate= or optimizer=, not both")
+
+
 def _split_validation(
     train_df: pd.DataFrame,
     validation_data: pd.DataFrame | None,
@@ -397,7 +403,7 @@ class NodeFitMixin:
         train_df: pd.DataFrame,
         *,
         epochs: int,
-        learning_rate: float = 1e-2,
+        learning_rate: float | None = None,
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
@@ -435,8 +441,8 @@ class NodeFitMixin:
         epochs : int
             Number of passes over the data. Required; there is no default.
         learning_rate : float, optional
-            Adam step size of the default optimizer, by default 1e-2.
-            Ignored when ``optimizer`` is given.
+            Adam step size of the default optimizer. The default (None) is
+            1e-2. Exclusive with ``optimizer``.
         batch_size : int, optional
             Rows per gradient step, by default 512. ``len(train_df)`` is one
             full-batch step per epoch.
@@ -464,7 +470,7 @@ class NodeFitMixin:
         optimizer : torch.optim.Optimizer | callable | None, optional
             A torch optimizer over ``node.parameters()``, or a factory
             ``f(node) -> Optimizer`` (for example to split the parameters into
-            groups). The default (None) is ``Adam(lr=learning_rate)``.
+            groups). The default (None) is ``Adam(lr=1e-2)``.
         callbacks : Callback | callable | list | None, optional
             One entry or a list, by default None. A
             [`Callback`][tramdag.callbacks.Callback]
@@ -497,13 +503,15 @@ class NodeFitMixin:
         Raises
         ------
         ValueError
-            If the validation arguments clash, a centered VC term's
+            If ``learning_rate`` and ``optimizer`` are both given, the
+            validation arguments clash, a centered VC term's
             propensity column is missing or out of [0, 1], two callbacks
             restore weights, an ordinal value is not a level index, or the
             node's calibration refuses the frame.
         KeyError
             If a frame lacks a column the node reads.
         """
+        _check_learning_rate(learning_rate, optimizer)
         cbs = _normalize_callbacks(callbacks)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
@@ -519,7 +527,9 @@ class NodeFitMixin:
         generator = None if seed is None else torch.Generator().manual_seed(seed)
         if callable(optimizer):
             optimizer = optimizer(self)
-        opt = optimizer or torch.optim.Adam(self.parameters(), lr=learning_rate)
+        opt = optimizer or torch.optim.Adam(
+            self.parameters(), lr=1e-2 if learning_rate is None else learning_rate
+        )
 
         def validate():
             if val_values is None:
@@ -781,7 +791,7 @@ class FitMixin:
         train_df: pd.DataFrame,
         *,
         epochs: int | Callable[[str], int],
-        learning_rate: float | Callable[[str], float] = 1e-2,
+        learning_rate: float | Callable[[str], float] | None = None,
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
@@ -810,8 +820,8 @@ class FitMixin:
         epochs : int | callable
             Passes over the data, or ``f(name) -> int`` per node.
         learning_rate : float | callable, optional
-            Adam step size of the default optimizer, or ``f(name) -> float``,
-            by default 1e-2. Ignored when ``optimizer`` is given.
+            Adam step size of the default optimizer, or ``f(name) -> float``.
+            The default (None) is 1e-2. Exclusive with ``optimizer``.
         batch_size : int, optional
             Rows per gradient step, by default 512.
         validation_data : pd.DataFrame | None, optional
@@ -834,7 +844,7 @@ class FitMixin:
         optimizer : callable | None, optional
             A factory ``f(node) -> Optimizer``, called once per node fit, for
             example ``lambda node: torch.optim.AdamW(node.parameters())``. The
-            default (None) is ``Adam(lr=learning_rate)``.
+            default (None) is ``Adam(lr=1e-2)``.
         callbacks : Callback | list | callable | None, optional
             The callbacks of every node, or a function of the node name that
             gives them per node, by default None. A shared shipped callback
@@ -869,13 +879,15 @@ class FitMixin:
             If a frame lacks a node column.
         ValueError
             See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every
-            node's callbacks are checked before the first node fits.
+            node's callbacks are checked before the first node fits. Also if
+            ``learning_rate`` and ``optimizer`` are both given.
         """
         if isinstance(optimizer, torch.optim.Optimizer):
             raise TypeError(
                 "optimizer= of CausalFlowDAG.fit is a factory f(node) -> "
                 "Optimizer, called once per node; got an optimizer instance"
             )
+        _check_learning_rate(learning_rate, optimizer)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
         )
@@ -954,7 +966,7 @@ class FitMixin:
         train_df: pd.DataFrame,
         *,
         epochs: int,
-        learning_rate: float = 1e-2,
+        learning_rate: float | None = None,
         batch_size: int = 512,
         validation_data: pd.DataFrame | None = None,
         validation_split: float | None = None,
@@ -983,8 +995,8 @@ class FitMixin:
         epochs : int
             Passes over the data.
         learning_rate : float, optional
-            Adam step size of the default optimizer, by default 1e-2.
-            Ignored when ``optimizer`` is given.
+            Adam step size of the default optimizer. The default (None) is
+            1e-2. Exclusive with ``optimizer``.
         batch_size : int, optional
             Rows per gradient step, by default 512.
         validation_data : pd.DataFrame | None, optional
@@ -1005,7 +1017,7 @@ class FitMixin:
         optimizer : torch.optim.Optimizer | callable | None, optional
             A torch optimizer over ``flow.parameters()``, or a factory
             ``f(flow) -> Optimizer``. The default (None) is
-            ``Adam(lr=learning_rate)``.
+            ``Adam(lr=1e-2)``.
         callbacks : Callback | callable | list | None, optional
             As in [`Node.fit`][tramdag.nodes.Node.fit], but every hook gets
             the flow instead of a node. ``EarlyStopping`` then tracks the
@@ -1023,6 +1035,7 @@ class FitMixin:
         KeyError
             If a frame lacks a node column.
         """
+        _check_learning_rate(learning_rate, optimizer)
         cbs = _normalize_callbacks(callbacks)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
@@ -1035,7 +1048,9 @@ class FitMixin:
         generator = None if seed is None else torch.Generator().manual_seed(seed)
         if callable(optimizer):
             optimizer = optimizer(self)
-        opt = optimizer or torch.optim.Adam(self.parameters(), lr=learning_rate)
+        opt = optimizer or torch.optim.Adam(
+            self.parameters(), lr=1e-2 if learning_rate is None else learning_rate
+        )
         _train_loop(
             self,
             "flow",

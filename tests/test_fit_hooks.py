@@ -96,8 +96,8 @@ def test_flow_callbacks_factory_gives_each_node_its_own(ls_chain):
 
 
 def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
-    """``optimizer=`` replaces the default Adam; its lr, not ``learning_rate``,
-    drives the fit, and its state survives into a second call.
+    """``optimizer=`` replaces the default Adam; its own lr drives the fit,
+    and its state survives into a second call.
     """
     df = ls_chain["draw"](400, 1)[["x1", "x2"]]
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
@@ -105,13 +105,29 @@ def test_user_optimizer_is_used_and_keeps_its_state(ls_chain):
     node.calibrate(df)
     opt = torch.optim.SGD(node.parameters(), lr=0.0)
     before = copy.deepcopy(node.state_dict())
-    node.fit(df, epochs=2, learning_rate=1e-2, optimizer=opt)
+    node.fit(df, epochs=2, optimizer=opt)
     assert all(torch.equal(before[k], v) for k, v in node.state_dict().items())
     opt = torch.optim.Adam(node.parameters(), lr=1e-2)
     node.fit(df, epochs=3, optimizer=opt)
     assert opt.state[node.shifts["x1"].fc.weight]["step"] == 3 * 1
     with pytest.raises(TypeError, match="factory"):
         flow.fit(df, epochs=1, optimizer=opt)
+
+
+def test_learning_rate_and_optimizer_exclude_each_other(ls_chain):
+    """Both given raise on every fit path, before any node fits."""
+    df = ls_chain["draw"](100, 1)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    node = flow.nodes["x2"]
+    sgd = torch.optim.SGD(node.parameters(), lr=0.1)
+    with pytest.raises(ValueError, match="learning_rate= or optimizer="):
+        node.fit(df, epochs=1, learning_rate=1e-2, optimizer=sgd)
+    for lr in (1e-2, lambda name: 1e-2):
+        with pytest.raises(ValueError, match="learning_rate= or optimizer="):
+            flow.fit(df, epochs=1, learning_rate=lr, optimizer=torch.optim.Adam)
+    with pytest.raises(ValueError, match="learning_rate= or optimizer="):
+        flow.fit_jointly(df, epochs=1, learning_rate=1e-2, optimizer=sgd)
+    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
 
 
 def test_an_optimizer_factory_may_split_the_parameters_into_groups(ls_chain):

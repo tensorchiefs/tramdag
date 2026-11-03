@@ -549,7 +549,8 @@ def test_history_frame_has_one_row_per_node_and_epoch(ls_chain):
         df, epochs=2, batch_size=100, validation_split=0.2, optimizer=grouped, seed=0
     )
     frame = flow.history_frame()
-    assert list(frame) == ["node", "epoch", "train", "val", "lr[0]", "lr[1]"]
+    assert list(frame) == ["node", "epoch", "train", "val", "best", "lr[0]", "lr[1]"]
+    assert not frame["best"].any()
     for name, nd in flow.nodes.items():
         rows = frame[frame["node"] == name]
         assert rows["epoch"].tolist() == [1, 2, 3, 4, 5]
@@ -582,6 +583,8 @@ def test_the_best_epoch_is_on_record_across_fits_and_checkpoints(ls_chain, tmp_p
         assert best == 5 + stoppers[name].best_epoch == len(nd.history["train"]) - 5
         held = nd.history["val"][nd.history["val_epoch"].index(best)]
         assert held == min(nd.history["val"])
+        rows = flow.history_frame().query("node == @name")
+        assert rows.loc[rows["best"], "epoch"].tolist() == [best]
         assert nll[name] == pytest.approx(held, rel=1e-6)
     flow.save(tmp_path / "flow.pt")
     loaded = CausalFlowDAG.load(tmp_path / "flow.pt")

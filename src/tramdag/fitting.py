@@ -781,9 +781,13 @@ class FitMixin:
         pd.DataFrame
             Columns ``node``, ``epoch`` (from 1), ``train``, ``val`` (NaN in an
             epoch without validation) and one ``lr[k]`` per optimizer group
-            ``k`` (NaN in a node without that group). A node that no ``fit``
-            trained has no rows, and a node that stopped early does not
-            repeat its last entry.
+            ``k`` (NaN in a node without that group), and the boolean
+            ``best``, true in the epoch that ``EarlyStopping`` restored
+            (``node.history["best_epoch"]``) and false everywhere for a node
+            without one. The minimum of ``val`` is not the restored epoch
+            when ``min_delta`` is above 0. A node that no ``fit`` trained has
+            no rows, and a node that stopped early does not repeat its last
+            entry.
         """
         frames = []
         for name, nd in self.nodes.items():
@@ -796,6 +800,7 @@ class FitMixin:
                     "epoch": epochs,
                     "train": h["train"],
                     "val": [val.get(e, math.nan) for e in epochs],
+                    "best": [e == h.get("best_epoch") for e in epochs],
                 }
             )
             lr = pd.DataFrame(h.get("lr", [])).rename(columns="lr[{}]".format)

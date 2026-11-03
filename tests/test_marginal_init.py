@@ -158,7 +158,7 @@ def test_marginal_init_is_pure_init_same_optimum(ls_chain):
     def converged_nll(marginal_init):
         flow = CausalFlowDAG(spec, seed=0)
         flow._calibrate(obs, marginal_init=marginal_init)
-        flow.fit(obs, epochs=1500, learning_rate=1e-2, batch_size=512)
+        flow.fit(obs, epochs=1500, learning_rate=1e-2, batch_size=512, seed=0)
         return sum(flow.nll(obs).values())
 
     np.testing.assert_allclose(converged_nll(True), converged_nll(False), atol=1e-2)
@@ -173,7 +173,7 @@ def test_marginal_init_does_not_reset_a_loaded_model(tmp_path):
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"y": rng.integers(0, 4, 400).astype(float)})
     flow = CausalFlowDAG({"y": OrdinalNode(4)}, seed=0)
-    flow.fit(df, epochs=5, learning_rate=1e-2, batch_size=128)
+    flow.fit(df, epochs=5, learning_rate=1e-2, batch_size=128, seed=0)
     flow.save(tmp_path / "m.pt")
     loaded = CausalFlowDAG.load(tmp_path / "m.pt")
 

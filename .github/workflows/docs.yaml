@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
         fetch-depth: 0
-    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e   # v10.3.2
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2   # v10.3.3
       with:
         enable-cache: true
     - run: uv sync --no-default-groups --group docs --group notebooks
@@ -41,7 +41,7 @@ jobs:
                  varying-coefficients paper-replication code-map zuko-upstream; do
           stage "docs/$d.md" "build/pdf/$d.md"
         done
-        for n in demo_tram_dag_colab training_strategies additive_vs_joint_ci \
+        for n in demo_tram_dag_colab training_strategies fit_strategies_benchmark additive_vs_joint_ci \
                  varying_coefficients classical_fit_tram_dag; do
           uv run jupytext --to notebook --execute --output "build/pdf/nb/$n.ipynb" "notebooks/$n.py"
           uv run jupyter nbconvert --to markdown "build/pdf/nb/$n.ipynb" --output "$n" --output-dir build/pdf/nb

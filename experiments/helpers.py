@@ -111,7 +111,7 @@ def fit_paper(train, val, config: dict, out: Path, record=None):
         train,
         validation_data=val if plateau else None,
         learning_rate=config["learning_rate"],
-        callbacks=callbacks,
+        callbacks={name: callbacks(name) for name in flow.order},
         marginal_init=config["marginal_init"],
         **config["fit_kwargs"],
     )

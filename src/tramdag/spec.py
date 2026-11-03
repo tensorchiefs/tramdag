@@ -90,9 +90,11 @@ def _serialized(term: Term) -> dict:
     }
 
 
-def _check_written(name: str, ordinal: bool, wire: dict, term: Term) -> None:
+def _check_written(
+    name: str, ordinal: bool, schema: dict, wire: dict, term: Term
+) -> None:
     """Raise if the wire entry of ``term`` omits one of its acting options."""
-    for k in term.acting_options(ordinal):
+    for k in term.acting_options(ordinal, schema):
         if k not in wire["options"]:
             raise ValueError(f"node {name!r}: term {wire['term']!r} omits option {k!r}")
 
@@ -390,6 +392,10 @@ def spec_from_dict(d: dict, *, strict: bool = False) -> dict[str, NodeSpec]:
     TypeError
         If a term does not take an option the entry names.
     """
+    schema = {
+        n: "continuous" if e["kind"] == "continuous" else e.get("levels")
+        for n, e in d.items()
+    }
     spec: dict[str, NodeSpec] = {}
     for name, entry in d.items():
         terms = []
@@ -397,7 +403,7 @@ def spec_from_dict(d: dict, *, strict: bool = False) -> dict[str, NodeSpec]:
             cls = _term_class(t["term"])
             term = cls.from_serialized(tuple(t["parents"]), t["options"])
             if strict:
-                _check_written(name, entry["kind"] == "ordinal", t, term)
+                _check_written(name, entry["kind"] == "ordinal", schema, t, term)
             terms.append(term)
         if entry["kind"] == "continuous":
             spec[name] = ContinuousNode(terms)
@@ -421,20 +427,9 @@ class Term:
 
     Subclass to add a term: set ``name`` (what the ``term`` key serializes)
     and ``module`` (a [`ShiftModule`][tramdag.modules.ShiftModule] subclass)
-    as class attributes, and assign the options (the keyword arguments of
-    ``__init__``, with their defaults) to ``self``:
-
-    ```python
-    class Scaled(Term):
-        name = "Scaled"
-        module = ScaledModule
-
-        def __init__(self, *parents, scale=1.0):
-            super().__init__(*parents)
-            self.scale = scale
-            if len(self.parents) != 1:
-                raise ValueError("Scaled() takes exactly one parent")
-    ```
+    as class attributes, assign the options (the keyword arguments of
+    ``__init__``, with their defaults) to ``self``, and raise ``ValueError``
+    in ``__init__`` on a bad option or parent count.
 
     A term is exactly its ``__dict__``: the parents the base assigns and the
     options each subclass assigns from its own signature. That is what makes
@@ -463,12 +458,15 @@ class Term:
         """Give everything the term carries, by name, the parents included."""
         return dict(vars(self))
 
-    def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
+    def acting_options(
+        self, ordinal: bool, schema: dict[str, str | int]
+    ) -> tuple[str, ...]:
         """Give the options that act on this term, the parents excluded.
 
         An option acts when setting it changes the model. ``ordinal`` says
-        whether the node is ordinal. A subclass overrides this to drop the
-        options that cannot act on it.
+        whether the node is ordinal. ``schema`` maps each node name to
+        "continuous" or its level count. A subclass overrides this to drop
+        the options that cannot act on it.
         """
         return tuple(k for k in self.options() if k != "parents")
 
@@ -635,16 +633,20 @@ class Intercept(Term):
                 "argument"
             )
 
-    def acting_options(self, ordinal: bool = False) -> tuple[str, ...]:
+    def acting_options(
+        self, ordinal: bool, schema: dict[str, str | int]
+    ) -> tuple[str, ...]:
         """Give the options that act on this intercept.
 
         An ordinal intercept is the cutpoint vector and takes no transform. A
-        parentless intercept has no network. ``allow_interaction`` acts
-        with two parents or more.
+        parentless intercept has no network, and neither has one with
+        ``units=()``. ``allow_interaction`` acts with two parents or more.
         """
         names = [] if ordinal else ["transform", "transform_kwargs"]
         if self.parents:
-            names += ["units", "activation", "batch_norm", "input_transform"]
+            names.append("units")
+            if self.units:
+                names += ["activation", "batch_norm", "input_transform"]
         if len(self.parents) > 1:
             names.append("allow_interaction")
         return tuple(names)
@@ -739,6 +741,15 @@ class ComplexShift(Term):
         if not self.parents:
             raise ValueError("CS() needs at least one parent")
 
+    def acting_options(
+        self, ordinal: bool, schema: dict[str, str | int]
+    ) -> tuple[str, ...]:
+        """Give the options that act; ``input_transform`` needs a continuous parent."""
+        names = super().acting_options(ordinal, schema)
+        if any(schema.get(p) == "continuous" for p in self.parents):
+            return names
+        return tuple(k for k in names if k != "input_transform")
+
 
 class VaryingCoefficient(Term):
     r"""The varying-coefficient shift ``VC``: $(\beta_0 + b_\Theta(\text{mod}))\, x_t$.
@@ -816,6 +827,15 @@ class VaryingCoefficient(Term):
             raise ValueError(
                 f"VC(): {t!r} cannot be both the treatment (t) and a modifier"
             )
+
+    def acting_options(
+        self, ordinal: bool, schema: dict[str, str | int]
+    ) -> tuple[str, ...]:
+        """Give the options that act, ``input_transform`` over a continuous modifier."""
+        names = super().acting_options(ordinal, schema)
+        if any(schema.get(p) == "continuous" for p in self.parents[1:]):
+            return names
+        return tuple(k for k in names if k != "input_transform")
 
     @classmethod
     def from_serialized(cls, parents: tuple[str, ...], options: dict) -> Term:

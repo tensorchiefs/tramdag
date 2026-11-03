@@ -154,7 +154,8 @@ plt.show()
 # progress. The strategy attaches through `callbacks=`. `EarlyStopping` stops
 # each node when its own validation score stops improving, and loads its best
 # weights back. Thus `epochs=200` is a ceiling and not a budget. The `seed=` of
-# `CausalFlowDAG` makes the initial weights reproducible.
+# `CausalFlowDAG` makes the initial weights reproducible. The `seed=` of `fit`
+# makes the minibatch order reproducible.
 #
 # [`notebooks/training_strategies.py`](training_strategies.py) works through
 # the other recipes.
@@ -180,6 +181,7 @@ flow.fit(
     verbose=50,
     learning_rate=1e-1,
     callbacks=EarlyStopping(patience=40),
+    seed=0,
 )
 t_fit = time.perf_counter() - t0
 stopped = {name: len(nd.history["train"]) for name, nd in flow.nodes.items()}

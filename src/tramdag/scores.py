@@ -81,10 +81,12 @@ def node_scores(flow, df: pd.DataFrame, node: str) -> pd.DataFrame:
         One column per coefficient, shape ``(n, k)``, indexed like ``df``.
         A continuous ``LS`` parent gives one column, named after the
         parent. An ordinal ``LS`` parent gives one column per one-hot
-        level, named ``"{parent}[{k}]"``. A ``VC`` term gives one column
-        named after its treatment, which holds the ``beta0`` score. For a
-        binary ordinal treatment that score belongs to the identified
-        contrast of level 1 against level 0.
+        level, named ``"{parent}[{k}]"``; a row's score sits in the column
+        of its level and the other columns are 0. A ``VC`` term gives one
+        column named after its treatment, which holds the ``beta0`` score.
+        For a binary ordinal treatment that score belongs to the identified
+        contrast of level 1 against level 0. ``CS`` and ``CI`` terms give no
+        column.
 
     Notes
     -----
@@ -182,7 +184,8 @@ def effect_modifier_scan(
         Name of the outcome node.
     t : str
         Name of the treatment. Its scores column is ``t`` itself for a
-        continuous parent or a VC term, and the identified level-1 column
+        continuous ``LS`` parent or a VC term (the ``beta0`` score), and the
+        identified level-1 column
         ``"{t}[1]"`` for a binary ordinal LS parent.
     candidates : list[str] | None, optional
         Candidate covariates. Defaults to every node that is not ``t``,

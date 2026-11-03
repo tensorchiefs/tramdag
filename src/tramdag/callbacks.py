@@ -1,10 +1,11 @@
 """Predefined ``fit`` callbacks: ``EarlyStopping``.
 
-Every node fits on its own, so a callback hooks one node's fit. ``fit`` owns
-validation and progress printing; ``EarlyStopping`` reads the validation NLL that
-``fit`` appends to ``node.history["val"]`` after every epoch. One ``callbacks=``
-list is the whole registration; anything not covered here is a
-[`Callback`][tramdag.callbacks.Callback] subclass of your own (docs/fitting.md).
+A callback hooks one node's fit, or the whole flow's under ``fit_jointly``.
+``fit`` owns validation and progress printing; ``EarlyStopping`` reads the
+validation NLL that ``fit`` appends to ``node.history["val"]`` after every
+epoch. One ``callbacks=`` list is the whole registration; anything not
+covered here is a [`Callback`][tramdag.callbacks.Callback] subclass of your
+own (docs/fitting.md).
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -18,20 +19,28 @@ __all__ = ["Callback", "EarlyStopping"]
 
 
 # %% private functions -----------------------------------------------------------------
-def _last_val(node, cb: Callback) -> float:
-    """Give the current epoch's validation NLL of the node, or fail loudly.
+def _nodes(target) -> list:
+    """Give the nodes that a callback hooks: the node, or a flow's nodes."""
+    return list(getattr(target, "nodes", {"": target}).values())
 
-    A stale entry from an earlier validated fit does not count: the last
-    entry must belong to the last train epoch (``history["val_epoch"]``
+
+def _last_val(target, cb: Callback) -> float:
+    """Give the current epoch's validation NLL, summed over the hooked nodes.
+
+    A stale entry from an earlier validated fit does not count: each node's
+    last entry must belong to its last train epoch (``history["val_epoch"]``
     records which one it belongs to).
     """
-    val_epoch = node.history.get("val_epoch", [])
-    if not val_epoch or val_epoch[-1] != len(node.history["train"]):
-        raise RuntimeError(
-            f"{type(cb).__name__} reads node.history['val']; pass validation_data= "
-            "or validation_split= to fit()"
-        )
-    return node.history["val"][-1]
+    total = 0.0
+    for nd in _nodes(target):
+        val_epoch = nd.history.get("val_epoch", [])
+        if not val_epoch or val_epoch[-1] != len(nd.history["train"]):
+            raise RuntimeError(
+                f"{type(cb).__name__} reads node.history['val']; pass "
+                "validation_data= or validation_split= to the fit call"
+            )
+        total += nd.history["val"][-1]
+    return total
 
 
 # %% public classes --------------------------------------------------------------------
@@ -45,7 +54,10 @@ class Callback:
     ``node.history["train"]``; the fit stops after an epoch in which any
     callback returned ``True``. ``on_fit_end(node, optimizer)`` runs once
     after the loop and **before** the VC re-centering, so a hook that swaps
-    the weights hands them to the re-centering.
+    the weights hands them to the re-centering. Under
+    [`fit_jointly`][tramdag.flow.CausalFlowDAG.fit_jointly] each hook gets the
+    flow in place of the node; ``flow.history["val"][-1]`` is then a dict
+    ``{node: NLL}``, not a float.
     """
 
     def on_fit_begin(self, node, optimizer) -> None:
@@ -61,7 +73,8 @@ class Callback:
 class EarlyStopping(Callback):
     """Keep the best-validation weights; optionally stop once they are old.
 
-    Tracks the node's validation NLL; an epoch improves when it beats the best
+    Tracks the node's validation NLL, or under ``fit_jointly`` the sum over
+    the flow's nodes; an epoch improves when it beats the best
     by more than ``min_delta``. With ``smoothing`` the tracked value is the
     exponential moving average of the validation NLL, so the best epoch is the
     one with the best smoothed value, its weights are restored, and
@@ -94,9 +107,11 @@ class EarlyStopping(Callback):
     Attributes
     ----------
     best_nll, best_epoch
-        The best validation NLL seen this fit and its epoch. The node's
-        ``history["best_epoch"]`` holds that epoch on the history axis,
-        which counts the epochs of every fit.
+        The best validation NLL seen this fit and its epoch. Each hooked
+        node's ``history["best_epoch"]`` holds that epoch on the history axis,
+        which counts the epochs of every fit;
+        [`plot_training`][tramdag.plots.plot_training] with ``stops=True``
+        marks it.
 
     Raises
     ------
@@ -156,7 +171,8 @@ class EarlyStopping(Callback):
             return False
         if nll < self.best_nll - self.min_delta:
             self.best_nll, self.best_epoch = nll, epoch
-            node.history["best_epoch"] = len(node.history["train"])
+            for nd in _nodes(node):
+                nd.history["best_epoch"] = len(nd.history["train"])
             if self.restore_best:
                 self._state = copy.deepcopy(node.state_dict())
         return self.patience is not None and epoch - self.best_epoch >= self.patience

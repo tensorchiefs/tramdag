@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   plan:
@@ -28,7 +28,7 @@ jobs:
       include: ${{ steps.pick.outputs.include }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
-    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e   # v10.3.2
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2   # v10.3.3
       with:
         enable-cache: true
     - id: pick
@@ -77,7 +77,7 @@ jobs:
       OMP_NUM_THREADS: '2'
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
-    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e   # v10.3.2
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2   # v10.3.3
       with:
         enable-cache: true
 
@@ -99,17 +99,3 @@ jobs:
       run: >-
         uv run --group experiments python -m check
         ${{ steps.result.outputs.name }}
-
-    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
-      name: post the report as a commit comment
-      uses: iterative/setup-cml@e5f9f4673e0a8f275c45cc66dbbfd29c8469fb4e # v2.1.0
-      with:
-        vega: false
-    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
-      working-directory: >-
-        experiments/results/${{ steps.result.outputs.name }}
-      env:
-        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -euo pipefail
-        cml comment create --target=commit report.md

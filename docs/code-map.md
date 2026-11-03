@@ -33,10 +33,13 @@ tensors, so it serializes and compares without torch.
 [`CausalFlowDAG`][tramdag.flow.CausalFlowDAG] holds one
 [`Node`][tramdag.nodes.Node] per variable in topological order. Construction
 seeds each node's weights from the constructor seed and the node's name. A node
-starts from the same weights in every spec that contains it. Construction ends
-with `torch.manual_seed(seed)`, which seeds the unseeded shuffling of `fit`. The
-constructor seed is the reproducibility knob. A lone
-`Node` needs `torch.manual_seed` before you build it. The class composes
+starts from the same weights in every spec that contains it. `Node(seed=)` uses
+the same stream, so a lone node starts from the weights it has in the flow.
+Without a seed, the weights come from torch's global RNG. `nodes.seeded` holds
+this seeding. It runs in `torch.random.fork_rng`, so construction does not
+change torch's global RNG state. Each random act takes its own seed: the
+constructor for the weights, `fit(seed=)` for the shuffle of every node,
+`sample(seed=)` and `abduct(seed=)` for the latent draws. The class composes
 `FitMixin` and `ReadoutsMixin`. The modules below list their methods.
 
 - `CausalFlowDAG.outcome()` gives the one node without children.
@@ -85,7 +88,9 @@ both the node and the flow.
 [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] fit one node,
 through `NodeFitMixin`. The flow's [`fit()`][tramdag.flow.CausalFlowDAG.fit] and
 [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] loop over the
-nodes, through `FitMixin`, serially or in `n_jobs` forked processes. The
+nodes, through `FitMixin`, serially or in `n_jobs` forked processes.
+[`fit_jointly()`][tramdag.flow.CausalFlowDAG.fit_jointly] trains all nodes in
+one loop; it shares `_train_loop` with `Node.fit`. The
 mechanics are in [fitting.md](fitting.md).
 
 ## `readouts.py`: `ReadoutsMixin`
@@ -110,7 +115,8 @@ callback. Anything else is torch's `lr_scheduler` and a few lines of callback
 ## `plots.py`: the figures
 
 matplotlib is optional (`tramdag[plots]`) and the first plot
-call imports it, never the package import. [`plot_dag()`][tramdag.plots.plot_dag],
+call imports it, never the package import.
+[`plot_dag()`][tramdag.plots.plot_dag],
 [`plot_marginals()`][tramdag.plots.plot_marginals],
 [`plot_training()`][tramdag.plots.plot_training] and
 [`plot_varying_coef()`][tramdag.plots.plot_varying_coef] each take `ax=` to
@@ -134,27 +140,17 @@ instead.
 
 The signatures hold the defaults. This list keeps the reasons.
 
-- **`fit(epochs=)` has no default.** No default epoch count fits both an `LS`
-  and a flexible model ([fitting.md](fitting.md)).
 - **Weight initialization is `CausalFlowDAG(init=)`.** Initialization happens
-  at construction, so the constructor seed is the reproducibility knob. Each
-  node draws from a stream keyed on the seed and the node's name.
-  `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras `Dense`
-  default, the paper's reference, and it is decisive under the paper's
+  at construction, so the constructor seed makes the initial weights
+  reproducible. `"torch"` is the `nn.Linear` default. `"glorot"` is the Keras
+  `Dense` default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. `zero_shift_networks=True` starts every `CS` shift
   at 0.
-- **Network widths and `activation=`** follow the default classes of the PyTorch
-  reference, for parity. The `VC` head has no counterpart there. `"sigmoid"` and
-  `"tanh"` are the paper's activations.
+- **Network widths and `activation=`** follow the default classes of the
+  PyTorch reference, for parity. The `VC` head has no counterpart there.
+  `"sigmoid"` and `"tanh"` are the paper's activations.
 - **`batch_norm=` is off**, because neither reference uses it. When on, it
   needs more than one row per batch, and inference needs `eval()` mode. `fit`
   and `load` leave the flow there.
-- **`marginal_init=` is off.** Only the fit that calibrates a node applies
-  it, so a node that `fit_classical` calibrated ignores it.
-- **`fit_classical` is one full-batch run with no chunks.** `converged` means
-  that L-BFGS and the Newton steps stopped on their own
-  ([fitting.md](fitting.md)).
 - **The transform domain** is `transforms.BOUND`, a constant. The order of the
   Bernstein coefficients is in [zuko-upstream.md](zuko-upstream.md).
-- **A centered `VC` term needs a propensity column** in the training frame
-  ([varying-coefficients.md](varying-coefficients.md)).

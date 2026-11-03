@@ -26,10 +26,9 @@ This is the observed-to-latent direction. It is Eq. 2 of the paper,
 $F_{X\mid\mathrm{pa}}(x)=F_U\big(h(x\mid\mathrm{pa})\big)$, and in code it is
 `u = h(x) + shift`.
 
-The direction matters for cost. Training evaluates $h$ directly to score the
-likelihood, which is cheap. Sampling runs the inverse
-$x_i = h^{-1}(u_i \mid \mathrm{pa})$. That inverse has no closed form, so
-bracketed bisection solves it, and sampling is the more expensive direction.
+Training evaluates $h$ directly to score the likelihood, which is cheap.
+Sampling runs the inverse $x_i = h^{-1}(u_i \mid \mathrm{pa})$, which has no
+closed form: bracketed bisection solves it, so sampling costs more.
 
 Together the $h$'s form one triangular flow. Each variable depends only on its
 causal parents $\mathrm{pa}(x_i)$, which is a subset of its predecessors. The
@@ -89,8 +88,9 @@ $$
 
 Each node declares its transformation as an additive formula of terms. The
 formula is the node's first argument, a `+` sum of terms. Each constructor
-names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`, `VC`
-are the classes `Intercept`, `LinearShift`, `ComplexShift`, `VaryingCoefficient`.
+names the parents its term depends on. The paper's symbols `I`, `LS`, `CS`,
+`VC` are the classes `Intercept`, `LinearShift`, `ComplexShift`,
+`VaryingCoefficient`.
 
 | formula for a continuous node $x_3$ | $u_3 = h(x_3 \mid \mathrm{pa})$ |
 |---|---|
@@ -136,9 +136,8 @@ continuous node:
 The keyword arguments of the transform class go in `transform_kwargs`,
 `I(transform="spline", transform_kwargs={"bins": 16})`. Each transform
 pre-scales the data from the training `range_q` and $1 - $`range_q` quantiles
-onto a fixed domain.
-`range_q` is a transform option with default 0.05, and `range_q=0` uses the
-minimum and maximum. Ordinal nodes have no transform to pick.
+onto a fixed domain; `range_q=0` uses the minimum and maximum. Ordinal nodes
+have no transform to pick.
 
 **`input_transform=` on `I`, `CS`, `VC`** transforms that term's continuous
 network inputs, with statistics frozen at the first fit: `"minmax"`,
@@ -157,16 +156,15 @@ $$
 P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 $$
 
-with increasing cutpoints $\vartheta$ and $s$ the total shift. The model subtracts
-the shift where a continuous node adds it. [notation.md](notation.md) states
+with increasing cutpoints $\vartheta$ and $s$ the total shift. The model
+subtracts the shift where a continuous node adds it.
+[notation.md](notation.md) states
 the convention. [interpretation.md](interpretation.md) shows what it does to
 the sign of a coefficient.
 
-The log-probability of an observed level is the difference of two sigmoids.
-The code computes it in log space with `logsigmoid` and a stable
-`log(1 - exp(x))`, and per element it takes the better-conditioned side.
-The direct difference of two sigmoids has exactly zero gradient once they
-saturate in float32, and a node that starts there never recovers.
+The probability of an observed level is the difference of two sigmoids. The
+code evaluates it in log space, which keeps a gradient where both sigmoids
+saturate ([`ordinal_log_prob`][tramdag.transforms.ordinal_log_prob]).
 
 Parents enter every network as features: a continuous parent raw, in one
 column; an ordinal parent one-hot, in one column per level. Abduction is exact

@@ -5,8 +5,9 @@ identities, warm start, and serialization.
 
 The recovery bar (corr(beta_hat, beta_true) >= 0.9) is the regression guard
 against "expressive but unestimated": the unregularized ``CS(on, x...)``
-reduced form measures ~0.5 on this task class, so the
-bar is what the term exists to clear.
+reduced form measures about 0.6 on this task class
+(``test_cs_reduced_form_falls_short_of_the_bar``), so the bar is what the
+term exists to clear.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -222,8 +223,8 @@ def test_nesting_large_penalty_matches_classical_ls(vc_hetero):
 def test_recovery_bar_on_hetero_dgp(vc_hetero):
     """THE acceptance bar: corr(beta_hat, beta_true) >= 0.9 at
     n = 5000 on the heterogeneous-effect DGP, default penalty. The
-    unregularized CS(on, x...) workaround measures ~0.5 on this task class —
-    this test is the regression guard against 'expressive but unestimated'.
+    unregularized CS(on, x...) workaround measures about 0.6 on this task
+    class; this test is the regression guard against 'expressive but unestimated'.
 
     beta0 is the interpretable main effect, the mean of beta(x) over the
     training rows (-0.98 here, b0 = -1). Measured -1.16 on linux and -1.22 on
@@ -242,6 +243,23 @@ def test_recovery_bar_on_hetero_dgp(vc_hetero):
     assert corr >= 0.9, f"recovery corr {corr:.3f} < 0.9"
     b0 = vc_hetero["truth"]["b0"]
     assert float(flow.nodes["Y"].shifts["T"].beta0) == pytest.approx(b0, abs=0.3)
+
+
+@pytest.mark.slow
+def test_cs_reduced_form_falls_short_of_the_bar(vc_hetero):
+    """The unregularized CS reduced form, read out as the latent difference
+    between the arms, stays well below the bar that VC clears on the same
+    protocol (measured 0.58 to 0.62 over init seeds 0 to 2).
+    """
+    df = vc_hetero["draw"](5000, 100)
+    test = vc_hetero["draw"](2000, 500)
+    spec = {**_vc_spec(), "Y": ContinuousNode(CS("X1", "X2", "X3", "T"))}
+    flow = CausalFlowDAG(spec, seed=0)
+    flow.fit(df.iloc[:4500], epochs=300, learning_rate=1e-2, batch_size=512, seed=0)
+    u1 = flow.abduct(test.assign(T=1.0), seed=0)["Y"].to_numpy()
+    u0 = flow.abduct(test.assign(T=0.0), seed=0)["Y"].to_numpy()
+    corr = float(np.corrcoef(u1 - u0, vc_hetero["beta"](test))[0, 1])
+    assert corr < 0.8, f"the CS reduced form reaches corr {corr:.3f}"
 
 
 def test_vc_continuous_treatment():
@@ -269,6 +287,24 @@ def test_vc_continuous_treatment():
     assert flow.sample(50, do={"D": 1.0}, seed=0).shape == (50, 3)
 
 
+def test_warm_start_ignores_the_global_rng(ls_chain):
+    """The twin's start is seeded, so warm_start is a function of the data."""
+    df = ls_chain["draw"](1000, 3)
+    spec = {
+        "x1": ContinuousNode(),
+        "x2": ContinuousNode(LS("x1")),
+        "t": OrdinalNode(2, LS("x1") + LS("x2")),
+        "y": OrdinalNode(4, VC("x1", t="t") + VC(t="x2")),
+    }
+    starts = []
+    for state in (1, 2):
+        torch.manual_seed(state)
+        flow = CausalFlowDAG(spec, seed=0)
+        flow.nodes["y"].warm_start(df)
+        starts.append([m.beta0.item() for m in flow.nodes["y"].shifts.values()])
+    assert starts[0] == starts[1]
+
+
 def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
     """Both treatment kinds start at the all-LS MLE, which recovers the truth."""
     df = ls_chain["draw"](4000, 3)
@@ -292,3 +328,19 @@ def test_warm_start_sets_beta0_to_the_classical_treatment_effect(ls_chain):
     assert shifts["x2"].beta0.item() == pytest.approx(truth["beta_y_x2"], abs=0.1)
     with pytest.raises(ValueError, match="node 'x2' has no VC term"):
         flow.nodes["x2"].warm_start(df)
+
+
+def test_flow_warm_start_covers_the_vc_nodes_only(ls_chain):
+    """One call warm-starts each VC node; a flow without one gives an empty dict."""
+    df = ls_chain["draw"](1000, 3)
+    spec = {
+        "x1": ContinuousNode(I(transform="affine")),
+        "t": OrdinalNode(2, LS("x1")),
+        "y": OrdinalNode(4, VC("x1", t="t")),
+    }
+    flow = CausalFlowDAG(spec, seed=0)
+    reports = flow.warm_start(df)
+    assert list(reports) == ["y"]
+    assert flow.nodes["y"].shifts["t"].beta0.item() != 0.0
+    plain = CausalFlowDAG({"x1": spec["x1"], "t": spec["t"]}, seed=0)
+    assert plain.warm_start(df) == {}

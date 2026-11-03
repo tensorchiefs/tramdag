@@ -1,78 +1,50 @@
 # Notebooks
 
-All notebooks in this repo are [jupytext](https://github.com/mwouts/jupytext)
-**percent-format `.py` files**: plain Python with `# %%` cell markers and
-markdown in `# %% [markdown]` cells. The `.py` file is always the **source of
-truth**.
+The notebooks are [jupytext](https://jupytext.readthedocs.io) percent-format
+`.py` files: plain Python with `# %%` cell markers and markdown in
+`# %% [markdown]` cells. The `.py` file is the source of truth.
 
 | notebook | what it is |
 |---|---|
-| `demo_tram_dag_colab.py` | the introduction and the showcase in one: the paper's bimodal VACA benchmark, L1 to L3, each checked against the known truth ([open in Colab](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)) |
-| `training_strategies.py` | every shipped fitting recipe on one workload, from the API side: `fit`'s own records, plain Adam, two phases, `EarlyStopping`, per-node stops, a `Callback` of your own, an optimizer factory, one node alone, and the runtime scoreboard |
-| `additive_vs_joint_ci.py` | joint vs additive complex intercept, and reading per-parent effects out of the additive one with `intercept_contributions` |
+| `demo_tram_dag_colab.py` | the introduction: the paper's bimodal VACA benchmark, L1 to L3, each checked against the known truth ([open in Colab](https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb)) |
+| `training_strategies.py` | every shipped fitting recipe on one workload: `fit`'s records, plain Adam, two phases, `EarlyStopping`, per-node stops, a custom `Callback`, an optimizer factory, one node alone, and the runtimes |
+| `fit_strategies_benchmark.py` | `fit` per node, in series and in processes, against `fit_jointly`, each with and without a plateau schedule: runtime, convergence, validation NLL and an intervention error |
+| `additive_vs_joint_ci.py` | joint against additive complex intercept, and per-parent effects from the additive one with `intercept_contributions` |
 | `varying_coefficients.py` | heterogeneous treatment effects: the `VC` head, `varying_coef`, the modifier scan and propensity centering, all scored against a known `beta(x)` |
-| `classical_fit_tram_dag.py` | `fit_classical` on all-`ls` models, opening with plain logistic regression on `MASS::birthwt` (a 2-level ordinal node) checked against R `glm`: the converged MLE against `statsmodels` / R, the same regression as a lone `Node`, and the classical-fit-then-keep-training warm start |
+| `classical_fit_tram_dag.py` | `fit_classical` on all-`LS` models against `statsmodels` and R: logistic regression on `MASS::birthwt`, the same regression as a lone `Node`, and the warm start |
 
-`classical_fit_tram_dag.R` is not a notebook. It is the R half of
-`classical_fit_tram_dag.py`. It fits every classical reference that the
-notebook holds as a constant, in one script, so the numbers can be re-checked
-instead of trusted. It needs `tram`, which CI does not install, so run it by
-hand:
-`Rscript notebooks/classical_fit_tram_dag.R` from the repo root.
+`classical_fit_tram_dag.R` is the R half of `classical_fit_tram_dag.py`. It
+fits every R reference that the notebook holds as a constant. It needs
+`tram`, which CI does not install, so run it by hand from the repository
+root: `Rscript notebooks/classical_fit_tram_dag.R`.
 
-The docs workflow executes every notebook here, on pushes to `main` and to
-`dev-*` branches. That execution is what keeps them working against the
-API. A notebook that is not in that workflow's loop does not belong in
-this directory.
-
-Data a notebook reads lives in `notebooks/data/`. Its README gives the
-provenance.
+The docs workflow executes every notebook on pushes to `main` and to `dev-*`
+branches. A notebook that is not in that workflow does not belong here.
+`notebooks/data/README.md` gives the provenance of the data that the
+notebooks read.
 
 ## Rules
 
-- **Do not edit `.ipynb` files directly.** Edit the `.py` and regenerate.
-- **Do not commit `.ipynb` files.** They are git-ignored (embedded base64
-  outputs ruin diffs). The single exception is `demo_tram_dag_colab.ipynb`,
-  tracked output-stripped, only so that the Open-in-Colab badge works;
-  regenerate it as described below whenever its `.py` changes.
+- Do not edit `.ipynb` files. Edit the `.py` and regenerate.
+- Do not commit `.ipynb` files. Git ignores them. The exception is
+  `demo_tram_dag_colab.ipynb`, tracked without outputs for the Colab badge.
+  Regenerate it when its `.py` changes.
 
 ## Working with the notebooks
 
-**VS Code / Cursor**: open the `.py` directly. With the Python and Jupyter
-extensions, every `# %%` cell gets a "Run Cell" link. Pick the `.venv`
-interpreter that `uv sync` created. You need no conversion.
+In VS Code, open the `.py`: every `# %%` cell gets a "Run Cell" link. In
+JupyterLab, right-click the `.py` and select *Open With*, then *Notebook*.
+The edits save to the `.py`.
 
-**Classic Jupyter / JupyterLab**: generate a local `.ipynb` (stays untracked):
-
-```bash
-uvx jupytext --to ipynb notebooks/training_strategies.py
-```
-
-**Edit in a synced copy.** The `.py` stays the source of truth. The cleanest
-way needs no `.ipynb` at all. In JupyterLab or Jupyter Notebook, right-click
-the `.py`, then *Open With*, then *Notebook*. Edits save straight back to the
-`.py`. For a real paired `.ipynb`, use jupytext with
-`--set-formats ipynb,py:percent` and then `--sync`. Your interactive edits then
-flow back into the tracked `.py`. The paired `.ipynb` stays git-ignored.
-`--set-formats` adds `ipynb` to the `.py` header. Revert that one-line header
-change before you commit, because the committed notebooks pair to
-`py:percent` only.
-
-**Headless check** (runs all cells top-to-bottom, plots suppressed):
+Run a notebook headless from the repository root:
 
 ```bash
 MPLBACKEND=Agg uv run python notebooks/training_strategies.py
 ```
 
-**Regenerate the tracked Colab demo ipynb** after editing its `.py`. Use
-`--update`, which keeps the existing cell identifiers. Without it, jupytext
-draws fresh random identifiers and the diff shows every cell as changed even
-when no content moved.
+Regenerate the tracked Colab notebook after you edit its `.py`. `--update`
+keeps the cell identifiers, so the diff shows only the changed cells:
 
 ```bash
 uvx jupytext --update --to ipynb notebooks/demo_tram_dag_colab.py
 ```
-
-(The committed notebook holds no outputs, and `--update` keeps it that way.)
-
-More on the format: [jupytext documentation](https://jupytext.readthedocs.io).

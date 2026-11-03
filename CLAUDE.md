@@ -1,8 +1,7 @@
 # CLAUDE.md
 
 `tramdag` is the PyTorch reference implementation of TRAM-DAGs (Sick & Dürr,
-CLeaR 2025): one triangular normalizing flow whose sparsity is a causal DAG,
-built on zuko. `README.md` says what it is; this file says how to work in it.
+CLeaR 2025). `README.md` says what it is; this file says how to work in it.
 
 ## Commands
 
@@ -11,7 +10,7 @@ uv sync                                        # install from the pinned uv.lock
 uv run pytest -q -m "not slow"                 # fast suite (PR CI)
 uv run pytest -q                               # full suite (nightly)
 uvx ruff check . && pre-commit run --all-files # the hooks CI enforces
-uv run mkdocs build --strict                   # docs; README.md becomes index.md
+uv run mkdocs build --strict                   # docs; README.md is index.md
 MPLBACKEND=Agg uv run python notebooks/<name>.py   # a notebook, headless
 cd experiments && uv run python -m triangle atan-cs   # one replication
 cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
@@ -32,9 +31,10 @@ cd experiments && uv run python -m check triangle-atan-cs  # vs ground truth
   new folder.
 - `notebooks/*.py` are jupytext sources; git tracks only
   `demo_tram_dag_colab.ipynb`, and you regenerate it from its `.py`.
-- `docs/` are the guides. Each subject has one home (`README.md` lists them);
-  examples live in the notebooks only; docstrings document functionality and
-  implementation, not background.
+- `docs/` are the guides: usage and maths background. Each subject has one
+  home (`README.md` lists them); link it, do not repeat it. Examples live in
+  the notebooks only. Docstrings document functionality and implementation,
+  not background. No anecdotes or history anywhere.
 
 ## Conventions
 

@@ -2,6 +2,7 @@
 
 # %% imports ---------------------------------------------------------------------------
 import sys
+from collections import defaultdict
 
 import matplotlib as mpl
 import numpy as np
@@ -73,7 +74,8 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
         epochs=30,
         batch_size=100,
         validation_data=df,
-        callbacks=lambda name: EarlyStopping(patience=8),
+        callbacks=defaultdict(lambda: EarlyStopping(patience=8)),
+        seed=0,
     )
     axes = plot_marginals(flow, df, ncols=2, seed=0, path=tmp_path / "m.png", title="m")
     assert axes.flat[0].figure._suptitle.get_text() == "m"
@@ -89,7 +91,7 @@ def test_marginals_and_training_draw_from_a_fitted_flow(ls_chain, tmp_path):
     bests = sorted(nd.history["best_epoch"] for nd in flow.nodes.values())
     assert sorted(ax.collections[0].get_offsets()[:, 0]) == bests
     flow2 = CausalFlowDAG(spec, seed=0)
-    flow2.fit(df, epochs=3, batch_size=100)
+    flow2.fit(df, epochs=3, batch_size=100, seed=0)
     assert len(plot_training(flow2).lines) == 1
     with pytest.raises(TypeError, match="stops"):
         plot_training(flow, stops={"a": 1})
@@ -119,8 +121,8 @@ def test_the_validation_curve_keeps_its_own_epochs(ls_chain):
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=3, batch_size=100)
-    flow.fit(df, epochs=2, batch_size=100, validation_split=0.2)
+    flow.fit(df, epochs=3, batch_size=100, seed=0)
+    flow.fit(df, epochs=2, batch_size=100, validation_split=0.2, seed=0)
     assert flow.history["val_epoch"] == [4, 5]
     ax = plot_training(flow)
     drawn = {
@@ -145,7 +147,7 @@ def test_plots_draw_into_given_axes_and_take_a_style(ls_chain):
     assert {t.get_color() for t in left.texts if t.get_text() == "x1"} == {"white"}
     df = ls_chain["draw"](200, 1)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, validation_split=0.2)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, validation_split=0.2, seed=0)
     assert plot_training(flow, ax=right) is right
     fig2, panels = plt.subplots(1, 2)
     out = plot_marginals(flow, df, ax=panels, legend="figure", title=None)
@@ -169,7 +171,7 @@ def test_plot_varying_coef_draws_the_vc_effect(ls_chain):
         "t": OrdinalNode(2),
         "y": ContinuousNode(LS("x") + VC("x", t="t")),
     }
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=2, seed=0)
     ax = plot_varying_coef(flow, df, "y", by="x")
     line = ax.get_lines()[0]
     grid = pd.DataFrame({"x": line.get_xdata()})
@@ -187,7 +189,7 @@ def test_plot_varying_coef_refuses_a_non_modifier(by):
         "t": OrdinalNode(2),
         "y": ContinuousNode(LS("x") + VC("x", t="t")),
     }
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=1, seed=0)
     with pytest.raises(ValueError, match="not a modifier"):
         plot_varying_coef(flow, df, "y", by=by)
 
@@ -198,7 +200,7 @@ def test_plot_training_survives_a_diverged_epoch(ls_chain):
 
     df = ls_chain["draw"](200, 2)[["x1", "x2"]]
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))}
-    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=20, validation_split=0.2)
+    flow = CausalFlowDAG(spec, seed=0).fit(df, epochs=20, validation_split=0.2, seed=0)
     flow.nodes["x2"].history["val"][12] = math.inf
     lo, hi = plot_training(flow).get_ylim()
     assert math.isfinite(lo)

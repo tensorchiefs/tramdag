@@ -1,4 +1,4 @@
-# Varying-coefficient treatment effects: `VC(*modifiers, t=, penalty=, propensity=)`
+# Varying-coefficient treatment effects
 
 A `VC` term gives a node a treatment-effect head with its own bias-variance
 budget. It contributes $\beta(x)\, x_t$ with
@@ -11,8 +11,8 @@ which is the one place for the code, or in the tests that the text names.
 
 Modifiers may appear twice in a node, as prognostic parents through `CS` or
 `LS` and as effect modifiers through `VC`. The design intends this pattern.
-Only the treatment named by `t=` owns its edge, and a second term that declares it
-raises an error.
+Only the treatment named by `t=` owns its edge, and a second term that
+declares it raises an error.
 
 ## Why not a joint `CS` over treatment and modifiers
 
@@ -21,10 +21,12 @@ Any shift decomposes as $s(x,t) = s(x,0) + [s(x,1) - s(x,0)]\, t$. But the
 `CS` form has no effect-specific regularization. The likelihood rewards a
 good average fit of $s(x,t)$, and nothing rewards a smooth difference between
 the arms. So the read-out is the difference of two jointly fitted,
-unregularized networks. It amplifies random variation. On the `vc_hetero` process
-the `VC` term clears the recovery bar of the tests (see [Validation](#validation)).
-The `CS` reduced form reaches a clearly lower correlation on the same
-protocol, although the model is in-class. Causal forests and R-learners
+unregularized networks. It amplifies random variation. On the `vc_hetero`
+process the `VC` term clears the recovery bar of the tests (see
+[Validation](#validation)).
+The `CS` reduced form stays below a correlation of 0.8 on the same
+protocol, although the model is in-class
+(`test_cs_reduced_form_falls_short_of_the_bar`). Causal forests and R-learners
 do not work because they target the effect. They work because they
 regularize it [@athey2019grf; @nie2021quasioracle]. `VC` brings that
 ingredient into the TRAM framework.
@@ -49,7 +51,8 @@ ingredient into the TRAM framework.
 - **Warm start.** `flow.nodes[name].warm_start(train_df)` fits the all-`LS`
   version of the node classically and copies the treatment weight into
   `beta0`. Call it before `fit`. Training then starts at the classical
-  answer and learns only deviations.
+  answer and learns only deviations. `flow.warm_start(train_df)` does this
+  for every node with a `VC` term and returns the reports by node name.
 - **Treatments.** Continuous or binary ordinal, entering as its 0/1 level so
   that $\beta$ is the identified level-1-against-0 contrast. The term is
   linear in the treatment.

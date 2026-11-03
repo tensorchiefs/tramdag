@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
         fetch-depth: 0
-    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e   # v10.3.2
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2   # v10.3.3
     - name: Build the sdist and wheel
       run: uv build
     - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7.0.2
@@ -54,11 +54,12 @@ jobs:
     - name: Create the GitHub release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: >-
-        gh release create '${{ github.ref_name }}'
-        --repo '${{ github.repository }}'
-        --title '${{ github.ref_name }}'
-        --notes 'See CHANGELOG.md for this release.'
+        TAG: ${{ github.ref_name }}
+      run: |
+        pre=()
+        if [[ $TAG =~ (a|b|rc)[0-9]+$ ]]; then pre=(--prerelease); fi
+        gh release create "$TAG" --repo '${{ github.repository }}' --title "$TAG" \
+          --notes 'See CHANGELOG.md for this release.' "${pre[@]}"
     - name: Upload the signed artifacts
       env:
         GITHUB_TOKEN: ${{ github.token }}

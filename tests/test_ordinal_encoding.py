@@ -81,7 +81,7 @@ def test_a_non_level_ordinal_value_is_refused_at_every_entry_point(bad):
     """1.5, 9 and -1 are refused by name, never truncated to a level."""
     spec, df = _ordinal_parent_frame(n=200)
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)
+    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2, seed=0)
 
     off = df.assign(p=bad)
     for call in (flow.log_prob, flow.abduct, lambda d: flow.nll(d)):
@@ -97,7 +97,7 @@ def test_a_latent_frame_skips_the_level_check():
     """``sample(u=...)`` carries node-named columns of real latents."""
     spec, df = _ordinal_parent_frame(n=200)
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)
+    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2, seed=0)
     u = flow.abduct(df, seed=0)
     assert not np.allclose(u["p"], np.round(u["p"]))
     back = flow.sample(u=u)
@@ -109,6 +109,6 @@ def test_a_level_column_of_any_numeric_dtype_reads_the_same(dtype):
     """A frame built row by row or read as mixed CSV holds ``object`` levels."""
     spec, df = _ordinal_parent_frame(n=200)
     flow = CausalFlowDAG(spec, seed=0)
-    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2)
+    flow.fit(df, epochs=2, batch_size=200, learning_rate=1e-2, seed=0)
     other = df.assign(p=df["p"].astype("int64").astype(dtype))
     assert flow.nll(other) == flow.nll(df)

@@ -15,18 +15,16 @@
 # # Training strategies: driving `fit` from the API side
 #
 # `fit` runs one minibatch Adam loop per node and keeps the final weights. It
-# owns three things only: the loop, the per-epoch validation score, and
-# progress printing. Everything else is the caller's, through `optimizer=` and
-# `callbacks=`.
+# owns the loop, the per-epoch validation score and the progress output. The
+# caller controls the rest through `optimizer=` and `callbacks=`.
 #
-# This notebook runs every shipped strategy on one small workload, so the
-# comparison is like for like. It prints what each strategy leaves in
-# `flow.history`. At the end, a scoreboard compares the runtime of the recipes
-# on this workload. The table in [`docs/fitting.md`](../docs/fitting.md) tells
-# which strategy to pick.
+# This notebook runs every shipped strategy on one small workload and ends
+# with a runtime scoreboard. The table in
+# [`docs/fitting.md`](../docs/fitting.md) tells which strategy to pick.
 
 # %%
 import time
+from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -45,9 +43,9 @@ REPO = next(
 )
 
 # %% [markdown]
-# The data is the tracked 1000-row VACA sample, drawn from the same process as
-# the Colab demo. The repo root is found from `pyproject.toml`, so the notebook
-# runs from the repo root or from `notebooks/`.
+# The data is the tracked VACA sample of `notebooks/data/`, from the process
+# of the Colab demo. The notebook runs from the repository root or from
+# `notebooks/`.
 
 # %%
 df = pd.read_csv(REPO / "notebooks" / "data" / "vaca.csv")
@@ -91,19 +89,10 @@ print(f"{len(train)} train rows, {len(val)} validation rows")
 # %% [markdown]
 # ## 1. What `fit` records without any callback
 #
-# Pass `validation_data=` and `fit` scores each node's validation NLL once per
-# epoch. `EarlyStopping` reads it from `node.history`. Four keys appear in
-# `flow.history`:
-#
-# - `train`, one dict of per-node negative log-likelihood per epoch,
-# - `val`, the same for the validation rows, only when validation is on,
-# - `val_epoch`, the train epoch each `val` entry belongs to,
-# - `lr`, each node's rates `{group index: lr}` after each epoch, recorded
-#   after the callbacks ran, so a schedule's decision for that epoch is what
-#   gets stored.
-#
-# Each node keeps its own history in `flow.nodes[name].history`, one entry
-# per epoch. `flow.history` is a view over them.
+# With `validation_data=`, `fit` scores the validation NLL of each node once
+# per epoch. `flow.history` holds one dict of per-node values per epoch, for
+# the keys that the docstring of `CausalFlowDAG.history` lists.
+# It is a view over the per-node `flow.nodes[name].history`.
 
 # %%
 flow = build()
@@ -139,11 +128,10 @@ else:
 # %% [markdown]
 # ## 2. Plain Adam
 #
-# One rate, one loop, and the weights at the last epoch. This is the baseline
-# every other recipe is measured against. An all-`LS` model trained this way
-# to convergence reaches the classical maximum-likelihood estimate, which
-# [`classical_fit_tram_dag.py`](classical_fit_tram_dag.py) checks against
-# `statsmodels` and R.
+# One rate, one loop, and the weights of the last epoch: the baseline for
+# the other recipes. An all-`LS` model trained this way to convergence
+# reaches the maximum-likelihood estimate
+# ([`classical_fit_tram_dag.py`](classical_fit_tram_dag.py)).
 
 # %%
 flow = build()
@@ -155,9 +143,9 @@ history_plain = [sum(d.values()) for d in flow.history["val"]]
 # %% [markdown]
 # ## 3. Two phases
 #
-# Calling `fit` again continues training. Each call builds a new optimizer,
-# so a second call at a lower rate is a coarse-then-fine
-# schedule with no callback at all. History accumulates across the calls.
+# A second `fit` call continues the training with a new optimizer. A second
+# call at a lower rate is thus a coarse-then-fine schedule. The history
+# accumulates over the calls.
 
 # %%
 flow = build()
@@ -174,14 +162,10 @@ assert len(flow.history["train"]) == 300, "the second fit did not continue the h
 # %% [markdown]
 # ## 4. `EarlyStopping`: keep the best weights
 #
-# The loop keeps the final weights. An all-`LS` model wants the final weights,
-# because they are the MLE ([`docs/fitting.md`](../docs/fitting.md)). A
-# flexible model does not always want them. It can reach a better validation
-# score part way through and then drift. `EarlyStopping` snapshots each node's
-# best epoch and loads it back at the end of that node's fit.
-#
-# The check below confirms it. After the fit, each node's validation score
-# equals the *minimum* over its recorded epochs, not the last one.
+# A flexible model can reach its best validation score part way through and
+# then drift. `EarlyStopping` keeps a copy of each node's best epoch and
+# loads it at the end of that node's fit. After the fit, the validation score
+# of each node equals the minimum over its epochs.
 
 # %%
 flow = build()
@@ -212,26 +196,21 @@ for name, nd in flow.nodes.items():
 # %% [markdown]
 # ## 5. `EarlyStopping(patience=)`: stop each node on its own
 #
-# Without `patience` each node spends its whole budget and only the
-# restoration happens. With it, a node also stops once its best epoch is that
-# many epochs old. Nodes converge at different speeds, so they stop at
-# different epochs.
-#
-# One shared instance resets at each node's fit begin, so its attributes
-# describe the last node only. A function of the node name,
-# `callbacks=lambda name: ...`, gives each node its own instance.
+# With `patience`, a node also stops once its best epoch is that many epochs
+# old, so each node stops at its own epoch. A dict by node name gives each
+# node its own instance; a `defaultdict` makes one for every node.
 
 # %%
 flow = build()
 t0 = time.perf_counter()
-stoppers = {}
+stoppers = defaultdict(lambda: EarlyStopping(patience=25))
 flow.fit(
     train,
     epochs=CEILING,
     batch_size=256,
     learning_rate=1e-2,
     validation_data=val,
-    callbacks=lambda name: stoppers.setdefault(name, EarlyStopping(patience=25)),
+    callbacks=stoppers,
 )
 record("EarlyStopping(25)", flow, time.perf_counter() - t0)
 
@@ -254,11 +233,9 @@ plt.show()
 # %% [markdown]
 # ## 6. Writing your own
 #
-# The callback contract is in [`docs/fitting.md`](../docs/fitting.md): every
-# hook receives the node, a bare callable in a list is an `on_epoch_end` hook,
-# and a `Callback` subclass gets the other two hooks. `Plateau` below builds
-# torch's `ReduceLROnPlateau` on each node's optimizer and steps it on the
-# validation score `fit` has already put in `node.history["val"]`.
+# [`docs/fitting.md`](../docs/fitting.md) gives the callback hooks. `Plateau`
+# builds torch's `ReduceLROnPlateau` on the optimizer of each node and steps
+# it on `node.history["val"]`.
 
 
 # %%
@@ -298,9 +275,8 @@ for name, rates in flow.history["lr"][-1].items():
     assert rates[0] < 1e-2, f"the scheduler never decayed the rate of {name}"
 
 # %% [markdown]
-# A one-line callable is often enough. This one records each node's
-# validation NLL after every epoch. Put it in a list: on the flow a callable
-# alone is a function of the node name.
+# A callable in a list is an `on_epoch_end` hook. This one records the
+# validation NLL of each node after every epoch.
 
 # %%
 trace = []
@@ -315,8 +291,8 @@ assert len(trace) == 5 * len(SPEC)
 
 # %% [markdown]
 # `optimizer=` takes a factory `f(node)`. This one gives the networks weight
-# decay in their own parameter group. `flow.history["lr"]` records the rate of
-# each group, so it shows both groups of every node.
+# decay in their own parameter group. `flow.history["lr"]` shows both groups
+# of every node.
 
 
 # %%
@@ -337,10 +313,9 @@ assert all(set(rates) == {0, 1} for rates in flow.history["lr"][-1].values())
 # %% [markdown]
 # ## 7. One node alone
 #
-# A node is a TRAM regression of one variable on its parents and fits without
-# the DAG. It takes its name, its node spec and a parent schema,
-# `{parent: "continuous" | n_levels}`. The frame needs only the node's own
-# column and its parents' columns.
+# A node is a TRAM regression of one variable on its parents and fits
+# without the DAG. It takes its name, its node spec and a parent schema,
+# `{parent: "continuous" | n_levels}`.
 
 # %%
 x3 = Node("x3", SPEC["x3"], {"x1": "continuous", "x2": "continuous"})
@@ -356,11 +331,10 @@ assert abs(x3.nll(val) - min(x3.history["val"])) < 1e-4
 # %% [markdown]
 # ## 8. The scoreboard: a runtime comparison
 #
-# The board has one workload, one seed, one machine and every recipe. Each row
-# gives the wall-clock seconds and the node-epochs (summed over the nodes). It
-# also gives the validation NLL and the gap to the best NLL on the board. A
-# recipe that stops itself wins on seconds only if its NLL also stays near the
-# best. The absolute seconds apply to this machine only.
+# Each row gives the wall-clock seconds, the node-epochs summed over the
+# nodes, the validation NLL and its gap to the best recipe. A recipe that
+# stops early wins on seconds only if its NLL stays near the best. The
+# seconds apply to this machine only.
 
 # %%
 board = pd.DataFrame(scoreboard).set_index("strategy")
@@ -391,8 +365,8 @@ assert nll_best <= nll_plain + 1e-6, (
 
 # %% [markdown]
 # The restored `EarlyStopping` score lies below the minimum of the plain Adam
-# curve. Each node restores its own best epoch, but the summed curve has one
-# epoch for all nodes.
+# curve: each node restores its own best epoch, while the summed curve has
+# one epoch for all nodes.
 
 # %%
 assert nll_best <= min(history_plain) + 1e-6

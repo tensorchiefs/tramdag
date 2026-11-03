@@ -68,17 +68,16 @@ padded with dashes to column 88:
 ```
 
 A module carries only the sections it has. These eight are the only section
-names. There are no sub-section banners of any other kind. Notebooks are
-jupytext `py:percent` files, and they keep their narrative cell structure
-instead.
+names. There are no sub-section banners of any other kind. Notebooks keep
+their narrative cell structure instead.
+
+Read [`docs/architecture.md`](docs/architecture.md) before you change
+anything in `src/tramdag/`.
 
 ## Notebooks
 
 `notebooks/*.py` are jupytext sources. The rules for them are in
 [`notebooks/README.md`](notebooks/README.md).
-
-Read [`docs/architecture.md`](docs/architecture.md) before you change
-anything in `src/tramdag/`.
 
 ## Conventions worth knowing
 
@@ -189,8 +188,6 @@ Workflows:
 - Torch opens as many intra-op threads as the machine reports, and `-n auto`
   already runs one worker per vCPU. Uncapped, the workers oversubscribe the
   CPUs and a run can stall. The jobs therefore cap the torch threads.
-- The diagrams job regenerates the views in `docs/architecture.md` and fails
-  when they are stale.
 - `docs.yaml` publishes the site per ref with mike: `main` at the site root as
   `latest`, every `dev-*` branch under its own version. The PDF is a
   convenience. Its step is `continue-on-error`, and the workflow republishes
@@ -209,12 +206,15 @@ Workflows:
   republish step reads the PDF from `gh-pages` at the ref directory.
   `docs.yaml` has `contents: write` and a full checkout because mike reads and
   writes the `gh-pages` branch.
-- `experiments.yaml` runs every experiment as one matrix job, from the YAML
-  configs, and posts the report as a commit comment. Concurrency cancels
-  superseded runs. `fail-fast` is off, so one drifting experiment does not hide
-  the rest. The CML action uploads the figures to its asset server, so no
-  branch holds generated images. It trains real models on the protocol of
-  `docs/paper-replication.md`, which lists the CI deviations.
+- The `replications` pre-push hook runs every experiment and its check
+  (`experiments/replicate.py`) when the pushed commits touch `src/`,
+  `experiments/` or `uv.lock`, so a moved number stops the push. It refuses
+  a working tree with uncommitted changes. `git push --no-verify` skips it.
+- `experiments.yaml` repeats the runs on CI as a sanity check, one matrix job
+  per variant from the YAML configs. Concurrency cancels superseded runs.
+  `fail-fast` is off, so one drifting experiment does not hide the rest. It
+  trains real models on the protocol of `docs/paper-replication.md`, which
+  lists the CI deviations.
 - The experiments jobs set `UV_NO_DEFAULT_GROUPS` for the same reason as the
   test job, and cap the torch threads to the cores of the runner.
 - The report step runs after a drifted run too, because the figures matter most

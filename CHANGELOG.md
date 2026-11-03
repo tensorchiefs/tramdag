@@ -1,3 +1,52 @@
+## v1.0.0rc3 (2026-11-03)
+
+### BREAKING CHANGE
+
+- the callable form f(name) of epochs, learning_rate and
+callbacks is gone. Use a dict or a defaultdict. A bare callable in
+callbacks is now an on_epoch_end hook, as in Node.fit.
+- CausalFlowDAG.fit(seed=s) no longer derives a shuffle seed
+per node index. Seeded per-node fits give other numbers. A node now fits
+as Node.fit with the same seed, independent of the other nodes.
+- a seeded construction no longer reseeds torch's global
+RNG. Pass seed= to fit, fit_jointly, sample and abduct for a
+reproducible run.
+- learning_rate now defaults to None. Giving it
+together with optimizer= raises ValueError. Before, fit ignored it.
+Without both, the default stays Adam at 1e-2. CausalFlowDAG.fit
+checks once, before any node fits.
+- fit and fit_jointly no longer check epochs, batch_size
+and verbose. They no longer refuse a callbacks entry that is a class or
+not callable. A Callback instance runs as it is. Anything else becomes
+an on_epoch_end hook. They still refuse two weight-restoring callbacks.
+CausalFlowDAG.fit still refuses an optimizer instance.
+
+### Feat
+
+- per-node fit arguments as a value or a dict
+- one shuffle stream from the fit seed
+- CausalFlowDAG.warm_start warm-starts every VC node
+- history_frame marks the restored epoch
+- **experiments**: VACA uses the reference min/max domain
+- seed each random act on its own
+- learning_rate and optimizer= exclude each other
+- fit_jointly trains all nodes with one optimizer
+
+### Fix
+
+- the missing-validation error names no single fit method
+- a per-node dict key that names no node raises
+- strict spec loading skips options that cannot act
+- warm_start starts its twin from a fixed seed
+- EarlyStopping reads each node's validation under fit_jointly
+
+### Refactor
+
+- build the fit optimizer in one place
+- drop the class special case of per-node arguments
+- drop the re-validation of fit arguments
+- delete the diagram generator
+
 ## v1.0.0rc2 (2026-11-02)
 
 ### BREAKING CHANGE

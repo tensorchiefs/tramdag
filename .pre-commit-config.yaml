@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.17.2
+  rev: v0.17.3
   hooks:
   - id: ruff-check
     args: [--fix]
@@ -43,7 +43,7 @@ repos:
     stages: [commit-msg]
 
 - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-  rev: v8.1.0
+  rev: v8.3.0
   hooks:
   - id: complexipy
     alias: complexipy-src
@@ -63,18 +63,26 @@ repos:
   - id: actionlint
 
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.13.5
+  rev: 0.13.6
   hooks:
   - id: uv-lock
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v4.19.2
+  rev: v4.19.3
   hooks:
   - id: commitizen
     stages: [commit-msg]
 
 - repo: local
   hooks:
+  - id: replications
+    name: replications match the ground truth
+    entry: uv run --no-sync python experiments/replicate.py
+    language: system
+    files: ^(src/|experiments/|uv\.lock$)
+    pass_filenames: false
+    require_serial: true
+    stages: [pre-push]
   - id: no-agent-attribution
     name: no agent attribution in the commit message
     entry: (?i)^(co-authored-by|assisted-by|generated-by|claude-session):|generated with

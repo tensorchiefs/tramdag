@@ -129,31 +129,20 @@ Two cases make the p-value less reliable:
 ## Using it
 
 `flow.effect_modifier_scan(df, node, t=)` runs the scan for the treatment
-`t` of `node`. It returns one row per candidate with `stat`, `p_value`,
-`crit_5pct` and `flag`, sorted by `stat`.
+`t` of `node` and returns one row per candidate, sorted by `stat`. By default
+it scans every node except `node`, `t` and the descendants of `t`. A modifier
+comes before the treatment, and a descendant would pick up the effect itself.
+A candidate does not have to be a parent. For a binary ordinal treatment the
+scan tests the level-1-against-0 contrast, and for a `VC` treatment its
+$\beta_0$.
 
-- `candidates=` lists the covariates to scan. By default it is every node
-  except `node`, `t` and the descendants of `t`. A modifier comes
-  before the treatment. A descendant would pick up the effect itself. A
-  candidate does not have to be a parent.
-- For a binary ordinal `LS` treatment, `t` resolves to the identified
-  contrast of level 1 against level 0. For a `VC` treatment it resolves to
-  $\beta_0$, the constant part of $\beta(x)$.
-- `column=` picks one score column by name, for example one level contrast
-  `"t[2]"` of a treatment with more than two levels.
-
-`flow.scores(df, node)` returns the scores themselves: one row for each row
-of `df`, and one column per interpretable shift coefficient of the node.
-
-- A continuous `LS` parent gives one column, named after the parent.
-- An ordinal `LS` parent gives one column per level of its one-hot
-  encoding, named `"{parent}[0]"`, `"{parent}[1]"` and so
-  on. A row's score goes to the column of the level that the row has.
-- A `VC` term gives one column for its $\beta_0$, named after the
-  treatment.
-- A `CS` term is a network with no single coefficient, so it has no column.
-
-The scores also serve influence analyses and robust standard errors.
+`flow.scores(df, node)` returns the scores themselves, one row per row of
+`df` and one column per interpretable shift coefficient of the node. A `CS`
+term has no single coefficient and so no column. The scores also serve
+influence analyses and robust standard errors. The
+[`effect_modifier_scan`][tramdag.scores.effect_modifier_scan] and
+[`node_scores`][tramdag.scores.node_scores] docstrings give the options and
+the column names.
 
 ## How the code computes the scores
 

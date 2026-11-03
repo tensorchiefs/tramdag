@@ -19,28 +19,24 @@ suggested order of attack is 4 → 1 → 3 → 2 → 5.
 gets the Jacobian by `torch.autograd.grad` in the forward pass. It therefore
 roughly doubles the training graph.
 
-It also makes the per-node loss un-`torch.compile`-able. Autograd in the
-forward pass gives a double backward, and `aot_autograd` does not support one.
-Therefore the op-count axis stays closed in eager mode.
+It also keeps the per-node loss out of `torch.compile`: autograd in the
+forward pass gives a double backward, which `aot_autograd` does not support.
 
 The derivative has a closed form: `f'(x) = order·Δθ` against the order−1 basis.
 zuko already computes it in `_offset_and_slope` for the tail slopes. An
 override is therefore small and needs no API change.
-`MonotonicRQSTransform` already has such an override. tramdag gets a free
-speedup and the `torch.compile` axis back.
+`MonotonicRQSTransform` already has such an override. The override removes
+the autograd call from the forward pass and makes the loss compilable.
 
 ## 2. Learnable/linear tails for `MonotonicRQSTransform`
 
 zuko pads the knot derivatives with `exp(0)=1`. It extrapolates as the
 identity outside `[-B, B]`. Therefore the tail slope stays fixed at 1 for
-every θ. This is the structural reason why `spline` consistently trails
-`bernstein` here, because ~10% of the data sits beyond the 5%/95% pre-scaling
-range.
+every θ, while the 5 % tails of the data sit beyond the pre-scaling range.
 
 Upstream, zuko can accept boundary derivatives of shape `(*, K+1)`, or it can
 take an opt-in `tails="linear"`. Identity tails are deliberate in the NSF
-design. The framing must therefore stay back-compatible. This change will
-delete the caveats and make `spline` a first-class transform choice.
+design, so the change must stay backward-compatible.
 
 ## 3. Public inverse of `_constrain_theta`
 
@@ -60,9 +56,8 @@ framing is "identity/linear initialization support", a standard flow trick.
 
 zuko's docstring says that θ has shape `(*, M-2)` for a degree-M polynomial.
 `n` unconstrained coefficients become `n+2` control points, which is degree
-`n+1`. The correct claim is therefore `(*, M-1)`. This off-by-one is a real
-replication trap: order 21 against the paper's `len_theta=20`, which is order
-19. The PR is trivial and an accept is near-certain.
+`n+1`. The correct claim is therefore `(*, M-1)`. The paper's
+`len_theta=20` is order 19, not order 21.
 
 ## 5. `Logistic` in `zuko.distributions`
 

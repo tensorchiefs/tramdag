@@ -10,8 +10,10 @@ read-outs and the tests read ``kind``, ``parents``, ``shifts``, ``intercept``,
 # %% imports ---------------------------------------------------------------------------
 from __future__ import annotations
 
+import contextlib
 import copy
 import pickle
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -158,6 +160,24 @@ def load_weights(module: nn.Module, state_dict: dict) -> None:
     module.load_state_dict(state_dict)
 
 
+@contextlib.contextmanager
+def seeded(seed: int | None, name: str):
+    """Draw the block's random numbers from a stream keyed on ``(seed, name)``.
+
+    The block runs in ``torch.random.fork_rng``, so torch's global RNG state
+    is the same after the block as before it. Without a seed the block draws
+    from torch's global stream.
+    """
+    if seed is None:
+        yield
+        return
+    with torch.random.fork_rng(devices=[]):
+        key = [seed, zlib.crc32(name.encode())]
+        state = np.random.SeedSequence(key).generate_state(1)[0]
+        torch.default_generator.manual_seed(int(state))
+        yield
+
+
 # %% public classes --------------------------------------------------------------------
 class Node(NodeFitMixin, nn.Module):
     r"""One TRAM regression of a variable on its parents, alone or in a flow.
@@ -186,6 +206,13 @@ class Node(NodeFitMixin, nn.Module):
         The parent schema, ``{parent: "continuous" | n_levels}``. It sizes
         the parent features: a continuous parent enters raw, an ordinal one
         one-hot over its levels.
+    seed : int | None, optional
+        If given, seeds the weight initialization from ``(seed, name)``. The
+        weights are then those of this node in ``CausalFlowDAG(spec,
+        seed=seed)`` with the default ``init``. Construction does not change
+        torch's global RNG state. Without a seed, the weights come from
+        torch's global RNG. A lone node always uses torch's default init;
+        ``init=`` exists on [`CausalFlowDAG`][tramdag.CausalFlowDAG] only.
 
     Attributes
     ----------
@@ -200,29 +227,36 @@ class Node(NodeFitMixin, nn.Module):
         The provenance that [`load`][tramdag.nodes.Node.load] fills.
     """
 
-    def __init__(self, name: str, node_spec: NodeSpec, schema: dict[str, str | int]):
+    def __init__(
+        self,
+        name: str,
+        node_spec: NodeSpec,
+        schema: dict[str, str | int],
+        seed: int | None = None,
+    ):
         super().__init__()
-        self.name = name
-        self.node_spec = node_spec
-        self.kind = node_spec.kind
-        terms = node_spec.terms
-        self.parents = tuple(node_parents(node_spec))
-        self.schema = {p: schema[p] for p in self.parents}
-        if node_spec.kind == "continuous":
-            self.ut = make_univariate_transform(
-                node_spec.transform, **node_spec.transform_kwargs
-            )
-            n_params = self.ut.n_params
-        else:
-            self.ut = None
-            self.levels = node_spec.levels
-            n_params = node_spec.levels - 1
-        self.encoding = schema_entry(node_spec)
-        self.intercept = terms[0].module(terms[0], self.schema, n_params)
-        self.shifts = nn.ModuleDict()
-        for term in terms[1:]:
-            m = term.module(term, self.schema)
-            self.shifts[m.key] = m
+        with seeded(seed, name):
+            self.name = name
+            self.node_spec = node_spec
+            self.kind = node_spec.kind
+            terms = node_spec.terms
+            self.parents = tuple(node_parents(node_spec))
+            self.schema = {p: schema[p] for p in self.parents}
+            if node_spec.kind == "continuous":
+                self.ut = make_univariate_transform(
+                    node_spec.transform, **node_spec.transform_kwargs
+                )
+                n_params = self.ut.n_params
+            else:
+                self.ut = None
+                self.levels = node_spec.levels
+                n_params = node_spec.levels - 1
+            self.encoding = schema_entry(node_spec)
+            self.intercept = terms[0].module(terms[0], self.schema, n_params)
+            self.shifts = nn.ModuleDict()
+            for term in terms[1:]:
+                m = term.module(term, self.schema)
+                self.shifts[m.key] = m
         self.register_buffer("calibrated", torch.tensor(False))
         self.history: dict = {"train": []}
         self.meta: dict = {}
@@ -278,8 +312,7 @@ class Node(NodeFitMixin, nn.Module):
         the marginal class log-odds; spline/affine intercepts and intercepts
         with parents are untouched. The start rides on this method's guard, so
         a second ``fit`` (the next phase of a schedule) continues training
-        instead of discarding the intercept it just trained. A spline or
-        affine transform has no start.
+        instead of discarding the intercept it just trained.
 
         Parameters
         ----------
@@ -431,7 +464,8 @@ class Node(NodeFitMixin, nn.Module):
         $\beta_0$ takes the twin's coefficient of its treatment. A binary
         ordinal treatment takes the level-1-against-0 contrast ``w[1] - w[0]``,
         a continuous one its weight ``w[0]``. Call it before ``fit``; the twin
-        ignores a centering column.
+        ignores a centering column. The twin starts from seed 0, so the result
+        does not depend on torch's global RNG.
 
         Parameters
         ----------
@@ -456,7 +490,9 @@ class Node(NodeFitMixin, nn.Module):
             raise ValueError(f"node {self.name!r} has no VC term to warm-start")
         spec = copy.copy(self.node_spec)
         spec.terms = [Intercept(), *(LinearShift(p) for p in self.parents)]
-        twin = Node(self.name, spec, self.schema).to(next(self.parameters()).device)
+        twin = Node(self.name, spec, self.schema, seed=0).to(
+            next(self.parameters()).device
+        )
         report = twin.fit_classical(train_df)
         with torch.no_grad():
             for m in vcs:

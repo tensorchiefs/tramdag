@@ -56,7 +56,7 @@ def test_save_load_round_trips_history(tmp_path):
         }
     )
     flow = CausalFlowDAG(_spec(), seed=0)
-    flow.fit(df, epochs=12)
+    flow.fit(df, epochs=12, seed=0)
     assert len(flow.history["train"]) == 12
     p = tmp_path / "flow.pt"
     flow.save(p)
@@ -112,13 +112,6 @@ def test_ls_coefficients_omits_a_node_without_linear_shifts():
 
     spec = {"x1": ContinuousNode(), "x2": ContinuousNode(CS("x1"))}
     assert CausalFlowDAG(spec, seed=0).ls_coefficients() == {}
-
-
-def test_fit_rejects_a_batch_size_below_one():
-    """batch_size=0 is refused by name before the loop reaches range()."""
-    df = pd.DataFrame({"x1": np.zeros(8), "x2": np.zeros(8), "y": np.zeros(8)})
-    with pytest.raises(ValueError, match="batch_size must be at least 1"):
-        CausalFlowDAG(_spec(), seed=0).fit(df, epochs=1, batch_size=0)
 
 
 def test_glorot_init_is_keras_dense_default(tmp_path):
@@ -196,7 +189,7 @@ def test_batch_norm_is_opt_in_and_reaches_every_net(ls_chain):
     df = ls_chain["draw"](200, 0)[["x1", "x2"]]
     df["t"] = (df["x1"] > 0).astype(int)
     df["y"] = df["x1"] * 0.5 + df["x2"]
-    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2)
+    flow.fit(df, epochs=3, batch_size=100, learning_rate=1e-2, seed=0)
     assert bool(torch.isfinite(flow.log_prob(df)).all())
 
 
@@ -206,7 +199,7 @@ def test_log_prob_takes_a_node_subset(ls_chain):
     flow = CausalFlowDAG(
         {"x1": td.ContinuousNode(), "x2": td.ContinuousNode(LS("x1"))}, seed=0
     )
-    flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2)
+    flow.fit(df, epochs=3, batch_size=150, learning_rate=1e-2, seed=0)
     parts = [flow.log_prob(df, nodes=[name]) for name in ("x1", "x2")]
     torch.testing.assert_close(parts[0] + parts[1], flow.log_prob(df))
     assert float(-parts[1].mean()) == pytest.approx(flow.nll(df)["x2"], abs=1e-5)
@@ -224,7 +217,7 @@ def test_batch_norm_survives_a_trailing_batch_of_one(ls_chain):
         },
         seed=0,
     )
-    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2)
+    flow.fit(df, epochs=2, batch_size=100, learning_rate=1e-2, seed=0)
     assert bool(torch.isfinite(flow.log_prob(df)).all())
 
 

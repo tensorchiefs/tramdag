@@ -50,6 +50,6 @@ the DGP under `do(x1 += 1)`, theory `e² ≈ 7.39`).
    `triangle_mixed.py` turns that into a number. An observed ordinal level pins
    the latent to an interval. The generator can therefore state the exact
    counterfactual *distribution*, `TriangleMixed.true_counterfactual_pmf`,
-   which `experiments/tests/` checks against realized counterfactuals. The flow's
-   averaged abduction draws are then scored against that distribution, and not
-   against a level no model can predict.
+   which `experiments/tests/` checks against realized counterfactuals.
+   The flow's averaged abduction draws are then scored against that
+   distribution, and not against a level no model can predict.

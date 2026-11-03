@@ -26,39 +26,28 @@ write.csv(birthwt[, c("low", "age", "lwt", "smoke", "bwt")],
           "notebooks/data/birthwt.csv", row.names = FALSE)
 ```
 
-The copy exists only so the notebook runs without R. **The R side of the
-comparison needs no file at all.** `birthwt` ships with MASS, so the notebook's
-pasteable snippet reads `data = birthwt` directly. Anyone with an R install can
-therefore check the three-way agreement. `MASS` is GPL-2/GPL-3, and its
-datasets are redistributable on those terms.
+The copy lets the notebook run without R. The R side reads `birthwt` from
+MASS directly. `MASS` is GPL-2/GPL-3, and its datasets are redistributable
+on those terms.
 
-Regenerating this file is a **contract change**. `classical_fit_tram_dag.py`
-compares against R coefficients hard-coded from the fit above. A regenerated
-CSV therefore means you re-run the R snippet and update `R_GLM` and
-`R_LOGLIK` there.
+`classical_fit_tram_dag.py` compares against R coefficients from this file.
+If you regenerate it, re-run the R snippet and update `R_GLM` and `R_LOGLIK`
+there.
 
 ## `vaca.csv`
 
-The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`: 1000 rows
-of `x1`, `x2`, `x3` from the SCM stated in
+The bimodal VACA triangle of Section 1b of `classical_fit_tram_dag.py`:
+1000 rows of `x1`, `x2`, `x3` from the SCM stated in
 [`docs/paper-replication.md`](../../docs/paper-replication.md).
 
-The notebook carries its generator in an `if False:` block, so a normal run
-reads this file and does not rewrite it. Run that block by hand to regenerate
-the sample, which has a seed and is therefore reproducible. Git tracks the file
-so that the R snippet in the same section reads the identical rows that the flow
-used for its fit.
+The notebook holds its seeded generator in an `if False:` block, so a
+normal run reads this file. Git tracks the file so that the R script fits
+the same rows as the flow.
 
-The notebook pins R's reference coefficients for this file in its `R_COLR`
-constant, and `classical_fit_tram_dag.R` is the script that produces them.
-Use `order = 21`, not 19 ([`docs/zuko-upstream.md`](../../docs/zuko-upstream.md)
-on the count).
+The notebook holds R's coefficients for this file in `R_COLR`, and
+`classical_fit_tram_dag.R` produces them with `order = 21`
+([`docs/zuko-upstream.md`](../../docs/zuko-upstream.md) on the count). If you
+change `n` or the seed, re-run the R script and update `R_COLR`.
 
-A change to `n` or to the seed changes those numbers. Re-run
-`Rscript notebooks/classical_fit_tram_dag.R` and update `R_COLR` when you
-change either.
-
-Do not confuse this file with `experiments/data/vaca/`, the frozen 5000-row
-benchmark of the paper replications under the data contract of
-[`experiments/README.md`](../../experiments/README.md). This file is neither
-frozen nor a contract.
+This file is not `experiments/data/vaca/`, the frozen benchmark under the
+data contract of [`experiments/README.md`](../../experiments/README.md).

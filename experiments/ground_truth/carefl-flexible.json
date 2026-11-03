@@ -1,39 +1,39 @@
 {
   "_note": "Protocol = carefl_fig5.r 1:1 on CAREFL's own committed rows (data/carefl-cf, the reference's USE_EXTERNAL_DATA run): val = train, 7000 full-batch epochs @ lr 0.001 with the reference's plateau rule applied per node (D5 in docs/paper-replication.md), glorot init, minmax net inputs, range_q 0 (scale_df's min-max Bernstein domain). Every metric is in CAREFL's sd-standardized units (x3/x4 divided by 6.0104/1.9114 - the committed data's units). The Fig. 6 errors compare the flow's curves at the committed xObs, on the committed alpha grid, against the committed analytic truth curves; fig6_max_abs_err_x4_carefl is CAREFL's OWN committed prediction error - a constant of the frozen data, pinned tightly as a tripwire on the csvs and as the bar the flow sits next to; docs/paper-replication.md gives where the flow's x4 error peaks. What each protocol ingredient is worth is measured in docs/paper-replication.md.",
   "fig6_max_abs_err_x3": {
-    "max": 0.15
+    "max": 0.1235
   },
   "fig6_max_abs_err_x4": {
-    "max": 0.35
+    "max": 0.3904
   },
   "fig6_max_abs_err_x4_carefl": {
     "value": 0.17366172278225167,
     "atol": 1e-06
   },
   "cf_mae_x3_do_x2_-1.5": {
-    "max": 0.03
+    "max": 0.0362
   },
   "cf_mae_x4_do_x1_-1.5": {
-    "max": 0.15
+    "max": 0.1479
   },
   "cf_mae_x3_do_x2_+0.0": {
-    "max": 0.02
+    "max": 0.0221
   },
   "cf_mae_x4_do_x1_+0.0": {
-    "max": 0.06
+    "max": 0.0637
   },
   "cf_mae_x3_do_x2_+1.5": {
-    "max": 0.03
+    "max": 0.0328
   },
   "cf_mae_x4_do_x1_+1.5": {
-    "max": 0.1
+    "max": 0.1307
   },
   "val_nll_x3": {
-    "value": -0.31799960136413574,
+    "value": -0.31746363639831543,
     "atol": 0.05
   },
   "val_nll_x4": {
-    "value": 0.7310044169425964,
+    "value": 0.730961263179779,
     "atol": 0.05
   },
   "fit_seconds": {

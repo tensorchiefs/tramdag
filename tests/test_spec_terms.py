@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import torch
 
-from tramdag import CI, CS, LS, CausalFlowDAG, ContinuousNode, I, OrdinalNode
+from tramdag import CI, CS, LS, VC, CausalFlowDAG, ContinuousNode, I, OrdinalNode
 from tramdag.spec import spec_from_dict, spec_to_dict
 
 
@@ -173,3 +173,29 @@ def test_strict_spec_loading_requires_the_switches():
     del d["X3"]["terms"][1]["options"]["batch_norm"]
     with pytest.raises(ValueError, match=r"'CS'.*'batch_norm'"):
         spec_from_dict(d, strict=True)
+
+
+def test_strict_spec_loading_skips_input_transform_without_continuous_parent():
+    """``input_transform`` acts on continuous parents only."""
+    spec = {
+        "sex": OrdinalNode(2, [I()]),
+        "age": ContinuousNode([I()]),
+        "t": OrdinalNode(2, [I()]),
+        "y": OrdinalNode(3, [I(), CS("sex", units=(4,)), VC("sex", t="t", units=(4,))]),
+    }
+    d = spec_to_dict(spec)
+    for term in d["y"]["terms"][1:]:
+        del term["options"]["input_transform"]
+    assert spec_from_dict(d, strict=True)["y"].terms[1] == spec["y"].terms[1]
+    d["y"]["terms"][1]["parents"] = ["age"]
+    with pytest.raises(ValueError, match=r"'CS'.*'input_transform'"):
+        spec_from_dict(d, strict=True)
+
+
+def test_strict_spec_loading_skips_network_options_without_units():
+    """An intercept with parents and ``units=()`` has no network."""
+    spec = {"x": ContinuousNode([I()]), "y": OrdinalNode(2, [I("x", units=())])}
+    d = spec_to_dict(spec)
+    for k in ("activation", "batch_norm", "input_transform"):
+        del d["y"]["terms"][0]["options"][k]
+    assert spec_from_dict(d, strict=True) == spec

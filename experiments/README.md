@@ -23,7 +23,7 @@ Every run writes to `results/<name>/` (gitignored):
 
 - `metrics.json`, the numbers that CI checks,
 - `report.md`, what the run is, the metrics table and the figures with their
-  captions (the experiments workflow posts this file as a commit comment),
+  captions,
 - `flow.pt`, the fitted model, so `CausalFlowDAG.load` can query a finished
   run again instead of refitting it,
 - `plots/*.png`: the package's own DAG, training and marginals figures, and
@@ -117,29 +117,16 @@ functions move their last bits between releases.
 `data/carefl-cf` is the one folder with no generator here: it is CAREFL's own
 committed data, external frozen input.
 
-## Notes on the reference protocols
+## Notes on the experiment code
 
-These facts explain choices in the experiment code.
-
-- `carefl.py` uses the grid of `carefl_fig5.r`, `seq(-3, 2.9, 0.1)`, for the
-  curve files. The reference also uses the training rows as validation rows,
-  so the plateau rule watches the training NLL. It holds nothing out, so a
-  fresh standardized draw scores the fit.
 - `helpers.fit_paper` sets the plateau patience to one less than the
   configured value. Torch reduces the rate at `bad > patience` and the
   reference reduces it at `bad == patience`. It computes the per-epoch
-  validation NLL only for the plateau rule. The triangle scripts never
-  computed it per epoch.
-- `simulations/vaca.py` intervenes at -3, -1 and 0. The paper figures and its
-  R code (`vaca_triangle.r`) use these values. The paper text says -3, -2 and
-  0. The code follows the figures.
+  validation NLL only for the plateau rule.
 - `simulations/carefl.py` gives the paper observation in raw units. It pushes
   the latents (2, 1.5, 1.4, -1) through the SCM. The paper prints x3 and x4
   divided by the CAREFL sample standard deviations (6.01 and 1.91).
 - The `source` strings in the simulation scripts match the frozen
   `data/*/truth.json` files, so they do not follow the cite style.
-- `triangle.py` reports the `cs_curve` figure of a different paper figure per
-  function: 7 for atan, 17 for the misspecified linear case and 18 for sin.
-  `PAPER_COVERAGE.md` has the detail.
-- Report tables carry no pipes in cell text. `cml` strips the backslash
-  escapes, which desyncs the header from the separator row.
+- Report tables carry no pipes in cell text. A Markdown renderer can drop
+  the backslash escapes, which desyncs the header from the separator row.

@@ -85,7 +85,9 @@ both the node and the flow.
 [`Node.fit_classical()`][tramdag.nodes.Node.fit_classical] fit one node,
 through `NodeFitMixin`. The flow's [`fit()`][tramdag.flow.CausalFlowDAG.fit] and
 [`fit_classical()`][tramdag.flow.CausalFlowDAG.fit_classical] loop over the
-nodes, through `FitMixin`, serially or in `n_jobs` forked processes. The
+nodes, through `FitMixin`, serially or in `n_jobs` forked processes.
+[`fit_jointly()`][tramdag.flow.CausalFlowDAG.fit_jointly] trains all nodes in
+one loop; it shares `_train_loop` with `Node.fit`. The
 mechanics are in [fitting.md](fitting.md).
 
 ## `readouts.py`: `ReadoutsMixin`

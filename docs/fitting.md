@@ -2,11 +2,15 @@
 
 This page is the reference for training a
 [`CausalFlowDAG`](../src/tramdag/flow.py) and its nodes. It covers the
-likelihood, the two fitting paths `fit` and `fit_classical`, and the hooks of
-the Adam path. [`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
+likelihood, the Adam paths `fit` and `fit_jointly`, the classical path
+`fit_classical`, and the hooks of the Adam paths.
+[`notebooks/training_strategies.py`](../notebooks/training_strategies.py)
 runs the Adam recipes end to end. It closes with a runtime comparison of the
-recipes on one workload. `n_jobs`, `marginal_init`, `validation_split` and
-per-node `epochs` or `learning_rate` functions have no notebook example.
+recipes on one workload.
+[`notebooks/fit_strategies_benchmark.py`](../notebooks/fit_strategies_benchmark.py)
+compares `fit`, `fit` with `n_jobs` and `fit_jointly`. `marginal_init`,
+`validation_split` and per-node `epochs` or `learning_rate` functions have no
+notebook example.
 
 ## One module, one sub-model per node
 
@@ -35,10 +39,11 @@ $\log p(x) = \sum_i \log p(x_i \mid \mathrm{pa}(x_i))$.
   evaluated as the log of the cutpoint-interval probability in log space.
 
 Because parents enter as data, the per-node terms have disjoint parameters,
-and maximizing each term maximizes the sum. So every node fits on
+and maximizing each term maximizes the sum. So every node can fit on
 its own: [`Node.fit`](../src/tramdag/fitting.py) minimizes the node's mean
 negative log-likelihood over the batch, plus the node's `VC` penalty.
-`CausalFlowDAG.fit` runs `Node.fit` for each node. `log_prob` returns the
+`CausalFlowDAG.fit` runs `Node.fit` for each node. `fit_jointly` minimizes
+the sum of these losses in one loop. `log_prob` returns the
 per-row joint.
 
 ## One node alone
@@ -116,8 +121,9 @@ the final weights.
   [`fit`][tramdag.flow.CausalFlowDAG.fit] docstring. A node that stopped
   earlier repeats its last entry in the flow view. `flow.history_frame()` gives
   one row per node and epoch, with no repeats.
-- **Callbacks.** `callbacks=` takes one `Callback` or a list. The hooks get the
-  node: `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
+- **Callbacks.** `callbacks=` takes one `Callback` or a list. Under `fit`
+  the hooks get the node (under `fit_jointly`, the flow):
+  `on_fit_begin(node, optimizer)`, `on_epoch_end(node, epoch, optimizer)`
   and `on_fit_end(node, optimizer)`. In `Node.fit` a bare callable is an
   `on_epoch_end` hook; any `True` return stops that node's fit. `on_fit_end`
   runs before the `VC` re-centering. On the flow, a bare callable is a
@@ -201,7 +207,7 @@ Three details are easy to get wrong.
 
 - A second `fit` call continues training and `history` accumulates. That is
   what makes a multi-phase schedule a loop of `fit` calls.
-- A callback instance passed to the flow serves every node in turn. A shipped
+- A callback instance passed to the flow's `fit` serves every node in turn. A shipped
   callback resets at each node's fit begin, so its attributes describe the
   last node only. Use a function of the node name to keep one instance per
   node. Under `n_jobs` the state of every callback stays in the workers; read

@@ -430,6 +430,17 @@ def test_fit_jointly_early_stopping_restores_the_summed_best(ls_chain):
     assert sum(flow.nll(df.iloc[420:]).values()) == pytest.approx(stop.best_nll)
 
 
+def test_fit_jointly_early_stopping_reads_each_node_after_a_warm_start(ls_chain):
+    """Uneven earlier histories do not hide the joint fit's validation NLL."""
+    df = ls_chain["draw"](600, 5)[["x1", "x2"]]
+    flow = CausalFlowDAG(_two_node_spec(), seed=0)
+    flow.nodes["x1"].fit(df, epochs=2, validation_split=0.2)
+    flow.nodes["x2"].fit(df, epochs=6)
+    stop = EarlyStopping(patience=2)
+    flow.fit_jointly(df, epochs=5, validation_split=0.2, callbacks=stop)
+    assert stop.best_epoch >= 1
+
+
 def test_history_accumulates_across_fit_calls(ls_chain):
     """A second fit continues the record instead of replacing it."""
     df = ls_chain["draw"](200, 5)[["x1", "x2"]]

@@ -26,6 +26,8 @@
 # schedule. The per-node plateau reads the node's own validation NLL; the
 # joint plateau reads the summed one, as the reference implementation does
 # (deviation D5 in [`docs/paper-replication.md`](../docs/paper-replication.md)).
+# The plateau waits 10 epochs instead of the reference's 49, to fit the short
+# budget.
 #
 # Each arm reports wall-clock seconds, the epoch at which the summed
 # validation NLL first comes within `EPS` of its best, the best summed
@@ -207,8 +209,10 @@ plt.show()
 #
 # All arms reach the same best validation NLL within a small gap. The
 # optimum is the same, so this is the expected result; a large gap would
-# point to a bug in one path. The intervention error varies more from seed
-# to seed than from arm to arm.
+# point to a bug in one path. The gap in intervention error between the arms
+# stays within two seed standard deviations. All arms come within `EPS` of
+# their best after a similar number of epochs, and the plateau arms end with
+# a learning rate cut by orders of magnitude, so the schedule acts.
 
 # %%
 means = runs.groupby("arm", sort=False).mean()
@@ -222,6 +226,17 @@ claim(
     "spread of the mean W1 error under do(x2=-1) over the arms, per seed std",
     (means["w1_do"].max() - means["w1_do"].min()) / spread,
     2.0,
+)
+claim(
+    "largest over smallest mean epochs to within EPS of the best",
+    means["epochs_to_eps"].max() / means["epochs_to_eps"].min(),
+    1.3,
+)
+claim(
+    "largest final learning rate of a plateau arm",
+    runs.loc[runs["arm"].str.endswith("plateau"), "final_lr"].max(),
+    1e-4,
+    fmt="{:.1e}",
 )
 
 # %% [markdown]
@@ -242,4 +257,5 @@ claim(
 # %% [markdown]
 # ## Which one, when
 #
-# [`docs/fitting.md`](../docs/fitting.md) holds the decision table.
+# The section "Which recipe" of [`docs/fitting.md`](../docs/fitting.md) holds
+# the decision table.

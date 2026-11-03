@@ -1,11 +1,12 @@
 """The fitting paths: ``NodeFitMixin`` for one node, ``FitMixin`` for the flow.
 
 The joint likelihood is a sum of per-node terms with disjoint parameters, so
-every node fits on its own. ``NodeFitMixin.fit`` is one minibatch Adam loop
+every node can fit on its own. ``NodeFitMixin.fit`` is one minibatch Adam loop
 over one node (validation, verbose printing and the callback hooks included);
 ``NodeFitMixin.fit_classical`` is the float64 full-batch L-BFGS exact-MLE
 route for a simple intercept with ``LS`` terms. ``FitMixin`` runs them for
-every node of the flow, in topological order or in processes.
+every node of the flow, in topological order or in processes;
+``FitMixin.fit_jointly`` trains all nodes in one loop with one optimizer.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -154,6 +155,7 @@ def _fit_epoch(
     values: dict[str, Tensor],
     opt: torch.optim.Optimizer,
     batch_size: int,
+    penalized: list,
     generator: torch.Generator | None,
 ) -> dict[str, float]:
     """One shuffled pass over the rows; give the epoch-mean train NLL per node.
@@ -165,7 +167,6 @@ def _fit_epoch(
     history.
     """
     n = len(values[nodes[0].name])
-    penalized = _penalized(nodes)
     acc = dict.fromkeys([nd.name for nd in nodes], 0.0)
     trained = 0
     perm = torch.randperm(n, generator=generator).to(values[nodes[0].name].device)
@@ -223,17 +224,18 @@ def _train_loop(
     """Run the epoch loop of ``Node.fit`` (one node) and ``fit_jointly`` (all).
 
     ``target`` is what the callbacks hook: the node or the flow; ``label``
-    names it in the progress line. ``validate``
-    gives the validation NLL per node, or None without validation. Each
-    node's history gets its own entries.
+    names it in the progress line. ``validate`` gives the validation NLL per
+    node, or None without validation. Each node's history gets its own
+    entries.
     """
+    penalized = _penalized(nodes)
     for nd in nodes:
         nd.history.pop("best_epoch", None)
     for cb in cbs:
         cb.on_fit_begin(target, opt)
     for epoch in range(1, epochs + 1):
         target.train()
-        train = _fit_epoch(nodes, values, opt, batch_size, generator)
+        train = _fit_epoch(nodes, values, opt, batch_size, penalized, generator)
         target.eval()
         val = validate()
         _record(nodes, train, val)
@@ -993,7 +995,7 @@ class FitMixin:
         """Fit all nodes together: one optimizer, one minibatch loop.
 
         Each step draws one batch of rows and minimizes the sum of the nodes'
-        mean NLLs. The optimum is that of [`fit`][tramdag.CausalFlowDAG.fit];
+        mean NLLs. The optimum is that of [`fit`][tramdag.flow.CausalFlowDAG.fit];
         the training dynamics differ. One learning-rate schedule and one stop
         rule act on the summed NLL, which is the protocol of the reference
         implementation. Each node's history gets its own train and validation

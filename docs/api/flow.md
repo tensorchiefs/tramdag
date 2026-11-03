@@ -4,6 +4,7 @@
     options:
       inherited_members:
         - fit
+        - fit_jointly
         - history
         - fit_classical
         - shift_curve

@@ -684,7 +684,7 @@
   <a href="#call-graph-flow-construction-traced" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Call graph — flow construction (traced)
+        Call graph: flow construction (traced)
       
     </span>
   </a>
@@ -695,7 +695,7 @@
   <a href="#call-graph-one-fit-traced" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Call graph — one fit (traced)
+        Call graph: one fit (traced)
       
     </span>
   </a>
@@ -1481,7 +1481,7 @@
   <a href="#call-graph-flow-construction-traced" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Call graph — flow construction (traced)
+        Call graph: flow construction (traced)
       
     </span>
   </a>
@@ -1492,7 +1492,7 @@
   <a href="#call-graph-one-fit-traced" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Call graph — one fit (traced)
+        Call graph: one fit (traced)
       
     </span>
   </a>
@@ -1527,8 +1527,9 @@
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
 <p>The package has ten modules and one rule. Term-specific behavior lives on the
 term's two classes: its <code>Term</code> subclass (the spec) and its module in
-<code>modules.py</code>. Node-kind maths lives in five <code>Node</code> methods, <code>nodes.encode</code>
-and the score derivative <code>scores._dl_ds</code>. Everything else is framework code.</p>
+<code>modules.py</code>. Node-kind maths lives in five <code>Node</code> methods, <code>nodes.encode</code> and
+the score derivative in <code>scores.py</code> (<a href="../scores/">scores.md</a>). Everything else is
+framework code.</p>
 <h2 id="module-map">Module map<a class="headerlink" href="#module-map" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>graph TD
     subgraph data["spec"]
@@ -1564,14 +1565,14 @@ and the score derivative <code>scores._dl_ds</code>. Everything else is framewor
     readouts --&gt; modules
     scores --&gt; transforms
     plots --&gt; spec</code></pre>
-<p><code>modules.py</code> imports nothing from <code>spec.py</code> at run time: it reads the node's parent schema,
-<code>{parent: "continuous" | n_levels}</code>, and a term's <code>parents</code> and options. That
-is what lets each term class hold its module class directly
-(<code>LinearShift.module is LinearShiftModule</code>). <code>fitting.py</code> and <code>readouts.py</code>
-are mixins: <code>Node</code> composes <code>NodeFitMixin</code>, and <code>CausalFlowDAG</code> composes
-<code>FitMixin</code> and <code>ReadoutsMixin</code>. <code>fitting</code> imports <code>flow</code> and <code>nodes</code> under
-<code>TYPE_CHECKING</code> only. So the import graph is acyclic at module load,
-although the package UML draws both directions between <code>fitting</code> and <code>nodes</code>.</p>
+<p><code>modules.py</code> imports nothing from <code>spec.py</code> at run time: it reads the node's
+parent schema, <code>{parent: "continuous" | n_levels}</code>, and a term's <code>parents</code> and
+options. That is what lets each term class hold its module class directly
+(<code>LinearShift.module is LinearShiftModule</code>). <code>fitting.py</code> and <code>readouts.py</code> are
+mixins: <code>Node</code> composes <code>NodeFitMixin</code>, and <code>CausalFlowDAG</code> composes <code>FitMixin</code>
+and <code>ReadoutsMixin</code>. <code>fitting</code> imports <code>flow</code> and <code>nodes</code> under <code>TYPE_CHECKING</code>
+only. So the import graph is acyclic at module load, although the package UML
+draws both directions between <code>fitting</code> and <code>nodes</code>.</p>
 <h2 id="the-term-contract">The term contract<a class="headerlink" href="#the-term-contract" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>classDiagram
     class Term {
@@ -1595,6 +1596,7 @@ although the package UML draws both directions between <code>fitting</code> and 
     class TermModule {
         &lt;&lt;modules.py, nn.Module&gt;&gt;
         input_transform / calibrate(train_df)
+        parameter_groups()
     }
     class ShiftModule {
         __init__(term, schema): builds the net, sets key and parents
@@ -1621,9 +1623,9 @@ although the package UML draws both directions between <code>fitting</code> and 
     InterceptModule &lt;|-- SimpleInterceptModule
     InterceptModule &lt;|-- ComplexInterceptModule
     InterceptModule &lt;|-- AdditiveInterceptModule</code></pre>
-<p>Each module builds its layers in a fixed order under fixed attribute names, so
-the state-dict paths (<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream are
-stable; <code>tests/test_statedict_stability.py</code> pins them.</p>
+<p>Each module builds its layers in a fixed order under fixed attribute names.
+So the state-dict paths (<code>nodes.&lt;n&gt;.shifts.&lt;key&gt;.…</code>) and the seeded RNG stream
+are stable. <code>tests/test_statedict_stability.py</code> pins them.</p>
 <p>A custom term is two classes:</p>
 <ul>
 <li>a <code>ShiftModule</code> subclass with <code>__init__(term, schema)</code>, which builds the
@@ -1636,27 +1638,20 @@ stable; <code>tests/test_statedict_stability.py</code> pins them.</p>
 </ul>
 <h2 id="node-kinds">Node kinds<a class="headerlink" href="#node-kinds" title="Permanent link">&para;</a></h2>
 <p>The two node kinds are continuous and ordinal. The maths that differs by
-kind is an if/else in three places:</p>
+kind is an if/else in three places.</p>
 <ul>
-<li>the five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>marginal_theta</code>
-  and <code>encode</code>, plus the transform choice in <code>Node.__init__</code>;</li>
-<li>the column encoding <code>nodes.encode</code>;</li>
-<li>the score derivative <code>scores._dl_ds</code>.</li>
+<li>The five <code>Node</code> methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>marginal_theta</code> and
+  <code>encode</code>, plus the transform choice in <code>Node.__init__</code>.</li>
+<li>The column encoding <code>nodes.encode</code>.</li>
+<li>The score derivative in <code>scores.py</code> (<a href="../scores/">scores.md</a>).</li>
 </ul>
-<p>Other code reads the kind only to check, convert or display values.
-<code>flow.py</code> checks ordinal levels, sets the output dtype and limits <code>pmf</code> and
-<code>density</code> to their kind. <code>readouts.py</code> refuses an ordinal parent in
-<code>shift_curve</code> and keeps a continuous parent raw in <code>design_matrix</code>.
-<code>effect_modifier_scan</code> finds the score column of a binary ordinal
-treatment. <code>spec.py</code> validates and serializes the kind, and <code>plots.py</code>
-styles the node.
-The term modules read a node's schema entry (<code>nodes.schema_entry</code>):
+<p>Other code reads a node's schema entry (<code>nodes.schema_entry</code>):
 <code>"continuous"</code> or a level count.</p>
 <h2 id="guards-that-pin-all-of-this">Guards that pin all of this<a class="headerlink" href="#guards-that-pin-all-of-this" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>tests/tools/statedict_smoke.py</code>: seeded per-DGP state dicts, bit-compared.</li>
-<li>The inline DGP truths (<code>tests/conftest.py</code>) and 45+ regex-pinned refusals.</li>
-<li><code>experiments/ground_truth/*.json</code>: eight CI-checked replications with
+<li>The inline DGP truths (<code>tests/conftest.py</code>) and the regex-pinned refusals.</li>
+<li><code>experiments/ground_truth/*.json</code>: the CI-checked replications with
   wall-time tripwires. Centers move only with a documented reason.</li>
 </ul>
 <!-- AUTOGEN:diagrams (tools/gen_diagrams.py) — do not edit by hand -->
@@ -1801,7 +1796,7 @@ node.</p>
   ComplexShiftModule --o ComplexShift : module
   LinearShiftModule --o LinearShift : module
   VaryingCoefficientModule --o VaryingCoefficient : module</code></pre>
-<h3 id="call-graph-flow-construction-traced">Call graph — flow construction (traced)<a class="headerlink" href="#call-graph-flow-construction-traced" title="Permanent link">&para;</a></h3>
+<h3 id="call-graph-flow-construction-traced">Call graph: flow construction (traced)<a class="headerlink" href="#call-graph-flow-construction-traced" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
   subgraph flow
     n0["CausalFlowDAG.__init__"]
@@ -1869,7 +1864,7 @@ node.</p>
     n4 --&gt; n22
     n23 -- "2x" --&gt; n24
     n16 -- "2x" --&gt; n23</code></pre>
-<h3 id="call-graph-one-fit-traced">Call graph — one fit (traced)<a class="headerlink" href="#call-graph-one-fit-traced" title="Permanent link">&para;</a></h3>
+<h3 id="call-graph-one-fit-traced">Call graph: one fit (traced)<a class="headerlink" href="#call-graph-one-fit-traced" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
   subgraph callbacks
     n0["EarlyStopping.__init__"]

@@ -4,7 +4,11 @@ README.md is the landing page and the guides link to source files, tests and
 experiments. A link to another docs page becomes a page link; a link into the
 repository becomes a GitHub URL for the ref being built (``REF``, default
 ``main``). The PDF link is added only when the PDF was built. The References
-page loses the footnote back-links that point at citations it does not have.
+page loses the footnote back-links that point at citations it does not have:
+mkdocs-bibtex renders the full bibliography as footnotes on every page. The
+link rewrite reads markdown links in the guides and ``href`` attributes in the
+rendered notebooks. A notebook arrives as source, so ``on_page_markdown`` skips
+it, because its links exist only as HTML.
 """
 
 # %% imports ---------------------------------------------------------------------------
@@ -15,10 +19,7 @@ import re
 
 # %% global variables ------------------------------------------------------------------
 REPO = "https://github.com/tensorchiefs/tramdag"
-# mkdocs-bibtex renders the full bibliography as footnotes whose back-links
-# point at citations that page does not have
 _BACKREF = re.compile(r'<a class="footnote-backref"[^>]*>[^<]*</a>')
-# markdown links in the guides, href attributes in the rendered notebooks
 _LINK = re.compile(r"(\]\(|href=\")([^)\s#\"][^)\s\"]*)(\)|\")")
 
 
@@ -34,7 +35,7 @@ def on_config(config):
 def on_page_markdown(markdown, page, config, files):
     """Rewrite repo-relative links of one guide; index.md is README.md itself."""
     if page.file.src_uri.startswith("notebooks/"):
-        return markdown  # a notebook arrives as source; its links exist only as HTML
+        return markdown
     if page.file.src_uri == "index.md":
         markdown = pathlib.Path("README.md").read_text()
     markdown = _rewrite(markdown, page, files)

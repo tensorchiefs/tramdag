@@ -357,28 +357,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#experiments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Experiments
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#use-of-ai-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1401,28 +1379,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#experiments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Experiments
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Layout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#use-of-ai-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1472,9 +1428,9 @@
 <a href="https://github.com/tensorchiefs/tramdag/tree/dev-marcel/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a></p>
 <p><strong>TRAM-DAGs</strong> model each variable of a structural causal model with a
 monotone normalizing flow, the statistician's <em>transformation model</em>. The
-whole model is one triangular normalizing flow from
-iid standard-logistic latents to the observed variables, and its triangular
-structure is exactly your causal DAG. One fit on observational data answers
+whole model is one triangular normalizing flow from iid standard-logistic
+latents to the observed variables. Its triangular structure is exactly your
+causal DAG. One fit on observational data answers
 all three rungs of Pearl's causal hierarchy: observational, interventional
 (the do-operator) and counterfactual (abduction). The model keeps
 <strong>interpretable effects</strong>: every linear-shift coefficient is a log-odds ratio,
@@ -1493,109 +1449,30 @@ answer against analytic ground truth. It runs on CPU in a few minutes, in
 <a href="https://colab.research.google.com/github/tensorchiefs/tramdag/blob/main/notebooks/demo_tram_dag_colab.ipynb">Colab</a>
 or locally.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<p>The package is on PyPI as <code>tramdag</code>. <code>uv add tramdag</code> or <code>pip install tramdag</code>
-installs it, and the <code>plots</code> extra (<code>tramdag[plots]</code>) adds matplotlib for the
-figures. The PyPI release lags <code>main</code>. For the current state, install from git
-(<code>tramdag @ git+https://github.com/tensorchiefs/tramdag.git@main</code>, pinned to a
-commit for reproducibility). A clone with <code>uv sync</code> gives the development
-setup with tests and experiments.</p>
+<p><code>uv add tramdag</code> or <code>pip install tramdag</code> installs the package from PyPI. The
+<code>plots</code> extra (<code>tramdag[plots]</code>) adds matplotlib for the figures. A clone with
+<code>uv sync</code> gives the development setup (<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>).</p>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Guides, executed notebooks and the API reference are published at the
-<a href="https://tensorchiefs.github.io/tramdag/">documentation site</a>. Each subject has
-at most one guide and one example notebook.</p>
-<table>
-<thead>
-<tr>
-<th>Subject</th>
-<th>Guide</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>The model, its notation, what it cannot do</td>
-<td><a href="model/"><code>docs/model.md</code></a>, <a href="notation/"><code>docs/notation.md</code></a></td>
-<td><a href="notebooks/demo_tram_dag_colab/">demo</a></td>
-</tr>
-<tr>
-<td>Reading a fitted model: coefficients, curves, interventional distributions</td>
-<td><a href="interpretation/"><code>docs/interpretation.md</code></a></td>
-<td><a href="notebooks/classical_fit_tram_dag/">classical fitting</a></td>
-</tr>
-<tr>
-<td>Fitting: the likelihood, one node alone, the Adam loop and its callbacks, the classical fit, a runtime comparison of the recipes</td>
-<td><a href="fitting/"><code>docs/fitting.md</code></a></td>
-<td><a href="notebooks/training_strategies/">training strategies</a></td>
-</tr>
-<tr>
-<td>Complex intercepts, joint versus additive</td>
-<td></td>
-<td><a href="notebooks/additive_vs_joint_ci/">additive vs joint intercepts</a></td>
-</tr>
-<tr>
-<td>Treatment effects that vary with covariates</td>
-<td><a href="varying-coefficients/"><code>docs/varying-coefficients.md</code></a></td>
-<td><a href="notebooks/varying_coefficients/">varying coefficients</a></td>
-</tr>
-<tr>
-<td>Scores and the effect-modifier scan</td>
-<td><a href="scores/"><code>docs/scores.md</code></a></td>
-<td><a href="notebooks/varying_coefficients/">varying coefficients</a></td>
-</tr>
-<tr>
-<td>Agreement with statsmodels and R, standard errors</td>
-<td></td>
-<td><a href="notebooks/classical_fit_tram_dag/">classical fitting</a></td>
-</tr>
-<tr>
-<td>What the tests guarantee</td>
-<td><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a></td>
-<td></td>
-</tr>
-<tr>
-<td>The API, every default and where it lives</td>
-<td><a href="code-map/"><code>docs/code-map.md</code></a></td>
-<td></td>
-</tr>
-<tr>
-<td>How the package is built inside</td>
-<td><a href="architecture/"><code>docs/architecture.md</code></a></td>
-<td></td>
-</tr>
-<tr>
-<td>zuko, and what tramdag would upstream</td>
-<td><a href="zuko-upstream/"><code>docs/zuko-upstream.md</code></a></td>
-<td></td>
-</tr>
-<tr>
-<td>The cited literature</td>
-<td><a href="references/"><code>docs/references.md</code></a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p><a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> covers setup, tests, linting and
-releases; <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/notebooks/README.md"><code>notebooks/README.md</code></a> how the notebooks are
-written and run.</p>
-<h2 id="experiments">Experiments<a class="headerlink" href="#experiments" title="Permanent link">&para;</a></h2>
-<p><code>experiments/</code> replicates the paper's experiments against its own R code and
-checks them against committed ground truth in continuous integration.
-<a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md"><code>experiments/README.md</code></a> explains the layout, the
-YAML variants and the frozen data;
-<a href="paper-replication/"><code>docs/paper-replication.md</code></a> gives the protocol,
-the hyperparameters and the numbers, experiment by experiment.</p>
-<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
+<p>The <a href="https://tensorchiefs.github.io/tramdag/">documentation site</a> publishes
+the guides, the executed notebooks and the API reference.</p>
 <ul>
-<li><code>src/tramdag/</code> is the framework, and nothing else.</li>
-<li><code>tests/</code> measures it against three inline data-generating processes; it
-  never imports research code.</li>
-<li><code>experiments/</code> holds the paper replications and their frozen data sets.</li>
-<li><code>notebooks/</code> are jupytext <code>.py</code> files, executed by the docs workflow.</li>
-<li><code>docs/</code> are the guides; the API pages render from the docstrings.</li>
+<li>The model: <a href="model/"><code>docs/model.md</code></a> and
+  <a href="notation/"><code>docs/notation.md</code></a></li>
+<li>Reading a fitted model: <a href="interpretation/"><code>docs/interpretation.md</code></a></li>
+<li>Fitting: <a href="fitting/"><code>docs/fitting.md</code></a></li>
+<li>Treatment effects that vary with covariates:
+  <a href="varying-coefficients/"><code>docs/varying-coefficients.md</code></a> and
+  <a href="scores/"><code>docs/scores.md</code></a></li>
+<li>The design of the package: <a href="architecture/"><code>docs/architecture.md</code></a> and
+  <a href="code-map/"><code>docs/code-map.md</code></a></li>
+<li>The paper replications: <a href="paper-replication/"><code>docs/paper-replication.md</code></a>
+  and <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md"><code>experiments/README.md</code></a></li>
+<li>The tests: <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a></li>
+<li>The notebooks: <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/notebooks/README.md"><code>notebooks/README.md</code></a></li>
 </ul>
 <h2 id="use-of-ai-tools">Use of AI tools<a class="headerlink" href="#use-of-ai-tools" title="Permanent link">&para;</a></h2>
-<p>This project was developed with the help of LLM coding assistants. The authors
-reviewed and take responsibility for all content.</p>
+<p>LLM coding assistants helped to develop this project. The authors reviewed
+all content and take responsibility for it.</p>
 <h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
 <p>If you use <code>tramdag</code>, please cite the method paper:</p>
 <div class="highlight"><pre><span></span><code><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">sick2025tramdag</span><span class="p">,</span>

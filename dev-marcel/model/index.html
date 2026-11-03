@@ -1462,7 +1462,7 @@
 <p>A TRAM-DAG is one triangular normalizing flow whose sparsity is a causal DAG.
 This page states the model in the notation of the paper and maps each part of
 it onto the constructors in <code>tramdag.spec</code>. For the symbols see
-<a href="../notation/">notation.md</a>; to read a model after it is fitted see
+<a href="../notation/">notation.md</a>; to read a fitted model see
 <a href="../interpretation/">interpretation.md</a>; for a worked fit see the
 <a href="../notebooks/demo_tram_dag_colab/">demo notebook</a>.</p>
 <h2 id="the-transformation-function">The transformation function<a class="headerlink" href="#the-transformation-function" title="Permanent link">&para;</a></h2>
@@ -1501,7 +1501,8 @@ u_i \;=\; h(x_i \mid \mathrm{pa}(x_i)) \;=\;
 \underbrace{h_{\boldsymbol{\vartheta}}(x_i)}_{\text{intercept}}
 \;+\; \underbrace{\textstyle\sum_j \beta_{ij}\, x_j}_{\text{linear shifts}}
 \;+\; \underbrace{\textstyle\sum_k g_{ik}(x_k)}_{\text{complex shifts}}
-\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}_{\text{varying coefficient}} ,
+\;+\; \underbrace{(\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t}
+_{\text{varying coefficient}} ,
 \]</div>
 <p>and every causal parent enters through exactly one term. Take <span class="arithmatex">\(x_5\)</span> with
 parents <span class="arithmatex">\(\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}\)</span> as the example.</p>
@@ -1516,10 +1517,11 @@ parents <span class="arithmatex">\(\mathrm{pa}(x_5) = \{x_1, x_2, x_4\}\)</span>
   number per parent.</li>
 <li><strong>Complex shift, CS.</strong> <span class="arithmatex">\(g(x_4)\)</span>, an unrestricted network of the parent. It
   stays additive on the latent scale.</li>
-<li><strong>Varying coefficient, VC.</strong> <span class="arithmatex">\((\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t\)</span>:
-  a treatment <span class="arithmatex">\(x_t\)</span> whose effect <span class="arithmatex">\(\beta\)</span> varies with modifier covariates
-  through a small penalized network. <a href="../varying-coefficients/">varying-coefficients.md</a>
-  is its guide.</li>
+<li><strong>Varying coefficient, VC.</strong>
+  <span class="arithmatex">\((\beta_0 + b_{\boldsymbol{\Theta}}(x_{\text{mod}}))\, x_t\)</span>: a treatment
+  <span class="arithmatex">\(x_t\)</span> whose effect <span class="arithmatex">\(\beta\)</span> varies with modifier covariates through a small
+  penalized network.
+  <a href="../varying-coefficients/">varying-coefficients.md</a> is its guide.</li>
 </ul>
 <p>Sampling has to invert only the intercept, because the shifts move to the
 other side:</p>
@@ -1602,41 +1604,41 @@ are the classes <code>Intercept</code>, <code>LinearShift</code>, <code>ComplexS
 <p><strong><code>transform=</code> on <code>I</code></strong> picks the class of <span class="arithmatex">\(h_{\boldsymbol{\vartheta}}\)</span> for a
 continuous node:</p>
 <ul>
-<li><code>"bernstein"</code>, the default: a Bernstein polynomial with <code>n_coeffs=20</code>
-  unconstrained coefficients whose tails extrapolate along the boundary
-  slope;</li>
-<li><code>"spline"</code>: a monotone rational-quadratic spline with <code>bins=8</code>, whose tail
-  slope is fixed (<a href="../zuko-upstream/">zuko-upstream.md</a> explains the
+<li><code>"bernstein"</code>, the default: a Bernstein polynomial whose tails extrapolate
+  along the boundary slope;</li>
+<li><code>"spline"</code>: a monotone rational-quadratic spline, whose tail slope has a
+  fixed value (<a href="../zuko-upstream/">zuko-upstream.md</a> explains the
   consequence);</li>
 <li><code>"affine"</code>: location and scale only, so the node-conditional is a logistic
   GLM.</li>
 </ul>
-<p>Extra keyword arguments of <code>I</code> pass straight to the transform class,
-<code>I(transform="spline", bins=16)</code>. Each transform pre-scales the data from the
-training <code>range_q</code> and $1 - $<code>range_q</code> quantiles onto a fixed domain.
-<code>range_q</code> is an intercept option with default 0.05, and <code>range_q=0</code> uses the
+<p>The keyword arguments of the transform class go in <code>transform_kwargs</code>,
+<code>I(transform="spline", transform_kwargs={"bins": 16})</code>. Each transform
+pre-scales the data from the training <code>range_q</code> and $1 - $<code>range_q</code> quantiles
+onto a fixed domain.
+<code>range_q</code> is a transform option with default 0.05, and <code>range_q=0</code> uses the
 minimum and maximum. Ordinal nodes have no transform to pick.</p>
 <p><strong><code>input_transform=</code> on <code>I</code>, <code>CS</code>, <code>VC</code></strong> transforms that term's continuous
 network inputs, with statistics frozen at the first fit: <code>"minmax"</code>,
 <code>"standardize"</code>, or a callable <code>fn(x, train)</code>. <code>LS</code> and the <code>VC</code> treatment
 stay raw, so their coefficients keep their units.</p>
 <p><strong><code>units=</code>, <code>activation=</code>, <code>batch_norm=</code> on <code>I</code>, <code>CS</code>, <code>VC</code></strong> size the
-term's network. <a href="../code-map/">code-map.md</a> lists every default.</p>
+term's network. The defaults are in the API pages of the terms.</p>
 <h2 id="ordinal-nodes">Ordinal nodes<a class="headerlink" href="#ordinal-nodes" title="Permanent link">&para;</a></h2>
 <p>An ordinal node has no monotone transform to choose. Its intercept is the
 cutpoint vector of an ordered logit,</p>
 <div class="arithmatex">\[
 P(Y \le k \mid \mathrm{pa}) = \sigma(\vartheta_k - s(\mathrm{pa})),
 \]</div>
-<p>with increasing cutpoints <span class="arithmatex">\(\vartheta\)</span> and <span class="arithmatex">\(s\)</span> the total shift. The shift is
-subtracted where a continuous node adds it. <a href="../notation/">notation.md</a> states
+<p>with increasing cutpoints <span class="arithmatex">\(\vartheta\)</span> and <span class="arithmatex">\(s\)</span> the total shift. The model subtracts
+the shift where a continuous node adds it. <a href="../notation/">notation.md</a> states
 the convention. <a href="../interpretation/">interpretation.md</a> shows what it does to
 the sign of a coefficient.</p>
 <p>The log-probability of an observed level is the difference of two sigmoids.
 The code computes it in log space with <code>logsigmoid</code> and a stable
-<code>log(1 - exp(x))</code>, and per element it takes the better-conditioned side. The direct difference of two
-sigmoids has exactly zero gradient once they saturate in float32, and a node
-that starts there never recovers.</p>
+<code>log(1 - exp(x))</code>, and per element it takes the better-conditioned side.
+The direct difference of two sigmoids has exactly zero gradient once they
+saturate in float32, and a node that starts there never recovers.</p>
 <p>Parents enter every network as features: a continuous parent raw, in one
 column; an ordinal parent one-hot, in one column per level. Abduction is exact
 for continuous nodes and truncated-logistic for ordinal ones, so
@@ -1646,7 +1648,8 @@ prediction (Pearl, 2009)<sup id="fnref:pearl2009causality"><a class="footnote-re
 intervention, and <code>sample(u=..., do=...)</code> predicts.</p>
 <h2 id="what-the-model-cannot-do">What the model cannot do<a class="headerlink" href="#what-the-model-cannot-do" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The latent distribution is fixed to standard logistic. It is not learned.</li>
+<li>The model fixes the latent distribution to standard logistic. It does not
+  learn it.</li>
 <li>A <code>VC</code> treatment is continuous or a binary ordinal node; a multi-level
   ordinal treatment is not supported. Propensity centering needs a binary
   ordinal treatment.</li>

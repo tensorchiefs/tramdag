@@ -1503,7 +1503,15 @@ nodes are ellipses, ordinal nodes rounded boxes with their level count.
 Each edge is drawn by the term that owns it: <code>LS</code> thin gray, <code>CS</code> thick
 blue, a complex intercept (<code>CI</code>) dashed orange, a <code>VC</code> treatment edge
 red; a multi-parent CS/CI is labelled <code>joint</code>. A VC modifier is a dotted
-red arrow onto the treatment edge it modifies.</p>
+red arrow onto the treatment edge it modifies. A term without an entry in
+<code>EDGE_STYLE</code> draws dotted gray. <code>EDGE_LABEL</code> maps the <code>to_matrix</code> tag
+<code>VCm</code> to the label <code>VC modifier</code>.</p>
+<p>The layout units are <code>NODE_H</code> for the node height and <code>ROW_DY</code> for the
+distance between rows. A new figure measures <code>INCH_PER_UNIT</code> inches per
+unit, and the fonts fit it. An edge that skips a layer bends out by
+<code>BULGE</code> per skipped layer. Given axes shrink the fonts with the space
+they have per layout unit. A modifier points at the midpoint of its
+treatment edge, a position of its own.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1718,45 +1726,7 @@ saved).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
-<span class="normal">430</span>
-<span class="normal">431</span>
-<span class="normal">432</span>
-<span class="normal">433</span>
-<span class="normal">434</span>
-<span class="normal">435</span>
-<span class="normal">436</span>
-<span class="normal">437</span>
-<span class="normal">438</span>
-<span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">454</span>
 <span class="normal">455</span>
 <span class="normal">456</span>
 <span class="normal">457</span>
@@ -1824,7 +1794,53 @@ saved).</p>
 <span class="normal">519</span>
 <span class="normal">520</span>
 <span class="normal">521</span>
-<span class="normal">522</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_dag</span><span class="p">(</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_dag</span><span class="p">(</span>
     <span class="n">spec_or_flow</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1843,7 +1859,16 @@ saved).</p>
 <span class="sd">    Each edge is drawn by the term that owns it: ``LS`` thin gray, ``CS`` thick</span>
 <span class="sd">    blue, a complex intercept (``CI``) dashed orange, a ``VC`` treatment edge</span>
 <span class="sd">    red; a multi-parent CS/CI is labelled ``joint``. A VC modifier is a dotted</span>
-<span class="sd">    red arrow onto the treatment edge it modifies.</span>
+<span class="sd">    red arrow onto the treatment edge it modifies. A term without an entry in</span>
+<span class="sd">    ``EDGE_STYLE`` draws dotted gray. ``EDGE_LABEL`` maps the ``to_matrix`` tag</span>
+<span class="sd">    ``VCm`` to the label ``VC modifier``.</span>
+
+<span class="sd">    The layout units are ``NODE_H`` for the node height and ``ROW_DY`` for the</span>
+<span class="sd">    distance between rows. A new figure measures ``INCH_PER_UNIT`` inches per</span>
+<span class="sd">    unit, and the fonts fit it. An edge that skips a layer bends out by</span>
+<span class="sd">    ``BULGE`` per skipped layer. Given axes shrink the fonts with the space</span>
+<span class="sd">    they have per layout unit. A modifier points at the midpoint of its</span>
+<span class="sd">    treatment edge, a position of its own.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1882,14 +1907,13 @@ saved).</p>
 <span class="sd">        If the spec has no node.</span>
 <span class="sd">    """</span>
     <span class="n">plt</span> <span class="o">=</span> <span class="n">_plt</span><span class="p">()</span>
-    <span class="n">spec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec_or_flow</span><span class="p">,</span> <span class="s2">"spec"</span><span class="p">,</span> <span class="n">spec_or_flow</span><span class="p">)</span>  <span class="c1"># a flow draws its spec</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec_or_flow</span><span class="p">,</span> <span class="s2">"spec"</span><span class="p">,</span> <span class="n">spec_or_flow</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"plot_dag needs a spec with at least one node"</span><span class="p">)</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">_style</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
     <span class="n">pos</span><span class="p">,</span> <span class="n">layer_dx</span> <span class="o">=</span> <span class="n">_layout</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
     <span class="n">edges</span><span class="p">,</span> <span class="n">mods</span> <span class="o">=</span> <span class="n">_dag_edges</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">)</span>
     <span class="n">bulges</span> <span class="o">=</span> <span class="n">_bulges</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">layer_dx</span><span class="p">,</span> <span class="n">edges</span><span class="p">)</span>
-    <span class="c1"># a modifier points at its treatment edge's midpoint, a position of its own</span>
     <span class="n">pos_all</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">|</span> <span class="p">{</span>
         <span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">t_edge</span><span class="p">):</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_arc</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">t_edge</span><span class="p">,</span> <span class="n">bulges</span><span class="p">[</span><span class="n">t_edge</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">mod</span><span class="p">,</span> <span class="n">t_edge</span> <span class="ow">in</span> <span class="n">mods</span>
@@ -1907,7 +1931,7 @@ saved).</p>
                 <span class="n">INCH_PER_UNIT</span> <span class="o">*</span> <span class="p">(</span><span class="n">y_hi</span> <span class="o">-</span> <span class="n">y_lo</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># the fonts shrink with the space the given axes has per layout unit</span>
+    <span class="k">else</span><span class="p">:</span>
         <span class="n">box</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
         <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
         <span class="n">per_unit</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">box</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="n">w</span> <span class="o">/</span> <span class="p">(</span><span class="n">x_hi</span> <span class="o">-</span> <span class="n">x_lo</span><span class="p">),</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="n">h</span> <span class="o">/</span> <span class="p">(</span><span class="n">y_hi</span> <span class="o">-</span> <span class="n">y_lo</span><span class="p">))</span>
@@ -2158,53 +2182,7 @@ are switched off).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
-<span class="normal">543</span>
-<span class="normal">544</span>
-<span class="normal">545</span>
-<span class="normal">546</span>
-<span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span>
-<span class="normal">563</span>
-<span class="normal">564</span>
-<span class="normal">565</span>
-<span class="normal">566</span>
-<span class="normal">567</span>
-<span class="normal">568</span>
-<span class="normal">569</span>
-<span class="normal">570</span>
-<span class="normal">571</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">571</span>
 <span class="normal">572</span>
 <span class="normal">573</span>
 <span class="normal">574</span>
@@ -2238,7 +2216,53 @@ are switched off).</p>
 <span class="normal">602</span>
 <span class="normal">603</span>
 <span class="normal">604</span>
-<span class="normal">605</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_marginals</span><span class="p">(</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_marginals</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2334,7 +2358,7 @@ are switched off).</p>
 
 <a href="#tramdag.plots.plot_training" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_training</span><span class="p">(</span>
-    <span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -2344,7 +2368,15 @@ are switched off).</p>
 <p><code>flow.history</code> accumulates across <code>fit</code> calls, so the curves cover
 every epoch the flow has trained, not only the last call. Each validation
 entry is drawn at the epoch it was measured in, which is what keeps the two
-curves aligned when one <code>fit</code> validated and another did not.</p>
+curves aligned when one <code>fit</code> validated and another did not: an
+unvalidated fit in between leaves a gap instead of shifting the curve back
+to epoch 1.</p>
+<p>The y axis zooms past the initial drop: its top keeps each curve after 10 %
+of its epochs, so a validation curve that rises later stays in view. The
+limits use finite values only, so a diverged epoch does not blow them up.
+The legend sits below the axes, off the curves, and the title stays left of
+the stop names. The stop marks come after the zoom, so they hang
+from the visible top.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2379,17 +2411,19 @@ curves aligned when one <code>fit</code> validated and another did not.</p>
                 <code>stops</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="int">int</span>] | None</code>
+                  <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>{node: epoch}</code> of the per-node stops, each a dashed mark; a
-node's stop epoch is the length of its <code>history["train"]</code>. By
-default no marks.</p>
+                <p>Mark each node's stop epoch, the length of its <code>history["train"]</code>,
+with a dashed line, and its <code>history["best_epoch"]</code>, where a fit
+recorded one, with a triangle at the top. By default no marks. The
+triangles come from the last fit that ran <code>EarlyStopping</code>; a fit
+without it removes <code>history["best_epoch"]</code>.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                  <code>False</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2479,6 +2513,16 @@ saved).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>stops</code> is not a bool.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                   <code><span title="ValueError">ValueError</span></code>
             </td>
             <td>
@@ -2493,53 +2537,7 @@ saved).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span>
-<span class="normal">614</span>
-<span class="normal">615</span>
-<span class="normal">616</span>
-<span class="normal">617</span>
-<span class="normal">618</span>
-<span class="normal">619</span>
-<span class="normal">620</span>
-<span class="normal">621</span>
-<span class="normal">622</span>
-<span class="normal">623</span>
-<span class="normal">624</span>
-<span class="normal">625</span>
-<span class="normal">626</span>
-<span class="normal">627</span>
-<span class="normal">628</span>
-<span class="normal">629</span>
-<span class="normal">630</span>
-<span class="normal">631</span>
-<span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span>
-<span class="normal">646</span>
-<span class="normal">647</span>
-<span class="normal">648</span>
-<span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span>
-<span class="normal">652</span>
-<span class="normal">653</span>
-<span class="normal">654</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">654</span>
 <span class="normal">655</span>
 <span class="normal">656</span>
 <span class="normal">657</span>
@@ -2572,22 +2570,77 @@ saved).</p>
 <span class="normal">684</span>
 <span class="normal">685</span>
 <span class="normal">686</span>
-<span class="normal">687</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span>
+<span class="normal">725</span>
+<span class="normal">726</span>
+<span class="normal">727</span>
+<span class="normal">728</span>
+<span class="normal">729</span>
+<span class="normal">730</span>
+<span class="normal">731</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_training</span><span class="p">(</span><span class="n">flow</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Draw the summed train and validation NLL per epoch.</span>
 
 <span class="sd">    ``flow.history`` accumulates across ``fit`` calls, so the curves cover</span>
 <span class="sd">    every epoch the flow has trained, not only the last call. Each validation</span>
 <span class="sd">    entry is drawn at the epoch it was measured in, which is what keeps the two</span>
-<span class="sd">    curves aligned when one ``fit`` validated and another did not.</span>
+<span class="sd">    curves aligned when one ``fit`` validated and another did not: an</span>
+<span class="sd">    unvalidated fit in between leaves a gap instead of shifting the curve back</span>
+<span class="sd">    to epoch 1.</span>
+
+<span class="sd">    The y axis zooms past the initial drop: its top keeps each curve after 10 %</span>
+<span class="sd">    of its epochs, so a validation curve that rises later stays in view. The</span>
+<span class="sd">    limits use finite values only, so a diverged epoch does not blow them up.</span>
+<span class="sd">    The legend sits below the axes, off the curves, and the title stays left of</span>
+<span class="sd">    the stop names. The stop marks come after the zoom, so they hang</span>
+<span class="sd">    from the visible top.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    flow : CausalFlowDAG</span>
 <span class="sd">        The fitted flow; ``flow.history`` is read.</span>
-<span class="sd">    stops : dict[str, int] | None, optional</span>
-<span class="sd">        ``{node: epoch}`` of the per-node stops, each a dashed mark; a</span>
-<span class="sd">        node's stop epoch is the length of its ``history["train"]``. By</span>
-<span class="sd">        default no marks.</span>
+<span class="sd">    stops : bool, optional</span>
+<span class="sd">        Mark each node's stop epoch, the length of its ``history["train"]``,</span>
+<span class="sd">        with a dashed line, and its ``history["best_epoch"]``, where a fit</span>
+<span class="sd">        recorded one, with a triangle at the top. By default no marks. The</span>
+<span class="sd">        triangles come from the last fit that ran ``EarlyStopping``; a fit</span>
+<span class="sd">        without it removes ``history["best_epoch"]``.</span>
 <span class="sd">    ax : matplotlib.axes.Axes | None, optional</span>
 <span class="sd">        Draw into this axes; by default a new figure.</span>
 <span class="sd">    path : str | Path | None, optional</span>
@@ -2603,9 +2656,13 @@ saved).</p>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If ``stops`` is not a bool.</span>
 <span class="sd">    ValueError</span>
 <span class="sd">        If ``flow.history`` is empty.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stops</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stops must be a bool, got </span><span class="si">{</span><span class="n">stops</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">plt</span> <span class="o">=</span> <span class="n">_plt</span><span class="p">()</span>
     <span class="n">hist</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">history</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"train"</span><span class="p">):</span>
@@ -2614,17 +2671,12 @@ saved).</p>
     <span class="n">curves</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train"</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">train</span><span class="p">)}</span>
     <span class="k">if</span> <span class="n">hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"val"</span><span class="p">):</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">hist</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]])</span>
-        <span class="c1"># each entry's own epoch, so an unvalidated fit in between leaves a gap</span>
-        <span class="c1"># rather than shifting the whole curve back to epoch 1</span>
         <span class="n">curves</span><span class="p">[</span><span class="s2">"val"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hist</span><span class="p">[</span><span class="s2">"val_epoch"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">val</span><span class="p">)</span>
     <span class="n">created</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">curve</span><span class="p">)</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">curve</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> NLL (total)"</span><span class="p">)</span>
-    <span class="c1"># zoom past the initial drop: the top keeps each curve after 10 % of its</span>
-    <span class="c1"># epochs, so a validation curve that rises later stays in view</span>
-    <span class="c1"># finite values only: a diverged epoch must not blow the limits up</span>
     <span class="n">lo</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">curves</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
     <span class="n">hi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
         <span class="n">c</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="p">:][</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span> <span class="p">:])]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
@@ -2632,22 +2684,10 @@ saved).</p>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">lo</span> <span class="o">-</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">),</span> <span class="n">hi</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">stops</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-            <span class="n">epoch</span><span class="p">,</span>
-            <span class="mf">1.01</span><span class="p">,</span>
-            <span class="n">name</span><span class="p">,</span>
-            <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xaxis_transform</span><span class="p">(),</span>
-            <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
-            <span class="n">ha</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
-            <span class="n">va</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
-            <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-            <span class="n">color</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">stops</span><span class="p">:</span>
+        <span class="n">_mark_stops</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"epoch"</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"NLL"</span><span class="p">)</span>
-    <span class="c1"># below the axes, off the curves; the title stays left of the stop names</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"upper center"</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.18</span><span class="p">),</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">"training"</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
     <span class="n">_finish</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">created</span><span class="p">)</span>
@@ -2676,7 +2716,7 @@ saved).</p>
         <p>Draw a VC term's effect <span class="arithmatex">\(\beta(x)\)</span> along one modifier.</p>
 <p>The grid spans <code>by</code> over its range in <code>df</code>, or its levels for an
 ordinal <code>by</code>; every other node column is held at an observed median
-in <code>df</code>. The values come from
+in <code>df</code>, so an ordinal value stays a level. The values come from
 <a class="autorefs autorefs-internal" title="varying_coef" href="../flow/#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef</code></a>, on the node's
 latent scale. A dotted line marks <span class="arithmatex">\(\beta = 0\)</span>.</p>
 
@@ -2833,53 +2873,32 @@ saved).</p>
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>by</code> is not a modifier of the node's VC term.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/tramdag/plots.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">690</span>
-<span class="normal">691</span>
-<span class="normal">692</span>
-<span class="normal">693</span>
-<span class="normal">694</span>
-<span class="normal">695</span>
-<span class="normal">696</span>
-<span class="normal">697</span>
-<span class="normal">698</span>
-<span class="normal">699</span>
-<span class="normal">700</span>
-<span class="normal">701</span>
-<span class="normal">702</span>
-<span class="normal">703</span>
-<span class="normal">704</span>
-<span class="normal">705</span>
-<span class="normal">706</span>
-<span class="normal">707</span>
-<span class="normal">708</span>
-<span class="normal">709</span>
-<span class="normal">710</span>
-<span class="normal">711</span>
-<span class="normal">712</span>
-<span class="normal">713</span>
-<span class="normal">714</span>
-<span class="normal">715</span>
-<span class="normal">716</span>
-<span class="normal">717</span>
-<span class="normal">718</span>
-<span class="normal">719</span>
-<span class="normal">720</span>
-<span class="normal">721</span>
-<span class="normal">722</span>
-<span class="normal">723</span>
-<span class="normal">724</span>
-<span class="normal">725</span>
-<span class="normal">726</span>
-<span class="normal">727</span>
-<span class="normal">728</span>
-<span class="normal">729</span>
-<span class="normal">730</span>
-<span class="normal">731</span>
-<span class="normal">732</span>
-<span class="normal">733</span>
-<span class="normal">734</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">734</span>
 <span class="normal">735</span>
 <span class="normal">736</span>
 <span class="normal">737</span>
@@ -2889,14 +2908,68 @@ saved).</p>
 <span class="normal">741</span>
 <span class="normal">742</span>
 <span class="normal">743</span>
-<span class="normal">744</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_varying_coef</span><span class="p">(</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span>
+<span class="normal">757</span>
+<span class="normal">758</span>
+<span class="normal">759</span>
+<span class="normal">760</span>
+<span class="normal">761</span>
+<span class="normal">762</span>
+<span class="normal">763</span>
+<span class="normal">764</span>
+<span class="normal">765</span>
+<span class="normal">766</span>
+<span class="normal">767</span>
+<span class="normal">768</span>
+<span class="normal">769</span>
+<span class="normal">770</span>
+<span class="normal">771</span>
+<span class="normal">772</span>
+<span class="normal">773</span>
+<span class="normal">774</span>
+<span class="normal">775</span>
+<span class="normal">776</span>
+<span class="normal">777</span>
+<span class="normal">778</span>
+<span class="normal">779</span>
+<span class="normal">780</span>
+<span class="normal">781</span>
+<span class="normal">782</span>
+<span class="normal">783</span>
+<span class="normal">784</span>
+<span class="normal">785</span>
+<span class="normal">786</span>
+<span class="normal">787</span>
+<span class="normal">788</span>
+<span class="normal">789</span>
+<span class="normal">790</span>
+<span class="normal">791</span>
+<span class="normal">792</span>
+<span class="normal">793</span>
+<span class="normal">794</span>
+<span class="normal">795</span>
+<span class="normal">796</span>
+<span class="normal">797</span>
+<span class="normal">798</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_varying_coef</span><span class="p">(</span>
     <span class="n">flow</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">by</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Draw a VC term's effect $\beta(x)$ along one modifier.</span>
 
 <span class="sd">    The grid spans ``by`` over its range in ``df``, or its levels for an</span>
 <span class="sd">    ordinal ``by``; every other node column is held at an observed median</span>
-<span class="sd">    in ``df``. The values come from</span>
+<span class="sd">    in ``df``, so an ordinal value stays a level. The values come from</span>
 <span class="sd">    [`varying_coef`][tramdag.flow.CausalFlowDAG.varying_coef], on the node's</span>
 <span class="sd">    latent scale. A dotted line marks $\beta = 0$.</span>
 
@@ -2923,13 +2996,23 @@ saved).</p>
 <span class="sd">    -------</span>
 <span class="sd">    matplotlib.axes.Axes</span>
 <span class="sd">        The axes drawn into.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``by`` is not a modifier of the node's VC term.</span>
 <span class="sd">    """</span>
     <span class="n">plt</span> <span class="o">=</span> <span class="n">_plt</span><span class="p">()</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">t_name</span><span class="p">,</span> <span class="n">mods</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">_vc_term</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">by</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mods</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">by</span><span class="si">!r}</span><span class="s2"> is not a modifier of the VC term on </span><span class="si">{</span><span class="n">t_name</span><span class="si">!r}</span><span class="s2"> of node "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="si">!r}</span><span class="s2"> (has </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">flow</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">by</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ordinal"</span><span class="p">:</span>
         <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">by</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">by</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">df</span><span class="p">[</span><span class="n">by</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">200</span><span class="p">)</span>
-    <span class="c1"># an observed median per node column, so an ordinal value is a level</span>
     <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">flow</span><span class="o">.</span><span class="n">order</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
     <span class="n">medians</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">}</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">grid</span><span class="p">),</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">medians</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>

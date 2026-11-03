@@ -1412,8 +1412,8 @@ care, not as a by-product. Every claim here runs in
 <a href="../notebooks/varying_coefficients/"><code>notebooks/varying_coefficients.py</code></a>,
 which is the one place for the code, or in the tests that the text names.</p>
 <p>Modifiers may appear twice in a node, as prognostic parents through <code>CS</code> or
-<code>LS</code> and as effect modifiers through <code>VC</code>. That pattern is intended. Only the
-treatment named by <code>t=</code> owns its edge, and a second term that declares it
+<code>LS</code> and as effect modifiers through <code>VC</code>. The design intends this pattern.
+Only the treatment named by <code>t=</code> owns its edge, and a second term that declares it
 raises an error.</p>
 <h2 id="why-not-a-joint-cs-over-treatment-and-modifiers">Why not a joint <code>CS</code> over treatment and modifiers<a class="headerlink" href="#why-not-a-joint-cs-over-treatment-and-modifiers" title="Permanent link">&para;</a></h2>
 <p>For a binary treatment the multi-parent <code>CS</code> is equivalent in expressiveness.
@@ -1421,10 +1421,10 @@ Any shift decomposes as <span class="arithmatex">\(s(x,t) = s(x,0) + [s(x,1) - s
 <code>CS</code> form has no effect-specific regularization. The likelihood rewards a
 good average fit of <span class="arithmatex">\(s(x,t)\)</span>, and nothing rewards a smooth difference between
 the arms. So the read-out is the difference of two jointly fitted,
-unregularized networks, and it amplifies noise. On the <code>vc_hetero</code> process
-the <code>VC</code> term reaches a correlation of about 0.99 with the true effect
-function. The <code>CS</code> reduced form reaches a clearly lower correlation on the
-same protocol, although the model is in-class. Causal forests and R-learners
+unregularized networks. It amplifies random variation. On the <code>vc_hetero</code> process
+the <code>VC</code> term clears the recovery bar of the tests (see <a href="#validation">Validation</a>).
+The <code>CS</code> reduced form reaches a clearly lower correlation on the same
+protocol, although the model is in-class. Causal forests and R-learners
 do not work because they target the effect. They work because they
 regularize it (Athey et al., 2019; Nie &amp; Wager, 2021)<sup id="fnref:athey2019grf"><a class="footnote-ref" href="#fn:athey2019grf">1</a></sup> <sup id="fnref:nie2021quasioracle"><a class="footnote-ref" href="#fn:nie2021quasioracle">2</a></sup>. <code>VC</code> brings that
 ingredient into the TRAM framework.</p>
@@ -1445,8 +1445,9 @@ ingredient into the TRAM framework.</p>
   mean zero over the training data, which preserves the function. <span class="arithmatex">\(\beta_0\)</span>
   is therefore the main effect in the training population, the Colr reading
   when <span class="arithmatex">\(\beta\)</span> is constant.</li>
-<li><strong>Warm start.</strong> Fit the all-<code>LS</code> version classically and copy the treatment
-  weight into <code>beta0</code> before <code>fit</code>. Training then starts at the classical
+<li><strong>Warm start.</strong> <code>flow.nodes[name].warm_start(train_df)</code> fits the all-<code>LS</code>
+  version of the node classically and copies the treatment weight into
+  <code>beta0</code>. Call it before <code>fit</code>. Training then starts at the classical
   answer and learns only deviations.</li>
 <li><strong>Treatments.</strong> Continuous or binary ordinal, entering as its 0/1 level so
   that <span class="arithmatex">\(\beta\)</span> is the identified level-1-against-0 contrast. The term is
@@ -1495,25 +1496,25 @@ with or without centering.</p>
 <li><strong>Inference</strong>, in <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>pmf</code> and <code>scores</code>,
   recomputes <span class="arithmatex">\(\hat e\)</span> from the flow's own fitted treatment node on the current
   parent values, detached. Under <code>do(T=t)</code> the regressor becomes
-  <span class="arithmatex">\(t - \hat e(x)\)</span>. Nothing is cached.</li>
+  <span class="arithmatex">\(t - \hat e(x)\)</span>. The flow caches nothing.</li>
 <li><strong>Interpretation.</strong> <span class="arithmatex">\(\beta_0\)</span> is the mean of <span class="arithmatex">\(\beta(x)\)</span> over the training
   rows, with or without centering, because <code>fit</code> re-centers the head in both
-  cases. <code>varying_coef</code> is unchanged, because centering moves the regressor
+  cases. <code>varying_coef</code> stays the same, because centering moves the regressor
   and not <span class="arithmatex">\(\beta\)</span>. Centering requires a binary ordinal treatment.</li>
 </ul>
 <h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
 <p>The <code>vc_hetero</code> process in <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/conftest.py"><code>tests/conftest.py</code></a> is a
 logistic-shift SCM with a known <span class="arithmatex">\(\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3\)</span>. It
 has a nonlinear prognostic part and confounded assignment, and <span class="arithmatex">\(X_2\)</span> is
-confounder and modifier at once. That is the configuration in which the <code>CS</code>
-reduced form fails hardest. <code>tests/test_vc_term.py</code> requires three things:
-a recovery correlation of at least 0.9 with 4500 training rows, a fitted
-<span class="arithmatex">\(\beta_0\)</span> that matches <code>fit_classical</code> under a large penalty, and the
-read-out identities.
+confounder and modifier at once. In this configuration the <code>CS</code>
+reduced form fails hardest. <code>tests/test_vc_term.py</code> requires three things.
+It requires a recovery correlation of at least 0.9 with 4500 training rows.
+It requires a fitted <span class="arithmatex">\(\beta_0\)</span> that matches <code>fit_classical</code> under a large
+penalty. It requires the read-out identities.
 <code>tests/test_vc_centered.py</code> tests the centering claims on the <code>confounded</code>
 process.
-<a href="../scores/">scores.md</a> covers the scan that shortlists modifiers before a <code>VC</code>
-term is declared.</p>
+<a href="../scores/">scores.md</a> covers the scan that shortlists modifiers before you
+declare a <code>VC</code> term.</p>
 <div class="footnote">
 <hr />
 <ol>

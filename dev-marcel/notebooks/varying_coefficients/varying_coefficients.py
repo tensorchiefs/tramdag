@@ -56,7 +56,8 @@ plt.rcParams["figure.dpi"] = 110
 # $$\beta(x) = -1 + 0.8\,X_2 - 0.6\,X_3 .$$
 #
 # `X2` is deliberately *both* a confounder and an effect modifier. In this case
-# a naive estimate fails hardest.
+# a naive estimate fails hardest. The simulator writes `beta` as the same
+# expression that `true_beta` reports.
 
 # %%
 B0, B2, B3 = -1.0, 0.8, -0.6
@@ -72,7 +73,7 @@ def simulate(n, seed):
     x1, x2, x3 = (rng.normal(size=n) for _ in range(3))
     t = (rng.logistic(size=n) > -(0.4 * x1 + 0.4 * x2)).astype(float)
     g = 0.5 * x1**2 + x2 - 0.5 * x3
-    beta = B0 + B2 * x2 + B3 * x3  # the same expression true_beta reports
+    beta = B0 + B2 * x2 + B3 * x3
     y = (rng.logistic(size=n) - g - beta * t) / 2.0
     return pd.DataFrame({"X1": x1, "X2": x2, "X3": x3, "T": t, "Y": y})
 
@@ -118,7 +119,8 @@ assert scan["flag"][["X1", "X2", "X3"]].all()
 # part flags too.
 #
 # To show this, generate the data again with a *linear* prognostic $X_1$ and
-# change nothing else. `X1` then does not flag.
+# change nothing else. `X1` then does not flag, because the prognostic part is
+# linear in `X1` and the simple model has the right form.
 
 
 # %%
@@ -126,7 +128,7 @@ def simulate_linear_x1(n, seed):
     rng = np.random.default_rng(seed)
     x1, x2, x3 = (rng.normal(size=n) for _ in range(3))
     t = (rng.logistic(size=n) > -(0.4 * x1 + 0.4 * x2)).astype(float)
-    g = 0.5 * x1 + x2 - 0.5 * x3  # linear, so the simple model has the right form
+    g = 0.5 * x1 + x2 - 0.5 * x3
     y = (rng.logistic(size=n) - g - (B0 + B2 * x2 + B3 * x3) * t) / 2.0
     return pd.DataFrame({"X1": x1, "X2": x2, "X3": x3, "T": t, "Y": y})
 
@@ -218,7 +220,7 @@ flow.fit(
     batch_size=512,
     validation_data=val,
     seed=0,
-    callbacks=EarlyStopping(),  # keep the best-validation weights
+    callbacks=EarlyStopping(),
 )
 print(flow.to_matrix())
 
@@ -307,16 +309,19 @@ TAU = -1.0
 def confounded(n, seed):
     rng = np.random.default_rng(seed)
     x = rng.normal(size=n)
-    t = (rng.logistic(size=n) > -2.0 * x).astype(float)  # strong confounding
-    y = (rng.logistic(size=n) - 1.2 * x**2 - TAU * t) / 2.0  # quadratic prognostic
+    t = (rng.logistic(size=n) > -2.0 * x).astype(float)
+    y = (rng.logistic(size=n) - 1.2 * x**2 - TAU * t) / 2.0
     return pd.DataFrame({"X": x, "T": t, "Y": y})
 
 
 c_train, c_val, c_test = confounded(5400, 0), confounded(600, 7), confounded(3000, 1000)
 
-# stage 1 of the centered design, the caller's job: cross-fitted P(T=1|X), each
-# fold predicted by a treatment model that never saw it (as double machine
-# learning requires)
+# %% [markdown]
+# Stage 1 of the centered design is the caller's job: the cross-fitted
+# $P(T=1 \mid X)$. A treatment model that never saw a fold predicts that fold,
+# as double machine learning requires.
+
+# %%
 fold_id = np.random.default_rng(0).permutation(len(c_train)) % 5
 e_oof = np.empty(len(c_train))
 for j in range(5):
@@ -333,19 +338,17 @@ for propensity in (None, "ps"):
     spec_c = {
         "X": ContinuousNode(SI(transform="affine")),
         "T": OrdinalNode(2, LS("X")),
-        # linear prognostic term, though the truth is quadratic
         "Y": ContinuousNode(LS("X") + VC("X", propensity=propensity, t="T")),
     }
     fc = CausalFlowDAG(spec_c, seed=0)
     fc.fit(
-        # the out-of-fold propensities ride the frame as the column propensity= names
         c_train.assign(ps=e_oof) if propensity else c_train,
         epochs=250,
         learning_rate=1e-2,
         batch_size=512,
         validation_data=c_val,
         seed=0,
-        callbacks=EarlyStopping(),  # keep the best-validation weights
+        callbacks=EarlyStopping(),
     )
     b = fc.varying_coef(c_test, "Y")
     centered = propensity is not None

@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#code-map-every-module-of-srctramdag-the-public-names-and-the-private-plumbing" class="md-skip">
+        <a href="#code-map-every-module-of-srctramdag" class="md-skip">
           Skip to content
         </a>
       
@@ -730,10 +730,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plotspy-the-figures-matplotlib-optional-tramdagplots" class="md-nav__link">
+  <a href="#plotspy-the-figures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        plots.py: the figures (matplotlib optional: tramdag[plots])
+        plots.py: the figures
       
     </span>
   </a>
@@ -752,10 +752,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-every-training-hyperparameter-lives" class="md-nav__link">
+  <a href="#decisions-behind-the-training-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where every training hyperparameter lives
+        Decisions behind the training defaults
       
     </span>
   </a>
@@ -1526,10 +1526,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plotspy-the-figures-matplotlib-optional-tramdagplots" class="md-nav__link">
+  <a href="#plotspy-the-figures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        plots.py: the figures (matplotlib optional: tramdag[plots])
+        plots.py: the figures
       
     </span>
   </a>
@@ -1548,10 +1548,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-every-training-hyperparameter-lives" class="md-nav__link">
+  <a href="#decisions-behind-the-training-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where every training hyperparameter lives
+        Decisions behind the training defaults
       
     </span>
   </a>
@@ -1578,14 +1578,14 @@
   
 
 
-<h1 id="code-map-every-module-of-srctramdag-the-public-names-and-the-private-plumbing">Code map: every module of <code>src/tramdag/</code>, the public names and the private plumbing<a class="headerlink" href="#code-map-every-module-of-srctramdag-the-public-names-and-the-private-plumbing" title="Permanent link">&para;</a></h1>
-<p>This document has one entry per name, with its role and its place in the
-pipeline. Names in parentheses are private machinery. They are useful to know,
-and they are not part of the API. The last section lists every training
-hyperparameter and where it lives.</p>
+<h1 id="code-map-every-module-of-srctramdag">Code map: every module of <code>src/tramdag/</code><a class="headerlink" href="#code-map-every-module-of-srctramdag" title="Permanent link">&para;</a></h1>
+<p>This page lists each module with its role and the decisions behind it. The
+<a href="../api/tramdag/">API pages</a> document every signature and default. Names in
+parentheses are private machinery and are not part of the API.</p>
 <h2 id="specpy-declare-the-model"><code>spec.py</code>: declare the model<a class="headerlink" href="#specpy-declare-the-model" title="Permanent link">&para;</a></h2>
 <p>Every term is a <code>Term</code> subclass under its pythonic name. The paper's symbol is
-the same object, so <code>LS is LinearShift</code>.</p>
+the same object, so <code>LS is LinearShift</code>. A spec is plain data: it holds no
+tensors, so it serializes and compares without torch.</p>
 <table>
 <thead>
 <tr>
@@ -1596,59 +1596,27 @@ the same object, so <code>LS is LinearShift</code>.</p>
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="Term" href="../api/spec/#tramdag.spec.Term"><code>Term</code></a></td>
-<td>One additive term of a node's transformation, plain data: a subclass per term with <code>name</code> and <code>module</code> as class attributes and its options as the keyword arguments of <code>__init__</code> assigned to <code>self</code>, so <code>options()</code> is <code>dict(vars(term))</code>. <code>+</code> on terms builds plain lists. Carries the spec-level rules <code>check</code>, <code>edge_parents</code>, <code>cells</code>, <code>classical</code> and <code>from_serialized</code>. The contract is in <a href="../architecture/">architecture.md</a>.</td>
+<td>One additive term of a node's transformation. <code>+</code> on terms builds plain lists. The contract for a custom term is in <a href="../architecture/">architecture.md</a>.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="SI" href="../api/spec/#tramdag.spec.SI"><code>SI()</code></a></td>
-<td>The parentless intercept, the paper's SI. Free transform parameters, the same for every row. Carries the transform choice (<code>transform=</code>, default <code>"bernstein"</code>); extra keyword arguments pass straight to the transform class.</td>
+<td><a class="autorefs autorefs-internal" title="SI" href="../api/spec/#tramdag.spec.SI"><code>SI()</code></a> / <a class="autorefs autorefs-internal" title="CI" href="../api/spec/#tramdag.spec.CI"><code>CI()</code></a> / <a class="autorefs autorefs-internal" title="Intercept" href="../api/spec/#tramdag.spec.Intercept"><code>Intercept</code></a></td>
+<td><code>Intercept</code> (<code>I</code>) is the one intercept class. <code>SI</code> and <code>CI</code> are its two spellings with the arity checked.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="CI" href="../api/spec/#tramdag.spec.CI"><code>CI()</code></a></td>
-<td>The parent-conditioned intercept, the paper's CI: the parents reshape the monotone transform. Needs at least one parent. Also carries <code>units=</code> and <code>allow_interaction=</code> (joint vs. additive multi-parent intercept).</td>
+<td><a class="autorefs autorefs-internal" title="LinearShift" href="../api/spec/#tramdag.spec.LinearShift"><code>LinearShift</code></a> / <a class="autorefs autorefs-internal" title="ComplexShift" href="../api/spec/#tramdag.spec.ComplexShift"><code>ComplexShift</code></a> / <a class="autorefs autorefs-internal" title="VaryingCoefficient" href="../api/spec/#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a></td>
+<td>The three shifts: an interpretable coefficient, a network, and the penalized treatment-effect head (<a href="../varying-coefficients/">varying-coefficients.md</a>).</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="Intercept" href="../api/spec/#tramdag.spec.Intercept"><code>Intercept</code></a> / <code>I</code></td>
-<td>The intercept term class: without parents the paper's SI, with parents the CI; <code>SI()</code>/<code>CI()</code> are the two spellings with their arity checked.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="LinearShift" href="../api/spec/#tramdag.spec.LinearShift"><code>LinearShift</code></a> / <code>LS</code></td>
-<td>Linear shift <span class="arithmatex">\(\beta x\)</span>, the interpretable log-odds coefficient. Exactly one parent.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ComplexShift" href="../api/spec/#tramdag.spec.ComplexShift"><code>ComplexShift</code></a> / <code>CS</code></td>
-<td>Complex shift: an NN <code>g(x)</code>, additive on the latent scale. Several parents form one joint network.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="VaryingCoefficient" href="../api/spec/#tramdag.spec.VaryingCoefficient"><code>VaryingCoefficient</code></a> / <code>VC</code></td>
-<td>Varying-coefficient shift <span class="arithmatex">\((\beta_0 + b_\Theta(\text{mod}))\, x_t\)</span>, the penalized treatment-effect head. <code>propensity=</code> names the propensity column for centering.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ContinuousNode" href="../api/spec/#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a></td>
-<td>Continuous variable: monotone 1-D transform plus shifts. <code>terms</code> is the first positional argument.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="OrdinalNode" href="../api/spec/#tramdag.spec.OrdinalNode"><code>OrdinalNode</code></a></td>
-<td>Ordinal variable with <code>levels</code> classes: ordered logit (cutpoints) plus shifts.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="node_parents" href="../api/spec/#tramdag.spec.node_parents"><code>node_parents()</code></a></td>
-<td>Ordered de-duplicated parent names of a node (the canonical term list is <code>node.terms</code>).</td>
+<td><a class="autorefs autorefs-internal" title="ContinuousNode" href="../api/spec/#tramdag.spec.ContinuousNode"><code>ContinuousNode</code></a> / <a class="autorefs autorefs-internal" title="OrdinalNode" href="../api/spec/#tramdag.spec.OrdinalNode"><code>OrdinalNode</code></a></td>
+<td>The two node kinds.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="validate_and_sort" href="../api/spec/#tramdag.spec.validate_and_sort"><code>validate_and_sort()</code></a></td>
-<td>Edge-ownership validation plus Kahn topological sort. The returned order makes the flow triangular.</td>
+<td>Edge-ownership validation plus Kahn topological sort. The order makes the flow triangular. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="spec_to_dict" href="../api/spec/#tramdag.spec.spec_to_dict"><code>spec_to_dict()</code></a> / <a class="autorefs autorefs-internal" title="spec_from_dict" href="../api/spec/#tramdag.spec.spec_from_dict"><code>spec_from_dict()</code></a></td>
-<td>Checkpoint (de)serialization. A term serializes as <code>{term, parents, options}</code> with every option it carries; a hand-written spec may name only some, and the constructor fills the rest. A built-in term's <code>term</code> key is its <code>name</code>; a custom term writes its <code>module.ClassName</code> import path, which <code>_term_class</code> imports. <code>spec_from_dict</code> rejects a term without <code>options</code>, the node constructors normalize the formula, and <code>validate_and_sort</code> checks the DAG.</td>
-</tr>
-<tr>
-<td>(<code>_normalize_terms</code>, <code>_check_term</code>, <code>_term_class</code>, <code>_checked_input_transform</code>, <code>_serialized</code>)</td>
-<td>Formula flattening and per-entry validation (a <code>+</code> sum nested in a list is rejected), the one-parented-<code>I</code> rule plus transform hoisting in one pass. An option another term takes is refused by Python's own argument binding, as a <code>TypeError</code>.</td>
-</tr>
-<tr>
-<td>(<code>_check_node</code>, <code>_kahn_sort</code>)</td>
-<td>The stages behind <code>validate_and_sort</code>: parents exist, then each term's <code>check</code> (the VC treatment and centering rules), then edge ownership through <code>edge_parents</code>; a term's own shape (arity, option values) and a node's own (ordinal levels, the transform) are checked when they are built. Kahn's sort emits ready nodes in sorted batches, so the order is deterministic.</td>
+<td>Checkpoint (de)serialization. A custom term writes its import path, so a checkpoint loads without a registry. <code>strict=True</code> refuses a term that omits a shaping option (<code>Term.acting_options</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -1663,137 +1631,47 @@ the same object, so <code>LS is LinearShift</code>.</p>
 <tbody>
 <tr>
 <td><a class="autorefs autorefs-internal" title="StandardLogistic" href="../api/transforms/#tramdag.transforms.StandardLogistic"><code>StandardLogistic</code></a></td>
-<td>The TRAM base distribution: <code>log_prob</code>, <code>sample</code> (generator-aware), <code>icdf</code>.</td>
+<td>The TRAM base distribution. zuko has none (<a href="../zuko-upstream/">zuko-upstream.md</a>).</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="BernsteinUT" href="../api/transforms/#tramdag.transforms.BernsteinUT"><code>BernsteinUT</code></a></td>
-<td>Bernstein-polynomial transform, the default. Linear tail extrapolation follows the boundary derivative. <code>marginal_init_theta(column)</code> gives the start <code>marginal_init=True</code> applies.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="SplineUT" href="../api/transforms/#tramdag.transforms.SplineUT"><code>SplineUT</code></a></td>
-<td>Monotone rational-quadratic spline. Tails extrapolate with a fixed slope (<a href="../zuko-upstream/">zuko-upstream.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="AffineUT" href="../api/transforms/#tramdag.transforms.AffineUT"><code>AffineUT</code></a></td>
-<td>Monotone affine transform: the node-conditional is a logistic GLM.</td>
+<td><a class="autorefs autorefs-internal" title="BernsteinUT" href="../api/transforms/#tramdag.transforms.BernsteinUT"><code>BernsteinUT</code></a> / <a class="autorefs autorefs-internal" title="SplineUT" href="../api/transforms/#tramdag.transforms.SplineUT"><code>SplineUT</code></a> / <a class="autorefs autorefs-internal" title="AffineUT" href="../api/transforms/#tramdag.transforms.AffineUT"><code>AffineUT</code></a></td>
+<td>The three transforms of a continuous node (<a href="../model/#the-three-knobs-on-a-term">model.md</a>).</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="make_univariate_transform" href="../api/transforms/#tramdag.transforms.make_univariate_transform"><code>make_univariate_transform()</code></a></td>
-<td>Transform registry: name → transform instance.</td>
+<td>Name to transform instance.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="ordinal_cutpoints" href="../api/transforms/#tramdag.transforms.ordinal_cutpoints"><code>ordinal_cutpoints()</code></a></td>
-<td>Unconstrained <code>(n, K-1)</code> → increasing cutpoints with ±inf ends.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ordinal_log_prob" href="../api/transforms/#tramdag.transforms.ordinal_log_prob"><code>ordinal_log_prob()</code></a></td>
-<td><span class="arithmatex">\(\log P(Y=y)\)</span>, computed in log space (<a href="../model/#ordinal-nodes">model.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ordinal_pmf" href="../api/transforms/#tramdag.transforms.ordinal_pmf"><code>ordinal_pmf()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_sample" href="../api/transforms/#tramdag.transforms.ordinal_sample"><code>ordinal_sample()</code></a> / <a class="autorefs autorefs-internal" title="ordinal_abduct" href="../api/transforms/#tramdag.transforms.ordinal_abduct"><code>ordinal_abduct()</code></a></td>
-<td>Class probabilities / latent → level / truncated-logistic latent recovery (abduction) for ordinal nodes.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ordinal_marginal_init_theta" href="../api/transforms/#tramdag.transforms.ordinal_marginal_init_theta"><code>ordinal_marginal_init_theta()</code></a></td>
-<td>Cutpoint start that matches the empirical class frequencies (<code>marginal_init=True</code>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ordinal_bounds" href="../api/transforms/#tramdag.transforms.ordinal_bounds"><code>ordinal_bounds()</code></a></td>
-<td>The shifted cutpoint interval of each observed level. <code>scores.py</code> reads it for the latent-scale derivative.</td>
-</tr>
-<tr>
-<td>(<code>_ScaledUT</code>, <code>_log1mexp</code>)</td>
-<td>Quantile pre-scaling base class, whose inverse is zuko's with its closed-form tail. Stable <span class="arithmatex">\(\log(1-e^{x})\)</span>.</td>
+<td><a class="autorefs autorefs-internal" title="ordinal_log_prob" href="../api/transforms/#tramdag.transforms.ordinal_log_prob"><code>ordinal_log_prob()</code></a> and the other <code>ordinal_*</code> functions</td>
+<td>The ordinal likelihood and its inverses. The log probability is in log space (<a href="../model/#ordinal-nodes">model.md</a>).</td>
 </tr>
 </tbody>
 </table>
 <h2 id="flowpy-the-model"><code>flow.py</code>: the model<a class="headerlink" href="#flowpy-the-model" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="CausalFlowDAG" href="../api/flow/#tramdag.flow.CausalFlowDAG"><code>CausalFlowDAG</code></a></td>
-<td>The flow: one <a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> per variable in topological order. Construction seeds the weights.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a></td>
-<td>Maximum likelihood node by node, serially or in <code>n_jobs</code> forked processes. The mechanics are in <a href="../fitting/">fitting.md</a>.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a></td>
-<td>Float64 full-batch L-BFGS for all-<code>ls</code> specs, node by node; refuses flexible specs.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="sample" href="../api/flow/#tramdag.flow.CausalFlowDAG.sample"><code>sample()</code></a></td>
-<td>Observational, interventional (<code>do=</code>, graph mutilation) and counterfactual (<code>u=</code>) sampling.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="abduct" href="../api/flow/#tramdag.flow.CausalFlowDAG.abduct"><code>abduct()</code></a></td>
-<td>Abduction: recover the latents.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="pmf" href="../api/flow/#tramdag.flow.CausalFlowDAG.pmf"><code>pmf()</code></a></td>
-<td>Analytic class probabilities of an ordinal node, with <code>do=</code> overrides.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="density" href="../api/flow/#tramdag.flow.CausalFlowDAG.density"><code>density()</code></a></td>
-<td>Analytic conditional density of a continuous node on a grid, with <code>do=</code> overrides, the continuous counterpart of <code>pmf</code>.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="log_prob" href="../api/flow/#tramdag.flow.CausalFlowDAG.log_prob"><code>log_prob()</code></a> / <a class="autorefs autorefs-internal" title="nll" href="../api/flow/#tramdag.flow.CausalFlowDAG.nll"><code>nll()</code></a></td>
-<td>Joint per-row log-likelihood, or a <code>nodes=</code> subset (exact, and the log-space way to get one node's conditional likelihood per row) / mean per-node NLL diagnostic.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="varying_coef" href="../api/flow/#tramdag.flow.CausalFlowDAG.varying_coef"><code>varying_coef()</code></a></td>
-<td>Closed-form read-out <span class="arithmatex">\(\beta(x)\)</span> of a fitted VC term. Deterministic, y-free.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="scores" href="../api/flow/#tramdag.flow.CausalFlowDAG.scores"><code>scores()</code></a> / <a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../api/flow/#tramdag.flow.CausalFlowDAG.effect_modifier_scan"><code>effect_modifier_scan()</code></a></td>
-<td>Analytic per-observation scores and the CUSUM modifier scan (delegate to <code>scores.py</code>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="intercept_contributions" href="../api/flow/#tramdag.flow.CausalFlowDAG.intercept_contributions"><code>intercept_contributions()</code></a></td>
-<td>Post-hoc GAM-style decomposition of a complex intercept into mean-centered per-term parts.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="ls_coefficients" href="../api/flow/#tramdag.flow.CausalFlowDAG.ls_coefficients"><code>ls_coefficients()</code></a></td>
-<td>The per-node linear-shift weights, the interpretable coefficients.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="design_matrix" href="../api/flow/#tramdag.flow.CausalFlowDAG.design_matrix"><code>design_matrix()</code></a></td>
-<td>Parent encoding as a DataFrame (<code>drop_first=</code> gives the classical statsmodels/<code>polr</code> design).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="to_matrix" href="../api/flow/#tramdag.flow.CausalFlowDAG.to_matrix"><code>to_matrix()</code></a></td>
-<td>The labeled meta-adjacency matrix of term tags.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="save" href="../api/flow/#tramdag.flow.CausalFlowDAG.save"><code>save()</code></a> / <a class="autorefs autorefs-internal" title="load
-
-
-  
-      classmethod
-  " href="../api/flow/#tramdag.flow.CausalFlowDAG.load"><code>load()</code></a></td>
-<td>Checkpoints with the nodes' histories and provenance (version, time, device). <code>load</code> requires a complete checkpoint and fails loudly otherwise.</td>
-</tr>
-<tr>
-<td>(<code>_node</code>, <code>_schema</code>, <code>_features</code>, <code>_tensorize</code>, <code>_generator</code>, <code>_dtype</code>, <code>_init_linear</code>)</td>
-<td>Node lookup with one shared error; each node's parent schema; parent encoding through <code>Node.encode</code> (continuous raw, ordinal one-hot); <code>_tensorize(df, cols=None)</code> for any column subset, checking every ordinal column against its levels on the way in; seeded-generator and dtype plumbing.</td>
-</tr>
-<tr>
-<td>(<code>_calibrate</code>, <code>_propensity</code>, <code>_side_feats</code>, <code>_query_side_columns</code>)</td>
-<td>The flow-wide calibration (every node before the first fit, flags rolled back when a node refuses the frame), the generic side-column plumbing (each term names/validates/recomputes its own columns via the <code>ShiftModule</code> hooks) plus the binary propensity fit.</td>
-</tr>
-</tbody>
-</table>
+<p><a class="autorefs autorefs-internal" title="CausalFlowDAG" href="../api/flow/#tramdag.flow.CausalFlowDAG"><code>CausalFlowDAG</code></a> holds one
+<a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> per variable in topological order. Construction
+seeds each node's weights from the constructor seed and the node's name. A node
+starts from the same weights in every spec that contains it. Construction ends
+with <code>torch.manual_seed(seed)</code>, which seeds the unseeded shuffling of <code>fit</code>. The
+constructor seed is the reproducibility knob. A lone
+<code>Node</code> needs <code>torch.manual_seed</code> before you build it. The class composes
+<code>FitMixin</code> and <code>ReadoutsMixin</code>. The modules below list their methods.</p>
+<ul>
+<li><code>CausalFlowDAG.outcome()</code> gives the one node without children.</li>
+<li><code>sample</code> covers observational, interventional (<code>do=</code>, graph mutilation) and
+  counterfactual (<code>u=</code>) sampling. <code>abduct</code> recovers the latents. <code>pmf</code> and
+  <code>density</code> give the analytic conditionals.</li>
+<li><code>save</code> and <code>load</code> write checkpoints with the nodes' histories and
+  provenance. <code>load</code> requires a complete checkpoint and fails loudly
+  otherwise.</li>
+<li>The flow calibrates every node before the first fit and rolls the flags
+  back when a node refuses the frame. A term names, validates and recomputes
+  its own side columns through the <code>ShiftModule</code> hooks, and the flow fits the
+  binary propensity.</li>
+</ul>
 <h2 id="modulespy-the-term-modules"><code>modules.py</code>: the term modules<a class="headerlink" href="#modulespy-the-term-modules" title="Permanent link">&para;</a></h2>
 <p>There is one module class per term, and the term class holds it as <code>module</code>
-(<code>ComplexShift.module is ComplexShiftModule</code>); the module holds the term's
+(<code>ComplexShift.module is ComplexShiftModule</code>). The module holds the term's
 network and owns the runtime hooks (<a href="../architecture/">architecture.md</a>).</p>
 <p>The default architectures replicate the PyTorch reference
 <a href="https://github.com/buehlpa/TramDag">buehlpa/TramDag</a>, file <code>tram_models.py</code>,
@@ -1808,185 +1686,59 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 </thead>
 <tbody>
 <tr>
-<td><a class="autorefs autorefs-internal" title="intercept_module" href="../api/modules/#tramdag.modules.intercept_module"><code>intercept_module()</code></a></td>
-<td>The one factory: an <code>I</code> term becomes the free theta, one joint net, or one net per parent (<code>allow_interaction=False</code>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="feat_width" href="../api/modules/#tramdag.modules.feat_width"><code>feat_width()</code></a></td>
-<td>Total encoded width of a parent set: <code>levels</code> per ordinal parent, 1 per continuous one.</td>
-</tr>
-<tr>
 <td><a class="autorefs autorefs-internal" title="ShiftModule" href="../api/modules/#tramdag.modules.ShiftModule"><code>ShiftModule</code></a> / <a class="autorefs autorefs-internal" title="InterceptModule" href="../api/modules/#tramdag.modules.InterceptModule"><code>InterceptModule</code></a></td>
-<td>The behavior hooks a term module owns: <code>__init__(term, schema)</code> (builds the net from the parent schema, sets <code>key</code> and <code>parents</code>), <code>shift_value</code>/<code>theta_value</code>, <code>post_init</code>, <code>regularizer</code>, post-fit <code>finalize</code>, <code>score_columns</code>, the side-input contract.</td>
+<td>The behavior hooks a term module owns.</td>
 </tr>
 <tr>
 <td><a class="autorefs autorefs-internal" title="LinearShiftModule" href="../api/modules/#tramdag.modules.LinearShiftModule"><code>LinearShiftModule</code></a></td>
-<td><code>LS</code>: <code>Linear(n, 1, bias=False)</code>. <code>.weight</code> is the interpretable coefficient; no bias because the intercept slot owns the constant.</td>
+<td>A linear layer without bias, because the intercept slot owns the constant. <code>.weight</code> is the interpretable coefficient.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="ComplexShiftModule" href="../api/modules/#tramdag.modules.ComplexShiftModule"><code>ComplexShiftModule</code></a></td>
-<td><code>CS</code>: an NN to one shift value.</td>
+<td><a class="autorefs autorefs-internal" title="ComplexShiftModule" href="../api/modules/#tramdag.modules.ComplexShiftModule"><code>ComplexShiftModule</code></a> / <a class="autorefs autorefs-internal" title="VaryingCoefficientModule" href="../api/modules/#tramdag.modules.VaryingCoefficientModule"><code>VaryingCoefficientModule</code></a></td>
+<td>The network shift and the varying-coefficient head.</td>
 </tr>
 <tr>
-<td><a class="autorefs autorefs-internal" title="VaryingCoefficientModule" href="../api/modules/#tramdag.modules.VaryingCoefficientModule"><code>VaryingCoefficientModule</code></a></td>
-<td><code>VC</code>: <span class="arithmatex">\(\beta_0 + b_\Theta(\text{mod})\)</span> with the L2 hook <code>l2()</code>; <code>beta()</code> evaluates the effect and <code>recenter()</code> re-splits <code>beta0</code>/<code>b_theta</code> after training (<a href="../varying-coefficients/">varying-coefficients.md</a>). <code>regressor</code> is both the forward regressor and the <code>beta0</code> score.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="SimpleInterceptModule" href="../api/modules/#tramdag.modules.SimpleInterceptModule"><code>SimpleInterceptModule</code></a> / <a class="autorefs autorefs-internal" title="ComplexInterceptModule" href="../api/modules/#tramdag.modules.ComplexInterceptModule"><code>ComplexInterceptModule</code></a> / <a class="autorefs autorefs-internal" title="AdditiveInterceptModule" href="../api/modules/#tramdag.modules.AdditiveInterceptModule"><code>AdditiveInterceptModule</code></a></td>
-<td>The intercept slot: free theta (<code>I()</code>), one joint net from the parent features to the transform parameters, or one net per parent summed in coefficient space. The additive one holds its nets in <code>nets</code>.</td>
-</tr>
-<tr>
-<td>(<code>_nn</code>)</td>
-<td>The one NN builder: a stack of the given <code>units</code> with the term's <code>activation</code> (optional <code>batch_norm</code> before it), then a bias-free output layer.</td>
-</tr>
-<tr>
-<td>(<code>_InputTransform</code>)</td>
-<td>One term's frozen network-input transform (minmax / standardize / callable over frozen train columns).</td>
+<td><a class="autorefs autorefs-internal" title="intercept_module" href="../api/modules/#tramdag.modules.intercept_module"><code>intercept_module()</code></a></td>
+<td>The one factory for the intercept slot: a free theta, one joint net, or one net per parent summed in coefficient space.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="nodespy-the-node-model"><code>nodes.py</code>: the node model<a class="headerlink" href="#nodespy-the-node-model" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a></td>
-<td>One sub-model per variable, a TRAM regression on its parents, exported as <code>tramdag.Node</code>: built from its name, node spec and parent schema <code>{parent: "continuous" \| n_levels}</code>; builds its intercept and shift terms through each term's <code>module</code>; <code>theta_shift()</code> sums the terms' <code>shift_value</code>s (plain shifts first, then VC); <code>net_input()</code> feeds every term network, <code>input_transform</code> applied.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> <code>.log_prob</code> / <code>.sample</code> / <code>.abduct</code> / <code>.marginal_theta</code> / <code>.encode</code></td>
-<td>The continuous-vs-ordinal branches and the parent encoding (<a href="../architecture/#node-kinds">architecture.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> <code>.features</code> / <code>.tensorize</code> / <code>.calibrate</code> / <code>.ls_coefficients</code> / <code>.save</code> / <code>.load</code></td>
-<td>The node's parent encoding from its schema, its columns as tensors (ordinal levels checked), its own calibration and <code>calibrated</code> flag, its <code>LS</code> coefficients, its checkpoint.</td>
-</tr>
-<tr>
-<td>(<code>encode</code>, <code>schema_entry</code>, <code>tensorize</code>, <code>check_columns</code>, <code>check_level_values</code>, <code>write_checkpoint</code>, <code>load_weights</code>)</td>
-<td>Shared by the node and the flow: one column's encoding, a node's schema entry, columns as tensors, the column and level checks, the checkpoint writer and loader.</td>
-</tr>
-</tbody>
-</table>
+<p><a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> is one sub-model per variable, a TRAM regression
+on its parents. <code>tramdag.Node</code> exports it. It builds its terms through
+each term's <code>module</code>. The continuous-versus-ordinal branches live in its
+methods <code>log_prob</code>, <code>sample</code>, <code>abduct</code>, <code>marginal_theta</code> and <code>encode</code>
+(<a href="../architecture/#node-kinds">architecture.md</a>). The shared helpers (<code>encode</code>,
+<code>schema_entry</code>, <code>tensorize</code>, the column checks and the checkpoint IO) serve
+both the node and the flow.</p>
 <h2 id="fittingpy-nodefitmixin-and-fitmixin"><code>fitting.py</code>: <code>NodeFitMixin</code> and <code>FitMixin</code><a class="headerlink" href="#fittingpy-nodefitmixin-and-fitmixin" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="fit" href="../api/nodes/#tramdag.nodes.Node.fit"><code>Node.fit()</code></a> / <a class="autorefs autorefs-internal" title="fit_classical" href="../api/nodes/#tramdag.nodes.Node.fit_classical"><code>Node.fit_classical()</code></a> / <a class="autorefs autorefs-internal" title="nll" href="../api/nodes/#tramdag.nodes.Node.nll"><code>Node.nll()</code></a></td>
-<td>One node's Adam loop and L-BFGS fit, mixed into <code>Node</code> via <code>NodeFitMixin</code>; <code>row_log_prob</code>, <code>_recenter</code> (the VC re-centering) and the side-column check live here too.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a> / <a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a></td>
-<td>The flow's loops over the nodes, methods of the flow via <code>FitMixin</code>; <code>history</code> is the flow's view over the nodes' histories.</td>
-</tr>
-<tr>
-<td>(<code>_split_validation</code>, <code>_normalize_callbacks</code>, <code>_check_fit_sizes</code>, <code>_learning_rates</code>, <code>_log_epoch</code>, <code>_fit_epoch</code>, <code>_FnCallback</code>, <code>_node_seed</code>, <code>_per_node</code>, <code>NodeFitMixin._check_classical</code>, <code>_fit_in_child</code>, <code>_pad_last</code>, <code>FitMixin._check_frames</code>, <code>FitMixin._fit_nodes</code>, <code>FitMixin._with_live_side</code>)</td>
-<td>The loop plumbing: Keras-shaped validation split, callback normalization, the rate record, verbose printing, the per-node seeds and arguments, the frame checks before the first fit, the forked worker and the serial loop, the padded history view, the live propensity for the validation NLL.</td>
-</tr>
-</tbody>
-</table>
+<p><a class="autorefs autorefs-internal" title="fit" href="../api/nodes/#tramdag.nodes.Node.fit"><code>Node.fit()</code></a> and
+<a class="autorefs autorefs-internal" title="fit_classical" href="../api/nodes/#tramdag.nodes.Node.fit_classical"><code>Node.fit_classical()</code></a> fit one node,
+through <code>NodeFitMixin</code>. The flow's <a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a> and
+<a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a> loop over the
+nodes, through <code>FitMixin</code>, serially or in <code>n_jobs</code> forked processes. The
+mechanics are in <a href="../fitting/">fitting.md</a>.</p>
 <h2 id="readoutspy-readoutsmixin"><code>readouts.py</code>: <code>ReadoutsMixin</code><a class="headerlink" href="#readoutspy-readoutsmixin" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="shift_curve" href="../api/flow/#tramdag.flow.CausalFlowDAG.shift_curve"><code>shift_curve()</code></a></td>
-<td>One fitted shift term on a 1-D grid, through the term's own <code>shift_value</code>.</td>
-</tr>
-<tr>
-<td>the read-out methods</td>
-<td><code>varying_coef</code>, <code>ls_coefficients</code>, <code>to_matrix</code>, <code>intercept_contributions</code>, <code>design_matrix</code>, defined here once, methods of the flow via the mixin.</td>
-</tr>
-</tbody>
-</table>
+<p>The read-out methods (<code>varying_coef</code>, <code>ls_coefficients</code>, <code>to_matrix</code>,
+<code>intercept_contributions</code>, <code>design_matrix</code>, <code>shift_curve</code>) live here
+once and are methods of the flow through the mixin.</p>
 <h2 id="scorespy-effect-modifier-detection"><code>scores.py</code>: effect-modifier detection<a class="headerlink" href="#scorespy-effect-modifier-detection" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="node_scores" href="../api/scores/#tramdag.scores.node_scores"><code>node_scores()</code></a></td>
-<td>Per-observation scores of the interpretable shift coefficients (<a href="../scores/">scores.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../api/scores/#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan()</code></a></td>
-<td>The fluctuation scan over candidate modifiers (<a href="../scores/">scores.md</a>).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="sup_bb_pvalue" href="../api/scores/#tramdag.scores.sup_bb_pvalue"><code>sup_bb_pvalue()</code></a></td>
-<td>$P(\sup</td>
-</tr>
-<tr>
-<td>(<code>_dl_ds</code>, <code>CRIT_5PCT</code>)</td>
-<td>Closed-form latent-scale derivative and the 5 % critical value. The per-term columns come from each term's <code>score_columns</code> hook.</td>
-</tr>
-</tbody>
-</table>
+<p><a class="autorefs autorefs-internal" title="node_scores" href="../api/scores/#tramdag.scores.node_scores"><code>node_scores()</code></a> and
+<a class="autorefs autorefs-internal" title="effect_modifier_scan" href="../api/scores/#tramdag.scores.effect_modifier_scan"><code>effect_modifier_scan()</code></a> are the
+analytic scores and the fluctuation scan (<a href="../scores/">scores.md</a>). The
+per-term score columns come from each term's <code>score_columns</code> hook.</p>
 <h2 id="callbackspy-the-shipped-fit-callbacks"><code>callbacks.py</code>: the shipped <code>fit</code> callbacks<a class="headerlink" href="#callbackspy-the-shipped-fit-callbacks" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="EarlyStopping" href="../api/callbacks/#tramdag.callbacks.EarlyStopping"><code>EarlyStopping</code></a></td>
-<td>The node's best-validation weights, restored at fit end (<code>restore_best=False</code> keeps the final ones); <code>patience=</code> also stops the node's fit, and <code>min_delta=</code> sets the smallest gain that counts.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="plotspy-the-figures-matplotlib-optional-tramdagplots"><code>plots.py</code>: the figures (matplotlib optional: <code>tramdag[plots]</code>)<a class="headerlink" href="#plotspy-the-figures-matplotlib-optional-tramdagplots" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a class="autorefs autorefs-internal" title="plot_dag" href="../api/plots/#tramdag.plots.plot_dag"><code>plot_dag()</code></a></td>
-<td>The labelled DAG of a spec or flow: layered left to right, ellipses for continuous and rounded boxes for ordinal nodes, every edge drawn by the term that owns it (LS / CS / CI / VC + modifiers, <code>joint</code> for a multi-parent net). Exported as <code>tramdag.plot_dag</code>. <code>style=</code> (<code>"light"</code>, <code>"dark"</code> or a dict), <code>node_kind=</code> and <code>modifiers=</code> (<code>"edge"</code> points a VC modifier at its treatment edge).</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="plot_marginals" href="../api/plots/#tramdag.plots.plot_marginals"><code>plot_marginals()</code></a></td>
-<td>Observed vs sampled marginal per node, one panel each; <code>colors=</code>, <code>legend=</code> and <code>title=</code>. Every plot function takes <code>ax=</code> to draw into a given layout.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="plot_training" href="../api/plots/#tramdag.plots.plot_training"><code>plot_training()</code></a></td>
-<td>Summed train/val NLL per epoch, with a dashed mark per <code>stops=</code> entry.</td>
-</tr>
-<tr>
-<td><a class="autorefs autorefs-internal" title="plot_varying_coef" href="../api/plots/#tramdag.plots.plot_varying_coef"><code>plot_varying_coef()</code></a></td>
-<td>A VC term's <span class="arithmatex">\(\beta(x)\)</span> along one modifier, the other node columns at an observed median.</td>
-</tr>
-<tr>
-<td>(<code>_layout</code>, <code>_term_edges</code>, <code>_dag_edges</code>, <code>_bulges</code>, <code>_clear</code>)</td>
-<td>Longest-path layers with one barycenter sweep; the edge list with the VC treatment/modifier split; each edge's bend, the nearest one that misses every node. matplotlib is imported on the first call, never at package import.</td>
-</tr>
-</tbody>
-</table>
+<p><a class="autorefs autorefs-internal" title="EarlyStopping" href="../api/callbacks/#tramdag.callbacks.EarlyStopping"><code>EarlyStopping</code></a> is the only shipped
+callback. Anything else is torch's <code>lr_scheduler</code> and a few lines of callback
+(<a href="../fitting/">fitting.md</a>).</p>
+<h2 id="plotspy-the-figures"><code>plots.py</code>: the figures<a class="headerlink" href="#plotspy-the-figures" title="Permanent link">&para;</a></h2>
+<p>matplotlib is optional (<code>tramdag[plots]</code>) and the first plot
+call imports it, never the package import. <a class="autorefs autorefs-internal" title="plot_dag" href="../api/plots/#tramdag.plots.plot_dag"><code>plot_dag()</code></a>,
+<a class="autorefs autorefs-internal" title="plot_marginals" href="../api/plots/#tramdag.plots.plot_marginals"><code>plot_marginals()</code></a>,
+<a class="autorefs autorefs-internal" title="plot_training" href="../api/plots/#tramdag.plots.plot_training"><code>plot_training()</code></a> and
+<a class="autorefs autorefs-internal" title="plot_varying_coef" href="../api/plots/#tramdag.plots.plot_varying_coef"><code>plot_varying_coef()</code></a> each take <code>ax=</code> to
+draw into a given layout. <code>plot_dag</code> draws every edge by the term that owns
+it.</p>
 <h2 id="what-is-not-in-the-package">What is <em>not</em> in the package<a class="headerlink" href="#what-is-not-in-the-package" title="Permanent link">&para;</a></h2>
 <p>Three groups of files are research code:</p>
 <ul>
@@ -1998,95 +1750,34 @@ so a fitted model stays comparable to it. They are not the paper's nets, which
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/experiments/README.md"><code>experiments/README.md</code></a> describes them and
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/tests/README.md"><code>tests/README.md</code></a> what the framework tests measure
 instead.</p>
-<h2 id="where-every-training-hyperparameter-lives">Where every training hyperparameter lives<a class="headerlink" href="#where-every-training-hyperparameter-lives" title="Permanent link">&para;</a></h2>
-<p>Everything that shapes a fit is either a keyword you pass or a documented
-default you can read at the call site. Nothing numeric is buried.</p>
-<table>
-<thead>
-<tr>
-<th>Knob</th>
-<th>Where</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>learning rate, batch size</td>
-<td><code>fit()</code></td>
-<td>1e-2 / 512 (in-repo callers state them explicitly anyway)</td>
-</tr>
-<tr>
-<td>validation, progress</td>
-<td><code>fit(validation_data=, validation_split=, verbose=)</code></td>
-<td>validation off, <code>verbose=0</code></td>
-</tr>
-<tr>
-<td>schedules, early stopping</td>
-<td><code>fit(optimizer=, callbacks=)</code></td>
-<td><code>tramdag.callbacks</code> ships <code>EarlyStopping</code>, per node; anything else is torch's <code>lr_scheduler</code> and a few lines of callback (<a href="../fitting/">fitting.md</a>)</td>
-</tr>
-<tr>
-<td>marginal start</td>
-<td><code>fit(marginal_init=)</code></td>
-<td>False: the zero start; applied only by the fit that calibrates a node, so a node that <code>fit_classical</code> calibrated ignores it</td>
-</tr>
-<tr>
-<td>VC stage-1 propensities</td>
-<td>the training-frame column <code>VC(propensity=)</code> names</td>
-<td>required for a centered VC term (<a href="../varying-coefficients/">varying-coefficients.md</a>)</td>
-</tr>
-<tr>
-<td>VC penalty and centering</td>
-<td><code>VC(penalty=, propensity=)</code></td>
-<td>1.0 / None (<code>propensity="col"</code> names the propensity column)</td>
-</tr>
-<tr>
-<td>L-BFGS budget</td>
-<td><code>fit_classical(max_iter=, history_size=)</code></td>
-<td>5000 / 50; torch's <code>tolerance_change</code> is 1e-9 and <code>tolerance_grad</code> is off. One full-batch run, no chunks; <code>converged</code> also needs <code>GRAD_TOL</code> (1e-2)</td>
-</tr>
-<tr>
-<td>training budget</td>
-<td><code>fit(epochs=)</code></td>
-<td><strong>required</strong> (<a href="../fitting/">fitting.md</a>)</td>
-</tr>
-<tr>
-<td>network widths</td>
-<td><code>units=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></td>
-<td>(8, 8) / (64, 128, 64), parity with the PyTorch reference's default classes; VC's (16,) has no counterpart there and comes from the recovery measurement</td>
-</tr>
-<tr>
-<td>activation</td>
-<td><code>activation=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></td>
-<td><code>"relu"</code> (the reference default classes); <code>"sigmoid"</code> and <code>"tanh"</code> are the paper's</td>
-</tr>
-<tr>
-<td>batch norm</td>
-<td><code>batch_norm=</code> on <code>I</code>/<code>CS</code>/<code>VC</code></td>
-<td><code>False</code>: neither reference uses it. <code>True</code> puts a <code>BatchNorm1d</code> between each hidden layer and its activation, so the fit needs more than one row per batch and inference needs <code>eval()</code> mode (<code>fit</code> and <code>load</code> leave the flow there)</td>
-</tr>
-<tr>
-<td>transform class</td>
-<td><code>I(transform=, **kwargs)</code> (extra kwargs go to the transform class)</td>
-<td><code>"bernstein"</code>, <code>n_coeffs=20</code> unconstrained coefficients (<a href="../zuko-upstream/">zuko-upstream.md</a> on the order they give); spline <code>bins=8</code>, zuko's NSF default; the domain is fixed at [-5, 5], <code>transforms.BOUND</code></td>
-</tr>
-<tr>
-<td>shuffling / weight init</td>
-<td><code>fit(seed=)</code> / <code>CausalFlowDAG(seed=)</code></td>
-<td>init happens at construction, so the constructor seed is the reproducibility knob; a lone <code>Node</code> takes <code>torch.manual_seed</code> before <code>Node(...)</code></td>
-</tr>
-<tr>
-<td>weight init</td>
-<td><code>CausalFlowDAG(init=)</code></td>
-<td><code>"torch"</code> (<code>nn.Linear</code> Kaiming-uniform); <code>"glorot"</code> = Keras <code>Dense</code> default, glorot-uniform weights and zero biases, the paper's reference; decisive under its full-batch protocol</td>
-</tr>
-<tr>
-<td>network inputs</td>
-<td><code>CI/CS/VC(input_transform=)</code></td>
-<td><code>None</code>, raw parents; <code>"minmax"</code>, <code>"standardize"</code> or a callable <code>fn(x, train)</code> (<a href="../model/">model.md</a>)</td>
-</tr>
-</tbody>
-</table>
+<h2 id="decisions-behind-the-training-defaults">Decisions behind the training defaults<a class="headerlink" href="#decisions-behind-the-training-defaults" title="Permanent link">&para;</a></h2>
+<p>The signatures hold the defaults. This list keeps the reasons.</p>
+<ul>
+<li><strong><code>fit(epochs=)</code> has no default.</strong> No default epoch count fits both an <code>LS</code>
+  and a flexible model (<a href="../fitting/">fitting.md</a>).</li>
+<li><strong>Weight initialization is <code>CausalFlowDAG(init=)</code>.</strong> Initialization happens
+  at construction, so the constructor seed is the reproducibility knob. Each
+  node draws from a stream keyed on the seed and the node's name.
+  <code>"torch"</code> is the <code>nn.Linear</code> default. <code>"glorot"</code> is the Keras <code>Dense</code>
+  default, the paper's reference, and it is decisive under the paper's
+  full-batch protocol. <code>zero_shift_networks=True</code> starts every <code>CS</code> shift
+  at 0.</li>
+<li><strong>Network widths and <code>activation=</code></strong> follow the default classes of the PyTorch
+  reference, for parity. The <code>VC</code> head has no counterpart there. <code>"sigmoid"</code> and
+  <code>"tanh"</code> are the paper's activations.</li>
+<li><strong><code>batch_norm=</code> is off</strong>, because neither reference uses it. When on, it
+  needs more than one row per batch, and inference needs <code>eval()</code> mode. <code>fit</code>
+  and <code>load</code> leave the flow there.</li>
+<li><strong><code>marginal_init=</code> is off.</strong> Only the fit that calibrates a node applies
+  it, so a node that <code>fit_classical</code> calibrated ignores it.</li>
+<li><strong><code>fit_classical</code> is one full-batch run with no chunks.</strong> <code>converged</code> means
+  that L-BFGS and the Newton steps stopped on their own
+  (<a href="../fitting/">fitting.md</a>).</li>
+<li><strong>The transform domain</strong> is <code>transforms.BOUND</code>, a constant. The order of the
+  Bernstein coefficients is in <a href="../zuko-upstream/">zuko-upstream.md</a>.</li>
+<li><strong>A centered <code>VC</code> term needs a propensity column</strong> in the training frame
+  (<a href="../varying-coefficients/">varying-coefficients.md</a>).</li>
+</ul>
 
 
 

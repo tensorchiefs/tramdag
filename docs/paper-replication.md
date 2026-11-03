@@ -75,12 +75,12 @@ covers x2 ∈ [−1, 0], the half period that Fig. 18 plots.
 
 | variant | metric | paper | paper protocol, `init: normal` (batch 32 / lr 0.001 / 500 epochs) | CI config, pinned run (measured) |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.986 / −0.153 / 0.261 |
-| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.176; 0.031 |
-| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.156; 0.053 |
-| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.165; 0.255 on the paper's [−1, 0] window |
-| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | 0.031 to 0.125 (linear-cs, atan-cs, sin-cs); linear-ls 0.115 |
-| all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4608 to 2.4632 |
+| linear-ls | β12 / β13 / β23 | Fig. 14 trajectories; Sec. 6.1 text: 1.98 / −0.21 / 0.26 | 1.987 / −0.170 / 0.282 | 1.981 / −0.161 / 0.281 |
+| linear-cs | β13; max \|ĝ − (−f)\| on [−1, 1] | Fig. 17: fitted CS is a straight line | −0.173; 0.122 | −0.180; 0.023 |
+| atan-cs | β13; cs max err | Fig. 7 right / 15 / 16: CS on −f; text: β12 = 2.07, β13 = −0.203 | −0.168; 0.059 | −0.165; 0.081 |
+| sin-cs | β13; cs max err | Fig. 18: CS follows the non-monotone f on x2 ∈ [−1, 0] | −0.195; 1.10 | −0.168; 0.245 on the paper's [−1, 0] window |
+| all | \|E[x3 \| do(x1 = −1)] flow − DGP\| | Figs. 16/17: histograms overlap | 0.09 to 0.14 | 0.068 to 0.131 (linear-cs, atan-cs, sin-cs); linear-ls 0.107 |
+| all | val NLL x3 | (none) | 2.4607 to 2.4764 | 2.4606 to 2.4614 |
 
 The pinned column gives the measurement of the pinned run, from its
 `metrics.json`. A `value` entry of a run metric in
@@ -89,10 +89,11 @@ CAREFL entries are constants. Each `max` bound on an error measure sits at 1.5x
 to 4x of it. The `fit_seconds` bounds are 3x the time on the CI runner. No cell
 in this column is a bound.
 
-β13 measures −0.15 to −0.18 instead of −0.2 in the continuous triangle variants.
+β13 measures −0.16 to −0.18 instead of −0.2 in the continuous triangle variants.
 β13 multiplies x1, whose two mixture components sit at 0.25 and 0.73. So x1 has
 sd 0.254 against 0.375 for x2 and 2.918 to 3.748 for x3. At n = 40000, SE(β13)
-is about 0.036. The value is within about 1.3 SE of the truth. At n = 5000,
+is about 0.040, the sd of β13 over 12 data seeds of `linear-ls`. The value is
+within about 1 SE of the truth. At n = 5000,
 β13 is too weakly identified for the frozen 5000-row CSVs to serve as fit
 checks. So the fit checks train on the paper's n = 40000 protocol.
 
@@ -133,11 +134,11 @@ odds-ratio check). It is the only mixed variant with a true β23.
 
 | variant | metric | paper | paper protocol, `init: normal` (500 epochs) | CI config, pinned |
 |---|---|---|---|---|
-| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.979 / −0.258 / 0.318 |
+| linear-ls | β12 / β13 / β23 | Fig. 19: 2 / 0.2 / −0.3 (paper convention; −0.2 / +0.3 in the flow's) | 1.987 / −0.246 / 0.319 | 1.978 / −0.258 / 0.333 |
 | linear-ls | odds ratio predicted / DGP | e² ≈ 7.39; C.4 text: 7.74, CI [7.16, 8.38] | 7.29 / 7.19 | 7.23 / 7.19 |
-| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV 0.050; 0.715 / 0.728 / 0.806 |
-| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.209; 0.064 |
-| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.020; 0.920 / 0.921 |
+| linear-ls | CF PMF TV vs analytic; P(true level) flow / analytic / mode bound | (App. B qualitative) | 0.044; 0.718 / 0.728 / 0.806 | TV 0.050; 0.716 / 0.728 / 0.806 |
+| exp-cs | β13; cs max err | Fig. 20: distributions match | −0.207; 0.142 | −0.205; 0.073 |
+| exp-cs | CF PMF TV; P(true level) | (none) | 0.023; 0.917 / 0.921 | 0.021; 0.921 / 0.921 |
 
 The pinned column follows the rule of the continuous table: every cell is a
 measurement.
@@ -172,15 +173,15 @@ pinned flow value.
 
 | metric | paper | here, pinned run (measured) |
 |---|---|---|
-| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.074 |
-| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.001 |
-| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.052 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.064, error 0.012 |
-| val NLL x3 | (none) | 1.4335 |
+| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.102 |
+| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.016 |
+| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.040 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.064, error 0.013 |
+| val NLL x3 | (none) | 1.4341 |
 
 The do(x2) errors vary with the init seed. D5 below gives five seeds. At
-do(x2 = −1) the per-node error goes from 0.001 to 0.018, and the config's
-seed 7 gives the smallest. The paper shows one run's densities. The
+do(x2 = −1) the per-node error goes from 0.006 to 0.018, and seed 1 gives
+the smallest. The paper shows one run's densities. The
 committed bounds sit at 1.5x to 4x of the pinned measurement.
 
 The table below traces what each protocol ingredient is worth under the
@@ -241,8 +242,8 @@ the same `make_model` nets as VACA, `range_q: 0` for the reference's
 
 | metric | paper / CAREFL | here, pinned run (measured) |
 |---|---|---|
-| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.050 |
-| Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.157, at α = 0; 0.149 at the α = −3 grid edge |
+| Fig. 6 max \|x3^cf error\| | Fig. 6: flow tracks the DGP curve; CAREFL's committed x3 preds err up to 1.21 at α = −3 | 0.049 |
+| Fig. 6 max \|x4^cf error\| | CAREFL's committed x4 preds: max 0.174 | 0.156, at α = 0.1 (0.156 at α = 0 too); 0.148 at the α = −3 grid edge |
 | held-out CF MAE x3, α = −1.5 / 0 / 1.5 | (none) | 0.014 / 0.009 / 0.013 |
 | held-out CF MAE x4, α = −1.5 / 0 / 1.5 | (none) | 0.059 / 0.025 / 0.052 |
 
@@ -253,9 +254,9 @@ The 5 %/95 % domain instead of min-max raises it too, to 0.27 for x4 and 0.29
 for x3. Both maxima sit at the α = −3 grid edge, where min-max gives 0.15 and
 0.04. The reference protocol gives 0.16 for x4 and 0.05 for x3.
 
-The largest x4 error of the reference run sits at α = 0, the bottom of the
-parabola, where the flow lies above the truth. The fresh-draw run lies above
-the truth at α = 0 too, by 0.12 for x4.
+The largest x4 error of the reference run sits at the bottom of the
+parabola, α = 0 to 0.1. There the flow lies above the truth. The fresh-draw run
+lies above the truth at α = 0 too, by 0.12 for x4.
 
 Rejected alternatives:
 
@@ -274,12 +275,12 @@ the start off and on, seeds unchanged:
 
 | variant | epochs to within 0.01 of the final train NLL, off → on | endpoint, off → on | verdict |
 |---|---|---|---|
-| triangle linear-ls | 28 → 5 | identical (β to 4 digits, val NLL 2.4606) | on |
-| triangle linear-cs | 28 → 5 | cs max err 0.025 → 0.056; do(x1) err 0.132 → 0.080 | off: the misspecified line is what this variant measures, and the start bends it |
-| triangle atan-cs | 28 → 6 | cs max err 0.108 → 0.074; do(x1) err 0.095 → 0.072 | on |
-| triangle sin-cs | 34 → 10 | cs max err 0.240 → 0.088; do(x1) err 0.075 → 0.201, past the 0.188 bound | off: a different optimum, better curve, worse L2 |
-| mixed linear-ls | 42 → 9 | identical | on |
-| mixed exp-cs | 28 → 6 | cs max err 0.143 → 0.060; do(x1) err 0.018 → 0.010 | on |
+| triangle linear-ls | 28 → 5 | identical (val NLL 2.4606, do(x1) err 0.107) | on |
+| triangle linear-cs | 28 → 5 | cs max err 0.023 → 0.046; do(x1) err 0.131 → 0.084 | off: the misspecified line is what this variant measures, and the start bends it |
+| triangle atan-cs | 28 → 6 | cs max err 0.099 → 0.081; do(x1) err 0.080 → 0.068 | on |
+| triangle sin-cs | 35 → 18 | cs max err 0.245 → 0.254; do(x1) err 0.078 → 0.102 | off: the start gains no accuracy and does not help the curve |
+| mixed linear-ls | 42 → 9 | identical (val NLL 1.2268, do(x1) err 0.046) | on |
+| mixed exp-cs | 28 → 6 | cs max err 0.141 → 0.073; do(x1) err 0.018 → 0.013 | on |
 | VACA, CAREFL | (none) | (none) | impossible: `range_q: 0` has no marginal start |
 
 The start is only an initialization. Where the optimizer reaches the same
@@ -307,11 +308,11 @@ summed validation NLL.
 | 2 | 0.077 / 0.008 / 0.042, 1.4339 | 0.357 / 0.212 / 0.123, 1.4379 |
 | 3 | 0.103 / 0.018 / 0.036, 1.4341 | 0.036 / 0.088 / 0.056, 1.4385 |
 | 4 | 0.096 / 0.011 / 0.040, 1.4337 | 0.011 / 0.062 / 0.047, 1.4367 |
-| 7 (config) | 0.074 / 0.001 / 0.052, 1.4335 | 0.095 / 0.093 / 0.054, 1.4383 |
+| 7 (config) | 0.102 / 0.016 / 0.040, 1.4341 | 0.095 / 0.093 / 0.054, 1.4383 |
 
 The per-node rule gives a lower x3 validation NLL on every seed. Its error at
 do(x2 = −1) and do(x2 = 0) is smaller on every seed. At the off-manifold
-point do(x2 = −3) the global rule errs less on three of the five seeds.
+point do(x2 = −3) the global rule errs less on four of the five seeds.
 
 ## Runtime and the CI deviations
 
@@ -333,12 +334,12 @@ selects them. Every entry is the cs max err unless the column says otherwise.
 
 Batch 256 / lr 0.004 is the only row that keeps every cs error within about
 0.02 of the paper protocol. Larger batches or rates bend the misspecified
-linear-cs curve (0.16 to 0.18), and lr 0.008 hurts atan-cs.
+linear-cs curve (0.160 to 0.183), and lr 0.008 hurts atan-cs.
 
 The epoch floors, measured at that batch and rate:
 
 - **Triangle** holds every bound at 300 epochs. At 150 the run fails atan's
-  do(x1) bound (0.235 > 0.200). `linear-cs` trains 500, because at 300 its
+  do(x1) bound (0.211 > 0.170). `linear-cs` trains 500, because at 300 its
   fitted cs curve flattens past |x2| > 0.5. The DGP line spans only ±0.3.
   relu is out: it fits atan badly.
 - **Triangle-mixed** `exp-cs` has two slow parts, the 2-unit sigmoid CS net and

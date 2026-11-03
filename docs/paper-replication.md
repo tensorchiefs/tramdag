@@ -22,7 +22,7 @@ replay. So every seed here is a repository choice.
 | item | reference | here |
 |---|---|---|
 | latent | standard logistic, shifts added on the continuous scale, subtracted for ordinal $P(Y \le k) = \sigma(\vartheta_k - s)$ | same ([notation.md](notation.md)) |
-| Bernstein basis | `len_theta` unconstrained coefficients, `to_theta` softplus-cumsum, domain → [0, 1] with tangent-linear extrapolation outside; the domain comes from the train 5 %/95 % quantiles in the triangle scripts (`quantile(..., c(0.05, 0.95))`) and from min/max in the comparison scripts (`scale_df`) | zuko Bernstein, `n_coeffs` unconstrained (zuko ties two control points on, so `n_coeffs=20` is order 21 against the reference's order 19; the free-parameter count is what matches), domain = train `range_q`/1−`range_q` quantiles → [−5, 5], linear extrapolation. Triangle: `range_q: 0.05`, a match up to the reparametrization. CAREFL: `range_q: 0`, the reference's min/max. VACA: quantiles kept, deviation D1, measured below |
+| Bernstein basis | `len_theta` unconstrained coefficients, `to_theta` softplus-cumsum, domain → [0, 1] with tangent-linear extrapolation outside; the domain comes from the train 5 %/95 % quantiles in the triangle scripts (`quantile(..., c(0.05, 0.95))`) and from min/max in the comparison scripts (`scale_df`) | zuko Bernstein, `n_coeffs` unconstrained (zuko ties two control points on, so `n_coeffs=20` is order 21 against the reference's order 19; the free-parameter count is what matches), domain = train `range_q`/1−`range_q` quantiles → [−5, 5], linear extrapolation. Triangle: `range_q: 0.05`, a match up to the reparametrization. VACA and CAREFL: `range_q: 0`, the reference's min/max |
 | networks | triangle scripts `create_param_net` with `hidden_features = c(2, 25, 25, 2)` continuous and `c(2, 2, 2, 2)` mixed, sigmoid (the ReLU line is commented out); the vector reads as in/out dims around the hidden stack, so the hidden layers are (25, 25) and (2, 2). Comparison scripts `make_model`: `dense(10, tanh) → dense(100, tanh) → dense(len_theta)`, one net per node | `units` and `activation` set per variant to exactly those stacks. The package defaults in [code-map.md](code-map.md) replicate the PyTorch reference `buehlpa/TramDag` instead and are not the paper's nets |
 | init | triangle scripts: `LinearMasked` layers with Keras `random_normal` (N(0, 0.05²)) on weights and biases, the LS `beta` layer included; comparison scripts: `layer_dense` default, glorot-uniform weights and zero biases | `init: normal` (triangle) and `init: glorot` (VACA/CAREFL) through `CausalFlowDAG(init=)`; torch's default init is the framework default, and under the full-batch protocol the init decides the fit (see VACA) |
 | optimizer | Keras Adam, eps 1e-7 | torch Adam, eps 1e-8; measured: no effect (VACA identical to four digits) |
@@ -32,7 +32,6 @@ replay. So every seed here is a repository choice.
 
 The deviations have these labels:
 
-- **D1** is the Bernstein domain. VACA keeps the quantiles (see VACA).
 - **D3** is the bias-free intercept output layer (the table above).
 - **D4** is the marginal start (the section D4 below).
 - **D5** is the plateau rule per node (the section D5 below).
@@ -165,7 +164,7 @@ a looser tolerance.
 | batch | full batch (one `apply_gradients` per epoch) | 2500 = n_train |
 | schedule | the plateau rule above | the same rule per node, deviation D5 |
 | input scaling | `scale_df`: everything min-max to [0, 1] | `input_transform: minmax` on the CI terms |
-| Bernstein domain | train min/max (`scale_df`) | 5 %/95 % quantiles (`range_q: 0.05`), deviation D1, chosen under the global plateau. At seed 7 the reference's min/max domain scored 0.289 / 0.040 / 0.067. The quantiles scored 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turns. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. Under D5 min/max errs less at every do point, at equal val NLL. The replication keeps the quantiles (D1). CAREFL, same nets, uses `range_q: 0` |
+| Bernstein domain | train min/max (`scale_df`) | train min/max (`range_q: 0`), as in CAREFL. Earlier study runs: under the global plateau, at seed 7, min/max scored 0.289 / 0.040 / 0.067 and the 5 %/95 % quantiles 0.096 / 0.080 / 0.018. Under the per-node plateau (D5) the order turned. D4/D5 study run, min/max: 0.072 / 0.001 / 0.049. Quantiles: 0.080 / 0.068 / 0.092. Val NLL: 1.4342 against 1.4347. Under D5 min/max errs less at every do point, at equal val NLL, so the replication uses min/max |
 | n_compare | (none) | 50000 |
 
 **Results**: the check is the flow's error against the analytic mean, not a
@@ -173,11 +172,11 @@ pinned flow value.
 
 | metric | paper | here, pinned run (measured) |
 |---|---|---|
-| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.097 |
-| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.078 |
-| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.099 |
-| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.069, error 0.008 |
-| val NLL x3 | (none) | 1.4353 |
+| \|E[x3 \| do(x2 = −3)] − (−1.0)\| | Fig. 5: densities overlap | 0.074 |
+| \|E[x3 \| do(x2 = −1)] − (−0.5)\| | Fig. 5 | 0.001 |
+| \|E[x3 \| do(x2 = 0)] − (−0.25)\| | Fig. 5 | 0.052 |
+| sd(x1) flow vs analytic 2.0767 | Fig. 4: bimodal x1 fitted; the default CNF [@javaloy2023causalflows] fails | 2.064, error 0.012 |
+| val NLL x3 | (none) | 1.4335 |
 
 The do(x2) errors vary with the seed. D5 below gives the spread over four
 init draws. The paper shows one run's densities. The committed bounds sit at
@@ -194,7 +193,7 @@ otherwise.
 | global plateau, torch init | 0.523 / 0.334 / 0.129 | the summed NLL keeps improving through x1 while x3 overfits |
 | … without any plateau | 0.562 / 0.354 / 0.142 | the rule is what stops the full-batch overfit |
 | … Adam eps 1e-7 | 0.523 / 0.334 / 0.129 | no effect |
-| … Bernstein on train min/max (D1 off) | 0.154 / 0.012 / 0.062 | helps, not the cause |
+| … Bernstein on train min/max | 0.154 / 0.012 / 0.062 | helps, not the cause |
 | … glorot init | 0.035 / 0.006 / 0.007 | the cause (a different random draw than the config's seed 7) |
 | … glorot + min/max | 0.035 / 0.056 / 0.057 | |
 
@@ -370,7 +369,7 @@ The epoch floors, measured at that batch and rate:
   closer to the 500-epoch values. It reads β23 as 0.333, where lr 0.004 reads
   0.337 instead. With relu at the sd-0.05 normal init, a study run gives cs err
   0.859 and β13 −0.055 in this setup.
-- **VACA and CAREFL** run their references 1:1 except D5 (and D1 for VACA);
+- **VACA and CAREFL** run their references 1:1 except D5;
   the rejected shortcuts are in their sections.
 
 ## Repository choices the paper does not state

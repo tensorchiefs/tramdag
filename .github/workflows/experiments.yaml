@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   plan:
@@ -99,17 +99,3 @@ jobs:
       run: >-
         uv run --group experiments python -m check
         ${{ steps.result.outputs.name }}
-
-    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
-      name: post the report as a commit comment
-      uses: iterative/setup-cml@e5f9f4673e0a8f275c45cc66dbbfd29c8469fb4e # v2.1.0
-      with:
-        vega: false
-    - if: always() && hashFiles(format('experiments/results/{0}/report.md', steps.result.outputs.name)) != ''
-      working-directory: >-
-        experiments/results/${{ steps.result.outputs.name }}
-      env:
-        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -euo pipefail
-        cml comment create --target=commit report.md

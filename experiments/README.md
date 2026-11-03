@@ -23,7 +23,7 @@ Every run writes to `results/<name>/` (gitignored):
 
 - `metrics.json`, the numbers that CI checks,
 - `report.md`, what the run is, the metrics table and the figures with their
-  captions (the experiments workflow posts this file as a commit comment),
+  captions,
 - `flow.pt`, the fitted model, so `CausalFlowDAG.load` can query a finished
   run again instead of refitting it,
 - `plots/*.png`: the package's own DAG, training and marginals figures, and
@@ -128,5 +128,5 @@ committed data, external frozen input.
   divided by the CAREFL sample standard deviations (6.01 and 1.91).
 - The `source` strings in the simulation scripts match the frozen
   `data/*/truth.json` files, so they do not follow the cite style.
-- Report tables carry no pipes in cell text. `cml` strips the backslash
-  escapes, which desyncs the header from the separator row.
+- Report tables carry no pipes in cell text. A Markdown renderer can drop
+  the backslash escapes, which desyncs the header from the separator row.

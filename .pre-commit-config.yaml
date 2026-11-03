@@ -75,6 +75,14 @@ repos:
 
 - repo: local
   hooks:
+  - id: replications
+    name: replications match the ground truth
+    entry: uv run --no-sync python experiments/replicate.py
+    language: system
+    files: ^(src/|experiments/|uv\.lock$)
+    pass_filenames: false
+    require_serial: true
+    stages: [pre-push]
   - id: no-agent-attribution
     name: no agent attribution in the commit message
     entry: (?i)^(co-authored-by|assisted-by|generated-by|claude-session):|generated with

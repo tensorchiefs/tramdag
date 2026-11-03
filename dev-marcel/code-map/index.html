@@ -949,6 +949,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1651,10 +1679,12 @@ tensors, so it serializes and compares without torch.</p>
 <p><a class="autorefs autorefs-internal" title="CausalFlowDAG" href="../api/flow/#tramdag.flow.CausalFlowDAG"><code>CausalFlowDAG</code></a> holds one
 <a class="autorefs autorefs-internal" title="Node" href="../api/nodes/#tramdag.nodes.Node"><code>Node</code></a> per variable in topological order. Construction
 seeds each node's weights from the constructor seed and the node's name. A node
-starts from the same weights in every spec that contains it. Construction ends
-with <code>torch.manual_seed(seed)</code>, which seeds the unseeded shuffling of <code>fit</code>. The
-constructor seed is the reproducibility knob. A lone
-<code>Node</code> needs <code>torch.manual_seed</code> before you build it. The class composes
+starts from the same weights in every spec that contains it. <code>Node(seed=)</code> uses
+the same stream, so a lone node starts from the weights it has in the flow.
+<code>nodes.seeded</code> holds this seeding. It runs in <code>torch.random.fork_rng</code>, so
+construction does not change torch's global RNG state. Each random act takes
+its own seed: the constructor for the weights, <code>fit(seed=)</code> for the shuffle,
+<code>sample(seed=)</code> and <code>abduct(seed=)</code> for the latent draws. The class composes
 <code>FitMixin</code> and <code>ReadoutsMixin</code>. The modules below list their methods.</p>
 <ul>
 <li><code>CausalFlowDAG.outcome()</code> gives the one node without children.</li>
@@ -1716,7 +1746,9 @@ both the node and the flow.</p>
 <a class="autorefs autorefs-internal" title="fit_classical" href="../api/nodes/#tramdag.nodes.Node.fit_classical"><code>Node.fit_classical()</code></a> fit one node,
 through <code>NodeFitMixin</code>. The flow's <a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit()</code></a> and
 <a class="autorefs autorefs-internal" title="fit_classical" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_classical"><code>fit_classical()</code></a> loop over the
-nodes, through <code>FitMixin</code>, serially or in <code>n_jobs</code> forked processes. The
+nodes, through <code>FitMixin</code>, serially or in <code>n_jobs</code> forked processes.
+<a class="autorefs autorefs-internal" title="fit_jointly" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit_jointly"><code>fit_jointly()</code></a> trains all nodes in
+one loop; it shares <code>_train_loop</code> with <code>Node.fit</code>. The
 mechanics are in <a href="../fitting/">fitting.md</a>.</p>
 <h2 id="readoutspy-readoutsmixin"><code>readouts.py</code>: <code>ReadoutsMixin</code><a class="headerlink" href="#readoutspy-readoutsmixin" title="Permanent link">&para;</a></h2>
 <p>The read-out methods (<code>varying_coef</code>, <code>ls_coefficients</code>, <code>to_matrix</code>,
@@ -1756,8 +1788,9 @@ instead.</p>
 <li><strong><code>fit(epochs=)</code> has no default.</strong> No default epoch count fits both an <code>LS</code>
   and a flexible model (<a href="../fitting/">fitting.md</a>).</li>
 <li><strong>Weight initialization is <code>CausalFlowDAG(init=)</code>.</strong> Initialization happens
-  at construction, so the constructor seed is the reproducibility knob. Each
-  node draws from a stream keyed on the seed and the node's name.
+  at construction, so the constructor seed makes the initial weights
+  reproducible. Each node draws from a stream keyed on the seed and the
+  node's name.
   <code>"torch"</code> is the <code>nn.Linear</code> default. <code>"glorot"</code> is the Keras <code>Dense</code>
   default, the paper's reference, and it is decisive under the paper's
   full-batch protocol. <code>zero_shift_networks=True</code> starts every <code>CS</code> shift

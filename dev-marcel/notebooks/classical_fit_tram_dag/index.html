@@ -770,6 +770,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -2347,7 +2375,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1ff2c3f9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3109b7e6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2373,7 +2401,7 @@ repo root. It needs <code>MASS</code> (ships with R) and <code>tram</code>.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=69819a71">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=54b0b917">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2454,7 +2482,7 @@ def claim(text, value, bound, fmt="{:.2e}"):
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c53d033a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bb64227b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2481,7 +2509,7 @@ MASS. This is not a <strong>causal</strong> model.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8e039adc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=50e7c163">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2506,7 +2534,7 @@ are <code>coef(glm(low ~ age + lwt + smoke, birthwt, family = binomial))</code>.
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0505fd90">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=43069d2f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2575,7 +2603,7 @@ print(
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dce94a1d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=feb7de27">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2591,7 +2619,7 @@ gradient of the <code>low</code> node never sees the covariate marginals.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c21578a3">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9f01cd0b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2641,7 +2669,7 @@ flow_bw.fit_classical(bw)</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
  'final_nll': 9.137612929448062,
- 'seconds': 1.1805878390000544,
+ 'seconds': 1.1755203330001223,
  'coefficients': {'low': {'age': array([-0.03899379]),
    'lwt': array([-0.01213884]),
    'smoke': array([-0.00437635,  0.66640591])}},
@@ -2651,7 +2679,7 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 3.089470463926682,
    'grad_norm': 1.0146105993900928e-06,
    'decrement': 1.3917636508756161e-12,
-   'seconds': 1.1118112200000496,
+   'seconds': 1.1084611050000603,
    'coefficients': {}},
   'lwt': {'converged': True,
    'stop_reason': 'tolerance',
@@ -2659,7 +2687,7 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 4.789085054515023,
    'grad_norm': 1.1217799113443504e-05,
    'decrement': 8.869592011349744e-11,
-   'seconds': 0.0076176299999133334,
+   'seconds': 0.007349724000050628,
    'coefficients': {}},
   'smoke': {'converged': True,
    'stop_reason': 'tolerance',
@@ -2667,7 +2695,7 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 0.6694294930549758,
    'grad_norm': 2.9695561377940383e-08,
    'decrement': 1.8507472827317275e-15,
-   'seconds': 0.006939703000057307,
+   'seconds': 0.006774016999997912,
    'coefficients': {}},
   'low': {'converged': True,
    'stop_reason': 'tolerance',
@@ -2675,7 +2703,7 @@ flow_bw.fit_classical(bw)</div>
    'final_nll': 0.5896279179513815,
    'grad_norm': 0.00030424912919857543,
    'decrement': 2.679244908939033e-11,
-   'seconds': 0.05421928600003412,
+   'seconds': 0.05293548700001338,
    'coefficients': {'age': array([-0.03899379]),
     'lwt': array([-0.01213884]),
     'smoke': array([-0.00437635,  0.66640591])}}}}</pre>
@@ -2685,7 +2713,7 @@ flow_bw.fit_classical(bw)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4d7a3e61">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ba9742c5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2715,7 +2743,7 @@ the output.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8b964f81">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8edb6d3e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2828,7 +2856,7 @@ ok  max coefficient spread of the three fits: 1.85e-05 &lt;= 6.00e-05
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0d5af7c1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8d6f5852">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2844,7 +2872,7 @@ log-likelihood.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=53612694">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8e2addcb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2904,7 +2932,7 @@ ok  max |P_flow(low=1) - P_glm(low=1)| over 189 rows: 6.27e-06 &lt;= 1.00e-05
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e322d4f8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b2c74daf">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2920,7 +2948,7 @@ R and <code>statsmodels</code>.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2ce5936f">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=542f418d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2983,7 +3011,7 @@ smoke   node alone 0.6708   R glm 0.6708
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4b65655b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=56ae8aa7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3002,7 +3030,7 @@ transform and a normal latent. The R reference values below come from
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a0f9a336">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=216c9e31">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3119,7 +3147,7 @@ R Colr     -0.0220  -0.0102   0.6687   -1499.67
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=dadaceb4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ff0742c1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3137,7 +3165,7 @@ standard errors and compare the differences with them.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=61412f0e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4c5ec27a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3181,7 +3209,7 @@ precision afterwards.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8373302a">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=51e14865">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3378,7 +3406,7 @@ def ls_conf_int(flow, node, data, level=0.95, rcond=1e-7):
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6fe696e7">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e4d99217">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3434,7 +3462,7 @@ smoke (1 vs 0)  0.664065  0.259577  0.155303  1.172827   0.0
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=434328fc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2f444ce4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3447,7 +3475,7 @@ are the oracle, not the claim.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=72306401">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9c27f3c5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3535,7 +3563,7 @@ ok  max |coef_flow - coef_Colr| / SE: 1.78e-02 &lt;= 7.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aa084314">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6c07d2dc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3549,7 +3577,7 @@ error.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cd7f85ad">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e5a7719a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3565,7 +3593,7 @@ generator. <code>fit_classical</code> still finds its MLE.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=56acd8e6">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cf8caa8f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3616,7 +3644,7 @@ generator. <code>fit_classical</code> still finds its MLE.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ec680f72">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=149a0867">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3647,7 +3675,7 @@ side as the flow.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=78df991e">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=edb8fbe6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3680,7 +3708,7 @@ side as the flow.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e3ff2af7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=121d14dd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3694,7 +3722,7 @@ Bernstein degree 21.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=82582e42">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=605380be">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3780,7 +3808,7 @@ logLik x3       -1410.9656  -1411.9020    0.9364
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3227875b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=641df18b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3793,7 +3821,7 @@ to it: their relative gap stays small.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=571f6395">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a2553c85">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3846,7 +3874,7 @@ ok  max relative coefficient gap: 1.31e-03 &lt;= 2.00e-02
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fda8743f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a34a1047">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3864,7 +3892,7 @@ rather than only its location.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fed63b2c">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6e829b7b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3912,7 +3940,7 @@ claim("worst |integral of the density - 1|", float(np.abs(mass - 1.0).max()), 5e
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=46584ab6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3faa39c1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3925,7 +3953,7 @@ value.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=07b7ace9">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c99858c4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3979,7 +4007,7 @@ assert corr &gt; 0.95, f"the density's mode does not track the shifts: r = {corr
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=93babb4f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=74adc304">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3995,7 +4023,7 @@ clock is a property of the machine.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=01f36aa0">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=12a2450c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4022,6 +4050,7 @@ clock is a property of the machine.</p>
     <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">,</span>
     <span class="n">validation_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="o">=</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">patience</span><span class="o">=</span><span class="mi">60</span><span class="p">),</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">t_adam</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
 
@@ -4044,6 +4073,7 @@ flow_a.fit(
     learning_rate=1e-1,
     validation_data=df,
     callbacks=EarlyStopping(patience=60),
+    seed=0,
 )
 t_adam = time.perf_counter() - t0
 
@@ -4072,7 +4102,7 @@ x1-&gt;x2          1.7986      1.7986    0.0001
 x1-&gt;x3         -1.7796     -1.7799    0.0003
 x2-&gt;x3         -0.4549     -0.4550    0.0002
 
-classical 4.32s  vs  adam 31.9s
+classical 4.16s  vs  adam 31.0s
 ok  max |coef_classical - coef_adam|: 3.14e-04 &lt;= 1.00e-03
 </pre>
 </div>
@@ -4081,7 +4111,7 @@ ok  max |coef_classical - coef_adam|: 3.14e-04 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=212ef34b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c74b5b4c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4097,7 +4127,7 @@ continuous parents <code>x1</code> and <code>x2</code>;
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f5a179c4">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8212f801">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4149,7 +4179,7 @@ flow_o.fit_classical(tm)</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>{'converged': True,
  'final_nll': 1.0638599166788296,
- 'seconds': 11.302064931999894,
+ 'seconds': 11.170405669000047,
  'coefficients': {'x2': {'x1': array([2.02991896])},
   'x3': {'x1': array([0.00974636]), 'x2': array([0.38319398])}},
  'nodes': {'x1': {'converged': True,
@@ -4158,7 +4188,7 @@ flow_o.fit_classical(tm)</div>
    'final_nll': -0.5284964811303434,
    'grad_norm': 7.935367721321228e-06,
    'decrement': 3.953522251566813e-10,
-   'seconds': 1.691523034999932,
+   'seconds': 1.6777453990000595,
    'coefficients': {}},
   'x2': {'converged': True,
    'stop_reason': 'tolerance',
@@ -4166,7 +4196,7 @@ flow_o.fit_classical(tm)</div>
    'final_nll': 0.3826475461052615,
    'grad_norm': 2.3250106041379636e-06,
    'decrement': 8.507781824995219e-10,
-   'seconds': 9.569424484000024,
+   'seconds': 9.452273258000105,
    'coefficients': {'x1': array([2.02991896])}},
   'x3': {'converged': True,
    'stop_reason': 'tolerance',
@@ -4174,7 +4204,7 @@ flow_o.fit_classical(tm)</div>
    'final_nll': 1.2097088517039114,
    'grad_norm': 6.470020896085258e-06,
    'decrement': 3.1231225589370035e-10,
-   'seconds': 0.0411174129999381,
+   'seconds': 0.040387011999882816,
    'coefficients': {'x1': array([0.00974636]), 'x2': array([0.38319398])}}}}</pre>
 </div>
 </div>
@@ -4182,7 +4212,7 @@ flow_o.fit_classical(tm)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1c3ab8f0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e37f531e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4195,7 +4225,7 @@ different one.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ab081a73">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b645da6e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4255,7 +4285,7 @@ x2                    0.3832       0.3832   0.0001
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7ee11eac">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9be0ba74">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4267,7 +4297,7 @@ quantities, so every number below has an external check.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=492da272">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bbd51fc1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4346,7 +4376,7 @@ ok  max |SE_flow - SE_statsmodels|: 8.14e-07 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7f0628f1">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d22ecbe9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4358,7 +4388,7 @@ the coefficient gap is a small fraction of one standard error.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0a3d65ad">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e25b1849">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4418,7 +4448,7 @@ ok  x2: gap against statsmodels / SE: 7.51e-04 &lt;= 1.00e-03
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=94f375cb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=817b2cd9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4432,7 +4462,7 @@ classical fit a warm start for further training.</p>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5eade836">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2807fd32">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4452,7 +4482,7 @@ classical fit a warm start for further training.</p>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">before</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-<span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="n">flow_o</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">after</span> <span class="o">=</span> <span class="n">flow_o</span><span class="o">.</span><span class="n">ls_coefficients</span><span class="p">()[</span><span class="s2">"x3"</span><span class="p">]</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"coefficient drift after 300 more Adam epochs from the classical MLE:"</span><span class="p">)</span>
@@ -4462,7 +4492,7 @@ classical fit a warm start for further training.</p>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-22">before = {k: v.copy() for k, v in flow_o.ls_coefficients()["x3"].items()}
 
-flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256)
+flow_o.fit(tm, epochs=300, learning_rate=1e-3, batch_size=256, seed=0)
 after = flow_o.ls_coefficients()["x3"]
 
 print("coefficient drift after 300 more Adam epochs from the classical MLE:")
@@ -4481,8 +4511,8 @@ for p in ["x1", "x2"]:
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>coefficient drift after 300 more Adam epochs from the classical MLE:
-ok  x1: max |drift| / SE: 1.19e-02 &lt;= 1.00e-01
-ok  x2: max |drift| / SE: 2.95e-02 &lt;= 1.00e-01
+ok  x1: max |drift| / SE: 1.15e-02 &lt;= 1.00e-01
+ok  x2: max |drift| / SE: 2.15e-02 &lt;= 1.00e-01
 </pre>
 </div>
 </div>

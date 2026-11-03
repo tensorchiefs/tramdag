@@ -911,6 +911,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../notebooks/fit_strategies_benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-node or joint fit: a benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../notebooks/additive_vs_joint_ci/" class="md-nav__link">
         
   
@@ -1505,11 +1533,15 @@
 <h1 id="fitting-a-tram-dag">Fitting a TRAM-DAG<a class="headerlink" href="#fitting-a-tram-dag" title="Permanent link">&para;</a></h1>
 <p>This page is the reference for training a
 <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/flow.py"><code>CausalFlowDAG</code></a> and its nodes. It covers the
-likelihood, the two fitting paths <code>fit</code> and <code>fit_classical</code>, and the hooks of
-the Adam path. <a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>
+likelihood, the Adam paths <code>fit</code> and <code>fit_jointly</code>, the classical path
+<code>fit_classical</code>, and the hooks of the Adam paths.
+<a href="../notebooks/training_strategies/"><code>notebooks/training_strategies.py</code></a>
 runs the Adam recipes end to end. It closes with a runtime comparison of the
-recipes on one workload. <code>n_jobs</code>, <code>marginal_init</code>, <code>validation_split</code> and
-per-node <code>epochs</code> or <code>learning_rate</code> functions have no notebook example.</p>
+recipes on one workload.
+<a href="../notebooks/fit_strategies_benchmark/"><code>notebooks/fit_strategies_benchmark.py</code></a>
+compares <code>fit</code>, <code>fit</code> with <code>n_jobs</code> and <code>fit_jointly</code>. <code>marginal_init</code>,
+<code>validation_split</code> and per-node <code>epochs</code> or <code>learning_rate</code> functions have no
+notebook example.</p>
 <h2 id="one-module-one-sub-model-per-node">One module, one sub-model per node<a class="headerlink" href="#one-module-one-sub-model-per-node" title="Permanent link">&para;</a></h2>
 <p>A <code>CausalFlowDAG</code> is a single <code>torch.nn.Module</code> with one independent
 sub-model per variable. A sub-model has an intercept that produces the
@@ -1534,10 +1566,11 @@ triangular, and the joint log-likelihood decomposes per node,
   evaluated as the log of the cutpoint-interval probability in log space.</li>
 </ul>
 <p>Because parents enter as data, the per-node terms have disjoint parameters,
-and maximizing each term maximizes the sum. So every node fits on
+and maximizing each term maximizes the sum. So every node can fit on
 its own: <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/fitting.py"><code>Node.fit</code></a> minimizes the node's mean
 negative log-likelihood over the batch, plus the node's <code>VC</code> penalty.
-<code>CausalFlowDAG.fit</code> runs <code>Node.fit</code> for each node. <code>log_prob</code> returns the
+<code>CausalFlowDAG.fit</code> runs <code>Node.fit</code> for each node. <code>fit_jointly</code> minimizes
+the sum of these losses in one loop. <code>log_prob</code> returns the
 per-row joint.</p>
 <h2 id="one-node-alone">One node alone<a class="headerlink" href="#one-node-alone" title="Permanent link">&para;</a></h2>
 <p>A <a href="https://github.com/tensorchiefs/tramdag/blob/dev-marcel/src/tramdag/nodes.py"><code>Node</code></a> is a TRAM regression of one variable on its
@@ -1554,9 +1587,10 @@ parents' columns and its side columns; the fit ignores other columns. <code>fit<
 centered <code>VC</code> needs its propensity column in every frame, because only the flow
 can compute it live from the treatment node. A flow derives each node's
 shuffling seed from <code>fit(seed=)</code> and the node's index. So <code>Node.fit(seed=)</code>
-alone does not repeat a node of a seeded flow fit. A node built alone draws its
-initial weights from torch's global RNG; call <code>torch.manual_seed</code> first for a
-reproducible start. It always uses torch's default init; <code>init=</code> exists on
+alone does not repeat a node of a seeded flow fit. <code>Node(seed=)</code> seeds the
+initial weights. They are the weights of the same node in
+<code>CausalFlowDAG(spec, seed=)</code>. Without a seed, the weights come from torch's
+global RNG. A lone node always uses torch's default init; <code>init=</code> exists on
 <code>CausalFlowDAG</code> only.</p>
 <h2 id="path-a-stochastic-optimization-with-fit">Path A: stochastic optimization with <code>fit</code><a class="headerlink" href="#path-a-stochastic-optimization-with-fit" title="Permanent link">&para;</a></h2>
 <p><code>fit</code> is the general-purpose trainer, and the only one for a model with a
@@ -1571,14 +1605,25 @@ the final weights.</p>
   a base seed from torch's global RNG.
   <code>epochs=</code>, <code>learning_rate=</code> and <code>callbacks=</code> take one value for all
   nodes or a function of the node name.</li>
-<li><strong>Optimizer.</strong> One optimizer per node, <code>Adam(lr=learning_rate)</code> by default.
-  <code>optimizer=</code> takes a factory <code>f(node)</code>, for example to give the networks
-  weight decay in their own parameter group. <code>Node.fit</code> also takes an
-  optimizer instance. <code>node.parameter_groups()</code> gives the parameters by kind:
-  <code>"intercept"</code>, <code>"linear"</code> and <code>"networks"</code>.</li>
+<li><strong>Joint fit.</strong> <code>fit_jointly</code> trains all nodes with one optimizer and one
+  minibatch loop. Each step minimizes the sum of the nodes' mean NLLs. The
+  optimum is that of <code>fit</code>. One schedule and one stop rule then act on the
+  summed NLL, as in the reference implementation. The hooks get the flow, so
+  <code>EarlyStopping</code> tracks the summed validation NLL and restores the whole
+  flow. <code>fit_jointly</code> takes an optimizer instance or a factory <code>f(flow)</code>, and
+  no <code>n_jobs</code>.
+  <a href="../notebooks/fit_strategies_benchmark/"><code>notebooks/fit_strategies_benchmark.py</code></a>
+  compares it with <code>fit</code>.</li>
+<li><strong>Optimizer.</strong> One optimizer per node, <code>Adam(lr=1e-2)</code> by default.
+  <code>learning_rate=</code> sets the Adam step size. It excludes <code>optimizer=</code>: giving
+  both raises <code>ValueError</code>. <code>optimizer=</code> takes a factory <code>f(node)</code>, for
+  example to give the networks weight decay in their own parameter group.
+  <code>Node.fit</code> also takes an optimizer instance. <code>node.parameter_groups()</code>
+  gives the parameters by kind: <code>"intercept"</code>, <code>"linear"</code> and <code>"networks"</code>.</li>
 <li><strong>Minibatches.</strong> A fresh shuffle each epoch. <code>seed=</code> seeds the shuffle
   only, not the weight init; each node gets its own seed derived from
-  <code>(seed, node index)</code>.</li>
+  <code>(seed, node index)</code>. Without <code>seed=</code>, the shuffle draws from torch's
+  global RNG. The constructor seed does not seed the shuffle.</li>
 <li><strong>Epochs.</strong> <code>epochs</code> has no default: a fixed budget under-spends on one
   workload and wastes on the next, so every caller states its own.</li>
 <li><strong>Calibration.</strong> The first <code>fit</code> or <code>fit_classical</code> calibrates each node on
@@ -1602,8 +1647,9 @@ the final weights.</p>
   <a class="autorefs autorefs-internal" title="fit" href="../api/flow/#tramdag.flow.CausalFlowDAG.fit"><code>fit</code></a> docstring. A node that stopped
   earlier repeats its last entry in the flow view. <code>flow.history_frame()</code> gives
   one row per node and epoch, with no repeats.</li>
-<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. The hooks get the
-  node: <code>on_fit_begin(node, optimizer)</code>, <code>on_epoch_end(node, epoch, optimizer)</code>
+<li><strong>Callbacks.</strong> <code>callbacks=</code> takes one <code>Callback</code> or a list. Under <code>fit</code>
+  the hooks get the node (under <code>fit_jointly</code>, the flow):
+  <code>on_fit_begin(node, optimizer)</code>, <code>on_epoch_end(node, epoch, optimizer)</code>
   and <code>on_fit_end(node, optimizer)</code>. In <code>Node.fit</code> a bare callable is an
   <code>on_epoch_end</code> hook; any <code>True</code> return stops that node's fit. <code>on_fit_end</code>
   runs before the <code>VC</code> re-centering. On the flow, a bare callable is a
@@ -1702,17 +1748,21 @@ and need the best-validation weights to recover the causal effect.</p>
 <td>a plateau <code>Callback</code> around torch's <code>ReduceLROnPlateau</code></td>
 <td>a decaying rate per node</td>
 </tr>
+<tr>
+<td><code>fit_jointly</code></td>
+<td>one schedule or stop rule on the summed NLL, as in the reference implementation</td>
+</tr>
 </tbody>
 </table>
 <p>Three details are easy to get wrong.</p>
 <ul>
 <li>A second <code>fit</code> call continues training and <code>history</code> accumulates. That is
   what makes a multi-phase schedule a loop of <code>fit</code> calls.</li>
-<li>A callback instance passed to the flow serves every node in turn. A shipped
-  callback resets at each node's fit begin, so its attributes describe the
-  last node only. Use a function of the node name to keep one instance per
-  node. Under <code>n_jobs</code> the state of every callback stays in the workers; read
-  <code>node.history</code> instead.</li>
+<li>A callback instance passed to the flow's <code>fit</code> serves every node in turn.
+  A shipped callback resets at each node's fit begin, so its attributes
+  describe the last node only. Use a function of the node name to keep one
+  instance per node. Under <code>n_jobs</code> the state of every callback stays in the
+  workers; read <code>node.history</code> instead.</li>
 <li>A post-fit <code>load_state_dict</code> skips the <code>VC</code> re-centering. Restore weights
   from <code>on_fit_end</code> instead, as <code>EarlyStopping</code> does.</li>
 </ul>

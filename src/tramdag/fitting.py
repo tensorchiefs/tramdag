@@ -41,16 +41,6 @@ _FORK_JOB: tuple | None = None
 
 
 # %% private functions -----------------------------------------------------------------
-def _check_fit_sizes(epochs: int, batch_size: int, verbose: int) -> None:
-    """Reject a non-positive epoch, batch or verbose value before anything runs."""
-    if epochs < 1:
-        raise ValueError(f"epochs must be at least 1, got {epochs!r}")
-    if batch_size < 1:
-        raise ValueError(f"batch_size must be at least 1, got {batch_size!r}")
-    if verbose < 0:
-        raise ValueError(f"verbose must be a non-negative int, got {verbose!r}")
-
-
 def _split_validation(
     train_df: pd.DataFrame,
     validation_data: pd.DataFrame | None,
@@ -81,7 +71,7 @@ def _split_validation(
 
 
 def _normalize_callbacks(cbs) -> list[Callback]:
-    """Give ``callbacks=`` as a list of ``Callback``s, or fail loudly.
+    """Give ``callbacks=`` as a list of ``Callback``s.
 
     A [`Callback`][tramdag.callbacks.Callback] instance is trusted: the base
     class defines all three hooks. A bare callable is an ``on_epoch_end``
@@ -96,15 +86,6 @@ def _normalize_callbacks(cbs) -> list[Callback]:
         if isinstance(cb, Callback):
             out.append(cb)
             continue
-        if isinstance(cb, type) and issubclass(cb, Callback):
-            raise TypeError(
-                f"callbacks= got the class {cb.__name__}; instantiate it: "
-                f"{cb.__name__}()"
-            )
-        if not callable(cb):
-            raise TypeError(
-                f"callbacks entries must be Callback instances or callables, got {cb!r}"
-            )
         out.append(_FnCallback(cb))
     restoring = [type(cb).__name__ for cb in out if getattr(cb, "restore_best", False)]
     if len(restoring) > 1:
@@ -320,8 +301,7 @@ def _node_seed(seed: int, index: int) -> int:
 def _per_node(value, name: str):
     """Give a per-node argument: ``value(name)`` for a function, else ``value``.
 
-    A class is not a factory: ``callbacks=EarlyStopping`` reaches
-    ``_normalize_callbacks``, which names the missing parentheses.
+    A class is not a factory.
     """
     return value(name) if callable(value) and not isinstance(value, type) else value
 
@@ -517,17 +497,13 @@ class NodeFitMixin:
         Raises
         ------
         ValueError
-            If a size argument is out of range, the validation arguments
-            clash, a centered VC term's propensity column is missing or out
-            of [0, 1], two callbacks restore weights, an ordinal value is not
-            a level index, or the node's calibration refuses the frame.
+            If the validation arguments clash, a centered VC term's
+            propensity column is missing or out of [0, 1], two callbacks
+            restore weights, an ordinal value is not a level index, or the
+            node's calibration refuses the frame.
         KeyError
             If a frame lacks a column the node reads.
-        TypeError
-            If a ``callbacks`` entry is neither a ``Callback`` nor a callable,
-            or is a ``Callback`` class instead of an instance.
         """
-        _check_fit_sizes(epochs, batch_size, verbose)
         cbs = _normalize_callbacks(callbacks)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split
@@ -888,13 +864,12 @@ class FitMixin:
         Raises
         ------
         TypeError
-            If ``optimizer`` is an optimizer instance instead of a factory,
-            or a node's ``callbacks`` entry is not a callback.
+            If ``optimizer`` is an optimizer instance instead of a factory.
         KeyError
             If a frame lacks a node column.
         ValueError
             See [`Node.fit`][tramdag.nodes.Node.fit]. Every frame and every
-            node's arguments are checked before the first node fits.
+            node's callbacks are checked before the first node fits.
         """
         if isinstance(optimizer, torch.optim.Optimizer):
             raise TypeError(
@@ -924,7 +899,6 @@ class FitMixin:
             for i, name in enumerate(self.order)
         }
         for kwargs in jobs.values():
-            _check_fit_sizes(kwargs["epochs"], batch_size, verbose)
             kwargs["callbacks"] = _normalize_callbacks(kwargs["callbacks"])
         self._calibrate(train_df, marginal_init=marginal_init)
         later = [n for n in self.order if self.nodes[n].side_columns()]
@@ -1048,10 +1022,7 @@ class FitMixin:
             See [`Node.fit`][tramdag.nodes.Node.fit].
         KeyError
             If a frame lacks a node column.
-        TypeError
-            If a ``callbacks`` entry is not a callback.
         """
-        _check_fit_sizes(epochs, batch_size, verbose)
         cbs = _normalize_callbacks(callbacks)
         train_df, validation_data = _split_validation(
             train_df, validation_data, validation_split

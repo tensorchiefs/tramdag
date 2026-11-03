@@ -212,23 +212,6 @@ def test_early_stopping_without_restore_keeps_the_final_weights(ls_chain):
         EarlyStopping(restore_best=False)
 
 
-def test_non_callable_callback_is_refused(ls_chain):
-    """A ``callbacks=`` entry that is not callable must raise up front."""
-    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
-    flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(TypeError, match="Callback instances or callables"):
-        flow.fit(df, epochs=10, callbacks=[42])
-
-
-def test_epochs_must_be_positive(ls_chain):
-    """epochs=0 would skip the loop but still calibrate and run the
-    after-fit hooks — refuse it instead.
-    """
-    flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(ValueError, match="epochs"):
-        flow.fit(ls_chain["draw"](100, 0)[["x1", "x2"]], epochs=0)
-
-
 def test_restore_best_without_an_epoch_refuses(ls_chain):
     """Restoring before any epoch is a bug in the caller's loop — loud."""
     flow = CausalFlowDAG(_two_node_spec(), seed=0)
@@ -307,14 +290,6 @@ def test_callbacks_reject_stale_validation_from_an_earlier_fit(ls_chain):
     with pytest.raises(RuntimeError, match="validation_data"):
         flow.fit(df, epochs=2, callbacks=EarlyStopping())
     flow.fit(df, epochs=2, validation_data=df, callbacks=EarlyStopping())
-
-
-def test_callbacks_reject_the_class_instead_of_an_instance(ls_chain):
-    """`callbacks=EarlyStopping` (forgotten parens) fails with the fix named."""
-    df = ls_chain["draw"](200, 0)[["x1", "x2"]]
-    flow = CausalFlowDAG(_two_node_spec(), seed=0)
-    with pytest.raises(TypeError, match="instantiate it: EarlyStopping"):
-        flow.fit(df, epochs=2, callbacks=EarlyStopping)
 
 
 def test_each_node_is_restored_at_its_best_epoch(ls_chain):

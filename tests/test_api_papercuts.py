@@ -114,13 +114,6 @@ def test_ls_coefficients_omits_a_node_without_linear_shifts():
     assert CausalFlowDAG(spec, seed=0).ls_coefficients() == {}
 
 
-def test_fit_rejects_a_batch_size_below_one():
-    """batch_size=0 is refused by name before the loop reaches range()."""
-    df = pd.DataFrame({"x1": np.zeros(8), "x2": np.zeros(8), "y": np.zeros(8)})
-    with pytest.raises(ValueError, match="batch_size must be at least 1"):
-        CausalFlowDAG(_spec(), seed=0).fit(df, epochs=1, batch_size=0)
-
-
 def test_glorot_init_is_keras_dense_default(tmp_path):
     """``init="glorot"``: every linear layer gets glorot-uniform weights and a
     zero bias; the default stays torch's; a checkpoint carries the choice.

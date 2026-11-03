@@ -114,16 +114,6 @@ def test_a_bad_frame_fails_before_any_node_fits(ls_chain):
     flow = CausalFlowDAG(_ls_spec(), seed=0)
     with pytest.raises(KeyError, match="'y'"):
         flow.fit(df, epochs=2, validation_data=df.drop(columns="y"))
-    with pytest.raises(ValueError, match="epochs"):
-        flow.fit(df, epochs=lambda name: 0 if name == "y" else 2)
-    assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
-
-
-def test_a_bad_callback_of_a_later_node_fails_before_any_node_fits(ls_chain):
-    df = ls_chain["draw"](300, 7)[["x1", "x2"]]
-    flow = CausalFlowDAG({"x1": ContinuousNode(), "x2": ContinuousNode(LS("x1"))})
-    with pytest.raises(TypeError, match="Callback instances or callables"):
-        flow.fit(df, epochs=2, callbacks=lambda name: [42] if name == "x2" else [])
     assert not any(bool(nd.calibrated) for nd in flow.nodes.values())
 
 

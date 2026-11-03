@@ -13,8 +13,8 @@ The commands are in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
   therefore measures that number.
 - **CI split**: [`CONTRIBUTING.md`](../CONTRIBUTING.md) has the commands.
   [`ci.yml`](../.github/workflows/ci.yml) says which runs use the fast subset.
-- **Determinism**: tests seed `torch` before they construct the flow, so the
-  fits are reproducible.
+- **Determinism**: tests pass `seed=` to the constructor and to every fit, so
+  the fits are reproducible.
 
 ## Testing principles
 

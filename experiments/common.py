@@ -137,9 +137,8 @@ def write_report(
 ) -> None:
     """Write ``report.md``: what the run is, its metrics table, its figures.
 
-    The experiments workflow posts this file as a commit comment, so the
-    figure links are plain relative paths that ``cml comment`` resolves and
-    uploads.
+    The figure links are plain relative paths, so the report renders next
+    to its figures in the results folder.
 
     Parameters
     ----------

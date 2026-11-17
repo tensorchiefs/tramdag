@@ -3383,15 +3383,15 @@ wheels = [
 
 [[package]]
 name = "pylsp-rope"
-version = "0.1.17"
+version = "0.1.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-lsp-server" },
     { name = "rope" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/3d/cfcf7e093c98cccadbccdc8762194cd3afaa4d8aac6731ced5bea92489cb/pylsp_rope-0.1.17.tar.gz", hash = "sha256:4cd6f2fb32c84302b94cb4ce002bc0700b1b656dd5147e7db3dd92303a9a8dc2", size = 21312, upload-time = "2024-11-17T13:05:48.009Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/0c/b9eac2b464d5fc106d4c45eac54d290aa298a70e37a23a7714354331f730/pylsp_rope-0.1.18.tar.gz", hash = "sha256:2cbca6f7a02d82b49c6efdbed1f2a933d751bba079c903c81732218622cf5380", size = 21874, upload-time = "2026-11-08T08:55:02.953Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/0d/92a83f4f3f0a15017a7831589d7c01408ba8eaede0028eadf6ca022050ee/pylsp_rope-0.1.17-py3-none-any.whl", hash = "sha256:6be821913b3834b3125e64457a8bcf2030c4f1d5cd629bce4c26ba5c2c12f30b", size = 14186, upload-time = "2024-11-17T13:05:46.954Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/fe/9d9f676a81db293a1a2166e5bd82142d73d90b6e26739e8a0bc36532a973/pylsp_rope-0.1.18-py3-none-any.whl", hash = "sha256:2bf1e25e8dcd228d8e1e94e7e17eb338a7ce6b5011d37b54d421febacc2a4077", size = 14261, upload-time = "2026-11-08T08:55:01.42Z" },
 ]
 
 [[package]]
